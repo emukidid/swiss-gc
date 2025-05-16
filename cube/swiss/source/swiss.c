@@ -1426,6 +1426,9 @@ void boot_dol(file_handle* file, int argc, char *argv[])
 	if(devices[DEVICE_CUR]->location == LOC_DVD_CONNECTOR) {
 		devices[DEVICE_CUR]->setupFile(imageFile, bootFile, NULL, -1);
 	}
+	if(swissSettings.hasFlippyDrive && needs_flippy_bypass(file, hash)) {
+		flippy_bypass(true);
+	}
 
 	if(!memcmp(buffer, ELFMAG, SELFMAG)) {
 		ELFtoARAM(buffer, argz, argz_len);

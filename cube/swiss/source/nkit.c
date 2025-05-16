@@ -31,7 +31,7 @@ static const struct {
 	const char *name;
 	uint32_t size;
 	uint64_t hash;
-} firm_dat[] = {
+} file_dat[] = {
 	{ "BS2.img", /* gc-npdp-gdev.bin       */ 1449848, 0xB5337A8BCA0E5FD8 },
 	{ "BS2.img", /* gc-npdp-ntsc.bin       */ 1448280, 0x4260AD4F5FDF0A5B },
 	{ "BS2.img", /* gc-npdp-pal.bin        */ 1760152, 0xEE52F211A2606E5F },
@@ -57,7 +57,7 @@ static const struct {
 	{ "GC_LOADER_HW2_UPDATER_1.0.0.dol",      1267200, 0x25AC594FF8F3C302 },
 	{ "GC_LOADER_HW2_UPDATER_1.0.1.dol",      1267200, 0x753F83C3E35CCBE0 },
 	{ "GC_LOADER_HW2_UPDATER_1.1.0.BETA.dol", 1267200, 0x153785DED813D3B1 },
-
+#define FIRM_COUNT (25)
 	{ "240p Test Suite (World) (v1.04) (Program) (Aftermarket) (Unl).dol",        2301384, 0x71BCDBA149B3AAAF },
 	{ "240p Test Suite (World) (v1.06) (Program) (Aftermarket) (Unl).dol",         930560, 0x7EB7DDDAF5105457 },
 	{ "240p Test Suite (World) (v1.07) (Program) (Aftermarket) (Unl).dol",         932032, 0x4DAB8540272CCBD5 },
@@ -69,6 +69,16 @@ static const struct {
 	{ "Mama Bear Puzzle (2015)(Mihai, Sebastian).dol",                            1161216, 0x5577A5CF49894D65 },
 	{ "Mama Bear Puzzle (2015)(Mihai, Sebastian).elf",                            1667136, 0x9FDBE50048C2BC9E },
 	{ "Xeno Crisis (World) (En,Ja,Fr,De,Es,It,Nl,Pt-BR) (Aftermarket) (Unl).dol", 5331008, 0x34BF21CA529D0E02 },
+#define VALID_DOL_COUNT (FIRM_COUNT + 11)
+	{ "CleanRipGC-lz.dol",  171136, 0x6C0308884F922929 },
+	{ "CleanRipGC.dol",    1491392, 0x64E1342A4D52EC8A },
+	{ "cleanrip-gc.dol",   1593248, 0x93B7BEAF5567F44B },
+	{ "cleanrip-gc.dol",   1607200, 0x8256AB7AB7720687 },
+	{ "cleanrip-gc.dol",   1607520, 0xCAE93CAD1AC448A8 },
+	{ "cleanrip-gc.dol",   1619776, 0x54DA1F15C617F2A6 },
+	{ "cleanrip-gc.dol",   1859168, 0xB27D4814753386EF },
+	{ "cleanrip-gc.dol",   1901888, 0x690543D39FC7E9F1 },
+#define TOTAL_DOL_COUNT (VALID_DOL_COUNT + 8)
 };
 
 static const dvddiskid NDDEMO = {
@@ -2311,7 +2321,7 @@ static const struct {
 	{{ "RELSAB\x01\x01" }, true,  0xAE, 0xB04C, 0xF11E97F0, 0x5FFE80C83B9D8B46,  983810048,  +476168192, {  314979244,      +24252, 6496, 0xA75A }, "Crash Bandicoot: The Wrath of Cortex" },
 	{{ "SG4JDA\x00\x00" }, true,  0x9D, 0xB3B3, 0x424A4760, 0x38394EDF8E58393A, 1261602816,  +198375424, { 1261594344,  +198377400, 6496, 0x015D }, "Naruto: Clash of Ninja 4" },
 	{{ "TESTNA\x00\x00" }, false, 0xD2, 0x0C28, 0x6254FB97, 0xAA2E5EDD0EF81992,   26834944,       -1658, {         ~0,          +0,    0, 0xFFFF }, "Dodger Demo" },
-#define VALID_COUNT (REDUMP_COUNT + 188)
+#define VALID_GCM_COUNT (REDUMP_COUNT + 188)
 	{{ "101E01\x00\x05" }, true,  0x88, 0xB6FD, 0x4BB518CD, 0x27CFAD706924A030, 1435949056,   +24029184, {         ~0,          +0,    0, 0xFFFF }, "Hontai Kensa Disc DOL-USA" },
 	{{ "101E01\x00\x05" }, true,  0xC6, 0xB6FD, 0x4BB518CD, 0x27CFAD706924A030, 1435949056,   +24029184, {         ~0,          +0,    0, 0xFFFF }, "Hontai Kensa Disc DOL-USA" },
 	{{ "101J01\x00\x03" }, true,  0x67, 0xA361, 0x1A7B7608, 0x6E2DA2E062EF73BA, 1459453952,     +524288, {         ~0,          +0,    0, 0xFFFF }, "Hontai Kensa Disc DOL" },
@@ -2375,7 +2385,7 @@ static const struct {
 	{{ "RELSAB\x00\x00" }, false, 0xAC, 0xBA9E, 0x1D74AD4A, 0x1A5F0EA47A582D7E, 1455841280,    +4136960, {         ~0,          +0,    0, 0xFFFF }, "Memory Card Utility Program" },
 	{{ "RELSAB\x00\x00" }, true,  0x44, 0xFCCE, 0x146E4A5A, 0x1E9563341CFB48F4, 1459947520,      +30720, { 1193673280,          +0, 6496, 0x8F7A }, "Summoner: The Prophecy" },
 	{{ "RELSAB\x00\x00" }, true,  0xD6, 0xD9CE, 0x16D7BCCE, 0xB64ADF7A4E8423B8, 1459978240,          +0, { 1193214528,          +0, 6496, 0x1458 }, "Summoner: The Prophecy" },
-#define TOTAL_COUNT (VALID_COUNT + 63)
+#define TOTAL_GCM_COUNT (VALID_GCM_COUNT + 63)
 };
 
 uint8_t fletcher8(const void *buffer, size_t size)
@@ -2422,7 +2432,7 @@ bool is_multi_disc(const file_meta *meta)
 	if (!meta)
 		return false;
 
-	for (int i = 0; i < TOTAL_COUNT; i++)
+	for (int i = 0; i < TOTAL_GCM_COUNT; i++)
 		if (!memcmp(&meta->diskId, nkit_dat[i].header, 6) &&
 			meta->diskId.disknum == nkit_dat[i].disknum &&
 			meta->diskId.gamever == nkit_dat[i].gamever &&
@@ -2464,7 +2474,7 @@ bool is_streaming_disc(const DiskHeader *header)
 	if (is_nkit_format(header)) {
 		uint8_t header_sum = fletcher8(header, sizeof(*header));
 
-		for (int i = 0; i < TOTAL_COUNT; i++)
+		for (int i = 0; i < TOTAL_GCM_COUNT; i++)
 			if (header_sum == nkit_dat[i].header_sum8 &&
 				!memcmp(header, nkit_dat[i].header, 6) &&
 				header->DiscID == nkit_dat[i].disknum &&
@@ -2474,7 +2484,7 @@ bool is_streaming_disc(const DiskHeader *header)
 	} else {
 		uint16_t header_sum = fletcher16(header, sizeof(*header));
 
-		for (int i = 0; i < TOTAL_COUNT; i++)
+		for (int i = 0; i < TOTAL_GCM_COUNT; i++)
 			if (header_sum == nkit_dat[i].header_sum16 &&
 				!memcmp(header, nkit_dat[i].header, 6) &&
 				header->DiscID == nkit_dat[i].disknum &&
@@ -2482,7 +2492,7 @@ bool is_streaming_disc(const DiskHeader *header)
 				return nkit_dat[i].streaming;
 	}
 
-	for (int i = 0; i < TOTAL_COUNT; i++)
+	for (int i = 0; i < TOTAL_GCM_COUNT; i++)
 		if (!memcmp(header, nkit_dat[i].header, 6) &&
 			header->DiscID == nkit_dat[i].disknum &&
 			header->Version == nkit_dat[i].gamever)
@@ -2496,7 +2506,7 @@ bool is_verifiable_disc(const DiskHeader *header)
 	if (is_nkit_format(header))
 		return true;
 
-	for (int i = 0; i < TOTAL_COUNT; i++)
+	for (int i = 0; i < TOTAL_GCM_COUNT; i++)
 		if (!memcmp(header, nkit_dat[i].header, 6) &&
 			header->DiscID == nkit_dat[i].disknum &&
 			header->Version == nkit_dat[i].gamever)
@@ -2512,7 +2522,7 @@ bool get_gcm_banner_fast(const DiskHeader *header, uint32_t *offset, uint32_t *s
 	if (is_nkit_format(header)) {
 		uint8_t header_sum = fletcher8(header, sizeof(*header));
 
-		for (int i = 0; i < TOTAL_COUNT; i++) {
+		for (int i = 0; i < TOTAL_GCM_COUNT; i++) {
 			if (header_sum == nkit_dat[i].header_sum8 &&
 				!memcmp(header, nkit_dat[i].header, 6) &&
 				header->DiscID == nkit_dat[i].disknum &&
@@ -2528,7 +2538,7 @@ bool get_gcm_banner_fast(const DiskHeader *header, uint32_t *offset, uint32_t *s
 	} else {
 		uint16_t header_sum = fletcher16(header, sizeof(*header));
 
-		for (int i = 0; i < TOTAL_COUNT; i++) {
+		for (int i = 0; i < TOTAL_GCM_COUNT; i++) {
 			if (header_sum == nkit_dat[i].header_sum16 &&
 				!memcmp(header, nkit_dat[i].header, 6) &&
 				header->DiscID == nkit_dat[i].disknum &&
@@ -2536,7 +2546,7 @@ bool get_gcm_banner_fast(const DiskHeader *header, uint32_t *offset, uint32_t *s
 				(*size == nkit_dat[i].size + nkit_dat[i]._size ||
 				*size == header->UserPos + header->UserLength)) {
 
-				for (int j = i + 1; j < TOTAL_COUNT; j++)
+				for (int j = i + 1; j < TOTAL_GCM_COUNT; j++)
 					if (nkit_dat[i].header_sum16 == nkit_dat[j].header_sum16 &&
 						!memcmp(nkit_dat[i].header, nkit_dat[j].header, 8) &&
 						nkit_dat[i].size + nkit_dat[i]._size == nkit_dat[j].size + nkit_dat[j]._size &&
@@ -2558,7 +2568,7 @@ uint64_t get_gcm_boot_hash(const DiskHeader *header, const file_meta *meta)
 	if (is_nkit_format(header)) {
 		uint8_t header_sum = fletcher8(header, sizeof(*header));
 
-		for (int i = 0; i < TOTAL_COUNT; i++)
+		for (int i = 0; i < TOTAL_GCM_COUNT; i++)
 			if (header_sum == nkit_dat[i].header_sum8 &&
 				!memcmp(header, nkit_dat[i].header, 6) &&
 				header->DiscID == nkit_dat[i].disknum &&
@@ -2568,7 +2578,7 @@ uint64_t get_gcm_boot_hash(const DiskHeader *header, const file_meta *meta)
 	} else {
 		uint16_t header_sum = fletcher16(header, sizeof(*header));
 
-		for (int i = 0; i < TOTAL_COUNT; i++)
+		for (int i = 0; i < TOTAL_GCM_COUNT; i++)
 			if (header_sum == nkit_dat[i].header_sum16 &&
 				!memcmp(header, nkit_dat[i].header, 6) &&
 				header->DiscID == nkit_dat[i].disknum &&
@@ -2588,7 +2598,7 @@ const char *get_gcm_title(const DiskHeader *header, file_meta *meta)
 	if (is_nkit_format(header)) {
 		uint8_t header_sum = fletcher8(header, sizeof(*header));
 
-		for (int i = 0; i < TOTAL_COUNT; i++) {
+		for (int i = 0; i < TOTAL_GCM_COUNT; i++) {
 			if (header_sum == nkit_dat[i].header_sum8 &&
 				!memcmp(header, nkit_dat[i].header, 6) &&
 				header->DiscID == nkit_dat[i].disknum &&
@@ -2601,7 +2611,7 @@ const char *get_gcm_title(const DiskHeader *header, file_meta *meta)
 	} else {
 		uint16_t header_sum = fletcher16(header, sizeof(*header));
 
-		for (int i = 0; i < TOTAL_COUNT; i++) {
+		for (int i = 0; i < TOTAL_GCM_COUNT; i++) {
 			if (header_sum == nkit_dat[i].header_sum16 &&
 				!memcmp(header, nkit_dat[i].header, 6) &&
 				header->DiscID == nkit_dat[i].disknum &&
@@ -2620,10 +2630,10 @@ int valid_dol_xxh3(const file_handle *file, uint64_t hash)
 {
 	const char *name = basename(file->name);
 
-	for (int i = 0; i < sizeof(firm_dat) / sizeof(*firm_dat); i++) {
-		if (!strcasecmp(name, firm_dat[i].name)) {
-			if (file->size == firm_dat[i].size &&
-				hash == firm_dat[i].hash)
+	for (int i = 0; i < VALID_DOL_COUNT; i++) {
+		if (!strcasecmp(name, file_dat[i].name)) {
+			if (file->size == file_dat[i].size &&
+				hash == file_dat[i].hash)
 				return 1;
 			else
 				return 0;
@@ -2641,7 +2651,7 @@ int valid_file_xxh3(const DiskHeader *header, const ExecutableFile *file)
 		if (is_nkit_format(header)) {
 			uint8_t header_sum = fletcher8(header, sizeof(*header));
 
-			for (int i = 0; i < VALID_COUNT; i++) {
+			for (int i = 0; i < VALID_GCM_COUNT; i++) {
 				if (header_sum == nkit_dat[i].header_sum8 &&
 					!memcmp(header, nkit_dat[i].header, 6) &&
 					header->DiscID == nkit_dat[i].disknum &&
@@ -2656,10 +2666,10 @@ int valid_file_xxh3(const DiskHeader *header, const ExecutableFile *file)
 		}
 	}
 
-	for (int i = 0; i < sizeof(firm_dat) / sizeof(*firm_dat); i++) {
-		if (!strcasecmp(file->name, firm_dat[i].name)) {
-			if (file->size == firm_dat[i].size &&
-				file->hash == firm_dat[i].hash)
+	for (int i = 0; i < VALID_DOL_COUNT; i++) {
+		if (!strcasecmp(file->name, file_dat[i].name)) {
+			if (file->size == file_dat[i].size &&
+				file->hash == file_dat[i].hash)
 				return 1;
 
 			valid = 0;
@@ -2682,7 +2692,7 @@ bool valid_gcm_crc32(const DiskHeader *header, uint32_t crc)
 	if (is_nkit_format(header))
 		return header->ImageCRC == crc;
 
-	for (int i = 0; i < VALID_COUNT; i++)
+	for (int i = 0; i < VALID_GCM_COUNT; i++)
 		if (!memcmp(header, nkit_dat[i].header, 6) &&
 			header->DiscID == nkit_dat[i].disknum &&
 			header->Version == nkit_dat[i].gamever &&
@@ -2704,7 +2714,7 @@ bool valid_gcm_size(const DiskHeader *header, off_t size)
 	if (is_nkit_format(header)) {
 		uint8_t header_sum = fletcher8(header, sizeof(*header));
 
-		for (int i = 0; i < VALID_COUNT; i++)
+		for (int i = 0; i < VALID_GCM_COUNT; i++)
 			if (header_sum == nkit_dat[i].header_sum8 &&
 				!memcmp(header, nkit_dat[i].header, 6) &&
 				header->DiscID == nkit_dat[i].disknum &&
@@ -2715,7 +2725,7 @@ bool valid_gcm_size(const DiskHeader *header, off_t size)
 	} else {
 		uint16_t header_sum = fletcher16(header, sizeof(*header));
 
-		for (int i = 0; i < VALID_COUNT; i++)
+		for (int i = 0; i < VALID_GCM_COUNT; i++)
 			if (header_sum == nkit_dat[i].header_sum16 &&
 				!memcmp(header, nkit_dat[i].header, 6) &&
 				header->DiscID == nkit_dat[i].disknum &&
@@ -2732,6 +2742,18 @@ bool valid_gcm_size2(const DiskHeader *header, off_t size)
 	return size == header->UserPos + header->UserLength;
 }
 
+bool needs_flippy_bypass(const file_handle *file, uint64_t hash)
+{
+	const char *name = basename(file->name);
+
+	for (int i = VALID_DOL_COUNT; i < TOTAL_DOL_COUNT; i++)
+		if (!strcasecmp(name, file_dat[i].name) ||
+			(file->size == file_dat[i].size &&
+			hash == file_dat[i].hash)) return true;
+
+	return false;
+}
+
 bool needs_nkit_reencode(const DiskHeader *header, off_t size)
 {
 	if (!is_nkit_format(header))
@@ -2739,7 +2761,7 @@ bool needs_nkit_reencode(const DiskHeader *header, off_t size)
 
 	uint8_t header_sum = fletcher8(header, sizeof(*header));
 
-	for (int i = VALID_COUNT; i < TOTAL_COUNT; i++)
+	for (int i = VALID_GCM_COUNT; i < TOTAL_GCM_COUNT; i++)
 		if (header_sum == nkit_dat[i].header_sum8 &&
 			!memcmp(header, nkit_dat[i].header, 6) &&
 			header->DiscID == nkit_dat[i].disknum &&
