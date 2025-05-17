@@ -117,7 +117,7 @@ def append_dol(data, trailer, base_address):
 
     return header + data[256:]
 
-def pack_uf2(data, base_address):
+def pack_uf2(data, base_address, family_ids):
     ret = bytearray()
 
     seq = 0
@@ -128,19 +128,20 @@ def pack_uf2(data, base_address):
         chunk = data[:chunk_size]
         data = data[chunk_size:]
 
-        ret += struct.pack(
-            "< 8I 476s I",
-            0x0A324655, # Magic 1 "UF2\n"
-            0x9E5D5157, # Magic 2
-            0x00002000, # Flags (family ID present)
-            addr,
-            chunk_size,
-            seq,
-            total_chunks,
-            0xE48BFF56, # Board family: Raspberry Pi RP2040
-            chunk,
-            0x0AB16F30, # Final magic
-        )
+        for family_id in family_ids:
+            ret += struct.pack(
+                "< 8I 476s I",
+                0x0A324655, # Magic 1 "UF2\n"
+                0x9E5D5157, # Magic 2
+                0x00002000, # Flags (family ID present)
+                addr,
+                chunk_size,
+                seq,
+                total_chunks,
+                family_id,
+                chunk,
+                0x0AB16F30, # Final magic
+            )
 
         seq += 1
         addr += chunk_size
@@ -227,7 +228,7 @@ def main():
         )
         assert len(header) == header_size
 
-        out = pack_uf2(header + img, 0x10080000)
+        out = pack_uf2(header + img, 0x10080000, [0xE48BFF56, 0xE48BFF59])
 
     else:
         print("Unknown output format")
