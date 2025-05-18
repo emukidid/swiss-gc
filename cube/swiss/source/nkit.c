@@ -58,6 +58,123 @@ static const struct {
 	{ "GC_LOADER_HW2_UPDATER_1.0.1.dol",      1267200, 0x753F83C3E35CCBE0 },
 	{ "GC_LOADER_HW2_UPDATER_1.1.0.BETA.dol", 1267200, 0x153785DED813D3B1 },
 #define FIRM_COUNT (25)
+	{ "apploader.img", /* 2000/12/01       */    3168, 0xB6DAE698C73D1E37 },
+	{ "apploader.img", /* 2001/04/04       */   24992, 0xD326D00BD578B2F5 },
+	{ "apploader.img", /* 2001/05/31       */    4768, 0xE2F367E5D3FBCBAE },
+	{ "apploader.img", /* 2001/07/19       */   77760, 0x69E626516A32FF26 },
+	{ "apploader.img", /* 2001/07/30       */   81408, 0xE4D8BABE9A1BD5B0 },
+	{ "apploader.img", /* 2001/08/09       */   62720, 0x583966037BC75CDA },
+	{ "apploader.img", /* 2001/08/09       */   78144, 0x56A98615B115AE90 },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0x000D3B9B72C539A3 },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0x08A3413A6833FB2B },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0x0A3B000F6EE712AF },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0x117C23798AEFE21C },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0x1A25A025A07B8230 },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0x1B0D02775A7CF43E },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0x2BB9CDBBDFD93ED8 },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0x2F3492A6A93665D9 },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0x3586E84FB8FAAE1E },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0x379837963CA97794 },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0x3B1C01C680CBE447 },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0x3E3B955D606EE7AD },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0x3E8EEAED5324E75A },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0x43DD384C088B570E },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0x45A131550CF0F17E },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0x4A198F3BD5AFC3D0 },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0x4DA5E3E5226539ED },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0x502140286CC6729C },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0x517F6B89BD7C4583 },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0x524E722B86A01A7F },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0x5A9043BAF52938A7 },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0x6DA014EB2CA49D15 },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0x7587E8709A4DB278 },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0x79604763B7B15F67 },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0x84D44A713A1DA241 },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0x891DB26658BCB715 },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0x8B2A31F3ECF18554 },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0x8CDF62F012D89B9F },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0x90A1045992223826 },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0x98146E55C425C188 },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0x9BB4BB9D766EA8F1 },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0x9F885B402E2835A6 },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0xAA3BA09628F57D56 },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0xAC029A0FF502AEC1 },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0xACECB2374CD99AA7 },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0xB16EE4BA8E3712AD },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0xB8952E138095E24F },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0xBAB90DC440BCDE13 },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0xBAE5496367A633DA },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0xBF2F1F558906C65A },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0xBFE0063A6E75F243 },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0xC333735F763FE48E },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0xC4E49B81B74285DB },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0xCB8F06ACAF059685 },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0xCD2E8F6DDC62DA89 },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0xDB064F612BC1FB13 },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0xDE417771C00F8DD8 },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0xE2C0DE68F3841CD1 },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0xE4C6A079607D3126 },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0xE8A47985C8462948 },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0xEFFE3187484D5A67 },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0xF85E26EDCBD56532 },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0xFBAAB18472269433 },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0xFCAC1C8931A46F0B },
+	{ "apploader.img", /* 2001/09/08       */  106624, 0x383E6B83504C990F },
+	{ "apploader.img", /* 2001/09/08       */  106624, 0x5E3AB428129E0DC6 },
+	{ "apploader.img", /* 2001/09/08       */  106624, 0x6D67F99B2EFD3E7E },
+	{ "apploader.img", /* 2001/09/08       */  106624, 0x89A96B9478AB6BE2 },
+	{ "apploader.img", /* 2001/09/08       */  106624, 0x8B8FB84C6A260CED },
+	{ "apploader.img", /* 2001/09/08       */  108544, 0x0F8C6C46B3C44150 },
+	{ "apploader.img", /* 2001/09/08       */  108544, 0x3967E55B5B9D7F25 },
+	{ "apploader.img", /* 2001/09/08       */  108544, 0x3DDD87752F8CE8BA },
+	{ "apploader.img", /* 2001/09/08       */  108544, 0x59AB007B4BB5165D },
+	{ "apploader.img", /* 2001/09/08       */  108544, 0x5E4B34B6C6A74809 },
+	{ "apploader.img", /* 2001/09/08       */  108544, 0x68362CDAF8230F6A },
+	{ "apploader.img", /* 2001/09/08       */  108544, 0xD4942743AEBF6E7C },
+	{ "apploader.img", /* 2001/09/08       */  108544, 0xE2A2500D243E76BD },
+	{ "apploader.img", /* 2001/09/08       */  108544, 0xF408681F1858B65E },
+	{ "apploader.img", /* 2001/09/08       */  108544, 0xFCED7360E1E9D3AB },
+	{ "apploader.img", /* 2001/09/08       */  111680, 0xD695B89F9E6B8A73 },
+	{ "apploader.img", /* 2001/09/08       */  111744, 0x8E7740C88CC1B384 },
+	{ "apploader.img", /* 2001/09/08       */  111744, 0xA7EEA181613F6B8A },
+	{ "apploader.img", /* 2001/10/29       */  114176, 0xA60EFFCCCD25279E },
+	{ "apploader.img", /* 2001/11/14       */  115360, 0xB08ABB7A72D0D499 },
+	{ "apploader.img", /* 2001/11/14       */  115456, 0x17DA89030FC12D30 },
+	{ "apploader.img", /* 2001/11/16       */  115360, 0xF057E38BAA2A59B5 },
+	{ "apploader.img", /* 2001/12/17       */  111872, 0x08030634D94D4E2E },
+	{ "apploader.img", /* 2001/12/17       */  111872, 0x289AEB294C5E3905 },
+	{ "apploader.img", /* 2002/03/28       */  113536, 0x4F2A035FB852C7EB },
+	{ "apploader.img", /* 2002/03/28       */  113536, 0x5D2040FE89C64FBC },
+	{ "apploader.img", /* 2002/04/10       */  113536, 0xBBF3FF7C1A14AA59 },
+	{ "apploader.img", /* 2002/04/10       */  113536, 0xDC2A278D4F92A68C },
+	{ "apploader.img", /* 2002/09/05       */  116512, 0x42C07D59E1227D14 },
+	{ "apploader.img", /* 2002/09/05       */  116512, 0x6587E6A4F9663BB7 },
+	{ "apploader.img", /* 2002/09/05       */  116512, 0xA607D68783177BA3 },
+	{ "apploader.img", /* 2002/09/05       */  116512, 0xE0A70AC76B355E02 },
+	{ "apploader.img", /* 2003/04/17       */  119360, 0x0596C19514DD7D1A },
+	{ "apploader.img", /* 2003/04/17       */  119360, 0x7EB7D190448B3B56 },
+	{ "apploader.img", /* 2003/08/20       */  119616, 0x1DA6DDCB6BD6CC84 },
+	{ "apploader.img", /* 2003/09/16       */  119808, 0xD452E42826EA69F7 },
+	{ "apploader.img", /* 2003/11/27       */  119936, 0xB8664DF0DA874A8C },
+	{ "apploader.img", /* 2004/02/23       */  121120, 0x31BED529F33BC28F },
+	{ "apploader.img", /* 2004/04/05       */  122784, 0x37456EE77DD55D50 },
+	{ "apploader.img", /* 2004/05/07       */  121792, 0x26818C411945F40A },
+	{ "apploader.img", /* 2004/05/20       */  121792, 0x03179AB1C9F42B82 },
+	{ "apploader.img", /* 2004/05/21       */  122432, 0x809EBA6AE3B4BD7D },
+	{ "apploader.img", /* 2004/05/21       */  122432, 0xA46FE6466747BFF5 },
+	{ "apploader.img", /* 2004/05/21       */  122432, 0xB86E28071C565F2B },
+	{ "apploader.img", /* 2004/11/10       */  122464, 0x435A348BFEF0E423 },
+	{ "apploader.img", /* 2006/01/06       */  139520, 0x109B245B3463E06C },
+	{ "apploader.img", /* 2006/01/06       */  139520, 0x24E9547A00CDF074 },
+	{ "apploader.img", /* 2006/01/06       */  139520, 0x469A62F5EAA7FC37 },
+	{ "apploader.img", /* 2006/01/06       */  139520, 0x4DC20C308CA47169 },
+	{ "apploader.img", /* 2006/01/06       */  139520, 0x6456FB25BC1C3C85 },
+	{ "apploader.img", /* 2006/01/06       */  139520, 0x8680418E760856CA },
+	{ "apploader.img", /* 2006/01/06       */  139520, 0x9CAE36C15BE61A63 },
+	{ "apploader.img", /* 2006/01/06       */  139520, 0xF01FA1F58FDF90EF },
+	{ "apploader.img", /* 2017/09/28       */  119360, 0xFA08F0DA6022973A },
+	{ "apploader.img", /* 2021/10/06       */    8416, 0x0C2EA9DF3E473E92 },
+#define NKIT_FIRM_COUNT (FIRM_COUNT + 116)
 	{ "240p Test Suite (World) (v1.04) (Program) (Aftermarket) (Unl).dol",        2301384, 0x71BCDBA149B3AAAF },
 	{ "240p Test Suite (World) (v1.06) (Program) (Aftermarket) (Unl).dol",         930560, 0x7EB7DDDAF5105457 },
 	{ "240p Test Suite (World) (v1.07) (Program) (Aftermarket) (Unl).dol",         932032, 0x4DAB8540272CCBD5 },
@@ -69,15 +186,15 @@ static const struct {
 	{ "Mama Bear Puzzle (2015)(Mihai, Sebastian).dol",                            1161216, 0x5577A5CF49894D65 },
 	{ "Mama Bear Puzzle (2015)(Mihai, Sebastian).elf",                            1667136, 0x9FDBE50048C2BC9E },
 	{ "Xeno Crisis (World) (En,Ja,Fr,De,Es,It,Nl,Pt-BR) (Aftermarket) (Unl).dol", 5331008, 0x34BF21CA529D0E02 },
-#define VALID_DOL_COUNT (FIRM_COUNT + 11)
-	{ "CleanRipGC-lz.dol",  171136, 0x6C0308884F922929 },
-	{ "CleanRipGC.dol",    1491392, 0x64E1342A4D52EC8A },
-	{ "cleanrip-gc.dol",   1593248, 0x93B7BEAF5567F44B },
-	{ "cleanrip-gc.dol",   1607200, 0x8256AB7AB7720687 },
-	{ "cleanrip-gc.dol",   1607520, 0xCAE93CAD1AC448A8 },
-	{ "cleanrip-gc.dol",   1619776, 0x54DA1F15C617F2A6 },
-	{ "cleanrip-gc.dol",   1859168, 0xB27D4814753386EF },
-	{ "cleanrip-gc.dol",   1901888, 0x690543D39FC7E9F1 },
+#define VALID_DOL_COUNT (NKIT_FIRM_COUNT + 11)
+	{ "CleanRipGC-lz.dol",                     171136, 0x6C0308884F922929 },
+	{ "CleanRipGC.dol",                       1491392, 0x64E1342A4D52EC8A },
+	{ "cleanrip-gc.dol",                      1593248, 0x93B7BEAF5567F44B },
+	{ "cleanrip-gc.dol",                      1607200, 0x8256AB7AB7720687 },
+	{ "cleanrip-gc.dol",                      1607520, 0xCAE93CAD1AC448A8 },
+	{ "cleanrip-gc.dol",                      1619776, 0x54DA1F15C617F2A6 },
+	{ "cleanrip-gc.dol",                      1859168, 0xB27D4814753386EF },
+	{ "cleanrip-gc.dol",                      1901888, 0x690543D39FC7E9F1 },
 #define TOTAL_DOL_COUNT (VALID_DOL_COUNT + 8)
 };
 
@@ -2666,13 +2783,27 @@ int valid_file_xxh3(const DiskHeader *header, const ExecutableFile *file)
 		}
 	}
 
-	for (int i = 0; i < VALID_DOL_COUNT; i++) {
-		if (!strcasecmp(file->name, file_dat[i].name)) {
-			if (file->size == file_dat[i].size &&
-				file->hash == file_dat[i].hash)
-				return 1;
+	const char *name = basename(file->name);
 
-			valid = 0;
+	if (is_nkit_format(header)) {
+		for (int i = 0; i < NKIT_FIRM_COUNT; i++) {
+			if (!strcasecmp(name, file_dat[i].name)) {
+				if (file->size == file_dat[i].size &&
+					file->hash == file_dat[i].hash)
+					return 1;
+
+				valid = 0;
+			}
+		}
+	} else {
+		for (int i = 0; i < FIRM_COUNT; i++) {
+			if (!strcasecmp(name, file_dat[i].name)) {
+				if (file->size == file_dat[i].size &&
+					file->hash == file_dat[i].hash)
+					return 1;
+
+				valid = 0;
+			}
 		}
 	}
 
