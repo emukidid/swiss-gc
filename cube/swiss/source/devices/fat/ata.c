@@ -190,7 +190,7 @@ static inline void ata_write_buffer(int chn, u32 *src)
 void print_hdd_sector(u32 *dest) {
 	int i = 0;
 	for (i = 0; i < 512/4; i+=4) {
-		print_gecko("%08X:%08X %08X %08X %08X\r\n",i*4,dest[i],dest[i+1],dest[i+2],dest[i+3]);
+		print_debug("%08X:%08X %08X %08X %08X\n",i*4,dest[i],dest[i+1],dest[i+2],dest[i+3]);
 	}
 }
 
@@ -213,13 +213,13 @@ int _ideExiVersion(int chn) {
 	}
 	u32 cid = 0;
 	EXI_GetID(chn,dev,&cid);
-	print_gecko("IDE-EXI ID: %08X\r\n",cid);
+	print_debug("IDE-EXI ID: %08X\n",cid);
 	if((cid&~0xff)==EXI_IDE_ID) {
-		print_gecko("IDE-EXI v2+ detected\r\n");
+		print_debug("IDE-EXI v2+ detected\n");
 		return (cid&0xff)-'1';
 	}
 	else {
-		print_gecko("Unknown - assume IDE-EXI v1\r\n");
+		print_debug("Unknown - assume IDE-EXI v1\n");
 		return IDE_EXI_V1;
 	}
 }
@@ -247,11 +247,11 @@ u32 _ataDriveIdentify(int chn) {
 		tmp = ataReadStatusReg(chn);
 		usleep(100000);	//sleep for 0.1 seconds
 		retries--;
-		print_gecko("(%08X) Waiting for BSY to clear..\r\n", tmp);
+		print_debug("(%08X) Waiting for BSY to clear..\n", tmp);
 	}
 	while((tmp & ATA_SR_BSY) && retries);
 	if(!retries) {
-		print_gecko("Exceeded retries..\r\n");
+		print_debug("Exceeded retries..\n");
 		return -1;
 	}
     
@@ -264,11 +264,11 @@ u32 _ataDriveIdentify(int chn) {
 		tmp = ataReadStatusReg(chn); 
 		usleep(100000);	//sleep for 0.1 seconds
 		retries--;
-		print_gecko("(%08X) Waiting for DRQ to toggle..\r\n", tmp);
+		print_debug("(%08X) Waiting for DRQ to toggle..\n", tmp);
 	}
 	while((!(tmp & ATA_SR_DRQ)) && retries);
 	if(!retries) {
-		print_gecko("(%08X) Drive did not respond in time, failing IDE-EXI init..\r\n", tmp);
+		print_debug("(%08X) Drive did not respond in time, failing IDE-EXI init..\n", tmp);
 		return -1;
 	}
 	usleep(2000);
@@ -319,21 +319,21 @@ u32 _ataDriveIdentify(int chn) {
 		i--;
 	}
 	
-	print_gecko("%d GB HDD Connected\r\n", ataDriveInfo.sizeInGigaBytes);
-	print_gecko("LBA 48-Bit Mode %s\r\n", ataDriveInfo.lba48Support ? "Supported" : "Not Supported");
+	print_debug("%d GB HDD Connected\n", ataDriveInfo.sizeInGigaBytes);
+	print_debug("LBA 48-Bit Mode %s\n", ataDriveInfo.lba48Support ? "Supported" : "Not Supported");
 	if(!ataDriveInfo.lba48Support) {
-		print_gecko("Cylinders: %i\r\n",ataDriveInfo.cylinders);
-		print_gecko("Heads Per Cylinder: %i\r\n",ataDriveInfo.heads);
-		print_gecko("Sectors Per Track: %i\r\n",ataDriveInfo.sectors);
+		print_debug("Cylinders: %i\n",ataDriveInfo.cylinders);
+		print_debug("Heads Per Cylinder: %i\n",ataDriveInfo.heads);
+		print_debug("Sectors Per Track: %i\n",ataDriveInfo.sectors);
 	}
-	print_gecko("Model: %s\r\n",ataDriveInfo.model);
-	print_gecko("Serial: %s\r\n",ataDriveInfo.serial); 
+	print_debug("Model: %s\n",ataDriveInfo.model);
+	print_debug("Serial: %s\n",ataDriveInfo.serial); 
 	//print_hdd_sector(&buffer);
 	
 	//int unlockStatus = ataUnlock(chn, 1, "password\0", ATA_CMD_UNLOCK);
-	//print_gecko("Unlock Status was: %i\r\n",unlockStatus);
+	//print_debug("Unlock Status was: %i\n",unlockStatus);
 	//unlockStatus = ataUnlock(chn, 1, "password\0", ATA_CMD_SECURITY_DISABLE);
-	//print_gecko("Disable Status was: %i\r\n",unlockStatus);
+	//print_debug("Disable Status was: %i\n",unlockStatus);
 	// Return ok
 	return 0;
 }
@@ -353,11 +353,11 @@ int ataUnlock(int chn, int useMaster, char *password, int command)
 		tmp = ataReadStatusReg(chn);
 		usleep(100000);	//sleep for 0.1 seconds
 		retries--;
-		print_gecko("UNLOCK (%08X) Waiting for BSY to clear..\r\n", tmp);
+		print_debug("UNLOCK (%08X) Waiting for BSY to clear..\n", tmp);
 	}
 	while((tmp & ATA_SR_BSY) && retries);
 	if(!retries) {
-		print_gecko("UNLOCK Exceeded retries..\r\n");
+		print_debug("UNLOCK Exceeded retries..\n");
 		return -1;
 	}
     
@@ -370,11 +370,11 @@ int ataUnlock(int chn, int useMaster, char *password, int command)
 		tmp = ataReadStatusReg(chn); 
 		usleep(100000);	//sleep for 0.1 seconds
 		retries--;
-		print_gecko("UNLOCK (%08X) Waiting for DRQ to toggle..\r\n", tmp);
+		print_debug("UNLOCK (%08X) Waiting for DRQ to toggle..\n", tmp);
 	}
 	while((!(tmp & ATA_SR_DRQ)) && retries);
 	if(!retries) {
-		print_gecko("UNLOCK (%08X) Drive did not respond in time, failing IDE-EXI init..\r\n", tmp);
+		print_debug("UNLOCK (%08X) Drive did not respond in time, failing IDE-EXI init..\n", tmp);
 		return -1;
 	}
 	usleep(2000);
@@ -398,7 +398,7 @@ int ataUnlock(int chn, int useMaster, char *password, int command)
 	
 	// If the error bit was set, fail.
 	if(temp & ATA_SR_ERR) {
-		print_gecko("Error: %02X\r\n", ataReadErrorReg(chn));
+		print_debug("Error: %02X\n", ataReadErrorReg(chn));
 		return 1;
 	}
 	
@@ -450,7 +450,7 @@ int _ataReadSector(int chn, u64 lba, u32 *Buffer)
 	
 	// If the error bit was set, fail.
 	if(temp & ATA_SR_ERR) {
-		print_gecko("Error: %02X", ataReadErrorReg(chn));
+		print_debug("Error: %02X\n", ataReadErrorReg(chn));
 		return 1;
 	}
 
@@ -513,7 +513,7 @@ int _ataWriteSector(int chn, u64 lba, u32 *Buffer)
 	
 	// If the error bit was set, fail.
 	if(temp & ATA_SR_ERR) {
-		print_gecko("Error: %02X", ataReadErrorReg(chn));
+		print_debug("Error: %02X\n", ataReadErrorReg(chn));
 		return 1;
 	}
 	// Wait for drive to request data transfer
@@ -547,9 +547,9 @@ int ataReadSectors(int chn, u64 sector, unsigned int numSectors, unsigned char *
 {
 	int ret = 0;
 	while(numSectors) {
-		//print_gecko("Reading, sec %08X, numSectors %i, dest %08X ..\r\n", (u32)(sector&0xFFFFFFFF),numSectors, (u32)dest);
+		//print_debug("Reading, sec %08X, numSectors %i, dest %08X ..\n", (u32)(sector&0xFFFFFFFF),numSectors, (u32)dest);
 		if((ret=_ataReadSector(chn,sector,(u32*)dest))) {
-			print_gecko("(%08X) Failed to read!..\r\n", ret);
+			print_debug("(%08X) Failed to read!..\n", ret);
 			return -1;
 		}
 		//print_hdd_sector((u32*)dest);
@@ -567,7 +567,7 @@ int ataWriteSectors(int chn, u64 sector,unsigned int numSectors, unsigned char *
 	int ret = 0;
 	while(numSectors) {
 		if((ret=_ataWriteSector(chn,sector,(u32*)src))) {
-			print_gecko("(%08X) Failed to write!..\r\n", ret);
+			print_debug("(%08X) Failed to write!..\n", ret);
 			return -1;
 		}
 		src+=512;

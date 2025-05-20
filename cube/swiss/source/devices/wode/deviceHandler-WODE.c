@@ -46,7 +46,7 @@ s32 startupWode() {
 	// Wode initialised, return success
 	device_versions *wode_version_info = calloc(1, sizeof(device_versions));
 	if(GetVersions(wode_version_info)) {
-		print_gecko("WODE initialised: Loader:%04X WODE:%04X FPGA:%04X HW:%02X\r\n",
+		print_debug("WODE initialised: Loader:%04X WODE:%04X FPGA:%04X HW:%02X\n",
 			wode_version_info->loader_version, wode_version_info->wode_version,
 			wode_version_info->fpga_version, wode_version_info->hw_version);
 		return 0;
@@ -89,7 +89,7 @@ s32 deviceHandler_WODE_readDir(file_handle* ffile, file_handle** dir, u32 type){
 				(*dir)[num_entries].size = DISC_SIZE;
 				(*dir)[num_entries].fileType = IS_FILE;
 				memcpy(&(*dir)[num_entries].other, &tmp, sizeof(ISOInfo_t));
-				print_gecko("Adding WODE entry: %s part:%08X iso:%08X region:%08X\r\n",
+				print_debug("Adding WODE entry: %s part:%08X iso:%08X region:%08X\n",
 					&tmp.name[0], tmp.iso_partition, tmp.iso_number, tmp.iso_region);
 				num_entries++;
 			}
@@ -133,7 +133,7 @@ s32 deviceHandler_WODE_setupFile(file_handle* file, file_handle* file2, Executab
 	
 	// Check if there are any fragments in our patch location for this game
 	if(devices[DEVICE_PATCHES] != NULL) {
-		print_gecko("Save Patch device found\r\n");
+		print_debug("Save Patch device found\n");
 		
 		// Look for patch files, if we find some, open them and add them as fragments
 		file_handle patchFile;

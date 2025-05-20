@@ -230,7 +230,7 @@ static uiDrawObj_t* addVideoEvent(uiDrawObj_t *event) {
 	if(videoEventQueue == NULL) {
 		videoEventQueue = calloc(1, sizeof(uiDrawObjQueue_t));
 		videoEventQueue->event = event;
-		//print_gecko("Added first event %08X (type %s)\r\n", (u32)videoEventQueue, typeStrings[event->type]);
+		//print_debug("Added first event %08X (type %s)\n", (u32)videoEventQueue, typeStrings[event->type]);
 		return event;
 	}
 	
@@ -241,31 +241,31 @@ static uiDrawObj_t* addVideoEvent(uiDrawObj_t *event) {
     current->next = calloc(1, sizeof(uiDrawObjQueue_t));
 	current->next->event = event;
 	event->disposed = false;
-	//print_gecko("Added a new event %08X (type %s)\r\n", (u32)event, typeStrings[event->type]);
+	//print_debug("Added a new event %08X (type %s)\n", (u32)event, typeStrings[event->type]);
 	return event;
 }
 
 static void clearNestedEvent(uiDrawObj_t *event) {
 	if(event && !event->disposed) {
-		print_gecko("Event was not disposed!!\r\n");
-		print_gecko("Event %08X (type %s)\r\n", (u32)event, typeStrings[event->type]);
+		print_debug("Event was not disposed!!\n");
+		print_debug("Event %08X (type %s)\n", (u32)event, typeStrings[event->type]);
 	}
 	
 	if(event->child && event->child != event) {
 		clearNestedEvent(event->child);
 	}
-	//print_gecko("Dispose nested event %08X\r\n", (u32)event);
+	//print_debug("Dispose nested event %08X\n", (u32)event);
 	if(event && event->data) {
 		// Free any attached data
 		if(event->type == EV_STYLEDLABEL) {
 			if(((drawStyledLabelEvent_t*)event->data)->string) {
-				//printf("Clear Nested EV_STYLEDLABEL\r\n");
+				//print_debug("Clear Nested EV_STYLEDLABEL\n");
 				free(((drawStyledLabelEvent_t*)event->data)->string);
 			}
 		}
 		else if(event->type == EV_FILEBROWSERBUTTON) {
 			if(((drawFileBrowserButtonEvent_t*)event->data)->displayName) {
-				//printf("Clear Nested EV_FILEBROWSERBUTTON\r\n");
+				//print_debug("Clear Nested EV_FILEBROWSERBUTTON\n");
 				free(((drawFileBrowserButtonEvent_t*)event->data)->displayName);
 			}
 			if(((drawFileBrowserButtonEvent_t*)event->data)->file) {
@@ -280,21 +280,21 @@ static void clearNestedEvent(uiDrawObj_t *event) {
 		}
 		else if(event->type == EV_SELECTABLEBUTTON) {
 			if(((drawSelectableButtonEvent_t*)event->data)->msg) {
-				//printf("Clear Nested EV_SELECTABLEBUTTON\r\n");
+				//print_debug("Clear Nested EV_SELECTABLEBUTTON\n");
 				free(((drawSelectableButtonEvent_t*)event->data)->msg);
 			}
 		}
 		else if(event->type == EV_TOOLTIP) {
 			if(((drawTooltipEvent_t*)event->data)->tooltip) {
-				//printf("Clear Nested EV_TOOLTIP\r\n");
+				//print_debug("Clear Nested EV_TOOLTIP\n");
 				free(((drawTooltipEvent_t*)event->data)->tooltip);
 			}
 		}
-		//printf("Clear Nested event->data\r\n");
+		//print_debug("Clear Nested event->data\n");
 		free(event->data);
 	}
 	if(event) {
-		//printf("Clear event\r\n");
+		//print_debug("Clear event\n");
 		memset(event, 0, sizeof(uiDrawObj_t));
 		free(event);
 	}
@@ -311,7 +311,7 @@ static void disposeEvent(uiDrawObj_t *event) {
 	// First node is what we're after.
 	while (current != NULL) {
 		if(current->event == event) {
-			//print_gecko("Disposing event %08X\r\n", (u32)current);
+			//print_debug("Disposing event %08X\n", (u32)current);
 			clearNestedEvent(current->event);
 			previous->next = current->next;
 			free(current);
@@ -1392,7 +1392,7 @@ uiDrawObj_t* DrawFileCarouselEntry(int x1, int y1, int x2, int y2, const char *m
 	drawFileBrowserButtonEvent_t *data = (drawFileBrowserButtonEvent_t*)event->data;
 	data->isCarousel = true;
 	data->distFromMiddle = distFromMiddle;
-	//print_gecko("message %s dist = %i x: (%i -> %i) y: (%i -> %i)\r\n", message, distFromMiddle, x1, x2, y1, y2);
+	//print_debug("message %s dist = %i x: (%i -> %i) y: (%i -> %i)\n", message, distFromMiddle, x1, x2, y1, y2);
 	return event;
 }
 
@@ -1806,8 +1806,8 @@ void DrawCheatsSelector(const char *fileName) {
 
 void DrawGetTextEntry(int mode, const char *label, void *src, int size) {
 	
-	print_gecko("DrawGetTextEntry Modes: Alpha [%s] Numeric [%s] IP [%s] Masked [%s] File [%s]\r\n", mode & ENTRYMODE_ALPHA ? "Y":"N", mode & ENTRYMODE_NUMERIC ? "Y":"N",
-																		mode & ENTRYMODE_IP ? "Y":"N", mode & ENTRYMODE_MASKED ? "Y":"N", mode & ENTRYMODE_FILE ? "Y":"N");
+	print_debug("DrawGetTextEntry Modes: Alpha [%s] Numeric [%s] IP [%s] Masked [%s] File [%s]\n", mode & ENTRYMODE_ALPHA ? "Y":"N", mode & ENTRYMODE_NUMERIC ? "Y":"N",
+																	mode & ENTRYMODE_IP ? "Y":"N", mode & ENTRYMODE_MASKED ? "Y":"N", mode & ENTRYMODE_FILE ? "Y":"N");
 	char *text = calloc(1, size + 1);
 	if(mode & (ENTRYMODE_ALPHA|ENTRYMODE_IP)) {
 		strncpy(text, src, size);
@@ -1816,7 +1816,7 @@ void DrawGetTextEntry(int mode, const char *label, void *src, int size) {
 		u16 *src_int = (u16*)src;
 		itoa(*src_int, text, 10);
 	}
-	print_gecko("Text is [%s] size %i\r\n", text, size);
+	print_debug("Text is [%s] size %i\n", text, size);
 	
 	int caret = strlen(text);
 	int cur_row = 0;
@@ -2026,7 +2026,7 @@ void DrawGetTextEntry(int mode, const char *label, void *src, int size) {
 			// Handle normal character presses
 			if(pressed != '\b' && !(btns & PAD_BUTTON_Y)) {
 				if(caret < size && strlen(text) < size) {
-					//print_gecko("Pressed [%c]\r\n", pressed);
+					//print_debug("Pressed [%c]\n", pressed);
 					if(pressed == '\a')
 						pressed = ' ';
 					// Shuffle everything forward (don't want overwrite functionality)
@@ -2086,7 +2086,7 @@ void DrawGetTextEntry(int mode, const char *label, void *src, int size) {
 
 
 static void videoDrawEvent(uiDrawObj_t *videoEvent) {
-	//print_gecko("Draw event: %08X (type %s)\r\n", (u32)videoEvent, typeStrings[videoEvent->type]);
+	//print_debug("Draw event: %08X (type %s)\n", (u32)videoEvent, typeStrings[videoEvent->type]);
 	drawInit();
 	switch(videoEvent->type) {
 		case EV_TEXOBJ:
@@ -2213,14 +2213,14 @@ uiDrawObj_t* DrawPublish(uiDrawObj_t *evt)
 void DrawAddChild(uiDrawObj_t *parent, uiDrawObj_t *child)
 {
 	LWP_MutexLock(_videomutex);
-	//print_gecko("Added a new child event %08X (type %s)\r\n", (u32)child, typeStrings[child->type]);
+	//print_debug("Added a new child event %08X (type %s)\n", (u32)child, typeStrings[child->type]);
 	uiDrawObj_t *current = parent;
     while (current->child != NULL) {
         current = current->child;
     }
 	current->child = child;
 	child->disposed = false;
-	//print_gecko("Add child %08X (type %s) to parent %08X (type %s)\r\n", 
+	//print_debug("Add child %08X (type %s) to parent %08X (type %s)\n",
 	//	(u32)child, typeStrings[child->type], (u32)parent, typeStrings[parent->type]);
 	LWP_MutexUnlock(_videomutex);
 }

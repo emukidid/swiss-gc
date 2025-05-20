@@ -71,13 +71,13 @@ bool config_set_device() {
 	if(devices[DEVICE_CONFIG] == NULL) {
 		return false;
 	}
-	//print_gecko("Save device is %s\r\n", devices[DEVICE_CONFIG]->deviceName);
+	//print_debug("Save device is %s\n", devices[DEVICE_CONFIG]->deviceName);
 	deviceHandler_setStatEnabled(0);
 	// If we're not using this device already, init it.
 	if(devices[DEVICE_CONFIG] != devices[DEVICE_CUR]) {
-		print_gecko("Save device is not current, current is (%s)\r\n", devices[DEVICE_CUR] == NULL ? "NULL":devices[DEVICE_CUR]->deviceName);
+		print_debug("Save device is not current, current is (%s)\n", devices[DEVICE_CUR] == NULL ? "NULL":devices[DEVICE_CUR]->deviceName);
 		if(devices[DEVICE_CONFIG]->init(devices[DEVICE_CONFIG]->initial)) {
-			print_gecko("Save device failed to init\r\n");
+			print_debug("Save device failed to init\n");
 			deviceHandler_setStatEnabled(1);
 			return false;
 		}
@@ -97,11 +97,11 @@ char* config_file_read(char* filename) {
 	char* readBuffer = NULL;
 	file_handle *configFile = (file_handle*)calloc(1, sizeof(file_handle));
 	concat_path(configFile->name, devices[DEVICE_CONFIG]->initial->name, filename);
-	print_gecko("config_file_read: looking for %s\r\n", configFile->name);
+	print_debug("config_file_read: looking for %s\n", configFile->name);
 	if(!devices[DEVICE_CONFIG]->statFile(configFile)) {
 		readBuffer = (char*)calloc(1, configFile->size + 1);
 		if (readBuffer) {
-			print_gecko("config_file_read: reading %i byte file\r\n", configFile->size);
+			print_debug("config_file_read: reading %i byte file\n", configFile->size);
 			devices[DEVICE_CONFIG]->readFile(configFile, readBuffer, configFile->size);
 			devices[DEVICE_CONFIG]->closeFile(configFile);
 		}
@@ -115,7 +115,7 @@ int config_file_write(char* filename, char* contents) {
 	concat_path(configFile->name, devices[DEVICE_CONFIG]->initial->name, filename);
 
 	u32 len = strlen(contents);
-	print_gecko("config_file_write: writing %i bytes to %s\r\n", len, configFile->name);
+	print_debug("config_file_write: writing %i bytes to %s\n", len, configFile->name);
 	devices[DEVICE_CONFIG]->deleteFile(configFile);
 	if(devices[DEVICE_CONFIG]->writeFile(configFile, contents, len) == len &&
 		!devices[DEVICE_CONFIG]->closeFile(configFile)) {
@@ -130,7 +130,7 @@ int config_file_write(char* filename, char* contents) {
 void config_file_delete(char* filename) {
 	file_handle *configFile = (file_handle*)calloc(1, sizeof(file_handle));
 	concat_path(configFile->name, devices[DEVICE_CONFIG]->initial->name, filename);
-	print_gecko("config_file_delete: deleting %s\r\n", configFile->name);
+	print_debug("config_file_delete: deleting %s\n", configFile->name);
 	devices[DEVICE_CONFIG]->deleteFile(configFile);
 	free(configFile);
 }
@@ -150,7 +150,7 @@ int config_update_global(bool checkConfigDevice) {
 	fprintf(fp, "Screen Position=%+hi\r\n", swissSettings.sramHOffset);
 	fprintf(fp, "System Language=%s\r\n", sramLang[swissSettings.sramLanguage]);
 	fprintf(fp, "Swiss Video Mode=%s\r\n", uiVModeStr[swissSettings.uiVMode]);
-	fprintf(fp, "Enable Debug=%s\r\n", swissSettings.debugUSB ? "Yes":"No");
+	fprintf(fp, "USB Gecko debug output=%s\r\n", debugUSBStr[swissSettings.debugUSB]);
 	fprintf(fp, "Hide Unknown file types=%s\r\n", swissSettings.hideUnknownFileTypes ? "Yes":"No");
 	fprintf(fp, "Stop DVD Motor on startup=%s\r\n", swissSettings.stopMotor ? "Yes":"No");
 	fprintf(fp, "Enable WiiRD debug=%s\r\n", swissSettings.wiirdDebug ? "Yes":"No");
@@ -243,7 +243,7 @@ int config_update_recent(bool checkConfigDevice) {
 	int i;
 	for(i = 0; i < RECENT_MAX; i++) {
 		fprintf(fp, "Recent_%i=%s\r\n", i, swissSettings.recent[i]);
-		//print_gecko("added recent num %i [%s]\r\n", i, swissSettings.recent[i]);
+		//print_debug("added recent num %i [%s]\n", i, swissSettings.recent[i]);
 	}
 	fclose(fp);
 
@@ -372,14 +372,14 @@ void config_parse_legacy(char *configData, void (*progress_indicator)(char*, int
 	bool defaultPassed = false;
 	line = strtok_r( configData, "\r\n", &linectx );
 	while( line != NULL ) {
-		//print_gecko("Line [%s]\r\n", line);
+		//print_debug("Line [%s]\n", line);
 		if(line[0] != '#') {
 			// Is this line a new game entry?
 			char *name, *value = NULL;
 			name = strtok_r(line, "=", &value);
 			
 			if(value != NULL) {
-				//print_gecko("Name [%s] Value [%s]\r\n", name, value);
+				//print_debug("Name [%s] Value [%s]\n", name, value);
 
 				if(!strcmp("ID", name)) {
 					defaultPassed = true;
@@ -489,7 +489,7 @@ void config_parse_legacy(char *configData, void (*progress_indicator)(char*, int
 					}
 				}
 				else if(!strcmp("Enable Debug", name)) {
-					swissSettings.debugUSB = !strcmp("Yes", value);
+					swissSettings.debugUSB = !strcmp("Yes", value) ? DEBUG_MEMCARD_SLOT_B : DEBUG_OFF;
 				}
 				else if(!strcmp("Hide Unknown file types", name)) {
 					swissSettings.hideUnknownFileTypes = !strcmp("Yes", value);
@@ -612,7 +612,7 @@ void config_parse_legacy(char *configData, void (*progress_indicator)(char*, int
 				else if(!strncmp("Recent_", name, strlen("Recent_"))) {
 					int recent_slot = atoi(name+strlen("Recent_"));
 					if(recent_slot >= 0 && recent_slot < RECENT_MAX) {
-						//print_gecko("found recent num %i [%s]\r\n", recent_slot, value);
+						//print_debug("found recent num %i [%s]\n", recent_slot, value);
 						strlcpy(swissSettings.recent[recent_slot], value, PATHNAME_MAX);
 					}
 				}
@@ -626,7 +626,7 @@ void config_parse_legacy(char *configData, void (*progress_indicator)(char*, int
 		configEntriesCount++;
 		config_defaults(&configEntries[configEntriesCount]);
 	}
-	 print_gecko("Found %i entries in the (legacy) config file\r\n",configEntriesCount);
+	 print_debug("Found %i entries in the (legacy) config file\n",configEntriesCount);
 	 
 	 // Write out to individual files.
 	 int i;
@@ -646,13 +646,13 @@ void config_parse_global(char *configData) {
 	char *line, *linectx = NULL;
 	line = strtok_r( configData, "\r\n", &linectx );
 	while( line != NULL ) {
-		//print_gecko("Line [%s]\r\n", line);
+		//print_debug("Line [%s]\n", line);
 		if(line[0] != '#') {
 			char *name, *value = NULL;
 			name = strtok_r(line, "=", &value);
 			
 			if(value != NULL) {
-				//print_gecko("Name [%s] Value [%s]\r\n", name, value);
+				//print_debug("Name [%s] Value [%s]\n", name, value);
 
 				if(!strcmp("Force Video Mode", name)) {
 					for(int i = 0; i < 15; i++) {
@@ -797,7 +797,15 @@ void config_parse_global(char *configData) {
 					}
 				}
 				else if(!strcmp("Enable Debug", name)) {
-					swissSettings.debugUSB = !strcmp("Yes", value);
+					swissSettings.debugUSB = !strcmp("Yes", value) ? DEBUG_MEMCARD_SLOT_B : DEBUG_OFF;
+				}
+				else if(!strcmp("USB Gecko debug output", name)) {
+					for(int i = 0; i < DEBUG_MAX; i++) {
+						if(!strcmp(debugUSBStr[i], value)) {
+							swissSettings.debugUSB = i;
+							break;
+						}
+					}
 				}
 				else if(!strcmp("Hide Unknown file types", name)) {
 					swissSettings.hideUnknownFileTypes = !strcmp("Yes", value);
@@ -989,17 +997,17 @@ void config_parse_recent(char *configData) {
 	char *line, *linectx = NULL;
 	line = strtok_r( configData, "\r\n", &linectx );
 	while( line != NULL ) {
-		//print_gecko("Line [%s]\r\n", line);
+		//print_debug("Line [%s]\n", line);
 		if(line[0] != '#') {
 			char *name, *value = NULL;
 			name = strtok_r(line, "=", &value);
 			
 			if(value != NULL) {
-				//print_gecko("Name [%s] Value [%s]\r\n", name, value);
+				//print_debug("Name [%s] Value [%s]\n", name, value);
 				if(!strncmp("Recent_", name, strlen("Recent_"))) {
 					int recent_slot = atoi(name+strlen("Recent_"));
 					if(recent_slot >= 0 && recent_slot < RECENT_MAX) {
-						//print_gecko("found recent num %i [%s]\r\n", recent_slot, value);
+						//print_debug("found recent num %i [%s]\n", recent_slot, value);
 						strlcpy(swissSettings.recent[recent_slot], value, PATHNAME_MAX);
 					}
 				}
@@ -1015,13 +1023,13 @@ void config_parse_game(char *configData, ConfigEntry *entry) {
 	char *line, *linectx = NULL;
 	line = strtok_r( configData, "\r\n", &linectx );
 	while( line != NULL ) {
-		//print_gecko("Line [%s]\r\n", line);
+		//print_debug("Line [%s]\n", line);
 		if(line[0] != '#') {
 			char *name, *value = NULL;
 			name = strtok_r(line, "=", &value);
 			
 			if(value != NULL) {
-				//print_gecko("Name [%s] Value [%s]\r\n", name, value);
+				//print_debug("Name [%s] Value [%s]\n", name, value);
 				if(!strcmp("Name", name)) {
 					strncpy(entry->game_name, value, 64);
 				}
@@ -1157,7 +1165,7 @@ void config_find(ConfigEntry *entry) {
 	if(!config_set_device()) {
 		return;
 	}
-	print_gecko("config_find: Looking for config file with ID %s\r\n",entry->game_id);
+	print_debug("config_find: Looking for config file with ID %s\n",entry->game_id);
 	// See if we have an actual config file for this game
 	concatf_path(txtbuffer, SWISS_GAME_SETTINGS_DIR, "%.4s.ini", entry->game_id);
 	char* configEntry = config_file_read(txtbuffer);

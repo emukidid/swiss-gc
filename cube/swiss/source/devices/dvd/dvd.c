@@ -93,7 +93,7 @@ void dvd_motor_off()
 void dvd_set_offset(u64 offset)
 {
 	if(is_gamecube() && isXenoGC) {
-		print_gecko("XenoGC offset set\r\n");
+		print_debug("XenoGC offset set\n");
 		dvd[0] = 0x2e;
 		dvd[1] = 0;
 		dvd[2] = 0x28000000;
@@ -289,22 +289,22 @@ void dvd_enable_patches()
 	if(patchCode == NULL) {
 		return;	// Unsupported drive
 	}
-	print_gecko("Drive date %08X\r\nUnlocking drive\r\n",(u32)(driveVersion&0xFFFFFFFF));
+	print_debug("Drive date %08X\nUnlocking drive\n",(u32)(driveVersion&0xFFFFFFFF));
 	dvd_unlock();
-	print_gecko("Unlocking drive - done\r\nWrite patch\r\n");
+	print_debug("Unlocking drive - done\nWrite patch\n");
 	dvd_writemem_array(0xff40d000, patchCode, 0x1F0);
 	dvd_writemem_32(0x804c, 0x00d04000);
-	print_gecko("Write patch - done\r\nSet extension %08X\r\n",dvd_get_error());
+	print_debug("Write patch - done\nSet extension %08X\n",dvd_get_error());
 	dvd_setextension();
-	print_gecko("Set extension - done\r\nUnlock again %08X\r\n",dvd_get_error());
+	print_debug("Set extension - done\nUnlock again %08X\n",dvd_get_error());
 	dvd_unlock();
-	print_gecko("Unlock again - done\r\nDebug Motor On %08X\r\n",dvd_get_error());
+	print_debug("Unlock again - done\nDebug Motor On %08X\n",dvd_get_error());
 	dvd_motor_on_extra();
-	print_gecko("Debug Motor On - done\r\nSet Status %08X\r\n",dvd_get_error());
+	print_debug("Debug Motor On - done\nSet Status %08X\n",dvd_get_error());
 	dvd_setstatus();
-	print_gecko("Set Status - done %08X\r\n",dvd_get_error());
+	print_debug("Set Status - done %08X\n",dvd_get_error());
 	dvd_read_id();
-	print_gecko("Read ID %08X\r\n",dvd_get_error());
+	print_debug("Read ID %08X\n",dvd_get_error());
 }
 
 
@@ -404,7 +404,7 @@ void npdp_start()
 	if(*(u16*)&buf[2] == 0x0200) {
 		npdp_inquiry(buf);
 		npdp_getid(buf);
-		print_gecko("NPDP ID: [%s]\r\n", buf);
+		print_debug("NPDP ID: [%s]\n", buf);
 	}
 	free(buf);
 }

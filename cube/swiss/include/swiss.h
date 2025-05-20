@@ -168,6 +168,15 @@ typedef struct {
 } SwissSettings;
 extern SwissSettings swissSettings;
 
+enum debugUSB
+{
+	DEBUG_OFF=0,
+	DEBUG_MEMCARD_SLOT_A,
+	DEBUG_MEMCARD_SLOT_B,
+	DEBUG_SERIAL_PORT_2,
+	DEBUG_MAX
+};
+
 enum aveCompat
 {
 	AVE_N_DOL_COMPAT=0,

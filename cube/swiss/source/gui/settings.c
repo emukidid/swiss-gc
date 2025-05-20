@@ -28,6 +28,7 @@
 
 ConfigEntry tempConfig;
 SwissSettings tempSettings;
+char *debugUSBStr[] = {"No", "Slot A", "Slot B", "Serial Port 2"};
 char *uiVModeStr[] = {"Auto", "480i", "480sf", "480p", "576i", "576sf", "576p"};
 char *gameVModeStr[] = {"Auto", "480i", "480sf", "240p", "960i", "480p", "1080i60", "540p60", "576i", "576sf", "288p", "1152i", "576p", "1080i50", "540p50"};
 char *forceHScaleStr[] = {"Auto", "1:1", "11:10", "9:8", "640px", "656px", "672px", "704px", "720px"};
@@ -223,7 +224,6 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 		DrawAddChild(page, DrawLabel(page_x_ofs_key, 65, "Global Settings (1/5):"));
 		bool dtvEnable = !in_range(swissSettings.aveCompat, AVE_N_DOL_COMPAT, AVE_P_DOL_COMPAT);
 		bool rt4kEnable = in_range(swissSettings.aveCompat, GCDIGITAL_COMPAT, GCVIDEO_COMPAT);
-		bool dbgEnable = devices[DEVICE_CUR] != &__device_usbgecko && deviceHandler_getDeviceAvailable(&__device_usbgecko);
 		// TODO settings to a new typedef that ties type etc all together, then draw a "page" of these rather than this at some point.
 		if(option < SET_STOP_MOTOR) {
 			drawSettingEntryString(page, &page_y_ofs, "System Sound:", swissSettings.sramStereo ? "Stereo":"Mono", option == SET_SYS_SOUND, true);
@@ -244,7 +244,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 			drawSettingEntryString(page, &page_y_ofs, "AVE Compatibility:", aveCompatStr[swissSettings.aveCompat], option == SET_AVE_COMPAT, true);
 			drawSettingEntryBoolean(page, &page_y_ofs, "Force DTV Status:", swissSettings.forceDTVStatus, option == SET_FORCE_DTVSTATUS, dtvEnable);
 			drawSettingEntryBoolean(page, &page_y_ofs, "Optimise for RetroTINK-4K:", swissSettings.rt4kOptim, option == SET_RT4K_OPTIM, rt4kEnable);
-			drawSettingEntryBoolean(page, &page_y_ofs, "USB Gecko debug output:", swissSettings.debugUSB, option == SET_ENABLE_USBGECKODBG, dbgEnable);
+			drawSettingEntryString(page, &page_y_ofs, "USB Gecko debug output:", debugUSBStr[swissSettings.debugUSB], option == SET_ENABLE_USBGECKODBG, true);
 		}
 	}
 	else if(page_num == PAGE_NETWORK) {
@@ -529,8 +529,8 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 				}
 			break;
 			case SET_ENABLE_USBGECKODBG:
-				if(devices[DEVICE_CUR] != &__device_usbgecko && deviceHandler_getDeviceAvailable(&__device_usbgecko))
-					swissSettings.debugUSB ^= 1;
+				swissSettings.debugUSB += direction;
+				swissSettings.debugUSB = (swissSettings.debugUSB + DEBUG_MAX) % DEBUG_MAX;
 			break;
 		}
 		switch(option) {

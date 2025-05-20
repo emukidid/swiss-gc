@@ -223,17 +223,13 @@ void load_auto_dol(int argc, char *argv[]) {
 }
 
 /* Print over USB Gecko if enabled */
-void print_gecko(const char* fmt, ...)
+void print_debug(const char *fmt, ...)
 {
-	if(swissSettings.debugUSB && usb_isgeckoalive(1)) {
-		char tempstr[2048];
-		va_list arglist;
-		va_start(arglist, fmt);
-		vsprintf(tempstr, fmt, arglist);
-		va_end(arglist);
-		// write out over usb gecko ;)
-		usb_sendbuffer_safe(1,tempstr,strlen(tempstr));
-	}
+	va_list arglist;
+	va_start(arglist, fmt);
+	SYS_EnableGecko(swissSettings.debugUSB - 1, true);
+	SYS_Reportv(fmt, arglist);
+	va_end(arglist);
 }
 
 /* Update recent list with a new entry. */
@@ -274,7 +270,7 @@ int find_existing_entry(char *entry, bool load) {
 	// get the device handler for it
 	DEVICEHANDLER_INTERFACE *entryDevice = getDeviceFromPath(entry);
 	if(entryDevice) {
-		print_gecko("Device required for entry [%s]\r\n", entryDevice->deviceName);
+		print_debug("Device required for entry [%s]\n", entryDevice->deviceName);
 		
 		// Init the device if it isn't one we were about to browse anyway
 		if(devices[DEVICE_CUR] == entryDevice || !entryDevice->init(entryDevice->initial)) {
@@ -321,13 +317,13 @@ int find_existing_entry(char *entry, bool load) {
 			return RECENT_ERR_ENT_MISSING;
 		}
 	}
-	print_gecko("Device was not found\r\n");
+	print_debug("Device was not found\n");
 	return RECENT_ERR_DEV_MISSING;
 }
 
 bool deleteFileOrDir(file_handle* entry) {
 	if(entry->fileType == IS_DIR) {
-		print_gecko("Entering dir for deletion: %s\r\n", entry);
+		print_debug("Entering dir for deletion: %s\n", entry);
 		file_handle* dirEntries = NULL;
 		int dirEntryCount = devices[DEVICE_CUR]->readDir(entry, &dirEntries, -1);
 		int i;
@@ -337,11 +333,11 @@ bool deleteFileOrDir(file_handle* entry) {
 			}
 		}
 		if(dirEntries) free(dirEntries);
-		print_gecko("Finally, deleting empty directory: %s\r\n", entry);
+		print_debug("Finally, deleting empty directory: %s\n", entry);
 		return !devices[DEVICE_CUR]->deleteFile(entry);
 	}
 	if(entry->fileType == IS_FILE) {
-		print_gecko("Deleting file: %s\r\n", entry);
+		print_debug("Deleting file: %s\n", entry);
 		return !devices[DEVICE_CUR]->deleteFile(entry);
 	}
 	return true;	// IS_SPECIAL can be ignored.

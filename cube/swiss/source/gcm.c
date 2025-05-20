@@ -591,10 +591,10 @@ int patch_gcm(ExecutableFile *filesToPatch, int numToPatch) {
 		sprintf(txtbuffer, "Patching File %i/%i\n%s [%iKB]",i+1,numToPatch,fileToPatch->name,fileToPatch->size/1024);
 		
 		if(fileToPatch->size > 8*1024*1024) {
-			print_gecko("Skipping %s %iKB too large\r\n", fileToPatch->name, fileToPatch->size/1024);
+			print_debug("Skipping %s %iKB too large\n", fileToPatch->name, fileToPatch->size/1024);
 			continue;
 		}
-		print_gecko("Checking %s %iKb\r\n", fileToPatch->name, fileToPatch->size/1024);
+		print_debug("Checking %s %iKB\n", fileToPatch->name, fileToPatch->size/1024);
 		
 		if(!strcasecmp(fileToPatch->name, "iwanagaD.dol") || !strcasecmp(fileToPatch->name, "switcherD.dol")) {
 			continue;	// skip unused PSO files
@@ -607,7 +607,7 @@ int patch_gcm(ExecutableFile *filesToPatch, int numToPatch) {
 		
 		devices[DEVICE_CUR]->seekFile(fileToPatch->file,fileToPatch->offset,DEVICE_HANDLER_SEEK_SET);
 		int ret = devices[DEVICE_CUR]->readFile(fileToPatch->file,buffer,sizeToRead);
-		print_gecko("Read from %08X Size %08X - Result: %08X\r\n", fileToPatch->offset, sizeToRead, ret);
+		print_debug("Read from %08X Size %08X - Result: %08X\n", fileToPatch->offset, sizeToRead, ret);
 		if(ret != sizeToRead) {
 			message = "Failed to read file!";
 			goto fail;
@@ -705,7 +705,7 @@ int patch_gcm(ExecutableFile *filesToPatch, int numToPatch) {
 				if(devices[DEVICE_PATCHES]->seekFile(fileToPatch->patchFile, -sizeof(old_hash), DEVICE_HANDLER_SEEK_END) == sizeToRead &&
 					devices[DEVICE_PATCHES]->readFile(fileToPatch->patchFile, &old_hash, sizeof(old_hash)) == sizeof(old_hash) &&
 					XXH128_isEqual(old_hash, new_hash)) {
-					print_gecko("Hash matched, no need to patch again\r\n");
+					print_debug("Hash matched, no need to patch again\n");
 					num_patched++;
 					free(buffer);
 					DrawDispose(progBox);
@@ -713,11 +713,11 @@ int patch_gcm(ExecutableFile *filesToPatch, int numToPatch) {
 				}
 				else {
 					devices[DEVICE_PATCHES]->deleteFile(fileToPatch->patchFile);
-					print_gecko("Hash mismatch, writing patch again\r\n");
+					print_debug("Hash mismatch, writing patch again\n");
 				}
 			}
 			// Otherwise, write a file out for this game with the patched buffer inside.
-			print_gecko("Writing patch file: %s %i bytes (disc offset %08X)\r\n", fileToPatch->patchFile->name, fileToPatch->size, fileToPatch->offset);
+			print_debug("Writing patch file: %s %i bytes (disc offset %08X)\n", fileToPatch->patchFile->name, fileToPatch->size, fileToPatch->offset);
 			devices[DEVICE_PATCHES]->seekFile(fileToPatch->patchFile, 0, DEVICE_HANDLER_SEEK_SET);
 			if(devices[DEVICE_PATCHES]->writeFile(fileToPatch->patchFile, buffer, sizeToRead) == sizeToRead &&
 				devices[DEVICE_PATCHES]->writeFile(fileToPatch->patchFile, &new_hash, sizeof(new_hash)) == sizeof(new_hash) &&
@@ -760,7 +760,7 @@ u64 calc_fst_entries_size(char *FST) {
 // Returns the number of filesToPatch and fills out the filesToPatch array passed in (pre-allocated)
 int read_fst(file_handle *file, file_handle** dir, u64 *usedSpace) {
 
-	print_gecko("Read dir for directory: %s\r\n",file->name);
+	print_debug("Read dir for directory: %s\n",file->name);
 	char	filename[PATHNAME_MAX];
 	int		numFiles = 1, idx = 0;
 	int		isRoot = file->fileBase == 0;
@@ -809,7 +809,7 @@ int read_fst(file_handle *file, file_handle** dir, u64 *usedSpace) {
 		(*dir)[idx].meta = 0;
 		idx++;
 	}
-	//print_gecko("Found DIR [%03i]:%s\r\n",parent_dir_offset,isRoot ? "ROOT":filename);
+	//print_debug("Found DIR [%03i]:%s\n",parent_dir_offset,isRoot ? "ROOT":filename);
 	
 	// Traverse the FST now adding all the files which come under our DIR
 	for (i=parent_dir_offset;i<dir_end_offset;i++) {
@@ -825,7 +825,7 @@ int read_fst(file_handle *file, file_handle** dir, u64 *usedSpace) {
 		// Is this a sub dir of our dir?
 		if(FST[offset]) {
 			if(file_offset == parent_dir_offset) {
-				//print_gecko("Adding: [%03i]%s:%s offset %08X length %08X\r\n",i,!FST[offset] ? "File" : "Dir",filename,file_offset,size);
+				//print_debug("Adding: [%03i]%s:%s offset %08X length %08X\n",i,!FST[offset] ? "File" : "Dir",filename,file_offset,size);
 				if(idx == numFiles){
 					++numFiles;
 					*dir = reallocarray(*dir, numFiles, sizeof(file_handle));
@@ -844,7 +844,7 @@ int read_fst(file_handle *file, file_handle** dir, u64 *usedSpace) {
 		}
 		else {
 			// File, add it.
-			//print_gecko("Adding: [%03i]%s:%s offset %08X length %08X\r\n",i,!FST[offset] ? "File" : "Dir",filename,file_offset,size);
+			//print_debug("Adding: [%03i]%s:%s offset %08X length %08X\n",i,!FST[offset] ? "File" : "Dir",filename,file_offset,size);
 			if(idx == numFiles){
 				++numFiles;
 				*dir = reallocarray(*dir, numFiles, sizeof(file_handle));

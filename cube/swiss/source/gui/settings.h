@@ -146,6 +146,7 @@ enum SETTINGS_GAME {
 };
 #define PAGE_GAME_MAX (SET_PAGE_5_CANCEL)
 
+extern char *debugUSBStr[];
 extern char *uiVModeStr[];
 extern char *gameVModeStr[];
 extern char *forceHScaleStr[];

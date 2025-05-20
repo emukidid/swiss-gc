@@ -230,7 +230,7 @@ int main(int argc, char *argv[])
 	
 	// Sane defaults
 	refreshSRAM(&swissSettings);
-	swissSettings.debugUSB = 0;
+	swissSettings.debugUSB = DEBUG_OFF;
 	swissSettings.exiSpeed = 1;		// 32MHz
 	swissSettings.uiVMode = 0; 		// Auto UI mode
 	swissSettings.gameVMode = 0;	// Auto video mode
@@ -251,20 +251,15 @@ int main(int argc, char *argv[])
 	needsRefresh = 1;
 	
 	//debugging stuff
-	if(swissSettings.debugUSB) {
-		if(usb_isgeckoalive(1)) {
-			usb_flush(1);
-		}
-		print_gecko("Arena Size: %iKb\r\n",(SYS_GetArena1Hi()-SYS_GetArena1Lo())/1024);
-		print_gecko("DVD Drive Present? %s\r\n",swissSettings.hasDVDDrive?"Yes":"No");
-		print_gecko("GIT Commit: %s\r\n", GIT_COMMIT);
-		print_gecko("GIT Revision: %s\r\n", GIT_REVISION);
-	}
+	print_debug("Arena Size: %iKB\n",SYS_GetArenaSize()/1024);
+	print_debug("DVD Drive Present? %s\n",swissSettings.hasDVDDrive?"Yes":"No");
+	print_debug("GIT Commit: %s\n", GIT_COMMIT);
+	print_debug("GIT Revision: %s\n", GIT_REVISION);
 	
 	// Go through all devices with FEAT_BOOT_DEVICE feature and set it as current if one is available
 	for(i = 0; i < MAX_DEVICES; i++) {
 		if(allDevices[i] != NULL && (allDevices[i]->features & FEAT_BOOT_DEVICE)) {
-			print_gecko("Testing device %s\r\n", allDevices[i]->deviceName);
+			print_debug("Testing device %s\n", allDevices[i]->deviceName);
 			if(allDevices[i]->test()) {
 				deviceHandler_setDeviceAvailable(allDevices[i], true);
 				devices[DEVICE_CUR] = allDevices[i];
@@ -273,7 +268,7 @@ int main(int argc, char *argv[])
 		}
 	}
 	if(devices[DEVICE_CUR] != NULL) {
-		print_gecko("Detected %s\r\n", devices[DEVICE_CUR]->deviceName);
+		print_debug("Detected %s\n", devices[DEVICE_CUR]->deviceName);
 		if(!devices[DEVICE_CUR]->init(devices[DEVICE_CUR]->initial)) {
 			if(devices[DEVICE_CUR]->features & FEAT_AUTOLOAD_DOL) {
 				load_auto_dol(argc, argv);
@@ -299,7 +294,7 @@ int main(int argc, char *argv[])
 		for(i = 0; i < MAX_DEVICES; i++) {
 			if(allDevices[i] != NULL && (allDevices[i]->features & FEAT_CONFIG_DEVICE) && deviceHandler_getDeviceAvailable(allDevices[i])) {
 				swissSettings.configDeviceId = allDevices[i]->deviceUniqueId;
-				print_gecko("No default config device found, using [%s]\r\n", allDevices[i]->deviceName);
+				print_debug("No default config device found, using [%s]\n", allDevices[i]->deviceName);
 				if(!config_init(&config_migration)) {
 					show_settings(PAGE_GLOBAL, SET_CONFIG_DEV, NULL);
 				}
@@ -385,7 +380,7 @@ int main(int argc, char *argv[])
 	// Check for autoload entry
 	if(swissSettings.autoload[0]) {
 		// Check that the path in the autoload entry points at a device that has been detected
-		print_gecko("Autoload entry detected [%s]\r\n", swissSettings.autoload);
+		print_debug("Autoload entry detected [%s]\n", swissSettings.autoload);
 		find_existing_entry(&swissSettings.autoload[0], true);
 	}
 	else if(swissSettings.recent[0][0] && swissSettings.recentListLevel > 1) {
@@ -417,7 +412,7 @@ void populateDeviceAvailability() {
 	int i;
 	for(i = 0; i < MAX_DEVICES; i++) {
 		if(allDevices[i] != NULL && !deviceHandler_getDeviceAvailable(allDevices[i])) {
-			print_gecko("Checking device availability for device %s\r\n", allDevices[i]->deviceName);
+			print_debug("Checking device availability for device %s\n", allDevices[i]->deviceName);
 			deviceHandler_setDeviceAvailable(allDevices[i], allDevices[i]->test());
 		}
 	}

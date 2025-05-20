@@ -135,9 +135,9 @@ int initialize_disc(u32 streaming) {
 	{
 		// Reset WKF hard to allow for a real disc to be read if SD is removed
 		if(wkfDetected || (__wkfSpiReadId() != 0 && __wkfSpiReadId() != 0xFFFFFFFF)) {
-			print_gecko("Detected Wiikey Fusion with SPI Flash ID: %08X\r\n",__wkfSpiReadId());
+			print_debug("Detected Wiikey Fusion with SPI Flash ID: %08X\n",__wkfSpiReadId());
 			__wkfReset();
-			print_gecko("WKF RESET\r\n");
+			print_debug("WKF RESET\n");
 			wkfDetected = 1;
 		}
 
@@ -268,11 +268,11 @@ s32 deviceHandler_DVD_readDir(file_handle* ffile, file_handle** dir, u32 type){
 	//GCOS or Cobra MultiGame DVD Disc
 	if((dvdDiscTypeInt == COBRA_MULTIGAME_DISC)||(dvdDiscTypeInt == GCOSD5_MULTIGAME_DISC)||(dvdDiscTypeInt == GCOSD9_MULTIGAME_DISC)) {
 
-		print_gecko("Multi game disc type %i detected\r\n", dvdDiscTypeInt);
+		print_debug("Multi game disc type %i detected\n", dvdDiscTypeInt);
 		if(drive_status == NORMAL_MODE) {
 			// This means we're using a drivechip, so our multigame command will be different.
 			isXenoGC = 1;
-			print_gecko("Drive isn't patched, drivechip is present.\r\n");
+			print_debug("Drive isn't patched, drivechip is present.\n");
 		}
 		//Read in the whole table of offsets
 		tmpTable = (unsigned int*)memalign(32,MAX_MULTIGAME*4);
@@ -288,7 +288,7 @@ s32 deviceHandler_DVD_readDir(file_handle* ffile, file_handle** dir, u32 type){
 				num_entries++;
 			}
 		}
-		print_gecko("%i entries found\r\n", num_entries);
+		print_debug("%i entries found\n", num_entries);
 
 		if(num_entries <= 0) { return num_entries; }
 		// malloc the directory structure
@@ -300,7 +300,7 @@ s32 deviceHandler_DVD_readDir(file_handle* ffile, file_handle** dir, u32 type){
 			if(num > 0) {
 				(*dir)[num-1].size = tmpOffset - (*dir)[num-1].fileBase;
 			}
-			print_gecko("fileBase is %016llX isGC? %s\r\n", tmpOffset, isGC ? "yes" : "no");
+			print_debug("fileBase is %016llX isGC? %s\n", tmpOffset, isGC ? "yes" : "no");
 			if((tmpOffset%(isGC?0x8000:0x20000)==0) && (tmpOffset<(isGC?DISC_SIZE:WII_D9_SIZE))) {
 				DVD_Read(&tmpName[0],tmpOffset+32,64);
 				concatf_path((*dir)[num].name, ffile->name, "%.64s.gcm", &tmpName[0]);
@@ -379,8 +379,8 @@ s64 deviceHandler_DVD_seekFile(file_handle* file, s64 where, u32 type){
 }
 
 s32 deviceHandler_DVD_readFile(file_handle* file, void* buffer, u32 length){
-	//print_gecko("read: status:%08X dst:%08X ofs:%08X base:%08X len:%08X\r\n"
-	//						,file->status,(u32)buffer,file->offset,(u32)((file->fileBase) & 0xFFFFFFFF),length);
+	//print_debug("read: status:%08X dst:%08X ofs:%08X base:%08X len:%08X\n",
+	//	file->status,(u32)buffer,file->offset,(u32)((file->fileBase) & 0xFFFFFFFF),length);
 	if(file->size == 0) return 0;	// Don't read garbage
 	u64 actualOffset = file->fileBase+file->offset;
 
@@ -404,30 +404,30 @@ s32 deviceHandler_DVD_setupFile(file_handle* file, file_handle* file2, Executabl
 		if(swissSettings.audioStreaming && !isXenoGC) {
 			uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "One moment, setting up audio streaming."));
 			dvd_motor_off();
-			print_gecko("Set extension %08X\r\n",dvd_get_error());
+			print_debug("Set extension %08X\n",dvd_get_error());
 			dvd_setextension();
-			print_gecko("Set extension - done\r\nUnlock %08X\r\n",dvd_get_error());
+			print_debug("Set extension - done\nUnlock %08X\n",dvd_get_error());
 			dvd_unlock();
-			print_gecko("Unlock - done\r\nDebug Motor On %08X\r\n",dvd_get_error());
+			print_debug("Unlock - done\nDebug Motor On %08X\n",dvd_get_error());
 			dvd_motor_on_extra();
-			print_gecko("Debug Motor On - done\r\nSet Status %08X\r\n",dvd_get_error());
+			print_debug("Debug Motor On - done\nSet Status %08X\n",dvd_get_error());
 			dvd_setstatus();
-			print_gecko("Set Status - done %08X\r\n",dvd_get_error());
+			print_debug("Set Status - done %08X\n",dvd_get_error());
 			dvd_read_id();
-			print_gecko("Read ID %08X\r\n",dvd_get_error());
+			print_debug("Read ID %08X\n",dvd_get_error());
 			dvd_set_streaming(swissSettings.audioStreaming);
 			DrawDispose(msgBox);
 		}
 		dvd_set_offset(file->fileBase);
 		file->status = STATUS_MAPPED;
-		print_gecko("Streaming %s %08X\r\n",swissSettings.audioStreaming?"Enabled":"Disabled",dvd_get_error());
+		print_debug("Streaming %s %08X\n",swissSettings.audioStreaming?"Enabled":"Disabled",dvd_get_error());
 	}
 	if(numToPatch < 0 || !devices[DEVICE_CUR]->emulated()) {
 		return 1;
 	}
 	// Check if there are any fragments in our patch location for this game
 	if(devices[DEVICE_PATCHES] != NULL) {
-		print_gecko("Save Patch device found\r\n");
+		print_debug("Save Patch device found\n");
 		
 		// Look for patch files, if we find some, open them and add them as fragments
 		file_handle patchFile;

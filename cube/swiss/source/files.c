@@ -76,7 +76,7 @@ void freeFiles() {
 void scanFiles() {
 	freeFiles();
 	// Read the directory/device TOC
-	print_gecko("Reading directory: %s\r\n",curDir.name);
+	print_debug("Reading directory: %s\n",curDir.name);
 	curDirEntryCount = devices[DEVICE_CUR]->readDir(&curDir, &curDirEntries, -1);
 	if(!fnmatch(swissSettings.flattenDir, curDir.name, FNM_PATHNAME | FNM_CASEFOLD)) {
 		for(int i = 0; i < curDirEntryCount; i++) {
@@ -94,7 +94,7 @@ void scanFiles() {
 			}
 		}
 	}
-	print_gecko("Found %i entries\r\n",curDirEntryCount);
+	print_debug("Found %i entries\n",curDirEntryCount);
 	sortedDirEntryCount = sortFiles(curDirEntries, curDirEntryCount, &sortedDirEntries);
 	for(int i = 0; i < sortedDirEntryCount; i++) {
 		if(!strcmp(sortedDirEntries[i]->name, curFile.name)) {

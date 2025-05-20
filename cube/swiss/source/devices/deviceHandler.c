@@ -214,7 +214,7 @@ bool getFragments(int deviceSlot, file_handle *file, file_frag **fragList, u32 *
 		}
 		file->ffsFp->cltbl = NULL;
 		
-		print_gecko("getFragments [%s] - found %i fragments [%i arr]\r\n", file->name, (clmt[0]/2)-1, clmt[0]);
+		print_debug("getFragments [%s] - found %i fragments [%i arr]\n", file->name, (clmt[0]/2)-1, clmt[0]);
 		
 		frags = reallocarray(frags, numFrags + (clmt[0]/2), sizeof(file_frag));
 		if(frags == NULL) {
@@ -295,12 +295,12 @@ bool getFragments(int deviceSlot, file_handle *file, file_frag **fragList, u32 *
 }
 
 void print_frag_list(file_frag *fragList, u32 totFrags) {
-	print_gecko("== Fragments List ==\r\n");
+	print_debug("== Fragments List ==\n");
 	for(int i = 0; i < totFrags; i++) {
-		print_gecko("Frag %i: ofs in file: [0x%08X] len [0x%08X] LBA on disk [0x%012llX]\r\n",
-					i, fragList[i].offset, fragList[i].size, fragList[i].fileBase);
+		print_debug("Frag %i: ofs in file: [0x%08X] len [0x%08X] LBA on disk [0x%012llX]\n",
+			i, fragList[i].offset, fragList[i].size, fragList[i].fileBase);
 	}
-	print_gecko("== Fragments End ==\r\n");
+	print_debug("== Fragments End ==\n");
 }
 
 FILE* openFileStream(int deviceSlot, file_handle *file)

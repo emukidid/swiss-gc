@@ -48,7 +48,7 @@ s32 deviceHandler_WKF_setupFile(file_handle* file, file_handle* file2, Executabl
 	
 	// Check if there are any fragments in our patch location for this game
 	if(devices[DEVICE_PATCHES] != NULL) {
-		print_gecko("Save Patch device found\r\n");
+		print_debug("Save Patch device found\n");
 		
 		// Look for patch files, if we find some, open them and add them as fragments
 		file_handle patchFile;

@@ -480,8 +480,8 @@ void drawFilesCarousel(file_handle** directory, int num_files, uiDrawObj_t *cont
 		}
 		//int left_num = curSelection - current_view_start; // Number of entries to the left
 		//int right_num = (current_view_end - curSelection)-1;
-		//print_gecko("%i entries to the left, %i to the right in this view\r\n", left_num, right_num);
-		//print_gecko("%i cur sel, %i start, %i end\r\n", curSelection, current_view_start, current_view_end);
+		//print_debug("%i entries to the left, %i to the right in this view\n", left_num, right_num);
+		//print_debug("%i cur sel, %i start, %i end\n", curSelection, current_view_start, current_view_end);
 		
 		bool parentLink = (directory[curSelection]->fileType==IS_SPECIAL);
 		int y_base = 105; // top most point
@@ -1020,7 +1020,7 @@ void load_app(ExecutableFile *fileToPatch)
 	if (topAddr < 0x81700000) {
 		topAddr = 0x81800000;
 	}
-	print_gecko("Top of RAM simulated as: 0x%08X\r\n", topAddr);
+	print_debug("Top of RAM simulated as: 0x%08X\n", topAddr);
 	
 	*(vu32*)(VAR_AREA+0x0028) = 0x01800000;
 	*(vu32*)(VAR_AREA+0x002C) = swissSettings.debugUSB ? SYS_CONSOLE_DEVELOPMENT_HW1 : SYS_CONSOLE_RETAIL_HW1;
@@ -1100,13 +1100,13 @@ void load_app(ExecutableFile *fileToPatch)
 			progBox = DrawPublish(DrawProgressBar(true, 0, "Loading DOL"));
 		}
 		
-		print_gecko("DOL Lives at %08X\r\n", fileToPatch->offset);
+		print_debug("DOL Lives at %08X\n", fileToPatch->offset);
 		sizeToRead = (fileToPatch->size + 31) & ~31;
 		type = fileToPatch->type;
-		print_gecko("DOL size %i\r\n", sizeToRead);
+		print_debug("DOL size %i\n", sizeToRead);
 		
 		buffer = memalign(32, sizeToRead);
-		print_gecko("DOL buffer %08X\r\n", (u32)buffer);
+		print_debug("DOL buffer %08X\n", (u32)buffer);
 		if(buffer == NULL) goto fail;
 		
 		if(fileToPatch->patchFile != NULL) {
@@ -1219,7 +1219,7 @@ void load_app(ExecutableFile *fileToPatch)
 	}
 	if(devices[DEVICE_CUR]->location & LOC_DVD_CONNECTOR) {
 		// Check DVD Status, make sure it's error code 0
-		print_gecko("DVD: %08X\r\n",dvd_get_error());
+		print_debug("DVD: %08X\n",dvd_get_error());
 	}
 	else if(swissSettings.hasFlippyDrive) {
 		flippy_bypass(false);
@@ -1234,13 +1234,13 @@ void load_app(ExecutableFile *fileToPatch)
 	VIDEO_Flush();
 	VIDEO_WaitVSync();
 	
-	print_gecko("libogc shutdown and boot game!\r\n");
+	print_debug("libogc shutdown and boot game!\n");
 	if(devices[DEVICE_CUR] == &__device_sd_a || devices[DEVICE_CUR] == &__device_sd_b || devices[DEVICE_CUR] == &__device_sd_c) {
 		s32 exi_channel;
 		if(getExiDeviceByLocation(devices[DEVICE_CUR]->location, &exi_channel, NULL)) {
 			sdgecko_setPageSize(exi_channel, 512);
 			sdgecko_enableCRC(exi_channel, false);
-			print_gecko("set size\r\n");
+			print_debug("set size\n");
 		}
 	}
 	else if(devices[DEVICE_PATCHES] == &__device_sd_a || devices[DEVICE_PATCHES] == &__device_sd_b || devices[DEVICE_PATCHES] == &__device_sd_c) {
@@ -1248,7 +1248,7 @@ void load_app(ExecutableFile *fileToPatch)
 		if(getExiDeviceByLocation(devices[DEVICE_PATCHES]->location, &exi_channel, NULL)) {
 			sdgecko_setPageSize(exi_channel, 512);
 			sdgecko_enableCRC(exi_channel, false);
-			print_gecko("set size\r\n");
+			print_debug("set size\n");
 		}
 	}
 	if(type == PATCH_BS2) {
@@ -1337,7 +1337,7 @@ void boot_dol(file_handle* file, int argc, char *argv[])
 	char fileName[PATHNAME_MAX];
 	memset(fileName, 0, PATHNAME_MAX);
 	strncpy(fileName, file->name, strrchr(file->name, '.') - file->name);
-	print_gecko("DOL file name without extension [%s]\r\n", fileName);
+	print_debug("DOL file name without extension [%s]\n", fileName);
 
 	// .iso disc image file
 	file_handle *imageFile = calloc(1, sizeof(file_handle));
@@ -1371,7 +1371,7 @@ void boot_dol(file_handle* file, int argc, char *argv[])
 	
 	// we found something, use parameters (.cli)
 	if(devices[DEVICE_CUR]->readFile(cliArgFile, NULL, 0) == 0 && cliArgFile->size) {
-		print_gecko("Argument file found [%s]\r\n", cliArgFile->name);
+		print_debug("Argument file found [%s]\n", cliArgFile->name);
 		char *cli_buffer = calloc(1, cliArgFile->size + 1);
 		if(cli_buffer) {
 			devices[DEVICE_CUR]->seekFile(cliArgFile, 0, DEVICE_HANDLER_SEEK_SET);
@@ -1397,7 +1397,7 @@ void boot_dol(file_handle* file, int argc, char *argv[])
 	
 	// we found something, parse and display parameters for selection (.dcp)
 	if(devices[DEVICE_CUR]->readFile(dcpArgFile, NULL, 0) == 0 && dcpArgFile->size) {
-		print_gecko("Argument file found [%s]\r\n", dcpArgFile->name);
+		print_debug("Argument file found [%s]\n", dcpArgFile->name);
 		char *dcp_buffer = calloc(1, dcpArgFile->size + 1);
 		if(dcp_buffer) {
 			devices[DEVICE_CUR]->seekFile(dcpArgFile, 0, DEVICE_HANDLER_SEEK_SET);
@@ -1552,7 +1552,7 @@ bool manage_file() {
 		concat_path(txtbuffer, parentPath, nameBuffer);
 		bool modified = (strcmp(&curFile.name[0], txtbuffer) != 0) && strlen(nameBuffer) > 0;
 		if(modified) {
-			print_gecko("Renaming %s to %s\r\n", &curFile.name[0], txtbuffer);
+			print_debug("Renaming %s to %s\n", &curFile.name[0], txtbuffer);
 			u32 ret = devices[DEVICE_CUR]->renameFile(&curFile, txtbuffer);
 			sprintf(txtbuffer, "%s renamed!\nPress A to continue.", isFile ? "File" : "Directory");
 			uiDrawObj_t *msgBox = DrawMessageBox(D_INFO, ret ? "Move Failed! Press A to continue" : txtbuffer);
@@ -1780,7 +1780,7 @@ bool manage_file() {
 			u32 lastOffset = 0;
 			int speed = 0;
 			int timeremain = 0;
-			print_gecko("Copying %i byte file from %s to %s\r\n", curFile.size, &curFile.name[0], destFile->name);
+			print_debug("Copying %i byte file from %s to %s\n", curFile.size, &curFile.name[0], destFile->name);
 			while(curOffset < curFile.size) {
 				u32 buttons = padsButtonsHeld();
 				if(buttons & PAD_BUTTON_B) {
@@ -2149,7 +2149,7 @@ void load_game() {
 		fileToPatch = select_alt_dol(filesToPatch, numToPatch);
 	}
 	if(fileToPatch != NULL) {
-		print_gecko("Alt DOL selected: %s\r\n", fileToPatch->name);
+		print_debug("Alt DOL selected: %s\n", fileToPatch->name);
 		gameID_set(&GCMDisk, fileToPatch->hash);
 	}
 	else if(tgcFile.magic == TGC_MAGIC) {

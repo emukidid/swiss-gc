@@ -328,7 +328,7 @@ int GetCharsThatFitInWidth(char *string, int max, float scale)
 	int strWidth = 0;
 	int charCount = 0;
 	char* string_work = string;
-	//print_gecko("String [%s] max %i\r\n", string, max);
+	//print_debug("String [%s] max %i\n", string, max);
 	while(*string_work)
 	{
 		unsigned char c = *string_work;

@@ -19,7 +19,7 @@ char *getDevicePath(char *path);
 char *getExternalPath(char *path);
 char *stripInvalidChars(char *str);
 void load_auto_dol();
-void print_gecko(const char* fmt, ...);
+void print_debug(const char *fmt, ...);
 bool update_recent();
 int find_existing_entry(char *entry, bool load);
 bool deleteFileOrDir(file_handle* entry);

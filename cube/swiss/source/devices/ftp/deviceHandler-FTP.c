@@ -79,7 +79,7 @@ void init_ftp() {
 		return;
 	}
 	res = ftpInitDevice("ftp", swissSettings.ftpUserName, swissSettings.ftpPassword, "/", swissSettings.ftpHostIp, swissSettings.ftpPort, swissSettings.ftpUsePasv);
-	print_gecko("ftpInitDevice %i \r\n",res);
+	print_debug("ftpInitDevice %i\n",res);
 	if(res) {
 		ftp_initialized = 1;
 	}

@@ -83,7 +83,7 @@ void init_samba() {
 		return;
 	}
 	res = smbInit(&swissSettings.smbUser[0], &swissSettings.smbPassword[0], &swissSettings.smbShare[0], &swissSettings.smbServerIp[0]);
-	print_gecko("SmbInit %i \r\n",res);
+	print_debug("smbInit %i\n",res);
 	if(res) {
 		smb_initialized = 1;
 	}

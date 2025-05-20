@@ -321,7 +321,7 @@ s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2, Executabl
 
 s32 fatFs_Mount(u8 devNum, char *path) {
 	if(fs[devNum] != NULL) {
-		print_gecko("Unmount %i devnum, %s path\r\n", devNum, path);
+		print_debug("Unmount %i devnum, %s path\n", devNum, path);
 		f_unmount(path);
 		free(fs[devNum]);
 		fs[devNum] = NULL;
@@ -332,14 +332,14 @@ s32 fatFs_Mount(u8 devNum, char *path) {
 
 void setSDGeckoSpeed(int slot, bool fast) {
 	sdgecko_setSpeed(slot, fast ? EXI_SPEED32MHZ : EXI_SPEED16MHZ);
-	print_gecko("SD speed set to %s\r\n", (fast ? "32MHz":"16MHz"));
+	print_debug("SD speed set to %s\n", (fast ? "32MHz":"16MHz"));
 }
 
 s32 deviceHandler_FAT_init(file_handle* file) {
 	int isSDCard = IS_SDCARD(file);
 	int slot = GET_SLOT(file);
 	file->status = 0;
-	print_gecko("Init %s %i\r\n", (isSDCard ? "SD":"ATA"), slot);
+	print_debug("Init %s %i\n", (isSDCard ? "SD":"ATA"), slot);
 	// SD Card - Slot A
 	if(isSDCard && slot == 0) {
 		setSDGeckoSpeed(slot, swissSettings.exiSpeed);
