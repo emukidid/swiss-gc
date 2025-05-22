@@ -23,6 +23,7 @@ char topStr[256];
 
 const char* getDeviceInfoString(u32 location) {
 	DEVICEHANDLER_INTERFACE *device = getDeviceByLocation(location);
+	s32 exi_channel, exi_device;
 	if(location == bba_exists(LOC_ANY)) {
 		sprintf(topStr, "%s (%s)", getHwNameByLocation(location), bba_address_str());
 	}
@@ -54,7 +55,6 @@ const char* getDeviceInfoString(u32 location) {
 		}
 	}
 	else if(device == &__device_sd_a || device == &__device_sd_b || device == &__device_sd_c) {
-		s32 exi_channel;
 		if(getExiDeviceByLocation(location, &exi_channel, NULL)) {
 			sprintf(topStr, "%u MHz %s", 1 << sdgecko_getSpeed(exi_channel), device->hwName);
 		}
@@ -67,6 +67,12 @@ const char* getDeviceInfoString(u32 location) {
 	}
 	else {
 		strcpy(topStr, getHwNameByLocation(location));
+	}
+	if(!strcmp(topStr, "Unknown") && getExiDeviceByLocation(location, &exi_channel, &exi_device)) {
+		u32 exi_id;
+		if(EXI_GetID(exi_channel, exi_device, &exi_id)) {
+			sprintf(topStr, "Unknown (0x%08X)", exi_id);
+		}
 	}
 	return topStr;
 }
