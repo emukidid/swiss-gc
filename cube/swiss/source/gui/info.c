@@ -151,7 +151,7 @@ uiDrawObj_t * info_draw_page(int page_num) {
 			}
 		}
 		else {
-			strcpy(topStr, "Wii");
+			strcpy(topStr, "Dummy");
 		}
 		DrawAddChild(container, DrawStyledLabel(640/2, 146, topStr, 0.75f, true, defaultColor));
 		
@@ -169,6 +169,20 @@ uiDrawObj_t * info_draw_page(int page_num) {
 		DrawAddChild(container, DrawStyledLabel(640/2, 330, (char*)"CPU ECID", 0.65f, true, defaultColor));
 		sprintf(topStr,"%08X:%08X:%08X:%08X",mfspr(ECID0),mfspr(ECID1),mfspr(ECID2),mfspr(ECID3));
 		DrawAddChild(container, DrawStyledLabel(640/2, 346, topStr, 0.75f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 370, (char*)"SYSTEM-ON-CHIP", 0.65f, true, defaultColor));
+		u32 chipid = ((vu32*)0xCC003000)[11];
+		if((chipid & 0xFFFFFFF) == 0x46500B1) {
+			if(is_gamecube()) {
+				sprintf(topStr, "ArtX Flipper Rev.%c", 'A' + (chipid >> 28));
+			}
+			else {
+				strcpy(topStr, "ATI Hollywood");
+			}
+		}
+		else {
+			sprintf(topStr, "Unknown (0x%08X)", chipid);
+		}
+		DrawAddChild(container, DrawStyledLabel(640/2, 386, topStr, 0.75f, true, defaultColor));
 	}
 	else if(page_num == 1) {
 		DrawAddChild(container, DrawLabel(30, 55, "Device Info (2/4):"));
