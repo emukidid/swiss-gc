@@ -164,21 +164,22 @@ uiDrawObj_t * info_draw_page(int page_num) {
 
 		// GC 00083214, 00083410
 		DrawAddChild(container, DrawStyledLabel(640/2, 290, (char*)"CPU PVR", 0.65f, true, defaultColor));
+		u32 coreMHz = SYS_GetCoreFrequency() / 1000000;
 		u32 pvr = mfpvr();
 		if((pvr & 0xFFFFF000) == 0x00083000) {
 			if((pvr & 0xFEF) == 0x203 || (pvr & 0xFFF) == 0x214) {
-				sprintf(topStr, "IBM Gekko DD%X.%Xe", (pvr >> 8) & 0xF, pvr & 0xF);
+				sprintf(topStr, "%u MHz IBM Gekko DD%X.%Xe", coreMHz, (pvr >> 8) & 0xF, pvr & 0xF);
 			}
 			else {
-				sprintf(topStr, "IBM Gekko DD%X.%X", (pvr >> 8) & 0xF, pvr & 0xF);
+				sprintf(topStr, "%u MHz IBM Gekko DD%X.%X", coreMHz, (pvr >> 8) & 0xF, pvr & 0xF);
 			}
 		}
 		else if((pvr & 0xFFFFF000) == 0x00087000) {
 			if((pvr & 0xFFF) == 0x110) {
-				sprintf(topStr, "IBM Broadway DD%X.%X%X", (pvr >> 8) & 0xF, pvr & 0xF, (pvr >> 4) & 0xF);
+				sprintf(topStr, "%u MHz IBM Broadway DD%X.%X%X", coreMHz, (pvr >> 8) & 0xF, pvr & 0xF, (pvr >> 4) & 0xF);
 			}
 			else {
-				sprintf(topStr, "IBM Broadway DD%X.%X", (pvr >> 8) & 0xF, pvr & 0xF);
+				sprintf(topStr, "%u MHz IBM Broadway DD%X.%X", coreMHz, (pvr >> 8) & 0xF, pvr & 0xF);
 			}
 		}
 		else {
@@ -191,17 +192,18 @@ uiDrawObj_t * info_draw_page(int page_num) {
 		DrawAddChild(container, DrawStyledLabel(640/2, 346, topStr, 0.75f, true, defaultColor));
 		
 		DrawAddChild(container, DrawStyledLabel(640/2, 370, (char*)"SYSTEM-ON-CHIP", 0.65f, true, defaultColor));
-		u32 chipid = ((vu32*)0xCC003000)[11];
-		if((chipid & 0xFFFFFFF) == 0x46500B1) {
+		u32 busMHz = SYS_GetBusFrequency() / 1000000;
+		u32 chipId = ((vu32*)0xCC003000)[11];
+		if((chipId & 0xFFFFFFF) == 0x46500B1) {
 			if(is_gamecube()) {
-				sprintf(topStr, "ArtX Flipper Rev.%c", 'A' + (chipid >> 28));
+				sprintf(topStr, "%u MHz ArtX Flipper Rev.%c", busMHz, 'A' + (chipId >> 28));
 			}
 			else {
-				strcpy(topStr, "ATI Hollywood");
+				sprintf(topStr, "%u MHz ATI Hollywood", busMHz);
 			}
 		}
 		else {
-			sprintf(topStr, "Unknown (0x%08X)", chipid);
+			sprintf(topStr, "Unknown (0x%08X)", chipId);
 		}
 		DrawAddChild(container, DrawStyledLabel(640/2, 386, topStr, 0.75f, true, defaultColor));
 	}

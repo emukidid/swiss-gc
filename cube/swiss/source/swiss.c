@@ -1024,14 +1024,14 @@ void load_app(ExecutableFile *fileToPatch)
 	
 	*(vu32*)(VAR_AREA+0x0028) = 0x01800000;
 	*(vu32*)(VAR_AREA+0x002C) = swissSettings.debugUSB ? SYS_CONSOLE_DEVELOPMENT_HW1 : SYS_CONSOLE_RETAIL_HW1;
-	*(vu32*)(VAR_AREA+0x002C) += ((vu32*)0xCC003000)[11] >> 28;
+	*(vu32*)(VAR_AREA+0x002C) += SYS_GetFlipperRevision();
 	*(vu32*)(VAR_AREA+0x00CC) = swissSettings.sramVideo;
 	*(vu32*)(VAR_AREA+0x00D0) = 0x01000000;
 	*(vu32*)(VAR_AREA+0x00E8) = 0x81800000 - topAddr;
 	*(vu32*)(VAR_AREA+0x00EC) = topAddr;
 	*(vu32*)(VAR_AREA+0x00F0) = 0x01800000;
-	*(vu32*)(VAR_AREA+0x00F8) = TB_BUS_CLOCK;
-	*(vu32*)(VAR_AREA+0x00FC) = TB_CORE_CLOCK;
+	*(vu32*)(VAR_AREA+0x00F8) = SYS_GetBusFrequency();
+	*(vu32*)(VAR_AREA+0x00FC) = SYS_GetCoreFrequency();
 	
 	// Copy the game header to 0x80000000
 	memcpy(VAR_AREA,(void*)&GCMDisk,0x20);

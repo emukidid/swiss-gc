@@ -153,10 +153,10 @@ void __SYS_PreInit(void)
 	else
 		*(u32 *)0x8000002C = SYS_CONSOLE_DEVELOPMENT_HW1;
 
-	*(u32 *)0x8000002C += ((vu32 *)0xCC003000)[11] >> 28;
+	*(u32 *)0x8000002C += SYS_GetFlipperRevision();
 
-	*(u32 *)0x800000F8 = TB_BUS_CLOCK;
-	*(u32 *)0x800000FC = TB_CORE_CLOCK;
+	*(u32 *)0x800000F8 = SYS_GetBusFrequency();
+	*(u32 *)0x800000FC = SYS_GetCoreFrequency();
 
 	memcpy((void *)0x80001800, stub_bin, stub_bin_size);
 	DCFlushRangeNoSync((void *)0x80001800, stub_bin_size);
