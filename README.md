@@ -18,7 +18,7 @@ Swiss aims to be an all-in-one homebrew utility for the Nintendo GameCube.
 - [Qoob Pro](https://www.gc-forever.com/wiki/index.php?title=Qoob) flash memory
 - [USB Gecko](https://www.gc-forever.com/wiki/index.php?title=USBGecko) remote file storage
 - [WASP](https://www.gc-forever.com/wiki/index.php?title=WASP_Fusion) / [Wiikey Fusion](https://www.gc-forever.com/wiki/index.php?title=Wiikey_Fusion)
-- SMB, FTP, FSP via Broadband Adapter, ENC28J60, W5500 or W6100
+- SMB, FTP, FSP via Broadband Adapter, ENC28J60, W5500, W6100 or W6300
 - [WODE Jukebox](https://www.gc-forever.com/wiki/index.php?title=Wii_Optical_Drive_Emulator)
 - [IDE-EXI](https://www.gc-forever.com/wiki/index.php?title=IDE-EXI) or M.2 Loader
 - Memory Cards

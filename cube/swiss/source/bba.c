@@ -38,12 +38,6 @@ static void *net_thread_func(void *arg)
 
 	char ifname[4];
 	if (if_indextoname(1, ifname)) {
-		switch (ifname[0]) {
-			case 'e': bba_device_str = "Broadband Adapter";  break;
-			case 'E': bba_device_str = "ENC28J60";           break;
-			case 'W': bba_device_str = "WIZnet W5500";       break;
-			case 'w': bba_device_str = "WIZnet W6100";       break;
-		}
 		if (strchr("EWw", ifname[0])) {
 			switch (ifname[1]) {
 				case 'A': bba_location = LOC_MEMCARD_SLOT_A; break;
@@ -53,6 +47,21 @@ static void *net_thread_func(void *arg)
 			}
 		} else if (ifname[0] == 'e')
 			bba_location = LOC_SERIAL_PORT_1;
+
+		switch (ifname[0]) {
+			case 'e': bba_device_str = "Broadband Adapter";  break;
+			case 'E': bba_device_str = "ENC28J60";           break;
+			case 'W': bba_device_str = "WIZnet W5500";       break;
+			case 'w': bba_device_str = "WIZnet W6X00";
+				u32 id;
+				if (getExiIdByLocation(bba_location, &id)) {
+					switch (id) {
+						case EXI_W5500_ID: bba_device_str = "WIZnet W6100"; break;
+						case EXI_W6300_ID: bba_device_str = "WIZnet W6300"; break;
+					}
+				}
+				break;
+		}
 
 		if (strchr("EWw", ifname[0]) && strchr("12AB", ifname[1])) {
 			__device_flippy.emulable |= EMU_ETHERNET;
@@ -112,30 +121,34 @@ u32 bba_exists(u32 location)
 
 	if ((location & LOC_SERIAL_PORT_1) && EXI_GetID(EXI_CHANNEL_0, EXI_DEVICE_2, &id)) {
 		switch (id) {
-			case EXI_WIZNET_ID:
+			case EXI_W5500_ID:
 			case EXI_MX98730EC_ID:
 			case EXI_ENC28J60_ID:
+			case EXI_W6300_ID:
 				return LOC_SERIAL_PORT_1;
 		}
 	}
 	if ((location & LOC_SERIAL_PORT_2) && EXI_GetID(EXI_CHANNEL_2, EXI_DEVICE_0, &id)) {
 		switch (id) {
-			case EXI_WIZNET_ID:
+			case EXI_W5500_ID:
 			case EXI_ENC28J60_ID:
+			case EXI_W6300_ID:
 				return LOC_SERIAL_PORT_2;
 		}
 	}
 	if ((location & LOC_MEMCARD_SLOT_A) && EXI_GetID(EXI_CHANNEL_0, EXI_DEVICE_0, &id)) {
 		switch (id) {
-			case EXI_WIZNET_ID:
+			case EXI_W5500_ID:
 			case EXI_ENC28J60_ID:
+			case EXI_W6300_ID:
 				return LOC_MEMCARD_SLOT_A;
 		}
 	}
 	if ((location & LOC_MEMCARD_SLOT_B) && EXI_GetID(EXI_CHANNEL_1, EXI_DEVICE_0, &id)) {
 		switch (id) {
-			case EXI_WIZNET_ID:
+			case EXI_W5500_ID:
 			case EXI_ENC28J60_ID:
+			case EXI_W6300_ID:
 				return LOC_MEMCARD_SLOT_B;
 		}
 	}

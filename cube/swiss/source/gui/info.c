@@ -5,6 +5,7 @@
 #include <malloc.h>
 #include <gccore.h>
 #include <ogc/exi.h>
+#include <ogc/libversion.h>
 #include <ogc/machine/processor.h>
 #include "deviceHandler.h"
 #include "FrameBufferMagic.h"
@@ -24,6 +25,7 @@ char topStr[256];
 const char* getDeviceInfoString(u32 location) {
 	DEVICEHANDLER_INTERFACE *device = getDeviceByLocation(location);
 	s32 exi_channel, exi_device;
+	u32 exi_id;
 	if(location == bba_exists(LOC_ANY)) {
 		sprintf(topStr, "%s (%s)", getHwNameByLocation(location), bba_address_str());
 	}
@@ -68,11 +70,8 @@ const char* getDeviceInfoString(u32 location) {
 	else {
 		strcpy(topStr, getHwNameByLocation(location));
 	}
-	if(!strcmp(topStr, "Unknown") && getExiDeviceByLocation(location, &exi_channel, &exi_device)) {
-		u32 exi_id;
-		if(EXI_GetID(exi_channel, exi_device, &exi_id)) {
-			sprintf(topStr, "Unknown (0x%08X)", exi_id);
-		}
+	if(!strcmp(topStr, "Unknown") && getExiIdByLocation(location, &exi_id)) {
+		sprintf(topStr, "Unknown (0x%08X)", exi_id);
 	}
 	return topStr;
 }
@@ -230,13 +229,14 @@ uiDrawObj_t * info_draw_page(int page_num) {
 		DrawAddChild(container, DrawLabel(30, 55, "Version Info (3/4):"));
 		DrawAddChild(container, DrawStyledLabel(640/2, 115, "Swiss version 0.6", 1.0f, true, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(640/2, 140, "by emu_kidid & Extrems, 2025", 0.75f, true, defaultColor));
-		sprintf(topStr, "Commit %s Revision %s", GIT_COMMIT, GIT_REVISION);
+		sprintf(topStr, "Commit %s; Revision %s", GIT_COMMIT, GIT_REVISION);
 		DrawAddChild(container, DrawStyledLabel(640/2, 165, topStr, 0.75f, true, defaultColor));
-		DrawAddChild(container, DrawStyledLabel(640/2, 220, "Source/Updates/Issues", 0.75f, true, defaultColor));
-		DrawAddChild(container, DrawStyledLabel(640/2, 244, "github.com/emukidid/swiss-gc", 0.64f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 190, "Built with " _V_STRING, 0.64f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 240, "Source/Updates/Issues", 0.75f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 264, "github.com/emukidid/swiss-gc", 0.64f, true, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(640/2, 310, "Web/Support", 0.75f, true, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(640/2, 334, "www.gc-forever.com", 0.64f, true, defaultColor));
-		DrawAddChild(container, DrawStyledLabel(640/2, 378, "Visit us on IRC at EFNet/#gc-forever", 0.75f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 378, "Visit us on IRC at EFnet/#gc-forever", 0.75f, true, defaultColor));
 	}
 	else if(page_num == 3) {
 		DrawAddChild(container, DrawLabel(30, 55, "Greetings (4/4):"));

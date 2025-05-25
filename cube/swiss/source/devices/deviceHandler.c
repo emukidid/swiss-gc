@@ -168,6 +168,14 @@ bool getExiInterruptByLocation(u32 location, s32 *chan) {
 	return false;
 }
 
+bool getExiIdByLocation(u32 location, u32 *id) {
+	s32 chan, dev;
+	if(getExiDeviceByLocation(location, &chan, &dev)) {
+		return EXI_GetID(chan, dev, id);
+	}
+	return false;
+}
+
 vu32* getExiRegsByLocation(u32 location) {
 	s32 chan;
 	if(getExiDeviceByLocation(location, &chan, NULL)) {
