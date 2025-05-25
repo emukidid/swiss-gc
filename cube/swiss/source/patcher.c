@@ -199,6 +199,9 @@ int install_code(int final)
 				} else if (!strcmp(bba_device_str, "WIZnet W6100")) {
 					patch     = !_ideexi_version ? ideexi_v1_w6100_eth_bin      : ideexi_v2_w6100_eth_bin;
 					patchSize = !_ideexi_version ? ideexi_v1_w6100_eth_bin_size : ideexi_v2_w6100_eth_bin_size;
+				} else if (!strcmp(bba_device_str, "WIZnet W6300")) {
+					patch     = !_ideexi_version ? ideexi_v1_w6300_eth_bin      : ideexi_v2_w6300_eth_bin;
+					patchSize = !_ideexi_version ? ideexi_v1_w6300_eth_bin_size : ideexi_v2_w6300_eth_bin_size;
 				} else
 					return 0;
 				break;
@@ -234,6 +237,9 @@ int install_code(int final)
 					} else if (!strcmp(bba_device_str, "WIZnet W6100")) {
 						patch     = sd_v1_w6100_eth_bin;
 						patchSize = sd_v1_w6100_eth_bin_size;
+					} else if (!strcmp(bba_device_str, "WIZnet W6300")) {
+						patch     = sd_v1_w6300_eth_bin;
+						patchSize = sd_v1_w6300_eth_bin_size;
 					} else
 						return 0;
 					break;
@@ -265,6 +271,9 @@ int install_code(int final)
 					} else if (!strcmp(bba_device_str, "WIZnet W6100")) {
 						patch     = sd_v2_w6100_eth_bin;
 						patchSize = sd_v2_w6100_eth_bin_size;
+					} else if (!strcmp(bba_device_str, "WIZnet W6300")) {
+						patch     = sd_v2_w6300_eth_bin;
+						patchSize = sd_v2_w6300_eth_bin_size;
 					} else
 						return 0;
 					break;
@@ -407,6 +416,9 @@ int install_code(int final)
 					} else if (!strcmp(bba_device_str, "WIZnet W6100")) {
 						patch     = gcloader_v2_w6100_eth_bin;
 						patchSize = gcloader_v2_w6100_eth_bin_size;
+					} else if (!strcmp(bba_device_str, "WIZnet W6300")) {
+						patch     = gcloader_v2_w6300_eth_bin;
+						patchSize = gcloader_v2_w6300_eth_bin_size;
 					} else
 						return 0;
 					break;
@@ -440,6 +452,9 @@ int install_code(int final)
 				} else if (!strcmp(bba_device_str, "WIZnet W6100")) {
 					patch     = flippy_w6100_eth_bin;
 					patchSize = flippy_w6100_eth_bin_size;
+				} else if (!strcmp(bba_device_str, "WIZnet W6300")) {
+					patch     = flippy_w6300_eth_bin;
+					patchSize = flippy_w6300_eth_bin_size;
 				} else
 					return 0;
 				break;

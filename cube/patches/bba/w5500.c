@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2024, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2024-2025, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -114,7 +114,7 @@ static void w5500_read_cmd(uint32_t cmd, void *buf, uint32_t len)
 
 static void w5500_write_cmd(uint32_t cmd, const void *buf, uint32_t len)
 {
-	cmd |= W5500_RWB;
+	cmd |=  W5500_RWB;
 	cmd  = (cmd << 16) | (cmd >> 16);
 
 	exi_select();

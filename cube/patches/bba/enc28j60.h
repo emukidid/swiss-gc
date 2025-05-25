@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2023-2024, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2023-2025, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -21,6 +21,8 @@
 #define ENC28J60_H
 
 #include "dolphin/exi.h"
+
+#define ENC28J60_CID (0xFA050000)
 
 #define ENC28J60_CMD_RCR(x) ((0x00 | ((x) & 0x1F)) << 24) // Read Control Register
 #define ENC28J60_CMD_RBM    ((0x3A) << 24)                // Read Buffer Memory

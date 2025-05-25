@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2019-2023, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2019-2025, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -21,6 +21,8 @@
 #define BBA_H
 
 #include <stdint.h>
+
+#define BBA_CID					0x04020200
 
 #define BBA_CMD_IRMASKALL		0x00
 #define BBA_CMD_IRMASKNONE		0xF8

@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2024, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2024-2025, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -19,6 +19,8 @@
 
 #ifndef W5500_H
 #define W5500_H
+
+#define W5500_CID (0x03000000)
 
 #define W5500_BSB(x)         (((x) & 0x1F) << 27) // Block Select Bits
 #define W5500_RWB                       (1 << 26) // Read/Write Access Mode Bit
