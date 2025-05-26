@@ -13,19 +13,26 @@ Swiss aims to be an all-in-one homebrew utility for the Nintendo GameCube.
 
 ### Main Features
 **Can browse the following devices**
-- SDSC/SDHC/SDXC Card via [SD Gecko](https://www.gc-forever.com/wiki/index.php?title=SDGecko) or [SD2SP2](https://github.com/Extrems/SD2SP2)
-- DVD (-/+R) or original GameCube discs via Disc Drive
+- SDSC/SDHC/SDXC Cards via [SD Gecko](https://www.gc-forever.com/wiki/index.php?title=SDGecko) or [SD2SP2](https://github.com/Extrems/SD2SP2)
+- DVD±R or original GameCube discs via Disc Drive
 - [Qoob Pro](https://www.gc-forever.com/wiki/index.php?title=Qoob) flash memory
 - [USB Gecko](https://www.gc-forever.com/wiki/index.php?title=USBGecko) remote file storage
 - [WASP](https://www.gc-forever.com/wiki/index.php?title=WASP_Fusion) / [Wiikey Fusion](https://www.gc-forever.com/wiki/index.php?title=Wiikey_Fusion)
-- SMB, FTP, FSP via Broadband Adapter, ENC28J60, W5500, W6100 or W6300
+- SMB, FTP, FSP via [Broadband Adapter](https://www.gc-forever.com/wiki/index.php?title=Broadband_Adapter), ENC28J60, W5500, W6100 or W6300
 - [WODE Jukebox](https://www.gc-forever.com/wiki/index.php?title=Wii_Optical_Drive_Emulator)
 - [IDE-EXI](https://www.gc-forever.com/wiki/index.php?title=IDE-EXI) or M.2 Loader
 - Memory Cards
-- [GC Loader](https://www.gc-forever.com/wiki/index.php?title=GCLoader)
+- [GC Loader](https://www.gc-forever.com/wiki/index.php?title=GCLoader) or CUBEODE
 - [FlippyDrive](https://www.gc-forever.com/wiki/index.php?title=FlippyDrive)
 
+**Can emulate the following devices**
+- Disc Drive
+- Broadband Adapter via [ENC28J60](https://www.microchip.com/en-us/product/enc28j60), [W5500](https://wiznet.io/products/iethernet-chips/w5500), [W6100](https://wiznet.io/products/iethernet-chips/w6100) or [W6300](https://wiznet.io/products/iethernet-chips/w6300)
+- Memory Cards via SD Cards
+
 **Can provide the following services**
+- Game ID for BlueRetro, MemCard PRO GC and PixelFX RetroGEM GC
+- Profile selection for RetroTINK-4K via [ser2net](https://github.com/cminyard/ser2net)
 - Return to loader and environment setup for [libogc2](https://github.com/extremscorner/libogc2) applications
 - Return to loader for older applications using a legacy mechanism
 - [wiiload](https://wiibrew.org/wiki/Wiiload) v0.5 over TCP/IP
