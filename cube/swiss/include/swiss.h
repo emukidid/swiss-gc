@@ -17,6 +17,7 @@
 #include "video.h"
 #include "input.h"
 #include <sdcard/card_cmn.h>
+#include "config.h"
 #include "deviceHandler.h"
 #include "gui/FrameBufferMagic.h"
 
@@ -65,19 +66,19 @@ extern u32 __SYS_SyncSram(void);
 extern u32 __SYS_CheckSram(void);
 extern void __SYS_ReadROM(void *buf,u32 len,u32 offset);
 
-extern uiDrawObj_t * renderFileBrowser(file_handle** directory, int num_files, uiDrawObj_t *container);
+extern uiDrawObj_t* renderFileBrowser(file_handle** directory, int num_files, uiDrawObj_t* filePanel);
 
 extern void menu_loop();
 extern void boot_dol(file_handle* file, int argc, char *argv[]);
 extern bool manage_file();
 extern void load_file();
-extern int check_game();
+extern int check_game(file_handle *file, file_handle *file2, ExecutableFile *filesToPatch);
 extern int cheats_game();
 extern void install_game();
-extern int info_game();
+extern int info_game(ConfigEntry *config);
 extern void settings();
 extern void credits();
-extern void drawFiles(file_handle** directory, int num_files, uiDrawObj_t *container);
+extern void drawFiles(file_handle** directory, int num_files, uiDrawObj_t *containerPanel);
 
 extern void select_speed();
 extern int select_slot();

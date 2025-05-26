@@ -1,7 +1,6 @@
 #ifndef CONFIG_H_
 #define CONFIG_H_
 
-#include "swiss.h"
 typedef struct {
 	char game_id[4 + 1];
 	char game_name[64 + 1];

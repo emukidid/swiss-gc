@@ -471,7 +471,7 @@ s32 deviceHandler_SYS_closeFile(file_handle* file) {
 	return 0;
 }
 
-s32 deviceHandler_SYS_deinit() {
+s32 deviceHandler_SYS_deinit(file_handle* file) {
 	return 0;
 }
 

@@ -665,9 +665,7 @@ enum {
 #define W6X00_Sn_MR2_FARP               (1 << 0) // Force ARP
 
 #define W6100_TX_BUFSIZE  (W6100_INIT_S0_TX_BSR * 1024)
-#define W6100_TX_QUEUELEN ((W6100_TX_BUFSIZE * 27) / (1536 * 20))
-
 #define W6300_TX_BUFSIZE  (W6300_INIT_S0_TX_BSR * 1024)
-#define W6300_TX_QUEUELEN ((W6300_TX_BUFSIZE * 27) / (1536 * 20))
+#define W6X00_TX_QUEUELEN ((W6300_TX_BUFSIZE * 27) / (1536 * 20))
 
 #endif /* W6X00_H */

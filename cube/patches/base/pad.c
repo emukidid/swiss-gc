@@ -18,6 +18,7 @@
  */
 
 #include <stdlib.h>
+#include <string.h>
 #include "common.h"
 #include "dolphin/os.h"
 #include "dolphin/pad.h"

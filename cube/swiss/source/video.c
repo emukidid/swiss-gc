@@ -161,8 +161,8 @@ GXRModeObj *getVideoModeFromSwissSetting(int uiVMode) {
 	return getVideoMode();
 }
 
-static void ProperScanPADS() {
-	PAD_ScanPads(); 
+static void ProperScanPADS(u32 retrace) {
+	PAD_ScanPads();
 }
 
 GXRModeObj* getVideoMode() {

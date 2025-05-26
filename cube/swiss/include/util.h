@@ -18,7 +18,7 @@ bool getParentPath(char *path, char *parentPath);
 char *getDevicePath(char *path);
 char *getExternalPath(char *path);
 char *stripInvalidChars(char *str);
-void load_auto_dol();
+void load_auto_dol(int argc, char *argv[]);
 void print_debug(const char *fmt, ...);
 bool update_recent();
 int find_existing_entry(char *entry, bool load);
