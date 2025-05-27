@@ -152,7 +152,8 @@ int config_update_global(bool checkConfigDevice) {
 	fprintf(fp, "Swiss Video Mode=%s\r\n", uiVModeStr[swissSettings.uiVMode]);
 	fprintf(fp, "USB Gecko debug output=%s\r\n", debugUSBStr[swissSettings.debugUSB]);
 	fprintf(fp, "Hide Unknown file types=%s\r\n", swissSettings.hideUnknownFileTypes ? "Yes":"No");
-	fprintf(fp, "Stop DVD Motor on startup=%s\r\n", swissSettings.stopMotor ? "Yes":"No");
+	fprintf(fp, "Init DVD Drive at startup=%s\r\n", swissSettings.initDVDDriveAtStart ? "Yes":"No");
+	fprintf(fp, "Stop DVD Drive motor=%s\r\n", swissSettings.stopMotor ? "Yes":"No");
 	fprintf(fp, "Enable WiiRD debug=%s\r\n", swissSettings.wiirdDebug ? "Yes":"No");
 	fprintf(fp, "Enable File Management=%s\r\n", swissSettings.enableFileManagement ? "Yes":"No");
 	fprintf(fp, "Disable MemCard PRO GameID=%s\r\n", disableMCPGameIDStr[swissSettings.disableMCPGameID]);
@@ -810,7 +811,10 @@ void config_parse_global(char *configData) {
 				else if(!strcmp("Hide Unknown file types", name)) {
 					swissSettings.hideUnknownFileTypes = !strcmp("Yes", value);
 				}
-				else if(!strcmp("Stop DVD Motor on startup", name)) {
+				else if(!strcmp("Init DVD Drive at startup", name)) {
+					swissSettings.initDVDDriveAtStart = !strcmp("Yes", value);
+				}
+				else if(!strcmp("Stop DVD Motor on startup", name) || !strcmp("Stop DVD Drive motor", name)) {
 					swissSettings.stopMotor = !strcmp("Yes", value);
 				}
 				else if(!strcmp("Enable WiiRD debug", name)) {

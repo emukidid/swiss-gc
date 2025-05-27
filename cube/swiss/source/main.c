@@ -39,7 +39,9 @@
 #include "aram/sidestep.h"
 #include "devices/filemeta.h"
 
-dvdcmdblk commandBlock;
+dvdcmdblk DVDCommandBlock;
+dvdcmdblk DVDInquiryBlock;
+dvdcmdblk DVDStopMotorBlock;
 dvddrvinfo DVDDriveInfo[2] __attribute__((aligned(32)));
 u16* const DVDDeviceCode = (u16*)0x800030E6;
 dvddiskid* DVDDiskID = (dvddiskid*)0x80000000;
@@ -328,11 +330,13 @@ int main(int argc, char *argv[])
 	
 	DEVICEHANDLER_INTERFACE *device = getDeviceByLocation(LOC_DVD_CONNECTOR);
 	if(device == &__device_dvd) {
-		if(DVD_GetCmdBlockStatus(&commandBlock) == DVD_STATE_END) {
-			// DVD Motor off setting
-			if(swissSettings.stopMotor) {
-				DVD_StopMotor(&commandBlock);
-			}
+		if(swissSettings.initDVDDriveAtStart) {
+			DVD_Reset(DVD_RESETNONE);
+			DVD_Resume();
+		}
+		// DVD Motor off setting
+		if(swissSettings.stopMotor && DVD_GetDriveStatus() != DVD_STATE_PAUSING) {
+			DVD_StopMotorAsync(&DVDStopMotorBlock, NULL);
 		}
 	}
 	else if(device == &__device_flippy) {
@@ -400,12 +404,12 @@ int main(int argc, char *argv[])
 // Checks if devices are available, prints name of device being detected for slow init devices
 void populateDeviceAvailability() {
 	uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Detecting devices\205\nThis can be skipped by holding B next time"));
-	while(DVD_GetCmdBlockStatus(&commandBlock) == DVD_STATE_BUSY) {
+	while(DVD_GetCmdBlockStatus(&DVDInquiryBlock) == DVD_STATE_BUSY) {
 		if(DVD_LowGetCoverStatus() == DVD_COVER_OPEN) {
 			break;
 		}
 		if(padsButtonsHeld() & PAD_BUTTON_B) {
-			DVD_CancelAsync(&commandBlock, NULL);
+			DVD_CancelAsync(&DVDInquiryBlock, NULL);
 			break;
 		}
 	}
@@ -420,12 +424,12 @@ void populateDeviceAvailability() {
 }
 
 void refreshDeviceCode(bool subdevice) {
-	switch(DVD_GetCmdBlockStatus(&commandBlock)) {
+	switch(DVD_GetCmdBlockStatus(&DVDInquiryBlock)) {
 		case DVD_STATE_END:
 		case DVD_STATE_FATAL_ERROR:
 		case DVD_STATE_CANCELED:
-			DVD_SetUserData(&commandBlock, &DVDDriveInfo[subdevice]);
-			DVD_InquiryAsync(&commandBlock, &DVDDriveInfo[subdevice], driveInfoCallback);
+			DVD_SetUserData(&DVDInquiryBlock, &DVDDriveInfo[subdevice]);
+			DVD_InquiryAsync(&DVDInquiryBlock, &DVDDriveInfo[subdevice], driveInfoCallback);
 			break;
 	}
 }

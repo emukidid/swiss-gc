@@ -39,7 +39,9 @@ extern char* _menu_array[];
 extern file_handle curFile;
 extern file_handle curDir;
 extern char IPLInfo[256] __attribute__((aligned(32)));
-extern dvdcmdblk commandBlock;
+extern dvdcmdblk DVDCommandBlock;
+extern dvdcmdblk DVDInquiryBlock;
+extern dvdcmdblk DVDStopMotorBlock;
 extern dvddrvinfo DVDDriveInfo[2];
 extern u16* const DVDDeviceCode;
 extern dvddiskid* DVDDiskID;
@@ -112,6 +114,7 @@ typedef struct {
 	int sram60Hz;
 	int sramProgressive;
 	int sramStereo;
+	int initDVDDriveAtStart;
 	int stopMotor;
 	int enableFileManagement;
 	int disableMCPGameID;

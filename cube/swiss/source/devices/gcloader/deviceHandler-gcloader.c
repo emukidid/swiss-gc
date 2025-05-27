@@ -309,10 +309,10 @@ bool deviceHandler_GCLoader_test() {
 			__device_gcloader.hwName = "GC Loader compatible";
 			__device_gcloader.deviceTexture = (textureImage){TEX_GCODE, 115, 98, 120, 100};
 			
-			if (DVD_PrepareStreamAbs(&commandBlock, 32*1024, 0) == DVD_ERROR_OK &&
-				(u8)DVD_GetStreamErrorStatus(&commandBlock) == TRUE &&
-				DVD_CancelStream(&commandBlock) == DVD_ERROR_OK &&
-				(u8)DVD_GetStreamErrorStatus(&commandBlock) == FALSE)
+			if (DVD_PrepareStreamAbs(&DVDCommandBlock, 32*1024, 0) == DVD_ERROR_OK &&
+				(u8)DVD_GetStreamErrorStatus(&DVDCommandBlock) == TRUE &&
+				DVD_CancelStream(&DVDCommandBlock) == DVD_ERROR_OK &&
+				(u8)DVD_GetStreamErrorStatus(&DVDCommandBlock) == FALSE)
 				__device_gcloader.features |=  FEAT_AUDIO_STREAMING;
 			else
 				__device_gcloader.features &= ~FEAT_AUDIO_STREAMING;

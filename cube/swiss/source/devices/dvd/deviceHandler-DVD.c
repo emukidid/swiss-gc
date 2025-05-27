@@ -168,7 +168,7 @@ int initialize_disc(u32 streaming) {
 		}
 	}
 	else {  //Wii, in GC Mode
-		DVD_Reset(DVD_RESETHARD);
+		dvd_reset();
 		dvd_read_id();
 		if((streaming == ENABLE_AUDIO) || (streaming == DISABLE_AUDIO)) {
 			dvd_set_streaming(streaming);

@@ -62,7 +62,8 @@ static char *tooltips_global[PAGE_GLOBAL_MAX+1] = {
 	NULL,
 	"Hide unknown file types:\n\nDisabled - Show all files (default)\nEnabled - Swiss will hide unknown file types from being displayed\n\nKnown file types are:\n GameCube Executables (.bin/.dol/.elf)\n Disc images (.gcm/.iso/.nkit.iso/.tgc)\n MP3 Music (.mp3)\n WASP/WKF Flash files (.fzn)\n GameCube Memory Card Files (.gci/.gcs/.sav)\n GameCube Executables with parameters appended (.dol+cli)",
 	"Flatten directory:\n\nFlattens a directory structure matching a glob pattern.",
-	"Stop DVD Motor at startup:\n\nDisabled - Leave it as-is (default)\nEnabled - Stop the DVD drive from spinning when Swiss starts\n\nThis option is mostly for users booting from game\nexploits where the disc will already be spinning.",
+	"Init DVD Drive at startup:\n\nDisabled - Leave it as-is (default)\nEnabled - Deassert reset signal when Swiss starts\n\nThis is necessary for the eject button to function on the\nPanasonic Q when Swiss is used as IPL replacement.",
+	"Stop DVD Drive motor:\n\nDisabled - Leave it as-is (default)\nEnabled - Stop the disc from spinning when Swiss starts\n\nThis option is mostly for users booting from game save\nexploits where the disc will already be spinning.",
 	"SD/IDE Speed:\n\nThe clock speed to try using on the EXI bus for SD Card Adapter\nand IDE-EXI devices. 32 MHz may not work with some SD cards\nor SD card adapters.",
 	"AVE Compatibility:\n\nSets the compatibility mode for the used audio/video encoder.\n\nAVE N-DOL - Output PAL as NTSC 50\nAVE P-DOL - Disable progressive scan mode\nCMPV-DOL - Enable 1080i & 540p\nGCDigital - Apply input filtering in OSD\nGCVideo - Apply general workarounds for GCVideo (default)\nAVE-RVL - Support 960i & 1152i without WiiVideo",
 	"Force DTV Status:\n\nDisabled - Use detect signal from the Digital AV Out (default)\nEnabled - Force detection in the case of a hardware fault",
@@ -225,7 +226,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 		bool dtvEnable = !in_range(swissSettings.aveCompat, AVE_N_DOL_COMPAT, AVE_P_DOL_COMPAT);
 		bool rt4kEnable = in_range(swissSettings.aveCompat, GCDIGITAL_COMPAT, GCVIDEO_COMPAT);
 		// TODO settings to a new typedef that ties type etc all together, then draw a "page" of these rather than this at some point.
-		if(option < SET_STOP_MOTOR) {
+		if(option < SET_INIT_DRIVE) {
 			drawSettingEntryString(page, &page_y_ofs, "System Sound:", swissSettings.sramStereo ? "Stereo":"Mono", option == SET_SYS_SOUND, true);
 			sprintf(sramHOffsetStr, "%+hi", swissSettings.sramHOffset);
 			drawSettingEntryString(page, &page_y_ofs, "Screen Position:", sramHOffsetStr, option == SET_SCREEN_POS, true);
@@ -239,7 +240,8 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 			drawSettingEntryBoolean(page, &page_y_ofs, "Hide unknown file types:", swissSettings.hideUnknownFileTypes, option == SET_HIDE_UNK, true);
 			drawSettingEntryString(page, &page_y_ofs, "Flatten directory:", swissSettings.flattenDir, option == SET_FLATTEN_DIR, true);
 		} else {
-			drawSettingEntryBoolean(page, &page_y_ofs, "Stop DVD Motor at startup:", swissSettings.stopMotor, option == SET_STOP_MOTOR, true);
+			drawSettingEntryBoolean(page, &page_y_ofs, "Init DVD Drive at startup:", swissSettings.initDVDDriveAtStart, option == SET_INIT_DRIVE, true);
+			drawSettingEntryBoolean(page, &page_y_ofs, "Stop DVD Drive motor:", swissSettings.stopMotor, option == SET_STOP_MOTOR, true);
 			drawSettingEntryString(page, &page_y_ofs, "SD/IDE Speed:", swissSettings.exiSpeed ? "32 MHz":"16 MHz", option == SET_EXI_SPEED, true);
 			drawSettingEntryString(page, &page_y_ofs, "AVE Compatibility:", aveCompatStr[swissSettings.aveCompat], option == SET_AVE_COMPAT, true);
 			drawSettingEntryBoolean(page, &page_y_ofs, "Force DTV Status:", swissSettings.forceDTVStatus, option == SET_FORCE_DTVSTATUS, dtvEnable);
@@ -497,6 +499,9 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 			break;
 			case SET_FLATTEN_DIR:
 				DrawGetTextEntry(ENTRYMODE_NUMERIC|ENTRYMODE_ALPHA, "Flatten directory", &swissSettings.flattenDir, sizeof(swissSettings.flattenDir) - 1);
+			break;
+			case SET_INIT_DRIVE:
+				swissSettings.initDVDDriveAtStart ^= 1;
 			break;
 			case SET_STOP_MOTOR:
 				swissSettings.stopMotor ^= 1;

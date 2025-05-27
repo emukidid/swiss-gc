@@ -1890,8 +1890,8 @@ void verify_game()
 			AUDIO_SetStreamVolLeft(0);
 			AUDIO_SetStreamVolRight(0);
 			AUDIO_SetStreamPlayState(AI_STREAM_START);
-			DVD_PrepareStreamAbs(&commandBlock, curFile.size & ~(32*1024-1), 0);
-			DVD_StopStreamAtEnd(&commandBlock);
+			DVD_PrepareStreamAbs(&DVDCommandBlock, curFile.size & ~(32*1024-1), 0);
+			DVD_StopStreamAtEnd(&DVDCommandBlock);
 		}
 	}
 	
@@ -1953,7 +1953,7 @@ void verify_game()
 fail:
 	if(devices[DEVICE_CUR]->location == LOC_DVD_CONNECTOR) {
 		if(swissSettings.audioStreaming) {
-			DVD_CancelStream(&commandBlock);
+			DVD_CancelStream(&DVDCommandBlock);
 			AUDIO_SetStreamPlayState(AI_STREAM_STOP);
 		}
 		devices[DEVICE_CUR]->closeFile(&curFile);

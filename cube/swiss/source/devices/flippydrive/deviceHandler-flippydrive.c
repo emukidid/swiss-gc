@@ -325,7 +325,7 @@ bool deviceHandler_Flippy_test() {
 				if (flippy_bypass(false) != FLIPPY_RESULT_OK)
 					return false;
 				
-				if (DVD_Inquiry(&commandBlock, DVDDriveInfo) < 0) {
+				if (DVD_Inquiry(&DVDCommandBlock, DVDDriveInfo) < 0) {
 					swissSettings.hasDVDDrive = 0;
 					*DVDDeviceCode = 0x0001;
 					return false;
@@ -339,7 +339,7 @@ bool deviceHandler_Flippy_test() {
 					return false;
 				
 				while (DVDDriveInfo->rel_date != 0x20220426) {
-					if (DVD_Inquiry(&commandBlock, DVDDriveInfo) < 0) {
+					if (DVD_Inquiry(&DVDCommandBlock, DVDDriveInfo) < 0) {
 						swissSettings.hasDVDDrive = 0;
 						*DVDDeviceCode = 0x0001;
 						return false;

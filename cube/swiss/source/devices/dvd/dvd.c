@@ -22,6 +22,7 @@ volatile unsigned long* dvd = (volatile unsigned long*)0xCC006000;
 
 void dvd_reset()
 {
+	while(DVD_GetDriveStatus() == DVD_STATE_BUSY);
 	DVD_Pause();
 	DVD_Reset(DVD_RESETHARD);
 	usleep(1150000);
