@@ -2319,6 +2319,7 @@ static const struct {
 	{{ "GGSEA4\x11\x00" }, false, 0xA9, 0x5C18, 0x85409E81, 0xBB75D2E06575ECBC, 1406547968,   +53430272, {  681679984,      +17296, 6496, 0x2460 }, "Metal Gear Solid: The Twin Snakes" },
 	{{ "GHEE91\x00\x01" }, false, 0x95, 0x4CAD, 0xA5391CA0, 0xD0D84B5A3961CAD8,  862353408,  +597624832, {  637646488,  +597625152, 6496, 0x94C1 }, "Homeland" },
 	{{ "GHEJ91\x00\x01" }, false, 0x27, 0x33B2, 0x490B2D9B, 0x6A0783B0D25BA15B,  862353408,  +597624832, {  637646488,  +597625152, 6496, 0x93E3 }, "Homeland" },
+	{{ "GHEJ91\x00\x01" }, false, 0x39, 0x33B2, 0xEC61F537, 0x6A0783B0D25BA15B,  862353408,  +597624832, {  637646488,  +597625152, 6496, 0x93E3 }, "Homeland" },
 	{{ "GIAP7D\x00\x00" }, false, 0x0B, 0x4B59, 0x85B0AE66, 0x98AF060B6E4E1EFC, 1459746816,     +231424, { 1459738284,     +231860, 8096, 0x9E52 }, "Ice Age 2: The Meltdown" },
 	{{ "GICE78\x00\x00" }, false, 0x19, 0x8D19, 0xE5D4FA8A, 0x83BF4A12324387B3, 1085521920,  +374456320, {         ~0,          +0,    0, 0xFFFF }, "Disney/Pixar The Incredibles" },
 	{{ "GICE78\x00\x00" }, false, 0x53, 0xBE32, 0x8BCDCAAF, 0xA1DBBC825BBD00DA,  144986112, +1314992128, {  120391172,      +23036, 6496, 0x6DF1 }, "Disney/Pixar The Incredibles" },
@@ -2438,7 +2439,7 @@ static const struct {
 	{{ "RELSAB\x01\x01" }, true,  0xAE, 0xB04C, 0xF11E97F0, 0x5FFE80C83B9D8B46,  983810048,  +476168192, {  314979244,      +24252, 6496, 0xA75A }, "Crash Bandicoot: The Wrath of Cortex" },
 	{{ "SG4JDA\x00\x00" }, true,  0x9D, 0xB3B3, 0x424A4760, 0x38394EDF8E58393A, 1261602816,  +198375424, { 1261594344,  +198377400, 6496, 0x015D }, "Naruto: Clash of Ninja 4" },
 	{{ "TESTNA\x00\x00" }, false, 0xD2, 0x0C28, 0x6254FB97, 0xAA2E5EDD0EF81992,   26834944,       -1658, {         ~0,          +0,    0, 0xFFFF }, "Dodger Demo" },
-#define VALID_GCM_COUNT (REDUMP_COUNT + 188)
+#define VALID_GCM_COUNT (REDUMP_COUNT + 189)
 	{{ "101E01\x00\x05" }, true,  0x88, 0xB6FD, 0x4BB518CD, 0x27CFAD706924A030, 1435949056,   +24029184, {         ~0,          +0,    0, 0xFFFF }, "Hontai Kensa Disc DOL-USA" },
 	{{ "101E01\x00\x05" }, true,  0xC6, 0xB6FD, 0x4BB518CD, 0x27CFAD706924A030, 1435949056,   +24029184, {         ~0,          +0,    0, 0xFFFF }, "Hontai Kensa Disc DOL-USA" },
 	{{ "101J01\x00\x03" }, true,  0x67, 0xA361, 0x1A7B7608, 0x6E2DA2E062EF73BA, 1459453952,     +524288, {         ~0,          +0,    0, 0xFFFF }, "Hontai Kensa Disc DOL" },
