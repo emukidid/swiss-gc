@@ -165,6 +165,7 @@ void drawSettingEntryNumeric(uiDrawObj_t* page, int *y, char *label, int num, bo
 uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfig) {
 	uiDrawObj_t* page = DrawEmptyBox(20,60, getVideoMode()->fbWidth-20, 460);
 	char sramHOffsetStr[8];
+	char uiVModeStr[20];
 	char forceVOffsetStr[8];
 	char triggerLevelStr[8];
 	
@@ -227,12 +228,13 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 		bool rt4kEnable = in_range(swissSettings.aveCompat, GCDIGITAL_COMPAT, GCVIDEO_COMPAT);
 		// TODO settings to a new typedef that ties type etc all together, then draw a "page" of these rather than this at some point.
 		if(option < SET_INIT_DRIVE) {
-			drawSettingEntryString(page, &page_y_ofs, "System Sound:", swissSettings.sramStereo ? "Stereo":"Mono", option == SET_SYS_SOUND, true);
+			drawSettingEntryString(page, &page_y_ofs, "System Sound:", swissSettings.sramStereo ? "Stereo" : "Mono", option == SET_SYS_SOUND, true);
 			sprintf(sramHOffsetStr, "%+hi", swissSettings.sramHOffset);
 			drawSettingEntryString(page, &page_y_ofs, "Screen Position:", sramHOffsetStr, option == SET_SCREEN_POS, true);
 			drawSettingEntryString(page, &page_y_ofs, "System Language:", sramLang[swissSettings.sramLanguage], option == SET_SYS_LANG, true);
 			drawSettingEntryString(page, &page_y_ofs, "Configuration Device:", getConfigDeviceName(&swissSettings), option == SET_CONFIG_DEV, true);
-			drawSettingEntryString(page, &page_y_ofs, "Swiss Video Mode:", uiVModeStr[swissSettings.uiVMode], option == SET_SWISS_VIDEOMODE, true);
+			sprintf(uiVModeStr, "%s%s", getVideoModeString(getVideoModeFromSwissSetting(swissSettings.uiVMode)), swissSettings.uiVMode == 0 ? " (Auto) " : "");
+			drawSettingEntryString(page, &page_y_ofs, "Swiss Video Mode:", uiVModeStr, option == SET_SWISS_VIDEOMODE, true);
 			drawSettingEntryString(page, &page_y_ofs, "File Browser Type:", fileBrowserStr[swissSettings.fileBrowserType], option == SET_FILEBROWSER_TYPE, true);
 			drawSettingEntryBoolean(page, &page_y_ofs, "File Management:", swissSettings.enableFileManagement, option == SET_FILE_MGMT, true);
 			drawSettingEntryString(page, &page_y_ofs, "Recent List:", recentListLevelStr[swissSettings.recentListLevel], option == SET_RECENT_LIST, true);
@@ -242,7 +244,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 		} else {
 			drawSettingEntryBoolean(page, &page_y_ofs, "Init DVD Drive at startup:", swissSettings.initDVDDriveAtStart, option == SET_INIT_DRIVE, true);
 			drawSettingEntryBoolean(page, &page_y_ofs, "Stop DVD Drive motor:", swissSettings.stopMotor, option == SET_STOP_MOTOR, true);
-			drawSettingEntryString(page, &page_y_ofs, "SD/IDE Speed:", swissSettings.exiSpeed ? "32 MHz":"16 MHz", option == SET_EXI_SPEED, true);
+			drawSettingEntryString(page, &page_y_ofs, "SD/IDE Speed:", swissSettings.exiSpeed ? "32 MHz" : "16 MHz", option == SET_EXI_SPEED, true);
 			drawSettingEntryString(page, &page_y_ofs, "AVE Compatibility:", aveCompatStr[swissSettings.aveCompat], option == SET_AVE_COMPAT, true);
 			drawSettingEntryBoolean(page, &page_y_ofs, "Force DTV Status:", swissSettings.forceDTVStatus, option == SET_FORCE_DTVSTATUS, dtvEnable);
 			drawSettingEntryBoolean(page, &page_y_ofs, "Optimise for RetroTINK-4K:", swissSettings.rt4kOptim, option == SET_RT4K_OPTIM, rt4kEnable);

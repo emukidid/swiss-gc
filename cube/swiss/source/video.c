@@ -11,36 +11,41 @@ u32 *xfb[2] = { NULL, NULL };	//Framebuffers
 int whichfb = 0;				//Frame buffer toggle
 
 //Video Modes (strings)
-#define NtscIntStr     "NTSC 480i"
-#define NtscDsStr      "NTSC 240p"
-#define NtscProgStr    "NTSC 480p"
-#define PalIntStr      "PAL 576i"
-#define PalDsStr       "PAL 288p"
-#define PalProgStr     "PAL 576p"
-#define MpalIntStr     "PAL-M 480i"
-#define MpalDsStr      "PAL-M 240p"
-#define MpalProgStr    "PAL-M 480p"
-#define DebugPalIntStr "NTSC 576i"
-#define DebugPalDsStr  "NTSC 288p"
-#define Eurgb60IntStr  "PAL 480i"
-#define Eurgb60DsStr   "PAL 240p"
-#define Eurgb60ProgStr "PAL 480p"
-#define UnknownVideo   "Unknown"
+#define NtscIntStr       "NTSC 480sf"
+#define NtscIntDfStr     "NTSC 480i"
+#define NtscDsStr        "NTSC 240p"
+#define NtscProgStr      "NTSC 480p"
+#define PalIntStr        "PAL 576sf"
+#define PalIntDfStr      "PAL 576i"
+#define PalDsStr         "PAL 288p"
+#define PalProgStr       "PAL 576p"
+#define MpalIntStr       "PAL-M 480sf"
+#define MpalIntDfStr     "PAL-M 480i"
+#define MpalDsStr        "PAL-M 240p"
+#define MpalProgStr      "PAL-M 480p"
+#define DebugPalIntStr   "NTSC 576sf"
+#define DebugPalIntDfStr "NTSC 576i"
+#define DebugPalDsStr    "NTSC 288p"
+#define Eurgb60IntStr    "PAL 480sf"
+#define Eurgb60IntDfStr  "PAL 480i"
+#define Eurgb60DsStr     "PAL 240p"
+#define Eurgb60ProgStr   "PAL 480p"
+#define UnknownVideo     "Unknown"
 
-char *getVideoModeString() {
-	switch(getVideoMode()->viTVMode) {
-		case VI_TVMODE_NTSC_INT:      return NtscIntStr;
+char *getVideoModeString(GXRModeObj *m) {
+	switch(m->viTVMode) {
+		case VI_TVMODE_NTSC_INT:      return m->xfbMode == VI_XFBMODE_DF ? NtscIntDfStr : NtscIntStr;
 		case VI_TVMODE_NTSC_DS:       return NtscDsStr;
 		case VI_TVMODE_NTSC_PROG:     return NtscProgStr;
-		case VI_TVMODE_PAL_INT:       return PalIntStr;
+		case VI_TVMODE_PAL_INT:       return m->xfbMode == VI_XFBMODE_DF ? PalIntDfStr : PalIntStr;
 		case VI_TVMODE_PAL_DS:        return PalDsStr;
 		case VI_TVMODE_PAL_PROG:      return PalProgStr;
-		case VI_TVMODE_MPAL_INT:      return MpalIntStr;
+		case VI_TVMODE_MPAL_INT:      return m->xfbMode == VI_XFBMODE_DF ? MpalIntDfStr : MpalIntStr;
 		case VI_TVMODE_MPAL_DS:       return MpalDsStr;
 		case VI_TVMODE_MPAL_PROG:     return MpalProgStr;
-		case VI_TVMODE_DEBUG_PAL_INT: return DebugPalIntStr;
+		case VI_TVMODE_DEBUG_PAL_INT: return m->xfbMode == VI_XFBMODE_DF ? DebugPalIntDfStr : DebugPalIntStr;
 		case VI_TVMODE_DEBUG_PAL_DS:  return DebugPalDsStr;
-		case VI_TVMODE_EURGB60_INT:   return Eurgb60IntStr;
+		case VI_TVMODE_EURGB60_INT:   return m->xfbMode == VI_XFBMODE_DF ? Eurgb60IntDfStr : Eurgb60IntStr;
 		case VI_TVMODE_EURGB60_DS:    return Eurgb60DsStr;
 		case VI_TVMODE_EURGB60_PROG:  return Eurgb60ProgStr;
 		default:                      return UnknownVideo;
@@ -168,7 +173,7 @@ static void ProperScanPADS(u32 retrace) {
 	PAD_ScanPads();
 }
 
-GXRModeObj* getVideoMode() {
+GXRModeObj *getVideoMode() {
 	if(vmode == NULL) {
 		if(getScanMode() == VI_PROGRESSIVE) {
 			switch(getTVFormat()) {
