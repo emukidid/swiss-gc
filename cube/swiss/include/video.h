@@ -14,6 +14,7 @@ GXRModeObj* getVideoMode();
 GXRModeObj* getVideoModeFromSwissSetting(int uiVMode);
 int getTVFormat();
 int getScanMode();
+int getRawDTVStatus();
 int getDTVStatus();
 int getFontEncode();
 f32 getYScaleFactor(u16 efbHeight, u16 xfbHeight);

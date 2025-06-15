@@ -96,14 +96,17 @@ int getScanMode() {
 	return vmode->viTVMode & 3;
 }
 
+int getRawDTVStatus() {
+	volatile unsigned short* vireg = (volatile unsigned short*)0xCC002000;
+	return vireg[55] & 1;
+}
+
 int getDTVStatus() {
-	if(in_range(swissSettings.aveCompat, GCDIGITAL_COMPAT, GCVIDEO_COMPAT) && swissSettings.rt4kOptim) {
+	if(in_range(swissSettings.aveCompat, AVE_N_DOL_COMPAT, AVE_P_DOL_COMPAT))
+		return 0;
+	else if(in_range(swissSettings.aveCompat, GCDIGITAL_COMPAT, GCVIDEO_COMPAT) && swissSettings.rt4kOptim)
 		return 1;
-	} else if(!in_range(swissSettings.aveCompat, AVE_N_DOL_COMPAT, AVE_P_DOL_COMPAT)) {
-		volatile unsigned short* vireg = (volatile unsigned short*)0xCC002000;
-		return (vireg[55] & 1) || swissSettings.forceDTVStatus;
-	}
-	return 0;
+	return getRawDTVStatus() || swissSettings.forceDTVStatus;
 }
 
 int getFontEncode() {

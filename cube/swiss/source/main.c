@@ -236,7 +236,7 @@ int main(int argc, char *argv[])
 	swissSettings.exiSpeed = 1;		// 32MHz
 	swissSettings.uiVMode = 0; 		// Auto UI mode
 	swissSettings.gameVMode = 0;	// Auto video mode
-	swissSettings.lastDTVStatus = VIDEO_HaveComponentCable();
+	swissSettings.lastDTVStatus = getRawDTVStatus();
 	swissSettings.emulateAudioStream = 1;
 	swissSettings.ftpPort = 21;
 	swissSettings.fspPort = 21;
@@ -288,7 +288,7 @@ int main(int argc, char *argv[])
 	if(!config_init(&config_migration)) {
 		swissSettings.configDeviceId = DEVICE_ID_UNK;
 	}
-	else if(swissSettings.lastDTVStatus != VIDEO_HaveComponentCable()) {
+	else if(swissSettings.lastDTVStatus != getRawDTVStatus()) {
 		show_settings(PAGE_GLOBAL, SET_AVE_COMPAT, NULL);
 	}
 	// If there's no default config device, set it to the first writable device available
@@ -300,7 +300,7 @@ int main(int argc, char *argv[])
 				if(!config_init(&config_migration)) {
 					show_settings(PAGE_GLOBAL, SET_CONFIG_DEV, NULL);
 				}
-				else if(swissSettings.lastDTVStatus != VIDEO_HaveComponentCable()) {
+				else if(swissSettings.lastDTVStatus != getRawDTVStatus()) {
 					show_settings(PAGE_GLOBAL, SET_AVE_COMPAT, NULL);
 				}
 				break;
