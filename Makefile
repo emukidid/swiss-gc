@@ -60,7 +60,7 @@ compile-patches:
 	@cd $(PATCHES) && $(MAKE)
 
 compile: # compile
-	@$(PACMAN) -Q gamecube-tools-git libogc2-git libogc2-libdvm-git ppc-libdeflate ppc-libmad ppc-libpsoarchive ppc-libxxhash ppc-zlib-ng-compat
+	@$(PACMAN) -Q devkitppc-licenses gamecube-tools-git libogc2-git libogc2-libdvm-git ppc-libdeflate ppc-libmad ppc-libpsoarchive ppc-libxxhash ppc-zlib-ng-compat
 	@cd $(SOURCES)/swiss && $(MAKE)
 
 compile-packer:
@@ -76,6 +76,7 @@ build:
 	@mkdir $(DIST)/FlippyDrive
 	@mkdir $(DIST)/GCLoader
 	@mkdir $(DIST)/ISO
+	@mkdir $(DIST)/Licenses
 	@mkdir $(DIST)/WiikeyFusion
 	@mkdir $(DIST)/WODE
 	@cp $(PACKER)/swiss.dol $(DIST)/DOL/$(SVN_REVISION).dol
@@ -86,19 +87,31 @@ build:
 	@$(DOLLZ) $(SOURCES)/swiss/swiss.dol $(DIST)/DOL/Legacy/$(SVN_REVISION)-lz-viper.dol -v -m
 	@echo -n $(shell git rev-parse --short HEAD) >> $(DIST)/DOL/Legacy/$(SVN_REVISION)-lz-viper.dol
 	@cp $(DIST)/DOL/$(SVN_REVISION).dol $(DIST)/FlippyDrive/boot.dol
+	# copy licenses
+	@cp LICENSE $(DIST)/LICENSE.txt
+	@cp $(DEVKITPRO)/libogc2/libogc2_license.txt $(DIST)/Licenses/libogc2.txt
+	@cp $(DEVKITPRO)/libogc2/rtems_license.txt $(DIST)/Licenses/rtems.txt
+	@cp $(DEVKITPRO)/libogc2/share/licenses/libdvm/COPYING $(DIST)/Licenses/libdvm.txt
+	@cp $(DEVKITPRO)/licenses/devkitPPC/COPYING.LIBGLOSS $(DIST)/Licenses/libgloss.txt
+	@cp $(DEVKITPRO)/licenses/devkitPPC/COPYING.NEWLIB $(DIST)/Licenses/newlib.txt
+	@cp $(DEVKITPRO)/portlibs/ppc/licenses/ppc-libdeflate/COPYING $(DIST)/Licenses/libdeflate.txt
+	@cp $(DEVKITPRO)/portlibs/ppc/licenses/ppc-libmad/COPYING $(DIST)/Licenses/libmad.txt
+	@cp $(DEVKITPRO)/portlibs/ppc/licenses/ppc-libpsoarchive/COPYING.LGPL21 $(DIST)/Licenses/libpsoarchive.txt
+	@cp $(DEVKITPRO)/portlibs/ppc/licenses/ppc-libxxhash/LICENSE $(DIST)/Licenses/xxhash.txt
+	@cp $(DEVKITPRO)/portlibs/ppc/licenses/ppc-zlib-ng-compat/LICENSE.md $(DIST)/Licenses/zlib-ng.txt
 	# make ISOs and WKF firmware
 	# GCLoader
-	@$(MKISOFS) -R -J -G $(BUILDTOOLS)/iso/eltorito-gcode.hdr -no-emul-boot -eltorito-platform PPC -b $(SVN_REVISION).dol -o $(DIST)/GCLoader/boot.iso $(DIST)/DOL/$(SVN_REVISION).dol
+	@$(MKISOFS) -R -J -G $(BUILDTOOLS)/iso/eltorito-gcode.hdr -no-emul-boot -eltorito-platform PPC -b $(SVN_REVISION).dol -o $(DIST)/GCLoader/boot.iso $(DIST)/DOL/$(SVN_REVISION).dol $(DIST)/LICENSE.txt
 	# NTSC-J
-	@$(MKISOFS) -R -J -G $(BUILDTOOLS)/iso/eltorito-j.hdr -no-emul-boot -eltorito-platform PPC -b $(SVN_REVISION).dol -o $(DIST)/ISO/$(SVN_REVISION)"(ntsc-j)".iso $(DIST)/DOL/$(SVN_REVISION).dol
+	@$(MKISOFS) -R -J -G $(BUILDTOOLS)/iso/eltorito-j.hdr -no-emul-boot -eltorito-platform PPC -b $(SVN_REVISION).dol -o $(DIST)/ISO/$(SVN_REVISION)"(ntsc-j)".iso $(DIST)/DOL/$(SVN_REVISION).dol $(DIST)/LICENSE.txt
 	# NTSC
-	@$(MKISOFS) -R -J -G $(BUILDTOOLS)/iso/eltorito-u.hdr -no-emul-boot -eltorito-platform PPC -b $(SVN_REVISION).dol -o $(DIST)/ISO/$(SVN_REVISION)"(ntsc-u)".iso $(DIST)/DOL/$(SVN_REVISION).dol
+	@$(MKISOFS) -R -J -G $(BUILDTOOLS)/iso/eltorito-u.hdr -no-emul-boot -eltorito-platform PPC -b $(SVN_REVISION).dol -o $(DIST)/ISO/$(SVN_REVISION)"(ntsc-u)".iso $(DIST)/DOL/$(SVN_REVISION).dol $(DIST)/LICENSE.txt
 	# PAL
-	@$(MKISOFS) -R -J -G $(BUILDTOOLS)/iso/eltorito-e.hdr -no-emul-boot -eltorito-platform PPC -b $(SVN_REVISION).dol -o $(DIST)/ISO/$(SVN_REVISION)"(pal)".iso $(DIST)/DOL/$(SVN_REVISION).dol
+	@$(MKISOFS) -R -J -G $(BUILDTOOLS)/iso/eltorito-e.hdr -no-emul-boot -eltorito-platform PPC -b $(SVN_REVISION).dol -o $(DIST)/ISO/$(SVN_REVISION)"(pal)".iso $(DIST)/DOL/$(SVN_REVISION).dol $(DIST)/LICENSE.txt
 	# WODE
-	@$(MKISOFS) -R -J -G $(BUILDTOOLS)/iso/eltorito-wode.hdr -no-emul-boot -eltorito-platform PPC -b $(SVN_REVISION).dol -o $(DIST)/WODE/$(SVN_REVISION)"(wode_extcfg)".iso $(DIST)/DOL/$(SVN_REVISION).dol
+	@$(MKISOFS) -R -J -G $(BUILDTOOLS)/iso/eltorito-wode.hdr -no-emul-boot -eltorito-platform PPC -b $(SVN_REVISION).dol -o $(DIST)/WODE/$(SVN_REVISION)"(wode_extcfg)".iso $(DIST)/DOL/$(SVN_REVISION).dol $(DIST)/LICENSE.txt
 	# WKF
-	@$(MKISOFS) -R -J -G $(BUILDTOOLS)/iso/eltorito-gcode.hdr -no-emul-boot -eltorito-platform PPC -b $(SVN_REVISION).dol -o $(DIST)/WiikeyFusion/$(SVN_REVISION).fzn $(DIST)/DOL/$(SVN_REVISION).dol
+	@$(MKISOFS) -R -J -G $(BUILDTOOLS)/iso/eltorito-gcode.hdr -no-emul-boot -eltorito-platform PPC -b $(SVN_REVISION).dol -o $(DIST)/WiikeyFusion/$(SVN_REVISION).fzn $(DIST)/DOL/$(SVN_REVISION).dol $(DIST)/LICENSE.txt
 	@truncate -s 1856K $(DIST)/WiikeyFusion/$(SVN_REVISION).fzn
 	@cp $(BUILDTOOLS)/wkf/autoboot.fzn.fw $(DIST)/WiikeyFusion/$(SVN_REVISION).fzn.fw
 
@@ -132,6 +145,8 @@ package:   # create distribution package
 	@sed -i "s/emukidid <emukidid@gmail.com>/emu_kidid/g" $(SVN_REVISION)-changelog.txt
 	@mv $(SVN_REVISION)-changelog.txt $(SVN_REVISION)
 	@cp $(BUILDTOOLS)/SWISS_FILE_DESCRIPTIONS.txt $(SVN_REVISION)
+	@mv $(DIST)/LICENSE.txt $(SVN_REVISION)
+	@mv $(DIST)/Licenses $(SVN_REVISION)
 	@7z a -m0=LZMA $(SVN_REVISION).7z $(SVN_REVISION)
 	@tar cfJ $(SVN_REVISION).tar.xz $(SVN_REVISION)
 
@@ -177,3 +192,4 @@ build-wii:
 	@mkdir $(DIST)/Wii/apps
 	@mkdir $(DIST)/Wii/apps/swiss-gc
 	@cp $(WIIBOOTER)/boot.dol $(DIST)/Wii/apps/swiss-gc/
+	@cp $(DIST)/LICENSE.txt $(DIST)/Wii/apps/swiss-gc/
