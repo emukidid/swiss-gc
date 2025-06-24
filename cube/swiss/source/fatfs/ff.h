@@ -1,8 +1,8 @@
 /*----------------------------------------------------------------------------/
-/  FatFs - Generic FAT Filesystem module  R0.15a                              /
+/  FatFs - Generic FAT Filesystem module  R0.15b                              /
 /-----------------------------------------------------------------------------/
 /
-/ Copyright (C) 2024, ChaN, all right reserved.
+/ Copyright (C) 2025, ChaN, all right reserved.
 /
 / FatFs module is an open source software. Redistribution and use of FatFs in
 / source and binary forms, with or without modification, are permitted provided
@@ -20,7 +20,7 @@
 
 
 #ifndef FF_DEFINED
-#define FF_DEFINED	5380	/* Revision ID */
+#define FF_DEFINED	5385	/* Revision ID */
 
 #ifdef __cplusplus
 extern "C" {
@@ -131,11 +131,11 @@ extern const char* VolumeStr[FF_VOLUMES];	/* User defined volume ID table */
 /* Filesystem object structure (FATFS) */
 
 typedef struct {
-	BYTE	fs_type;		/* Filesystem type (0:blank filesystem object) */
+	BYTE	fs_type;		/* Filesystem type (0:not mounted) */
 	BYTE	pdrv;			/* Volume hosting physical drive */
 	BYTE	ldrv;			/* Logical drive number (used only when FF_FS_REENTRANT) */
 	BYTE	n_fats;			/* Number of FATs (1 or 2) */
-	BYTE	wflag;			/* win[] status (1:dirty) */
+	BYTE	wflag;			/* win[] status (b0:dirty) */
 	BYTE	fsi_flag;		/* Allocation information control (b7:disabled, b0:dirty) */
 	WORD	id;				/* Volume mount ID */
 	WORD	n_rootdir;		/* Number of root directory entries (FAT12/16) */
@@ -144,33 +144,29 @@ typedef struct {
 	WORD	ssize;			/* Sector size (512, 1024, 2048 or 4096) */
 #endif
 #if FF_USE_LFN
-	WCHAR*	lfnbuf;			/* LFN working buffer */
-#endif
-#if FF_FS_EXFAT
-	BYTE*	dirbuf;			/* Directory entry block scratch pad buffer for exFAT */
+	WCHAR	*lfnbuf;		/* LFN working buffer */
 #endif
 #if !FF_FS_READONLY
-	DWORD	last_clst;		/* Last allocated cluster (Unknown if >= n_fatent) */
-	DWORD	free_clst;		/* Number of free clusters (Unknown if >= n_fatent-2) */
+	DWORD	last_clst;		/* Last allocated cluster (Unknown if >=n_fatent) */
+	DWORD	free_clst;		/* Number of free clusters (Unknown if >=fs->n_fatent-2) */
 #endif
 #if FF_FS_RPATH
 	DWORD	cdir;			/* Current directory start cluster (0:root) */
-#if FF_FS_EXFAT
-	DWORD	cdc_scl;		/* Containing directory start cluster (invalid when cdir is 0) */
-	DWORD	cdc_size;		/* b31-b8:Size of containing directory, b7-b0: Chain status */
-	DWORD	cdc_ofs;		/* Offset in the containing directory (invalid when cdir is 0) */
-#endif
 #endif
 	DWORD	n_fatent;		/* Number of FAT entries (number of clusters + 2) */
 	DWORD	fsize;			/* Number of sectors per FAT */
+	LBA_t	winsect;		/* Current sector appearing in the win[] */
 	LBA_t	volbase;		/* Volume base sector */
 	LBA_t	fatbase;		/* FAT base sector */
 	LBA_t	dirbase;		/* Root directory base sector (FAT12/16) or cluster (FAT32/exFAT) */
 	LBA_t	database;		/* Data base sector */
 #if FF_FS_EXFAT
 	LBA_t	bitbase;		/* Allocation bitmap base sector */
+	BYTE	*dirbuf;		/* Directory entry block scratchpad buffer for exFAT */
+	DWORD	cdc_scl;		/* Containing directory start cluster (invalid when cdir is 0) */
+	DWORD	cdc_size;		/* b31-b8:Size of containing directory, b7-b0: Chain status */
+	DWORD	cdc_ofs;		/* Offset in the containing directory (invalid when cdir is 0) */
 #endif
-	LBA_t	winsect;		/* Current sector appearing in the win[] */
 	BYTE	win[FF_MAX_SS];	/* Disk access window for Directory, FAT (and file data at tiny cfg) */
 } FATFS;
 
@@ -190,7 +186,7 @@ typedef struct {
 	DWORD	n_frag;			/* Size of last fragment needs to be written to FAT (valid when not zero) */
 	DWORD	c_scl;			/* Containing directory start cluster (valid when sclust != 0) */
 	DWORD	c_size;			/* b31-b8:Size of containing directory, b7-b0: Chain status (valid when c_scl != 0) */
-	DWORD	c_ofs;			/* Offset in the containing directory (valid when file object and sclust != 0) */
+	DWORD	c_ofs;			/* Offset in the containing directory (valid when in file object and sclust != 0) */
 #endif
 #if FF_FS_LOCK
 	UINT	lockid;			/* File lock ID origin from 1 (index of file semaphore table Files[]) */
@@ -248,6 +244,10 @@ typedef struct {
 	DWORD	fclust;			/* File cluster */
 	WORD	fdate;			/* Modified date */
 	WORD	ftime;			/* Modified time */
+#if FF_FS_CRTIME
+	WORD	crdate;			/* Created date */
+	WORD	crtime;			/* Created time */
+#endif
 	BYTE	fattrib;		/* File attribute */
 #if FF_USE_LFN
 	TCHAR	altname[FF_SFN_BUF + 1];/* Alternative file name */
