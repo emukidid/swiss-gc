@@ -218,7 +218,7 @@ typedef struct {
 
 
 
-/* Directory object structure (DIRF) */
+/* Directory object structure (FFDIR) */
 
 typedef struct {
 	FFOBJID	obj;			/* Object identifier */
@@ -233,7 +233,7 @@ typedef struct {
 #if FF_USE_FIND
 	const TCHAR* pat;		/* Pointer to the name matching pattern */
 #endif
-} DIRF;
+} FFDIR;
 
 
 
@@ -242,6 +242,8 @@ typedef struct {
 typedef struct {
 	FSIZE_t	fsize;			/* File size */
 	DWORD	fclust;			/* File cluster */
+	WORD	acdate;			/* Last accessed date */
+	WORD	actime;			/* Last accessed time */
 	WORD	fdate;			/* Modified date */
 	WORD	ftime;			/* Modified time */
 #if FF_FS_CRTIME
@@ -310,11 +312,11 @@ FRESULT f_write (FIL* fp, const void* buff, UINT btw, UINT* bw);	/* Write data t
 FRESULT f_lseek (FIL* fp, FSIZE_t ofs);								/* Move file pointer of the file object */
 FRESULT f_truncate (FIL* fp);										/* Truncate the file */
 FRESULT f_sync (FIL* fp);											/* Flush cached data of the writing file */
-FRESULT f_opendir (DIRF* dp, const TCHAR* path);					/* Open a directory */
-FRESULT f_closedir (DIRF* dp);										/* Close an open directory */
-FRESULT f_readdir (DIRF* dp, FILINFO* fno);							/* Read a directory item */
-FRESULT f_findfirst (DIRF* dp, FILINFO* fno, const TCHAR* path, const TCHAR* pattern);	/* Find first file */
-FRESULT f_findnext (DIRF* dp, FILINFO* fno);						/* Find next file */
+FRESULT f_opendir (FFDIR* dp, const TCHAR* path);					/* Open a directory */
+FRESULT f_closedir (FFDIR* dp);										/* Close an open directory */
+FRESULT f_readdir (FFDIR* dp, FILINFO* fno);						/* Read a directory item */
+FRESULT f_findfirst (FFDIR* dp, FILINFO* fno, const TCHAR* path, const TCHAR* pattern);	/* Find first file */
+FRESULT f_findnext (FFDIR* dp, FILINFO* fno);						/* Find next file */
 FRESULT f_mkdir (const TCHAR* path);								/* Create a sub directory */
 FRESULT f_unlink (const TCHAR* path);								/* Delete an existing file or directory */
 FRESULT f_rename (const TCHAR* path_old, const TCHAR* path_new);	/* Rename/Move a file or directory */

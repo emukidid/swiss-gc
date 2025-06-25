@@ -109,8 +109,8 @@ device_info* deviceHandler_FAT_info(file_handle* file) {
 
 s32 deviceHandler_FAT_readDir(file_handle* ffile, file_handle** dir, u32 type) {	
 
-	DIRF* dp = malloc(sizeof(DIRF));
-	memset(dp, 0, sizeof(DIRF));
+	FFDIR* dp = malloc(sizeof(FFDIR));
+	memset(dp, 0, sizeof(FFDIR));
 	if(f_opendir(dp, ffile->name) != FR_OK) return -1;
 	FILINFO entry;
 	

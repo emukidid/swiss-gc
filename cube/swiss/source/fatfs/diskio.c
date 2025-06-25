@@ -170,7 +170,9 @@ DWORD get_fattime(void)
 	struct tm tm;
 
 	if (time(&now) == (time_t)-1) {
-		return 0;
+		return (((FF_NORTC_YEAR - 1980) & 0x7F) << 25) |
+		       ((FF_NORTC_MON & 0xF) << 21) |
+		       ((FF_NORTC_MDAY & 0x1F) << 16);
 	}
 	if (!localtime_r(&now, &tm)) {
 		return 0;
