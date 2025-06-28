@@ -128,14 +128,18 @@ recovery-iso:
 package:   # create distribution package
 	@mkdir $(SVN_REVISION)
 	@mv $(DIST)/ActionReplay $(SVN_REVISION)
+	@cd $(DIST)/Apploader && zip -mr0 EXTRACT_TO_ROOT.zip *
 	@mv $(DIST)/Apploader $(SVN_REVISION)
 	@mv $(DIST)/DOL $(SVN_REVISION)
+	@cd $(DIST)/FlippyDrive && zip -mr0 EXTRACT_TO_ROOT.zip *
 	@mv $(DIST)/FlippyDrive $(SVN_REVISION)
+	@cd $(DIST)/GCLoader && zip -mr0 EXTRACT_TO_ROOT.zip *
 	@mv $(DIST)/GCLoader $(SVN_REVISION)
 	@mv $(DIST)/ISO $(SVN_REVISION)
 	@mv $(DIST)/MemoryCard $(SVN_REVISION)
 	@mv $(DIST)/PicoBoot $(SVN_REVISION)
 	@mv $(DIST)/USBGeckoRemoteServer $(SVN_REVISION)
+	@cd $(DIST)/Wii && zip -mr0 EXTRACT_TO_ROOT.zip *
 	@mv $(DIST)/Wii $(SVN_REVISION)
 	@mv $(DIST)/WiikeyFusion $(SVN_REVISION)
 	@mv $(DIST)/WODE $(SVN_REVISION)
