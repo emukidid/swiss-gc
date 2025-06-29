@@ -169,8 +169,8 @@ void ARAMRunStub(void)
 ****************************************************************************/
 void ARAMRun(u32 entrypoint, u32 dst, u32 src, u32 len)
 {
-	_entrypoint = entrypoint;
-	_dst = dst;
+	_entrypoint = entrypoint | 0x80000000;
+	_dst = dst | 0x80000000;
 	_src = src;
 	_len = len;
 	
@@ -193,7 +193,7 @@ static void DOLMinMax(DOLHEADER * dol)
   int i;
 
   maxaddress = 0;
-  minaddress = 0x87100000;
+  minaddress = 0xffffffff;
 
   /*** Go through DOL sections ***/
   /*** Text sections ***/
@@ -292,6 +292,9 @@ int DOLtoARAM(unsigned char *dol, char *argz, size_t argz_len)
   DOLMinMax(dolhdr);
   sizeinbytes = maxaddress - minaddress;
 
+  if ((ARAMSTART + sizeinbytes) > AR_GetInternalSize())
+    return 0;
+
   /*** Move all DOL sections into ARAM ***/
   /*** Move text sections ***/
   for (i = 0; i < MAXTEXTSECTION; i++)
@@ -374,7 +377,7 @@ static void ELFMinMax(Elf32_Ehdr *ehdr, Elf32_Phdr *phdr)
   int i;
 
   maxaddress = 0;
-  minaddress = 0x87100000;
+  minaddress = 0xffffffff;
 
   /*** Go through ELF segments ***/
   for (i = 0; i < ehdr->e_phnum; i++)
@@ -415,6 +418,9 @@ int ELFtoARAM(unsigned char *elf, char *argz, size_t argz_len)
   /*** Get ELF stats ***/
   ELFMinMax(ehdr, phdr);
   sizeinbytes = maxaddress - minaddress;
+
+  if ((ARAMSTART + sizeinbytes) > AR_GetInternalSize())
+    return 0;
 
   /*** Move all ELF segments into ARAM ***/
   for (i = 0; i < ehdr->e_phnum; i++)
@@ -486,6 +492,9 @@ int BINtoARAM(unsigned char *bin, size_t len, unsigned int entrypoint, unsigned 
   AR_Reset();
   AR_Init(NULL, 0); /*** No stack - we need it all ***/
   AR_Clear(AR_ARAMINTALL);
+
+  if ((ARAMSTART + len) > AR_GetInternalSize())
+    return 0;
 
   /*** Move BIN into ARAM ***/
   ARAMPut(bin, (char *) ARAMSTART, len);
