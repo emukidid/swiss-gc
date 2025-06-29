@@ -216,7 +216,7 @@ uiDrawObj_t * info_draw_page(int page_num) {
 		DrawAddChild(container, DrawStyledLabel(640/2, 186, getDeviceInfoString(LOC_SERIAL_PORT_1), 0.75f, true, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(640/2, 210, (char*)"SERIAL PORT 2", 0.65f, true, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(640/2, 226, getDeviceInfoString(LOC_SERIAL_PORT_2), 0.75f, true, defaultColor));
-		DrawAddChild(container, DrawStyledLabel(640/2, 250, (char*)"DRIVE INTERFACE", 0.65f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 250, (char*)"DVD INTERFACE", 0.65f, true, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(640/2, 266, getDeviceInfoString(LOC_DVD_CONNECTOR), 0.75f, true, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(640/2, 290, (char*)"PROGRESSIVE VIDEO", 0.65f, true, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(640/2, 306, (char*)(getDTVStatus() ? getRawDTVStatus() ? "Enabled" : "Forced" : "Disabled"), 0.75f, true, defaultColor));
