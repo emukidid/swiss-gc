@@ -134,6 +134,16 @@ premain:
 	cmplwi	r3, 0x1700
 	blt		1b
 
+	lis		r3, 0xE000
+	li		r0, 16384 / 32
+	mtctr	r0
+2:	dcbi	0, r3
+	addi	r3, r3, 32
+	bdnz	2b
+	mfhid2	r0
+	rlwinm	r0, r0, 0, 4, 2
+	mthid2	r0
+
 	li		r0, 0
 	lis		sp, 0x0100
 	stwu	r0, -8 (sp)
