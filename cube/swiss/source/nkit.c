@@ -195,7 +195,8 @@ static const struct {
 	{ "cleanrip-gc.dol",                      1619776, 0x54DA1F15C617F2A6 },
 	{ "cleanrip-gc.dol",                      1859168, 0xB27D4814753386EF },
 	{ "cleanrip-gc.dol",                      1901888, 0x690543D39FC7E9F1 },
-#define TOTAL_DOL_COUNT (VALID_DOL_COUNT + 8)
+	{ "cleanrip-gc.dol",                      1929280, 0xE526065DAA036D2A },
+#define TOTAL_DOL_COUNT (VALID_DOL_COUNT + 9)
 };
 
 static const dvddiskid NDDEMO = {
@@ -1455,11 +1456,11 @@ static const struct {
 	{{ "GNHE5d\x00\x00" }, false, 0x2C, 0x3E90, 0x0E8BB8D0, 0xCB5D5096FE9FD4E8,    2045952, +1457932288, {      94248,       +4056, 6496, 0xB20B }, "Advance Game Port" },
 	{{ "GNHE5d\x00\x00" }, false, 0x2C, 0xCCBB, 0x11A23CFC, 0x9D96DC5BD2CAB822,    3047424, +1456930816, {      94248,       +4056, 6496, 0x4C9F }, "Action Replay for GameCube" },
 	{{ "GNHE5d\x00\x00" }, false, 0x2D, 0xCCBB, 0x20410C84, 0xFD841AF194632025,     968704, +1459009536, {      94248,       +4056, 6496, 0xB8A4 }, "Action Replay Ultimate Codes for Use with Wario World" },
-	{{ "GNHE5d\x00\x00" }, false, 0x2E, 0xCCBB, 0x2E098A57, 0xED61A06E328BCADC,     929792, +1459048448, {      94248,       +4056, 6496, 0x71DF }, "CD avec les Codes Exclusifs et Inédits pour le Jeu Metroid Prime" },
+	{{ "GNHE5d\x00\x00" }, false, 0x2E, 0xCCBB, 0x2E098A57, 0xED61A06E328BCADC,     929792, +1459048448, {      94248,       +4056, 6496, 0x71DF }, "CD avec les Codes Exclusifs et inédits pour le Jeu Metroid Prime" },
 	{{ "GNHE5d\x00\x00" }, false, 0x32, 0xCCBB, 0xF788D099, 0x20C822BDDEB80BC7,    1245184, +1458733056, {      94248,       +4056, 6496, 0x08F2 }, "Ultimate Codes for Use with Tom Clancy's Splinter Cell" },
 	{{ "GNHE5d\x00\x00" }, false, 0x33, 0xCCBB, 0xC7E200F3, 0x2B7A18F78F0474B8,    2117632, +1457860608, {      94248,       +4056, 6496, 0x3A76 }, "Action Replay Ultimate Cheats für Enter the Matrix" },
 	{{ "GNHE5d\x00\x00" }, false, 0x38, 0xCCBB, 0xF44D8921, 0x2634109EB130EDB7,    2183168, +1457795072, {      94248,       +4056, 6496, 0x3101 }, "Karat GC-you Pro Action Replay PAR GC-you" },
-	{{ "GNHE5d\x00\x00" }, false, 0x3A, 0xCCBB, 0xA1C6B7A4, 0xE00BE64FE685E811,    1107968, +1458870272, {      94248,       +4056, 6496, 0xA9C4 }, "CD Exclusif avec les Codes pour les Jeux Resident Evil et Resident Evil Zero" },
+	{{ "GNHE5d\x00\x00" }, false, 0x3A, 0xCCBB, 0xA1C6B7A4, 0xE00BE64FE685E811,    1107968, +1458870272, {      94248,       +4056, 6496, 0xA9C4 }, "CD exclusif avec les codes pour les jeux Resident Evil et Resident Evil Zero" },
 	{{ "GNHE5d\x00\x00" }, false, 0x3C, 0xCCBB, 0xB1B28589, 0xBA2B9164B083E0A3,    1714176, +1458264064, {      94248,       +4056, 6496, 0x3310 }, "Action Replay Ultimate Codes Greatest Hits: Best Buy Achievers Weekend 2004" },
 	{{ "GNHE5d\x00\x00" }, false, 0x3D, 0xCCBB, 0x1570E92E, 0x987DD6D6992B0FCD,     774144, +1459204096, {      94248,       +4056, 6496, 0x6923 }, "Cube CD 19 (38)" },
 	{{ "GNHE5d\x00\x00" }, false, 0x42, 0x685B, 0x7B642B57, 0x1BB6CC5F6B2F8B1A,     647168, +1459331072, {      94248,       +4056, 6496, 0x1F49 }, "SD Media Launcher for GameCube / Wii" },
@@ -1491,7 +1492,7 @@ static const struct {
 	{{ "GNHE5d\x00\x00" }, false, 0x98, 0x8464, 0x53F2137A, 0x1D6B58FD88349461,  855990272,  +603987968, {    7480672,      +30652, 6496, 0x8BDF }, "NHL Hitz 2002" },
 	{{ "GNHE5d\x00\x00" }, false, 0x98, 0xCCBB, 0xE5C0156E, 0x654DFB8F0F5E8495,     968704, +1459009536, {      94248,       +4056, 6496, 0x71CD }, "Cube CD 16 (35)" },
 	{{ "GNHE5d\x00\x00" }, false, 0x99, 0xCCBB, 0x40647E85, 0x36903BDC45F9FF89,    1396736, +1458581504, {      94248,       +4056, 6496, 0xDD29 }, "FreeLoader for GameCube" },
-	{{ "GNHE5d\x00\x00" }, false, 0x99, 0xCCBB, 0xE584A9F1, 0xCA715EDF4ECEBB48,    1355776, +1458622464, {      94248,       +4056, 6496, 0x9839 }, "CD avec les Codes Action Replay Exclusivement pour le Jeu The Legend of Zelda: The Wind Waker" },
+	{{ "GNHE5d\x00\x00" }, false, 0x99, 0xCCBB, 0xE584A9F1, 0xCA715EDF4ECEBB48,    1355776, +1458622464, {      94248,       +4056, 6496, 0x9839 }, "CD avec les codes Action Replay exclusivement pour le jeu The Legend of Zelda: The Wind Waker" },
 	{{ "GNHE5d\x00\x00" }, false, 0xA4, 0xCCBB, 0xA04B47B2, 0x0B1283EE258112F2,    1245184, +1458733056, {      94248,       +4056, 6496, 0xD5E2 }, "Action Replay Ultimate Codes for Use with Final Fantasy: Crystal Chronicles" },
 	{{ "GNHE5d\x00\x00" }, false, 0xA9, 0xCCBB, 0xEB7F7BC6, 0x1F6713160B2BAF7F,     800768, +1459177472, {      94248,       +4056, 6496, 0xF61C }, "Cube CD 20 (40)" },
 	{{ "GNHE5d\x00\x00" }, false, 0xAA, 0xCCBB, 0xA5292C47, 0x076715BBB1E14944,    1355776, +1458622464, {      94248,       +4056, 6496, 0x9839 }, "Ultimate Cheats für The Legend of Zelda: The Wind Waker" },
