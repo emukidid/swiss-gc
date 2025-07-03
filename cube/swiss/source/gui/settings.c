@@ -28,7 +28,7 @@
 
 ConfigEntry tempConfig;
 SwissSettings tempSettings;
-char *debugUSBStr[] = {"No", "Slot A", "Slot B", "Serial Port 2"};
+char *enableUSBGeckoStr[] = {"No", "Slot A", "Slot B", "Serial Port 2"};
 char *uiVModeStr[] = {"Auto", "480i", "480sf", "480p", "576i", "576sf", "576p"};
 char *gameVModeStr[] = {"Auto", "480i", "480sf", "240p", "960i", "480p", "1080i60", "540p60", "576i", "576sf", "288p", "1152i", "576p", "1080i50", "540p50"};
 char *forceHScaleStr[] = {"Auto", "1:1", "11:10", "9:8", "640px", "656px", "672px", "704px", "720px"};
@@ -68,11 +68,11 @@ static char *tooltips_global[PAGE_GLOBAL_MAX+1] = {
 	"AVE Compatibility:\n\nSets the compatibility mode for the used audio/video encoder.\n\nAVE N-DOL - Output PAL as NTSC 50\nAVE P-DOL - Disable progressive scan mode\nCMPV-DOL - Enable 1080i & 540p\nGCDigital - Apply input filtering in OSD\nGCVideo - Apply general workarounds for GCVideo (default)\nAVE-RVL - Support 960i & 1152i without WiiVideo",
 	"Force DTV Status:\n\nDisabled - Use detect signal from the Digital AV Out (default)\nEnabled - Force detection in the case of a hardware fault",
 	"Optimise for RetroTINK-4K:\n\nRequires GCVideo-DVI v3.0 or later with Fix Resolution Off.",
-	"Enable USB Gecko debug output:\n\nIf a USB Gecko is present in slot B, debug output from\nSwiss & in game (if the game supported output over OSReport)\nwill be output. If nothing is reading the data out from the\ndevice it may cause Swiss/games to hang."
+	"Enable USB Gecko:\n\nIf a USB Gecko is present, messages output to the debug UART\nby Swiss/games will be redirected. When nothing is actively\nreading from the USB Gecko, it may cause Swiss/games to\nhang. wiiload is also made available for iterative development."
 };
 
 static char *tooltips_network[PAGE_NETWORK_MAX+1] = {
-	"Init network at startup:\n\nDisabled - Do not initialise the BBA even if present (default)\nEnabled - If a BBA is present, it will be initialised at startup\n\nIf initialised, navigate to the IP in a web browser to backup\nvarious data. wiiload is supported for iterative development."
+	"Init network at startup:\n\nDisabled - Do not initialise the BBA even if present (default)\nEnabled - If a BBA is present, it will be initialised at startup\n\nIf initialised, navigate to the IP in a web browser to backup\nvarious data. wiiload is available for iterative development."
 };
 
 static char *tooltips_game_global[PAGE_GAME_GLOBAL_MAX+1] = {
@@ -248,7 +248,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 			drawSettingEntryString(page, &page_y_ofs, "AVE Compatibility:", aveCompatStr[swissSettings.aveCompat], option == SET_AVE_COMPAT, true);
 			drawSettingEntryBoolean(page, &page_y_ofs, "Force DTV Status:", swissSettings.forceDTVStatus, option == SET_FORCE_DTVSTATUS, dtvEnable);
 			drawSettingEntryBoolean(page, &page_y_ofs, "Optimise for RetroTINK-4K:", swissSettings.rt4kOptim, option == SET_RT4K_OPTIM, rt4kEnable);
-			drawSettingEntryString(page, &page_y_ofs, "USB Gecko debug output:", debugUSBStr[swissSettings.debugUSB], option == SET_ENABLE_USBGECKODBG, true);
+			drawSettingEntryString(page, &page_y_ofs, "Enable USB Gecko:", enableUSBGeckoStr[swissSettings.enableUSBGecko], option == SET_ENABLE_USBGECKO, true);
 		}
 	}
 	else if(page_num == PAGE_NETWORK) {
@@ -535,9 +535,9 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 					DrawDispose(msgBox);
 				}
 			break;
-			case SET_ENABLE_USBGECKODBG:
-				swissSettings.debugUSB += direction;
-				swissSettings.debugUSB = (swissSettings.debugUSB + DEBUG_MAX) % DEBUG_MAX;
+			case SET_ENABLE_USBGECKO:
+				swissSettings.enableUSBGecko += direction;
+				swissSettings.enableUSBGecko = (swissSettings.enableUSBGecko + USBGECKO_MAX) % USBGECKO_MAX;
 			break;
 		}
 		switch(option) {

@@ -1023,7 +1023,7 @@ void load_app(ExecutableFile *fileToPatch)
 	print_debug("Top of RAM simulated as: 0x%08X\n", topAddr);
 	
 	*(vu32*)(VAR_AREA+0x0028) = 0x01800000;
-	*(vu32*)(VAR_AREA+0x002C) = swissSettings.debugUSB ? SYS_CONSOLE_DEVELOPMENT_HW1 : SYS_CONSOLE_RETAIL_HW1;
+	*(vu32*)(VAR_AREA+0x002C) = swissSettings.enableUSBGecko ? SYS_CONSOLE_DEVELOPMENT_HW1 : SYS_CONSOLE_RETAIL_HW1;
 	*(vu32*)(VAR_AREA+0x002C) += SYS_GetFlipperRevision();
 	*(vu32*)(VAR_AREA+0x00CC) = swissSettings.sramVideo;
 	*(vu32*)(VAR_AREA+0x00D0) = 0x01000000;

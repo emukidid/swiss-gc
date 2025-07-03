@@ -38,7 +38,7 @@ enum SETTINGS_GLOBAL {
 	SET_AVE_COMPAT,
 	SET_FORCE_DTVSTATUS,
 	SET_RT4K_OPTIM,
-	SET_ENABLE_USBGECKODBG,
+	SET_ENABLE_USBGECKO,
 	SET_PAGE_1_NEXT,
 	SET_PAGE_1_SAVE,
 	SET_PAGE_1_CANCEL
@@ -147,7 +147,7 @@ enum SETTINGS_GAME {
 };
 #define PAGE_GAME_MAX (SET_PAGE_5_CANCEL)
 
-extern char *debugUSBStr[];
+extern char *enableUSBGeckoStr[];
 extern char *uiVModeStr[];
 extern char *gameVModeStr[];
 extern char *forceHScaleStr[];

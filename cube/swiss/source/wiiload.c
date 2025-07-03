@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2014-2024, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2014-2025, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -28,6 +28,8 @@
 #include "bba.h"
 #include "elf.h"
 #include "patcher.h"
+#include "swiss.h"
+#include "wiiload.h"
 
 typedef struct {
 	uint32_t magic;
@@ -37,7 +39,10 @@ typedef struct {
 	uint32_t inflate_size;
 } ATTRIBUTE_PACKED wiiload_header_t;
 
-static lwp_t thread = LWP_THREAD_NULL;
+typedef int wiiload_read_function_t(int, void *, size_t);
+
+static lwp_t tcp_thread = LWP_THREAD_NULL;
+static lwp_t usb_thread = LWP_THREAD_NULL;
 
 static struct {
 	struct {
@@ -82,7 +87,12 @@ static int tcp_read(int sd, void *buf, size_t size)
 	return pos;
 }
 
-static void *wiiload_read(int sd, size_t insize, size_t outsize)
+static int usb_read(int chn, void *buf, size_t size)
+{
+	return usb_recvbuffer_safe_ex(chn, buf, size, 65536);
+}
+
+static void *wiiload_read(int sd, size_t insize, size_t outsize, wiiload_read_function_t read)
 {
 	Byte inbuf[4096];
 	z_stream zstream = {0};
@@ -99,7 +109,7 @@ static void *wiiload_read(int sd, size_t insize, size_t outsize)
 	zstream.avail_out = outsize;
 
 	while (pos < insize) {
-		ret = tcp_read(sd, inbuf, MIN(insize - pos, sizeof(inbuf)));
+		ret = read(sd, inbuf, MIN(insize - pos, sizeof(inbuf)));
 		if (ret < 0) goto fail;
 		else pos += ret;
 
@@ -118,13 +128,13 @@ fail:
 	return NULL;
 }
 
-static void *wiiload_read_args(int sd, size_t size)
+static void *wiiload_read_args(int sd, size_t size, wiiload_read_function_t read)
 {
 	void *args = malloc(size);
 
 	if (!args)
 		goto fail;
-	if (tcp_read(sd, args, size) < size)
+	if (read(sd, args, size) < size)
 		goto fail;
 
 	return args;
@@ -134,19 +144,21 @@ fail:
 	return NULL;
 }
 
-static void wiiload_handler(int sd)
+static void wiiload_handler(int sd, wiiload_read_function_t read)
 {
 	wiiload_header_t header;
 
-	if (tcp_read(sd, &header, sizeof(header)) < sizeof(header))
+	if (read(sd, &header, sizeof(header)) < sizeof(header))
 		return;
 	if (memcmp(&header.magic, "HAXX", 4))
 		return;
 	if (header.version != 5)
 		return;
 
-	void *buffer = wiiload_read(sd, header.deflate_size, header.inflate_size);
-	void *args = wiiload_read_args(sd, header.args_size);
+	int priority = LWP_SetThreadPriority(LWP_THREAD_NULL, LWP_PRIO_NORMAL);
+
+	void *buffer = wiiload_read(sd, header.deflate_size, header.inflate_size, read);
+	void *args = wiiload_read_args(sd, header.args_size, read);
 
 	if (buffer) {
 		if (!memcmp(buffer, ELFMAG, SELFMAG))
@@ -161,9 +173,11 @@ static void wiiload_handler(int sd)
 
 	free(args);
 	free(buffer);
+
+	LWP_SetThreadPriority(LWP_THREAD_NULL, priority);
 }
 
-static void *thread_func(void *arg)
+static void *tcp_thread_func(void *arg)
 {
 	wiiload.sv.sd = net_socket(AF_INET, SOCK_STREAM, IPPROTO_IP);
 
@@ -174,7 +188,7 @@ static void *thread_func(void *arg)
 	if (net_listen(wiiload.sv.sd, 0) < 0)
 		goto fail;
 
-	while (true) {
+	while (tcp_thread == LWP_GetSelf()) {
 		fd_set readset;
 		FD_ZERO(&readset);
 		FD_SET(wiiload.sv.sd, &readset);
@@ -185,7 +199,7 @@ static void *thread_func(void *arg)
 			wiiload.cl.sd = net_accept(wiiload.sv.sd, &wiiload.cl.sa, &addrlen);
 
 			if (wiiload.cl.sd != INVALID_SOCKET) {
-				wiiload_handler(wiiload.cl.sd);
+				wiiload_handler(wiiload.cl.sd, tcp_read);
 				net_close(wiiload.cl.sd);
 				wiiload.cl.sd = INVALID_SOCKET;
 			}
@@ -198,8 +212,27 @@ fail:
 	return NULL;
 }
 
-void init_wiiload_thread(void)
+static void *usb_thread_func(void *arg)
 {
-	if (net_initialized && thread == LWP_THREAD_NULL)
-		LWP_CreateThread(&thread, thread_func, NULL, NULL, 0, LWP_PRIO_NORMAL);
+	while (usb_thread == LWP_GetSelf()) {
+		int chn = *(int *)arg - USBGECKO_MEMCARD_SLOT_A;
+
+		if (usb_isgeckoalive(chn)) {
+			wiiload_handler(chn, usb_read);
+			usb_flush(chn);
+		}
+	}
+
+	return NULL;
+}
+
+void init_wiiload_tcp_thread(void)
+{
+	if (net_initialized && tcp_thread == LWP_THREAD_NULL)
+		LWP_CreateThread(&tcp_thread, tcp_thread_func, NULL, NULL, 0, LWP_PRIO_NORMAL);
+}
+
+void init_wiiload_usb_thread(void *arg)
+{
+	LWP_CreateThread(&usb_thread, usb_thread_func, arg, NULL, 0, LWP_PRIO_LOWEST);
 }

@@ -28,7 +28,7 @@
 #include "gcloader.h"
 #include "wkf.h"
 #include "exi.h"
-#include "httpd.h"
+#include "wiiload.h"
 #include "config.h"
 #include "sram.h"
 #include "stub_bin.h"
@@ -232,7 +232,7 @@ int main(int argc, char *argv[])
 	
 	// Sane defaults
 	refreshSRAM(&swissSettings);
-	swissSettings.debugUSB = DEBUG_OFF;
+	swissSettings.enableUSBGecko = USBGECKO_OFF;
 	swissSettings.exiSpeed = 1;		// 32MHz
 	swissSettings.uiVMode = 0; 		// Auto UI mode
 	swissSettings.gameVMode = 0;	// Auto video mode
@@ -253,6 +253,13 @@ int main(int argc, char *argv[])
 	needsRefresh = 1;
 	
 	//debugging stuff
+	for(i = 0; i < EXI_CHANNEL_MAX; i++) {
+		if(usb_isgeckoalive(i)) {
+			swissSettings.enableUSBGecko = USBGECKO_MEMCARD_SLOT_A + i;
+			init_wiiload_usb_thread(&swissSettings.enableUSBGecko);
+			break;
+		}
+	}
 	print_debug("Arena Size: %iKB\n",SYS_GetArenaSize()/1024);
 	print_debug("DVD Drive Present? %s\n",swissSettings.hasDVDDrive?"Yes":"No");
 	print_debug("GIT Commit: %s\n", GIT_COMMIT);

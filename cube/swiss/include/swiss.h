@@ -89,7 +89,7 @@ extern bool select_dest_dir(file_handle* initial, file_handle* selection);
 
 typedef struct {
 	int cubebootInvoked;
-	int debugUSB; // Debug prints over USBGecko
+	int enableUSBGecko; // Debug prints over USBGecko
 	int hasDVDDrive;	// 0 if none, 1 if something
 	int hasFlippyDrive;
 	int exiSpeed;
@@ -172,13 +172,13 @@ typedef struct {
 } SwissSettings;
 extern SwissSettings swissSettings;
 
-enum debugUSB
+enum enableUSBGecko
 {
-	DEBUG_OFF=0,
-	DEBUG_MEMCARD_SLOT_A,
-	DEBUG_MEMCARD_SLOT_B,
-	DEBUG_SERIAL_PORT_2,
-	DEBUG_MAX
+	USBGECKO_OFF=0,
+	USBGECKO_MEMCARD_SLOT_A,
+	USBGECKO_MEMCARD_SLOT_B,
+	USBGECKO_SERIAL_PORT_2,
+	USBGECKO_MAX
 };
 
 enum aveCompat

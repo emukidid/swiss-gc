@@ -150,7 +150,7 @@ int config_update_global(bool checkConfigDevice) {
 	fprintf(fp, "Screen Position=%+hi\r\n", swissSettings.sramHOffset);
 	fprintf(fp, "System Language=%s\r\n", sramLang[swissSettings.sramLanguage]);
 	fprintf(fp, "Swiss Video Mode=%s\r\n", uiVModeStr[swissSettings.uiVMode]);
-	fprintf(fp, "USB Gecko debug output=%s\r\n", debugUSBStr[swissSettings.debugUSB]);
+	fprintf(fp, "Enable USB Gecko=%s\r\n", enableUSBGeckoStr[swissSettings.enableUSBGecko]);
 	fprintf(fp, "Hide Unknown file types=%s\r\n", swissSettings.hideUnknownFileTypes ? "Yes":"No");
 	fprintf(fp, "Init DVD Drive at startup=%s\r\n", swissSettings.initDVDDriveAtStart ? "Yes":"No");
 	fprintf(fp, "Stop DVD Drive motor=%s\r\n", swissSettings.stopMotor ? "Yes":"No");
@@ -490,7 +490,7 @@ void config_parse_legacy(char *configData, void (*progress_indicator)(char*, int
 					}
 				}
 				else if(!strcmp("Enable Debug", name)) {
-					swissSettings.debugUSB = !strcmp("Yes", value) ? DEBUG_MEMCARD_SLOT_B : DEBUG_OFF;
+					swissSettings.enableUSBGecko = !strcmp("Yes", value) ? USBGECKO_MEMCARD_SLOT_B : USBGECKO_OFF;
 				}
 				else if(!strcmp("Hide Unknown file types", name)) {
 					swissSettings.hideUnknownFileTypes = !strcmp("Yes", value);
@@ -798,12 +798,12 @@ void config_parse_global(char *configData) {
 					}
 				}
 				else if(!strcmp("Enable Debug", name)) {
-					swissSettings.debugUSB = !strcmp("Yes", value) ? DEBUG_MEMCARD_SLOT_B : DEBUG_OFF;
+					swissSettings.enableUSBGecko = !strcmp("Yes", value) ? USBGECKO_MEMCARD_SLOT_B : USBGECKO_OFF;
 				}
-				else if(!strcmp("USB Gecko debug output", name)) {
-					for(int i = 0; i < DEBUG_MAX; i++) {
-						if(!strcmp(debugUSBStr[i], value)) {
-							swissSettings.debugUSB = i;
+				else if(!strcmp("Enable USB Gecko", name) || !strcmp("USB Gecko debug output", name)) {
+					for(int i = 0; i < USBGECKO_MAX; i++) {
+						if(!strcmp(enableUSBGeckoStr[i], value)) {
+							swissSettings.enableUSBGecko = i;
 							break;
 						}
 					}

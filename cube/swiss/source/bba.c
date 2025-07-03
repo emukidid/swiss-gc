@@ -8,6 +8,7 @@
 #include "httpd.h"
 #include "rt4k.h"
 #include "swiss.h"
+#include "wiiload.h"
 #include "deviceHandler.h"
 
 /* Network Globals */
@@ -82,7 +83,7 @@ static void *net_thread_func(void *arg)
 	deviceHandler_setDeviceAvailable(&__device_fsp, deviceHandler_FSP_test());
 
 	init_httpd_thread();
-	init_wiiload_thread();
+	init_wiiload_tcp_thread();
 	rt4k_init();
 	return NULL;
 }

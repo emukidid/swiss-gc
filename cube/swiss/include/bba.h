@@ -12,7 +12,6 @@ extern u32 bba_location;
 void wait_network();
 bool init_network();
 void init_network_async();
-void init_wiiload_thread();
 u32 bba_exists(u32 location);
 const char *bba_address_str();
 

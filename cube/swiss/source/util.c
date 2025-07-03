@@ -227,7 +227,7 @@ void print_debug(const char *fmt, ...)
 {
 	va_list arglist;
 	va_start(arglist, fmt);
-	SYS_EnableGecko(swissSettings.debugUSB - 1, true);
+	SYS_EnableGecko(swissSettings.enableUSBGecko - USBGECKO_MEMCARD_SLOT_A, true);
 	SYS_Reportv(fmt, arglist);
 	va_end(arglist);
 }
