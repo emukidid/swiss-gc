@@ -68,7 +68,8 @@ static char *tooltips_global[PAGE_GLOBAL_MAX+1] = {
 	"AVE Compatibility:\n\nSets the compatibility mode for the used audio/video encoder.\n\nAVE N-DOL - Output PAL as NTSC 50\nAVE P-DOL - Disable progressive scan mode\nCMPV-DOL - Enable 1080i & 540p\nGCDigital - Apply input filtering in OSD\nGCVideo - Apply general workarounds for GCVideo (default)\nAVE-RVL - Support 960i & 1152i without WiiVideo",
 	"Force DTV Status:\n\nDisabled - Use detect signal from the Digital AV Out (default)\nEnabled - Force detection in the case of a hardware fault",
 	"Optimise for RetroTINK-4K:\n\nRequires GCVideo-DVI v3.0 or later with Fix Resolution Off.",
-	"Enable USB Gecko:\n\nIf a USB Gecko is present, messages output to the debug UART\nby Swiss/games will be redirected. When nothing is actively\nreading from the USB Gecko, it may cause Swiss/games to\nhang. wiiload is also made available for iterative development."
+	"Enable USB Gecko:\n\nIf a USB Gecko is present, messages output to the debug UART\nby Swiss/games will be redirected. When the USB host isn't\nactively reading from the USB Gecko, it may cause the system\nto hang.\n\nwiiload is also made available for iterative development.",
+	"Wait for USB Gecko:\n\nWait for the transmit buffer to be read by the USB host when full."
 };
 
 static char *tooltips_network[PAGE_NETWORK_MAX+1] = {
@@ -249,6 +250,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 			drawSettingEntryBoolean(page, &page_y_ofs, "Force DTV Status:", swissSettings.forceDTVStatus, option == SET_FORCE_DTVSTATUS, dtvEnable);
 			drawSettingEntryBoolean(page, &page_y_ofs, "Optimise for RetroTINK-4K:", swissSettings.rt4kOptim, option == SET_RT4K_OPTIM, rt4kEnable);
 			drawSettingEntryString(page, &page_y_ofs, "Enable USB Gecko:", enableUSBGeckoStr[swissSettings.enableUSBGecko], option == SET_ENABLE_USBGECKO, true);
+			drawSettingEntryBoolean(page, &page_y_ofs, "Wait for USB Gecko:", swissSettings.waitForUSBGecko, option == SET_WAIT_USBGECKO, true);
 		}
 	}
 	else if(page_num == PAGE_NETWORK) {
@@ -538,6 +540,9 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 			case SET_ENABLE_USBGECKO:
 				swissSettings.enableUSBGecko += direction;
 				swissSettings.enableUSBGecko = (swissSettings.enableUSBGecko + USBGECKO_MAX) % USBGECKO_MAX;
+			break;
+			case SET_WAIT_USBGECKO:
+				swissSettings.waitForUSBGecko ^= 1;
 			break;
 		}
 		switch(option) {
