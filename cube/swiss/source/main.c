@@ -323,7 +323,7 @@ int main(int argc, char *argv[])
 	DrawVideoMode(forcedMode);
 	
 	// Save settings to SRAM
-	swissSettings.sram60Hz = getTVFormat() != VI_PAL;
+	swissSettings.sram60Hz = getTVFormat() == VI_EURGB60;
 	swissSettings.sramProgressive = getScanMode() == VI_PROGRESSIVE;
 	if(in_range(swissSettings.aveCompat, GCDIGITAL_COMPAT, GCVIDEO_COMPAT)) {
 		swissSettings.sramHOffset &= ~1;

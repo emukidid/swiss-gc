@@ -9044,7 +9044,7 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 			if (in_range(swissSettings.gameVMode, 1, 7)) {
 				memset(data + i, 0, OSGetEuRgb60ModeSigs[j].Length * sizeof(u32));
 				
-				data[i + 0] = 0x38600001;	// li		r3, 1
+				data[i + 0] = 0x38600000 | (swissSettings.sram60Hz & 0xFFFF);
 				data[i + 1] = 0x4E800020;	// blr
 			}
 			print_debug("Found:[%s$%i] @ %08X\n", OSGetEuRgb60ModeSigs[j].Name, j, OSGetEuRgb60Mode);

@@ -997,7 +997,7 @@ int show_settings(int page, int option, ConfigEntry *config) {
 			if(option == settings_count_pp[page]-1) {
 				uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Saving changes\205"));
 				// Save settings to SRAM
-				swissSettings.sram60Hz = getTVFormat() != VI_PAL;
+				swissSettings.sram60Hz = getTVFormat() == VI_EURGB60;
 				swissSettings.sramProgressive = getScanMode() == VI_PROGRESSIVE;
 				if(in_range(swissSettings.aveCompat, GCDIGITAL_COMPAT, GCVIDEO_COMPAT)) {
 					swissSettings.sramHOffset &= ~1;
