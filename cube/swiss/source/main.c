@@ -109,8 +109,10 @@ void Initialise(void)
 		swissSettings.sramVideo = SYS_VIDEO_PAL;
 	else if(!strncmp(&IPLInfo[0x55], "MPAL", 4))
 		swissSettings.sramVideo = SYS_VIDEO_MPAL;
-	else if(!strncmp(&IPLInfo[0x55], "TDEV", 4) && (SYS_GetConsoleType() & SYS_CONSOLE_MASK) == SYS_CONSOLE_RETAIL)
+	else if(!strncmp(&IPLInfo[0x55], "TDEV", 4) && (SYS_GetConsoleType() & SYS_CONSOLE_MASK) == SYS_CONSOLE_RETAIL) {
 		*(u32*)0x8000002C += SYS_CONSOLE_TDEV_HW1 - SYS_CONSOLE_RETAIL_HW1;
+		swissSettings.sramVideo = SYS_VIDEO_NTSC;
+	}
 
 	*(u32*)0x800000CC = swissSettings.sramVideo;
 	SYS_SetVideoMode(swissSettings.sramVideo);
@@ -295,7 +297,7 @@ int main(int argc, char *argv[])
 	if(!config_init(&config_migration)) {
 		swissSettings.configDeviceId = DEVICE_ID_UNK;
 	}
-	else if(swissSettings.lastDTVStatus != getRawDTVStatus()) {
+	else if(swissSettings.aveCompat != AVE_RVL_COMPAT && swissSettings.lastDTVStatus != getRawDTVStatus()) {
 		show_settings(PAGE_GLOBAL, SET_AVE_COMPAT, NULL);
 	}
 	// If there's no default config device, set it to the first writable device available
@@ -307,7 +309,7 @@ int main(int argc, char *argv[])
 				if(!config_init(&config_migration)) {
 					show_settings(PAGE_GLOBAL, SET_CONFIG_DEV, NULL);
 				}
-				else if(swissSettings.lastDTVStatus != getRawDTVStatus()) {
+				else if(swissSettings.aveCompat != AVE_RVL_COMPAT && swissSettings.lastDTVStatus != getRawDTVStatus()) {
 					show_settings(PAGE_GLOBAL, SET_AVE_COMPAT, NULL);
 				}
 				break;
