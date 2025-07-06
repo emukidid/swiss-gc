@@ -98,12 +98,16 @@ static void initSram(void)
 
 	uint32_t counterBias = SYS_GetCounterBias();
 	int8_t displayOffsetH = SYS_GetDisplayOffsetH();
+	bool euRGB60 = SYS_GetEuRGB60();
 	uint8_t language = SYS_GetLanguage();
+	bool progressiveScan = SYS_GetProgressiveScan();
 	uint8_t soundMode = SYS_GetSoundMode();
 	uint8_t videoMode = SYS_GetVideoMode();
 
 	CONF_GetCounterBias(&counterBias);
 	CONF_GetDisplayOffsetH(&displayOffsetH);
+
+	euRGB60 = CONF_GetEuRGB60() > CONF_ERR_OK;
 
 	switch (CONF_GetLanguage()) {
 		case CONF_LANG_JAPANESE:
@@ -126,6 +130,8 @@ static void initSram(void)
 			language = SYS_LANG_DUTCH;
 			break;
 	}
+
+	progressiveScan = CONF_GetProgressiveScan() > CONF_ERR_OK;
 
 	switch (CONF_GetSoundMode()) {
 		case CONF_SOUND_MONO:
@@ -151,7 +157,9 @@ static void initSram(void)
 
 	SYS_SetCounterBias(counterBias);
 	SYS_SetDisplayOffsetH(displayOffsetH);
+	SYS_SetEuRGB60(euRGB60);
 	SYS_SetLanguage(language);
+	SYS_SetProgressiveScan(progressiveScan);
 	SYS_SetSoundMode(soundMode);
 	SYS_SetVideoMode(videoMode);
 }
