@@ -7839,6 +7839,17 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 		{   9,  3,  2, 1, 0,  2, NULL, 0, "__OSUnlockSram" },
 		{ 173, 53, 11, 9, 9, 25, NULL, 0, "__OSUnlockSram" }	// SN Systems ProDG
 	};
+	FuncPattern OSGetProgressiveModeSigs[4] = {
+		{ 16,  3, 2, 2, 0, 3, NULL, 0, "OSGetProgressiveModeD" },
+		{ 32,  9, 5, 3, 4, 2, NULL, 0, "OSGetProgressiveMode" },
+		{ 28,  9, 5, 3, 2, 2, NULL, 0, "OSGetProgressiveMode" },
+		{ 31, 11, 6, 3, 2, 2, NULL, 0, "OSGetProgressiveMode" }	// SN Systems ProDG
+	};
+	FuncPattern OSSetProgressiveModeSigs[3] = {
+		{  39,  8,  2,  4,  3,  6, NULL, 0, "OSSetProgressiveModeD" },
+		{  41, 12,  6,  4,  3,  4, NULL, 0, "OSSetProgressiveMode" },
+		{ 192, 54, 10, 14, 11, 27, NULL, 0, "OSSetProgressiveMode" }	// SN Systems ProDG
+	};
 	FuncPattern OSGetEuRgb60ModeSigs[3] = {
 		{ 16,  3, 2, 2, 0, 3, NULL, 0, "OSGetEuRgb60ModeD" },
 		{ 28,  9, 5, 3, 2, 2, NULL, 0, "OSGetEuRgb60Mode" },
@@ -8242,6 +8253,96 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 		
 		FuncPattern fp;
 		make_pattern(data, i, length, &fp);
+		
+		for (j = 0; j < sizeof(OSGetProgressiveModeSigs) / sizeof(FuncPattern); j++) {
+			if (compare_pattern(&fp, &OSGetProgressiveModeSigs[j])) {
+				switch (j) {
+					case 0:
+						if (findx_pattern(data, dataType, i +  4, length, &__OSLockSramSigs[0]) &&
+							(data[i +  6] & 0xFC00FFFF) == 0x88000013 &&
+							(data[i +  7] & 0xFC00FFFF) == 0x5400CFFE &&
+							findx_pattern(data, dataType, i +  9, length, &__OSUnlockSramSigs[0]))
+							OSGetProgressiveModeSigs[j].offsetFoundAt = i;
+						break;
+					case 1:
+						if (findx_pattern(data, dataType, i +  6, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 11, length, &OSRestoreInterruptsSig) &&
+							(data[i + 17] & 0xFC00FFFF) == 0x88000013 &&
+							(data[i + 18] & 0xFC00FFFF) == 0x54000631 &&
+							findx_pattern(data, dataType, i + 25, length, &UnlockSramSigs[2]))
+							OSGetProgressiveModeSigs[j].offsetFoundAt = i;
+						break;
+					case 2:
+						if (findx_pattern (data, dataType, i +  6, length, &OSDisableInterruptsSig) &&
+							findx_pattern (data, dataType, i + 11, length, &OSRestoreInterruptsSig) &&
+							(data[i + 17] & 0xFC00FFFF) == 0x88000013 &&
+							(data[i + 20] & 0xFC00FFFF) == 0x5400CFFE &&
+							findx_patterns(data, dataType, i + 21, length, &UnlockSramSigs[2],
+							                                               &UnlockSramSigs[3], NULL))
+							OSGetProgressiveModeSigs[j].offsetFoundAt = i;
+						break;
+					case 3:
+						if (findx_pattern(data, dataType, i +  4, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 10, length, &OSRestoreInterruptsSig) &&
+							(data[i + 17] & 0xFC00FFFF) == 0x88000013 &&
+							(data[i + 22] & 0xFC00FFFF) == 0x5400CFFE &&
+							findx_pattern(data, dataType, i + 24, length, &OSRestoreInterruptsSig))
+							OSGetProgressiveModeSigs[j].offsetFoundAt = i;
+						break;
+				}
+			}
+		}
+		
+		for (j = 0; j < sizeof(OSSetProgressiveModeSigs) / sizeof(FuncPattern); j++) {
+			if (compare_pattern(&fp, &OSSetProgressiveModeSigs[j])) {
+				switch (j) {
+					case 0:
+						if ((data[i + 15] & 0xFC00FFFF) == 0x54003830 &&
+							(data[i + 16] & 0xFC00FFFF) == 0x54000630 &&
+							findx_pattern(data, dataType, i + 17, length, &__OSLockSramSigs[0]) &&
+							(data[i + 19] & 0xFC00FFFF) == 0x88000013 &&
+							(data[i + 20] & 0xFC00FFFF) == 0x54000630 &&
+							findx_pattern(data, dataType, i + 24, length, &__OSUnlockSramSigs[0]) &&
+							(data[i + 26] & 0xFC00FFFF) == 0x88000013 &&
+							(data[i + 27] & 0xFC00FFFF) == 0x5400066E &&
+							(data[i + 28] & 0xFC00FFFF) == 0x98000013 &&
+							(data[i + 29] & 0xFC00FFFF) == 0x88000013 &&
+							(data[i + 31] & 0xFC00FFFF) == 0x98000013 &&
+							findx_pattern(data, dataType, i + 33, length, &__OSUnlockSramSigs[0]))
+							OSSetProgressiveModeSigs[j].offsetFoundAt = i;
+						break;
+					case 1:
+						if ((data[i +  7] & 0xFC00FFFF) == 0x54003E30 &&
+							findx_pattern (data, dataType, i +  8, length, &OSDisableInterruptsSig) &&
+							findx_pattern (data, dataType, i + 13, length, &OSRestoreInterruptsSig) &&
+							(data[i + 19] & 0xFC00FFFF) == 0x88000013 &&
+							(data[i + 20] & 0xFC00FFFF) == 0x54000630 &&
+							findx_patterns(data, dataType, i + 25, length, &UnlockSramSigs[2],
+							                                               &UnlockSramSigs[3], NULL) &&
+							(data[i + 27] & 0xFC00FFFF) == 0x5400066E &&
+							(data[i + 28] & 0xFC00FFFF) == 0x98000013 &&
+							(data[i + 31] & 0xFC00FFFF) == 0x88000013 &&
+							(data[i + 33] & 0xFC00FFFF) == 0x98000013 &&
+							findx_patterns(data, dataType, i + 34, length, &UnlockSramSigs[2],
+							                                               &UnlockSramSigs[3], NULL))
+							OSSetProgressiveModeSigs[j].offsetFoundAt = i;
+						break;
+					case 2:
+						if ((data[i +  5] & 0xFC00FFFF) == 0x54003E30 &&
+							findx_pattern(data, dataType, i +   6, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i +  12, length, &OSRestoreInterruptsSig) &&
+							(data[i + 19] & 0xFC00FFFF) == 0x88000013 &&
+							(data[i + 20] & 0xFC00FFFF) == 0x54000630 &&
+							findx_pattern(data, dataType, i +  28, length, &OSRestoreInterruptsSig) &&
+							(data[i + 30] & 0xFC00FFFF) == 0x5400067E &&
+							(data[i + 33] & 0xFC00FFFF) == 0x98000013 &&
+							(data[i + 37] & 0xFC00FFFF) == 0x98000013 &&
+							findx_pattern(data, dataType, i + 185, length, &OSRestoreInterruptsSig))
+							OSSetProgressiveModeSigs[j].offsetFoundAt = i;
+						break;
+				}
+			}
+		}
 		
 		for (j = 0; j < sizeof(OSGetEuRgb60ModeSigs) / sizeof(FuncPattern); j++) {
 			if (compare_pattern(&fp, &OSGetEuRgb60ModeSigs[j])) {
@@ -9034,6 +9135,40 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 				IDct10_GCSig.offsetFoundAt = i;
 		}
 		i += fp.Length - 1;
+	}
+	
+	for (j = 0; j < sizeof(OSGetProgressiveModeSigs) / sizeof(FuncPattern); j++)
+	if ((i = OSGetProgressiveModeSigs[j].offsetFoundAt)) {
+		u32 *OSGetProgressiveMode = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+		
+		if (OSGetProgressiveMode) {
+			if (swissSettings.gameVMode < 0) {
+				memset(data + i, 0, OSGetProgressiveModeSigs[j].Length * sizeof(u32));
+				
+				data[i + 0] = 0x38600000;	// li		r3, 0
+				data[i + 1] = 0x4E800020;	// blr
+			} else if (swissSettings.gameVMode > 0) {
+				memset(data + i, 0, OSGetProgressiveModeSigs[j].Length * sizeof(u32));
+				
+				data[i + 0] = 0x38600000 | (swissSettings.sramProgressive & 0xFFFF);
+				data[i + 1] = 0x4E800020;	// blr
+			}
+			print_debug("Found:[%s$%i] @ %08X\n", OSGetProgressiveModeSigs[j].Name, j, OSGetProgressiveMode);
+		}
+	}
+	
+	for (j = 0; j < sizeof(OSSetProgressiveModeSigs) / sizeof(FuncPattern); j++)
+	if ((i = OSSetProgressiveModeSigs[j].offsetFoundAt)) {
+		u32 *OSSetProgressiveMode = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+		
+		if (OSSetProgressiveMode) {
+			if (swissSettings.gameVMode != 0) {
+				memset(data + i, 0, OSSetProgressiveModeSigs[j].Length * sizeof(u32));
+				
+				data[i + 0] = 0x4E800020;	// blr
+			}
+			print_debug("Found:[%s$%i] @ %08X\n", OSSetProgressiveModeSigs[j].Name, j, OSSetProgressiveMode);
+		}
 	}
 	
 	for (j = 0; j < sizeof(OSGetEuRgb60ModeSigs) / sizeof(FuncPattern); j++)
