@@ -67,7 +67,7 @@ static char *tooltips_global[PAGE_GLOBAL_MAX+1] = {
 	"SD/IDE Speed:\n\nThe clock speed to try using on the EXI bus for SD Card Adapter\nand IDE-EXI devices. 32 MHz may not work with some SD cards\nor SD card adapters.",
 	"AVE Compatibility:\n\nSets the compatibility mode for the used audio/video encoder.\n\nAVE N-DOL - Output PAL as NTSC 50\nAVE P-DOL - Disable progressive scan mode\nCMPV-DOL - Enable 1080i & 540p\nGCDigital - Apply input filtering in OSD\nGCVideo - Apply general workarounds for GCVideo (default)\nAVE-RVL - Support 960i & 1152i without WiiVideo",
 	"Force DTV Status:\n\nDisabled - Use detect signal from the Digital AV Out (default)\nEnabled - Force detection in the case of a hardware fault",
-	"Optimise for RetroTINK-4K:\n\nRequires GCVideo-DVI v3.0 or later with Fix Resolution Off.",
+	"Optimise for RetroTINK-4K:\n\nFor GCDigital compatibility mode:\n Requires FX-Framework firmware version 3.9.46.178 or later\n and RetroTINK-4K firmware version 1.9.4 or later, and using\n DV1-Direct mode.\n\nFor GCVideo compatibility mode:\n Requires GCVideo-DVI firmware version 3.0 or later.",
 	"Enable USB Gecko:\n\nIf a USB Gecko is present, messages output to the debug UART\nby Swiss/games will be redirected. When the USB host isn't\nactively reading from the USB Gecko, it may cause the system\nto hang.\n\nwiiload is also made available for iterative development.",
 	"Wait for USB Gecko:\n\nWait for the transmit buffer to be read by the USB host when full."
 };
@@ -82,7 +82,7 @@ static char *tooltips_game_global[PAGE_GAME_GLOBAL_MAX+1] = {
 	NULL,
 	NULL,
 	NULL,
-	"Force Video Active:\n\nA workaround for GCVideo-DVI v3.0 series, obsoleted by 3.1.",
+	"Force Video Active:\n\nA workaround for GCVideo-DVI firmware version series 3.0,\nrendered obsolete by 3.1 and later.",
 	NULL,
 	"Pause for resolution change:\n\nWhen enabled, a change in active video resolution will pause\nthe game for 2 seconds.",
 	"Auto-load cheats:\n\nIf enabled, and a cheats file for a particular game is found\ne.g. /swiss/cheats/GPOP8D.txt (on a compatible device)\nthen all previously enabled cheats will be re-enabled",
