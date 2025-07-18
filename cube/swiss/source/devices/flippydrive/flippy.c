@@ -68,7 +68,7 @@ typedef void (*flippycallback)(flippyfile *file);
 static dvddrvinfo       driveinfo  ATTRIBUTE_ALIGN(32);
 static flippybootstatus bootstatus ATTRIBUTE_ALIGN(32);
 
-static u64 handles = ((1LL << FLIPPY_MAX_HANDLES) - 1) | (1LL << (FLIPPY_FLASH_HANDLE - 1));
+static u64 handles;
 
 static syswd_t alarm = SYS_WD_NULL;
 static lwpq_t queue = LWP_TQUEUE_NULL;
@@ -840,6 +840,8 @@ flippyresult flippy_init(void)
 	if (FLIPPY_VERSION(version->major, version->minor, version->build) <
 		FLIPPY_VERSION(FLIPPY_MINVER_MAJOR, FLIPPY_MINVER_MINOR, FLIPPY_MINVER_BUILD))
 		return FLIPPY_RESULT_INT_ERR;
+
+	handles = ((1LL << FLIPPY_MAX_HANDLES) - 1) | (1LL << (FLIPPY_FLASH_HANDLE - 1));
 
 	LWP_InitQueue(&queue);
 	initialized = true;
