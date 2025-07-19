@@ -108,6 +108,7 @@ static const struct {
 	{ "apploader.img", /* 2001/09/08       */  106432, 0xBFE0063A6E75F243 },
 	{ "apploader.img", /* 2001/09/08       */  106432, 0xC333735F763FE48E },
 	{ "apploader.img", /* 2001/09/08       */  106432, 0xC4E49B81B74285DB },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0xC7DD859D93371EC5 },
 	{ "apploader.img", /* 2001/09/08       */  106432, 0xCB8F06ACAF059685 },
 	{ "apploader.img", /* 2001/09/08       */  106432, 0xCD2E8F6DDC62DA89 },
 	{ "apploader.img", /* 2001/09/08       */  106432, 0xDB064F612BC1FB13 },
@@ -174,7 +175,7 @@ static const struct {
 	{ "apploader.img", /* 2006/01/06       */  139520, 0xF01FA1F58FDF90EF },
 	{ "apploader.img", /* 2017/09/28       */  119360, 0xFA08F0DA6022973A },
 	{ "apploader.img", /* 2021/10/06       */    8416, 0x0C2EA9DF3E473E92 },
-#define NKIT_FIRM_COUNT (FIRM_COUNT + 116)
+#define NKIT_FIRM_COUNT (FIRM_COUNT + 117)
 	{ "240p Test Suite (World) (v1.04) (Program) (Aftermarket) (Unl).dol",        2301384, 0x71BCDBA149B3AAAF },
 	{ "240p Test Suite (World) (v1.06) (Program) (Aftermarket) (Unl).dol",         930560, 0x7EB7DDDAF5105457 },
 	{ "240p Test Suite (World) (v1.07) (Program) (Aftermarket) (Unl).dol",         932032, 0x4DAB8540272CCBD5 },
@@ -1459,6 +1460,7 @@ static const struct {
 	{{ "GNHE5d\x00\x00" }, false, 0x2E, 0xCCBB, 0x2E098A57, 0xED61A06E328BCADC,     929792, +1459048448, {      94248,       +4056, 6496, 0x71DF }, "CD avec les Codes Exclusifs et inédits pour le Jeu Metroid Prime" },
 	{{ "GNHE5d\x00\x00" }, false, 0x32, 0xCCBB, 0xF788D099, 0x20C822BDDEB80BC7,    1245184, +1458733056, {      94248,       +4056, 6496, 0x08F2 }, "Ultimate Codes for Use with Tom Clancy's Splinter Cell" },
 	{{ "GNHE5d\x00\x00" }, false, 0x33, 0xCCBB, 0xC7E200F3, 0x2B7A18F78F0474B8,    2117632, +1457860608, {      94248,       +4056, 6496, 0x3A76 }, "Action Replay Ultimate Cheats für Enter the Matrix" },
+	{{ "GNHE5d\x00\x00" }, false, 0x36, 0xCCBB, 0x4021811B, 0x0BD3C7BA76983FB6,    2174976, +1457803264, {      94248,       +4056, 6496, 0xCD3A }, "Karat GC-you Pro Action Replay PAR GC-you" },
 	{{ "GNHE5d\x00\x00" }, false, 0x38, 0xCCBB, 0xF44D8921, 0x2634109EB130EDB7,    2183168, +1457795072, {      94248,       +4056, 6496, 0x3101 }, "Karat GC-you Pro Action Replay PAR GC-you" },
 	{{ "GNHE5d\x00\x00" }, false, 0x3A, 0xCCBB, 0xA1C6B7A4, 0xE00BE64FE685E811,    1107968, +1458870272, {      94248,       +4056, 6496, 0xA9C4 }, "CD exclusif avec les codes pour les jeux Resident Evil et Resident Evil Zero" },
 	{{ "GNHE5d\x00\x00" }, false, 0x3C, 0xCCBB, 0xB1B28589, 0xBA2B9164B083E0A3,    1714176, +1458264064, {      94248,       +4056, 6496, 0x3310 }, "Action Replay Ultimate Codes Greatest Hits: Best Buy Achievers Weekend 2004" },
@@ -2250,7 +2252,7 @@ static const struct {
 	{{ "UGPP01\x00\x01" }, false, 0x2A, 0x6D4F, 0x5ECD9681, 0x4E9244DEFB94F10C,    5079040, +1454899200, {    2317764,       +8764, 8096, 0x8972 }, "Game Boy Player Start-Up Disc" },
 	{{ "UGPP01\x00\x02" }, false, 0x3A, 0xCA50, 0x1E26380C, 0x483B4CE794041533,    5079040, +1454899200, {    2317764,       +8764, 8096, 0x8972 }, "Game Boy Player Start-Up Disc" },
 	{{ "XXXXXX\x00\x01" }, false, 0x83, 0x7056, 0x5995AC59, 0x5CBC3D9F00D75112, 1287913472,  +172064768, {         ~0,          +0,    0, 0xFFFF }, "LEGO Super Soccer Adventure" },
-#define REDUMP_COUNT (2010)
+#define REDUMP_COUNT (2011)
 	{{"00\0E01\x00\x00" }, false, 0x8B, 0x42A2, 0x499CF1AB, 0xC1BAC83BFBED3EDB,   31170560, +1428807680, {    7795364,      +23900, 6496, 0xBBEA }, "Nintendo Developer Demo" },
 	{{"00\0E01\x00\x00" }, false, 0xD9, 0x21CF, 0xBF114CB3, 0xC1BAC83BFBED3EDB,   31170560, +1428807680, {    7795364,      +23900, 6496, 0xBBEA }, "Nintendo Developer Demo" },
 	{{ "060J01\x00\x00" }, true,  0x7E, 0x27AC, 0x94C088DF, 0x55221BF909AB54CC,  171485184, +1288493056, {     238648, +1288483336, 6496, 0xFD76 }, "Diag Ver 3.1.1" },
