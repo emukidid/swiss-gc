@@ -2379,6 +2379,7 @@ static const struct {
 	{{ "GNHE5d\x00\x00" }, false, 0x94, 0xCCBB, 0xE7F301B7, 0x111E626AC7CDE6B5,     428032, +1459550208, {      94248,       +4056, 6496, 0x5AE1 }, "Action Replay Ultimate Codes for Use with Enter the Matrix" },
 	{{ "GP5P01\x00\x00" }, false, 0x3D, 0xFBF1, 0x9DC1BB2A, 0xC5CD32D7C41AAE3D,  922845184,  +537133056, {   14902032,      +41916, 8096, 0x3D31 }, "Mario Party 5" },
 	{{ "GPNE08\x00\x00" }, false, 0x44, 0xA6AC, 0xD42D1079, 0x43947E5CABB597D0,  689250304,  +770727936, {  492787200,  +770729280, 6496, 0x5AB7 }, "P.N. 03" },
+	{{ "GPZE01\x00\x00" }, false, 0x3E, 0xF60D, 0x0F13C224, 0x1C69883B549A7E38,  144412672, +1315565568, {   33273940,      +38004, 6496, 0x59D7 }, "Nintendo Puzzle Collection" },
 	{{ "GPZJ01\x00\x00" }, false, 0x49, 0x686E, 0xB6FEB467, 0x3F854F54EDCC3480,  144412672, +1315565568, {   33273940,      +38004, 6496, 0x59D7 }, "Nintendo Puzzle Collection" },
 	{{ "GPZJ01\x00\x00" }, false, 0x49, 0xB3A1, 0x05B32F44, 0xE8180E176D3D096B,  144412672, +1315565568, {   33275844, +1315481660, 6496, 0x0A78 }, "Nintendo Puzzle Collection" },
 	{{ "GQSEAF\x10\x00" }, false, 0x49, 0x0E94, 0x9E8B9546, 0xFD0C9D21D44DEA63, 1380898816,   +79079424, {  349195336,   +79079928, 6496, 0xF367 }, "Tales of Symphonia" },
@@ -2446,7 +2447,7 @@ static const struct {
 	{{ "RELSAB\x01\x01" }, true,  0xAE, 0xB04C, 0xF11E97F0, 0x5FFE80C83B9D8B46,  983810048,  +476168192, {  314979244,      +24252, 6496, 0xA75A }, "Crash Bandicoot: The Wrath of Cortex" },
 	{{ "SG4JDA\x00\x00" }, true,  0x9D, 0xB3B3, 0x424A4760, 0x38394EDF8E58393A, 1261602816,  +198375424, { 1261594344,  +198377400, 6496, 0x015D }, "Naruto: Clash of Ninja 4" },
 	{{ "TESTNA\x00\x00" }, false, 0xD2, 0x0C28, 0x6254FB97, 0xAA2E5EDD0EF81992,   26834944,       -1658, {         ~0,          +0,    0, 0xFFFF }, "Dodger Demo" },
-#define VALID_GCM_COUNT (REDUMP_COUNT + 193)
+#define VALID_GCM_COUNT (REDUMP_COUNT + 194)
 	{{ "101E01\x00\x05" }, true,  0x88, 0xB6FD, 0x4BB518CD, 0x27CFAD706924A030, 1435949056,   +24029184, {         ~0,          +0,    0, 0xFFFF }, "Hontai Kensa Disc DOL-USA" },
 	{{ "101E01\x00\x05" }, true,  0xC6, 0xB6FD, 0x4BB518CD, 0x27CFAD706924A030, 1435949056,   +24029184, {         ~0,          +0,    0, 0xFFFF }, "Hontai Kensa Disc DOL-USA" },
 	{{ "101J01\x00\x03" }, true,  0x67, 0xA361, 0x1A7B7608, 0x6E2DA2E062EF73BA, 1459453952,     +524288, {         ~0,          +0,    0, 0xFFFF }, "Hontai Kensa Disc DOL" },
@@ -2503,6 +2504,8 @@ static const struct {
 	{{ "GNMEAF\x00\x00" }, true,  0xD6, 0xBD06, 0x316232A1, 0x4537061684D7C9D1,  660848640,  +799129600, {  484029924,      +70216, 6496, 0x9E0C }, "Namco Museum" },
 	{{ "GNMEAF\x00\x01" }, true,  0x6B, 0x25E4, 0x0BECBC5F, 0xBA5DB6E856CA7B9A,  662274048,  +797704192, {  485454564,      +54600, 6496, 0x9E0C }, "Namco Museum" },
 	{{ "GPMEAF\x00\x00" }, true,  0x47, 0x1CEA, 0x2E6425F3, 0x272C8825B749E04B, 1154119680,  +305858560, {  172111684,     +520148, 6496, 0x1480 }, "Pac-Man Fever" },
+	{{ "GPZE01\x00\x00" }, false, 0x5E, 0xF60D, 0x0F13C224, 0x1C69883B549A7E38, 1459980288,       -2048, {   33311960,         -16, 6496, 0x59D7 }, "Nintendo Puzzle Collection" },
+	{{ "GPZE01\x00\x00" }, false, 0x7C, 0xF60D, 0x0F13C224, 0x1C69883B549A7E38, 1459980288,       -2048, {   33311960,         -16, 6496, 0x59D7 }, "Nintendo Puzzle Collection" },
 	{{ "GXQP41\x00\x00" }, false, 0x55, 0x904A, 0xD0B0EDE0, 0x260C8DE80E2C787E, 1459980288,       -2048, {  479137452,        -312, 8096, 0xA071 }, "Taxi 3: The Game" },
 	{{ "GXQP41\x00\x00" }, false, 0xCE, 0x904A, 0xD0B0EDE0, 0x260C8DE80E2C787E, 1459980288,       -2048, {  479137452,        -312, 8096, 0xA071 }, "Taxi 3: The Game" },
 	{{ "GY3E01\x00\x00" }, false, 0x0A, 0x112A, 0x696F5AC7, 0x780C22857F53C0D0, 1459980288,       -2048, { 1198941300,         -96, 6496, 0x12FC }, "Donkey Konga 3: Tabehoudai! Haru Mogitate 50-kyoku" },
@@ -2514,7 +2517,7 @@ static const struct {
 	{{ "RELSAB\x00\x00" }, false, 0xAC, 0xBA9E, 0x1D74AD4A, 0x1A5F0EA47A582D7E, 1455841280,    +4136960, {         ~0,          +0,    0, 0xFFFF }, "Memory Card Utility Program" },
 	{{ "RELSAB\x00\x00" }, true,  0x44, 0xFCCE, 0x146E4A5A, 0x1E9563341CFB48F4, 1459947520,      +30720, { 1193673280,          +0, 6496, 0x8F7A }, "Summoner: The Prophecy" },
 	{{ "RELSAB\x00\x00" }, true,  0xD6, 0xD9CE, 0x16D7BCCE, 0xB64ADF7A4E8423B8, 1459978240,          +0, { 1193214528,          +0, 6496, 0x1458 }, "Summoner: The Prophecy" },
-#define TOTAL_GCM_COUNT (VALID_GCM_COUNT + 67)
+#define TOTAL_GCM_COUNT (VALID_GCM_COUNT + 69)
 };
 
 uint8_t fletcher8(const void *buffer, size_t size)
