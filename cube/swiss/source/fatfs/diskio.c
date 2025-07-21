@@ -1,5 +1,5 @@
 /*-----------------------------------------------------------------------*/
-/* Low level disk I/O module skeleton for FatFs     (C)ChaN, 2019        */
+/* Low level disk I/O module skeleton for FatFs     (C)ChaN, 2025        */
 /*-----------------------------------------------------------------------*/
 /* If a working storage control module is available, it should be        */
 /* attached to the FatFs via a glue function rather than modifying it.   */
@@ -7,8 +7,8 @@
 /* storage control modules to the FatFs module with a defined API.       */
 /*-----------------------------------------------------------------------*/
 
-#include "ff.h"			/* Obtains integer types */
-#include "diskio.h"		/* Declarations of disk functions */
+#include "ff.h"			/* Basic definitions of FatFs */
+#include "diskio.h"		/* Declarations FatFs MAI */
 
 #include <sdcard/gcsd.h>
 #include "ata.h"

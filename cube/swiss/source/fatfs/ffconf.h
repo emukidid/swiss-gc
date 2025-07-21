@@ -2,7 +2,7 @@
 /  Configurations of FatFs Module
 /---------------------------------------------------------------------------*/
 
-#define FFCONF_DEF	5385	/* Revision ID */
+#define FFCONF_DEF	80386	/* Revision ID */
 
 /*---------------------------------------------------------------------------/
 / Function Configurations
@@ -155,12 +155,24 @@
 
 
 #define FF_FS_RPATH		0
-/* This option configures support for relative path.
+/* This option configures support for relative path feature.
 /
 /   0: Disable relative path and remove related API functions.
-/   1: Enable relative path. f_chdir() and f_chdrive() are available.
+/   1: Enable relative path and dot names. f_chdir() and f_chdrive() are available.
 /   2: f_getcwd() is available in addition to 1.
 */
+
+
+#define FF_PATH_DEPTH	10
+/*  This option defines maximum depth of directory in the exFAT volume. It is NOT
+/   relevant to FAT/FAT32 volume.
+/   For example, FF_PATH_DEPTH = 3 will able to follow a path "/dir1/dir2/dir3/file"
+/   but a sub-directory in the dir3 will not able to be followed and set current
+/   directory.
+/   The size of filesystem object (FATFS) increases FF_PATH_DEPTH * 24 bytes.
+/   When FF_FS_EXFAT == 0 or FF_FS_RPATH == 0, this option has no effect.
+*/
+
 
 
 /*---------------------------------------------------------------------------/
@@ -227,7 +239,7 @@
 
 #define FF_FS_TINY		1
 /* This option switches tiny buffer configuration. (0:Normal or 1:Tiny)
-/  At the tiny configuration, size of file object (FIL) is shrinked FF_MAX_SS bytes.
+/  At the tiny configuration, size of file object (FIL) is reduced FF_MAX_SS bytes.
 /  Instead of private sector buffer eliminated from the file object, common sector
 /  buffer in the filesystem object (FATFS) is used for the file data transfer. */
 
@@ -239,7 +251,7 @@
 
 
 #define FF_FS_NORTC		0
-#define FF_NORTC_MON	6
+#define FF_NORTC_MON	1
 #define FF_NORTC_MDAY	1
 #define FF_NORTC_YEAR	2025
 /* The option FF_FS_NORTC switches timestamp feature. If the system does not have
