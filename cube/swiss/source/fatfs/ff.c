@@ -3176,7 +3176,7 @@ static FRESULT follow_path (	/* FR_OK(0): successful, !=0: error code */
 						dp->obj.c_ofs = fs->xcwds2.tbl[fs->xcwds2.depth - 1].nxt_ofs;
 					}
 				}
-				dp->obj.attr |= AM_DIR;			/* This is a directory */
+				dp->obj.attr = AM_DIR;			/* This is a directory */
 				dp->fn[NSFLAG] |= NS_NONAME;	/* but dot names in exFAT volume are not directory entry */
 				if (ns & NS_LAST) break;		/* Last segment? */
 				continue;		/* Follow next segment */
@@ -3187,7 +3187,7 @@ static FRESULT follow_path (	/* FR_OK(0): successful, !=0: error code */
 				if (res == FR_NO_FILE) {	/* Object is not found */
 					if (FF_FS_RPATH && (ns & NS_DOT)) {	/* If dot entry is not exist, stay there (may be root dir in FAT volume) */
 						if (!(ns & NS_LAST)) continue;	/* Continue to follow if not last segment */
-						dp->fn[NSFLAG] = NS_NONAME;
+						dp->fn[NSFLAG] |= NS_NONAME;
 						res = FR_OK;
 					} else {							/* Could not find the object */
 						if (!(ns & NS_LAST)) res = FR_NO_PATH;	/* Adjust error code if not last segment */
@@ -4986,21 +4986,24 @@ FRESULT f_stat (
 		if (res == FR_OK) {				/* Follow completed */
 			if (dj.fn[NSFLAG] & NS_NONAME) {	/* It is origin directory */
 				if (fno) {
-					fno->fsize = 0;
-					fno->fclust = (fs->fs_type >= FS_FAT32) ? fs->dirbase : 0;
-					fno->acdate = 0;
-					fno->actime = 0;
-					fno->fdate = 0;
-					fno->ftime = 0;
-#if FF_FS_CRTIME
-					fno->crdate = 0;
-					fno->crtime = 0;
-#endif
+					fno->fclust = dj.obj.sclust;
+					if (fno->fclust == 0 && fs->fs_type >= FS_FAT32) {
+						fno->fclust = (DWORD)fs->dirbase;
+					}
 					fno->fattrib = AM_DIR;
+					fno->fsize = 0;
+					fno->actime = 0;
+					fno->acdate = 0;
+					fno->ftime = 0;
+					fno->fdate = 0;
+#if FF_FS_CRTIME
+					fno->crtime = 0;
+					fno->crdate = 0;
+#endif
+					fno->fname[0] = 0;
 #if FF_USE_LFN
 					fno->altname[0] = 0;
 #endif
-					fno->fname[0] = 0;
 				}
 			} else {							/* Found an object */
 				if (fno) get_fileinfo(&dj, fno);
