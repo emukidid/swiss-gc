@@ -11,7 +11,6 @@ jobs:
     steps:
     - name: Install packages
       run: |
-        sudo rm /etc/apt/sources.list.d/bullseye-backports.list
         sudo rm /etc/apt/sources.list.d/devkitpro.list
         sudo apt-get update
         sudo apt-get install -y --no-install-recommends gcc gcc-mingw-w64-i686 libc6-dev libc6-i386 p7zip-full xorriso
