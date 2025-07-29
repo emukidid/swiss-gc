@@ -153,6 +153,7 @@ static const struct {
 	{ "apploader.img", /* 2002/09/05       */  116512, 0xA607D68783177BA3 },
 	{ "apploader.img", /* 2002/09/05       */  116512, 0xE0A70AC76B355E02 },
 	{ "apploader.img", /* 2003/04/17       */  119360, 0x0596C19514DD7D1A },
+	{ "apploader.img", /* 2003/04/17       */  119360, 0x7DB4525317DC0C10 },
 	{ "apploader.img", /* 2003/04/17       */  119360, 0x7EB7D190448B3B56 },
 	{ "apploader.img", /* 2003/08/20       */  119616, 0x1DA6DDCB6BD6CC84 },
 	{ "apploader.img", /* 2003/09/16       */  119808, 0xD452E42826EA69F7 },
@@ -175,7 +176,7 @@ static const struct {
 	{ "apploader.img", /* 2006/01/06       */  139520, 0xF01FA1F58FDF90EF },
 	{ "apploader.img", /* 2017/09/28       */  119360, 0xFA08F0DA6022973A },
 	{ "apploader.img", /* 2021/10/06       */    8416, 0x0C2EA9DF3E473E92 },
-#define NKIT_FIRM_COUNT (FIRM_COUNT + 117)
+#define NKIT_FIRM_COUNT (FIRM_COUNT + 118)
 	{ "240p Test Suite (World) (v1.04) (Program) (Aftermarket) (Unl).dol",        2301384, 0x71BCDBA149B3AAAF },
 	{ "240p Test Suite (World) (v1.06) (Program) (Aftermarket) (Unl).dol",         930560, 0x7EB7DDDAF5105457 },
 	{ "240p Test Suite (World) (v1.07) (Program) (Aftermarket) (Unl).dol",         932032, 0x4DAB8540272CCBD5 },
@@ -2369,6 +2370,7 @@ static const struct {
 	{{ "GL3EE8\x11\x00" }, false, 0x66, 0xDC00, 0xABB35F7C, 0x8DD29CAF465774AB, 1099397120,  +360581120, { 1079112416,       +8780, 6496, 0xDEAB }, "Lupin III: Lost Treasure Under the Sea" },
 	{{ "GLJEGG\x00\x00" }, false, 0x44, 0x3684, 0xC411F2F8, 0xED983A4B64245ED8,  577157120,  +883148800, {  560702976,  +882822244, 6496, 0x83D8 }, "Radio Allergy" },
 	{{ "GLJJMS\x00\x00" }, false, 0x16, 0xCB65, 0xB7A047F5, 0xF4AFE991FE4ECC7B,  575610880,   +25878528, {  559153824,   +15203680, 6496, 0xDA29 }, "Radirgy Generic" },
+	{{ "GLJJMS\x00\x00" }, false, 0xAE, 0xFD43, 0x78B86F33, 0xF4AFE991FE4ECC7B,  575600640,  +884377600, {  559145940,  +884376972, 6496, 0xDA29 }, "Radirgy Generic" },
 	{{ "GM8E01\x00\x00" }, false, 0x0D, 0xF5D6, 0xE2BE408A, 0xAE43A5550F45F4FF, 1323476992,  +136501248, { 1314573668,  +136500540, 6496, 0xE1FB }, "Samus Goes to the Fridge to Get a Glass of Milk 3D" },
 	{{ "GM8E01\x00\x00" }, false, 0xC3, 0x51EE, 0xBCB54B30, 0xAE43A5550F45F4FF, 1314445312,  +145532928, {     137444,  +120059484, 6496, 0xDAB5 }, "Metroid Prime: Double Trouble" },
 	{{ "GM8P01\x00\x00" }, false, 0x24, 0x909C, 0x3B9499FB, 0xF12C663EF4B5642F, 1425532928,   +34445312, {  629056224,   +34443008, 8096, 0xEE10 }, "Metroid Prime" },
@@ -2445,9 +2447,10 @@ static const struct {
 	{{ "RELSAB\x01\x01" }, false, 0x89, 0x8544, 0x64ADDC63, 0x5E74E9C536078EF4,     225280, +1459752960, {         ~0,          +0,    0, 0xFFFF }, "There Is No Program on This Disc" },
 	{{ "RELSAB\x01\x01" }, false, 0xB5, 0x3C92, 0xA553BEC9, 0xB2D663542AE4C391,  126601216, +1333377024, {   96423396,      +27800, 6496, 0x19E5 }, "Smashing Drive" },
 	{{ "RELSAB\x01\x01" }, true,  0xAE, 0xB04C, 0xF11E97F0, 0x5FFE80C83B9D8B46,  983810048,  +476168192, {  314979244,      +24252, 6496, 0xA75A }, "Crash Bandicoot: The Wrath of Cortex" },
+	{{ "SG4JDA\x00\x00" }, true,  0x52, 0xF019, 0x4BB4830A, 0x3645CAE26589C220, 1272594432,  +187383808, { 1272587604,  +187384140, 6496, 0x015D }, "Naruto: Clash of Ninja 4" },
 	{{ "SG4JDA\x00\x00" }, true,  0x9D, 0xB3B3, 0x424A4760, 0x38394EDF8E58393A, 1261602816,  +198375424, { 1261594344,  +198377400, 6496, 0x015D }, "Naruto: Clash of Ninja 4" },
 	{{ "TESTNA\x00\x00" }, false, 0xD2, 0x0C28, 0x6254FB97, 0xAA2E5EDD0EF81992,   26834944,       -1658, {         ~0,          +0,    0, 0xFFFF }, "Dodger Demo" },
-#define VALID_GCM_COUNT (REDUMP_COUNT + 194)
+#define VALID_GCM_COUNT (REDUMP_COUNT + 196)
 	{{ "101E01\x00\x05" }, true,  0x88, 0xB6FD, 0x4BB518CD, 0x27CFAD706924A030, 1435949056,   +24029184, {         ~0,          +0,    0, 0xFFFF }, "Hontai Kensa Disc DOL-USA" },
 	{{ "101E01\x00\x05" }, true,  0xC6, 0xB6FD, 0x4BB518CD, 0x27CFAD706924A030, 1435949056,   +24029184, {         ~0,          +0,    0, 0xFFFF }, "Hontai Kensa Disc DOL-USA" },
 	{{ "101J01\x00\x03" }, true,  0x67, 0xA361, 0x1A7B7608, 0x6E2DA2E062EF73BA, 1459453952,     +524288, {         ~0,          +0,    0, 0xFFFF }, "Hontai Kensa Disc DOL" },
