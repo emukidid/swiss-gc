@@ -219,13 +219,6 @@ static void DOLMinMax(DOLHEADER * dol)
         maxaddress = dol->dataAddress[i] + dol->dataLength[i];
     }
   }
-
-  /*** And of course, any BSS section ***/
-  if (dol->bssAddress)
-  {
-    if ((dol->bssAddress + dol->bssLength) > maxaddress)
-      maxaddress = dol->bssAddress + dol->bssLength;
-  }
 }
 
 u32 DOLSize(DOLHEADER *dol)
@@ -333,18 +326,16 @@ int DOLtoARAM(unsigned char *dol, char *argz, size_t argz_len)
     }
   }
 
-  /*** Pass a command line ***/
+  /*** Move command line and environment ***/
+  if (envz) envz = memcpy(SYS_AllocArenaMemHi(envz_len, 1), envz, envz_len);
+  if (argz) argz = memcpy(SYS_AllocArenaMemHi(argz_len, 1), argz, argz_len);
+
+  /*** Pass command line ***/
   if (argz)
   {
     argv.argvMagic = ARGV_MAGIC;
     argv.commandLine = argz;
     argv.length = argz_len;
-
-    ARAMPut((unsigned char *) argv.commandLine, (char *) ((maxaddress - minaddress) + ARAMSTART), argv.length);
-
-    argv.commandLine = (char *) maxaddress;
-    maxaddress += argv.length;
-    sizeinbytes += argv.length;
 
     ARAMPut((unsigned char *) &argv, (char *) ((dolhdr->entryPoint + 8 - minaddress) + ARAMSTART), sizeof(struct __argv));
   }
@@ -355,12 +346,6 @@ int DOLtoARAM(unsigned char *dol, char *argz, size_t argz_len)
     argv.argvMagic = ENVP_MAGIC;
     argv.commandLine = envz;
     argv.length = envz_len;
-
-    ARAMPut((unsigned char *) argv.commandLine, (char *) ((maxaddress - minaddress) + ARAMSTART), argv.length);
-
-    argv.commandLine = (char *) maxaddress;
-    maxaddress += argv.length;
-    sizeinbytes += argv.length;
 
     ARAMPut((unsigned char *) &argv, (char *) ((dolhdr->entryPoint + 40 - minaddress) + ARAMSTART), sizeof(struct __argv));
   }
@@ -386,8 +371,8 @@ static void ELFMinMax(Elf32_Ehdr *ehdr, Elf32_Phdr *phdr)
     {
       if (phdr[i].p_vaddr < minaddress)
         minaddress = phdr[i].p_vaddr;
-      if ((phdr[i].p_vaddr + phdr[i].p_memsz) > maxaddress)
-        maxaddress = phdr[i].p_vaddr + phdr[i].p_memsz;
+      if ((phdr[i].p_vaddr + phdr[i].p_filesz) > maxaddress)
+        maxaddress = phdr[i].p_vaddr + phdr[i].p_filesz;
     }
   }
 }
@@ -447,18 +432,16 @@ int ELFtoARAM(unsigned char *elf, char *argz, size_t argz_len)
     }
   }
 
-  /*** Pass a command line ***/
+  /*** Move command line and environment ***/
+  if (envz) envz = memcpy(SYS_AllocArenaMemHi(envz_len, 1), envz, envz_len);
+  if (argz) argz = memcpy(SYS_AllocArenaMemHi(argz_len, 1), argz, argz_len);
+
+  /*** Pass command line ***/
   if (argz)
   {
     argv.argvMagic = ARGV_MAGIC;
     argv.commandLine = argz;
     argv.length = argz_len;
-
-    ARAMPut((unsigned char *) argv.commandLine, (char *) ((maxaddress - minaddress) + ARAMSTART), argv.length);
-
-    argv.commandLine = (char *) maxaddress;
-    maxaddress += argv.length;
-    sizeinbytes += argv.length;
 
     ARAMPut((unsigned char *) &argv, (char *) ((ehdr->e_entry + 8 - minaddress) + ARAMSTART), sizeof(struct __argv));
   }
@@ -469,12 +452,6 @@ int ELFtoARAM(unsigned char *elf, char *argz, size_t argz_len)
     argv.argvMagic = ENVP_MAGIC;
     argv.commandLine = envz;
     argv.length = envz_len;
-
-    ARAMPut((unsigned char *) argv.commandLine, (char *) ((maxaddress - minaddress) + ARAMSTART), argv.length);
-
-    argv.commandLine = (char *) maxaddress;
-    maxaddress += argv.length;
-    sizeinbytes += argv.length;
 
     ARAMPut((unsigned char *) &argv, (char *) ((ehdr->e_entry + 40 - minaddress) + ARAMSTART), sizeof(struct __argv));
   }
