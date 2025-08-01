@@ -71,14 +71,13 @@ compile-packer:
 build:
 	# create initial DIR structure and various DOLs 
 	@mkdir $(DIST)
-	@mkdir $(DIST)/DOL
-	@mkdir $(DIST)/DOL/Legacy
-	@mkdir $(DIST)/FlippyDrive
-	@mkdir $(DIST)/GCLoader
-	@mkdir $(DIST)/ISO
-	@mkdir $(DIST)/Licenses
-	@mkdir $(DIST)/WiikeyFusion
-	@mkdir $(DIST)/WODE
+	@mkdir -p $(DIST)/DOL/Legacy
+	@mkdir -p $(DIST)/FlippyDrive
+	@mkdir -p $(DIST)/GCLoader
+	@mkdir -p $(DIST)/ISO
+	@mkdir -p $(DIST)/Licenses
+	@mkdir -p $(DIST)/WiikeyFusion
+	@mkdir -p $(DIST)/WODE
 	@cp $(PACKER)/swiss.dol $(DIST)/DOL/$(SVN_REVISION).dol
 	@echo -n $(shell git rev-parse --short HEAD) >> $(DIST)/DOL/$(SVN_REVISION).dol
 	@cp $(SOURCES)/swiss/swiss.elf $(DIST)/DOL/$(SVN_REVISION).elf
@@ -118,7 +117,7 @@ build:
 #------------------------------------------------------------------
 
 recovery-iso:
-	@mkdir $(DIST)/WiikeyFusion/RecoveryISO
+	@mkdir -p $(DIST)/WiikeyFusion/RecoveryISO
 	@cp $(DIST)/ISO/$(SVN_REVISION)"(pal)".iso $(DIST)/WiikeyFusion/RecoveryISO/$(SVN_REVISION)"_Recovery".iso
 	# merge bootloader and swiss
 	@dd if=$(BUILDTOOLS)/wkf/recovery_bootloader.iso of=$(DIST)/WiikeyFusion/RecoveryISO/$(SVN_REVISION)"_Recovery".iso bs=32K count=1 conv=notrunc
@@ -137,6 +136,7 @@ package:   # create distribution package
 	@mv $(DIST)/GCLoader $(SVN_REVISION)
 	@mv $(DIST)/ISO $(SVN_REVISION)
 	@mv $(DIST)/MemoryCard $(SVN_REVISION)
+	@cd $(DIST)/PicoBoot/gekkoboot && zip -mr0 EXTRACT_TO_ROOT.zip *
 	@mv $(DIST)/PicoBoot $(SVN_REVISION)
 	@mv $(DIST)/USBGeckoRemoteServer $(SVN_REVISION)
 	@cd $(DIST)/Wii && zip -mr0 EXTRACT_TO_ROOT.zip *
@@ -157,43 +157,41 @@ package:   # create distribution package
 #------------------------------------------------------------------
 
 build-AR: # make ActionReplay
-	@mkdir $(DIST)/ActionReplay
+	@mkdir -p $(DIST)/ActionReplay
 	@cp $(DIST)/DOL/$(SVN_REVISION).dol $(DIST)/ActionReplay/AUTOEXEC.DOL
-	@cp $(PACKER)/SDLOADER.BIN $(DIST)/ActionReplay/
+	@cp $(PACKER)/SDLOADER.BIN $(DIST)/ActionReplay
 
 #------------------------------------------------------------------
 
 build-gci: # make GCI for memory cards
-	@mkdir $(DIST)/MemoryCard
-	@mkdir $(DIST)/MemoryCard/dol2gci
+	@mkdir -p $(DIST)/MemoryCard/dol2gci
 	@$(DOL2GCI) $(DIST)/DOL/$(SVN_REVISION).dol $(DIST)/MemoryCard/boot.gci boot.dol
 	@$(DOL2GCI) $(DIST)/DOL/$(SVN_REVISION).dol $(DIST)/MemoryCard/xeno.gci xeno.dol
-	@cp $(BUILDTOOLS)/dol2gci* $(DIST)/MemoryCard/dol2gci/
+	@cp $(BUILDTOOLS)/dol2gci* $(DIST)/MemoryCard/dol2gci
 
 #------------------------------------------------------------------
 
 build-geckoserver:
 	@cd $(GECKOSERVER) && $(MAKE)
-	@mkdir $(DIST)/USBGeckoRemoteServer
-	@cp $(GECKOSERVER)/swissserver* $(DIST)/USBGeckoRemoteServer/
+	@mkdir -p $(DIST)/USBGeckoRemoteServer
+	@cp $(GECKOSERVER)/swissserver* $(DIST)/USBGeckoRemoteServer
 
 #------------------------------------------------------------------
 
 build-ipl:
-	@mkdir $(DIST)/Apploader
-	@mkdir $(DIST)/Apploader/swiss
-	@mkdir $(DIST)/Apploader/swiss/patches
-	@mkdir $(DIST)/PicoBoot
+	@mkdir -p $(DIST)/Apploader/swiss/patches
+	@mkdir -p $(DIST)/PicoBoot/gekkoboot
 	@$(DOL2IPL) $(DIST)/Apploader/swiss/patches/apploader.img $(PACKER)/reboot.dol *$(SVN_REVISION).dol
 	@$(DOL2IPL) $(DIST)/PicoBoot/$(SVN_REVISION).uf2 $(PACKER)/reboot.dol
+	@cp $(DIST)/DOL/$(SVN_REVISION).dol $(DIST)/PicoBoot/gekkoboot/ipl.dol
+	@cp -r $(DIST)/Apploader/* $(DIST)/PicoBoot/gekkoboot
 
 #------------------------------------------------------------------
 
 build-wii:
 	@cd $(WIIBOOTER) && $(MAKE)
 	@$(DOL2IPL) $(WIIBOOTER)/boot.dol $(PACKER)/reboot.dol
-	@mkdir $(DIST)/Wii
-	@mkdir $(DIST)/Wii/apps
-	@mkdir $(DIST)/Wii/apps/swiss-gc
-	@cp $(WIIBOOTER)/boot.dol $(DIST)/Wii/apps/swiss-gc/
-	@cp $(DIST)/LICENSE.txt $(DIST)/Wii/apps/swiss-gc/
+	@mkdir -p $(DIST)/Wii/apps/swiss-gc
+	@cp $(WIIBOOTER)/boot.dol $(DIST)/Wii/apps/swiss-gc
+	@cp $(DIST)/LICENSE.txt $(DIST)/Wii/apps/swiss-gc
+	@cp -r $(DIST)/Licenses $(DIST)/Wii/apps/swiss-gc/licenses
