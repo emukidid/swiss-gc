@@ -15,6 +15,7 @@
 #include "gui/IPLFontWrite.h"
 #include "swiss.h"
 #include "main.h"
+#include "flippy.h"
 #include "wkf.h"
 #include "patcher.h"
 #include "dvd.h"
@@ -159,8 +160,13 @@ bool deviceHandler_WKF_test() {
 	return swissSettings.hasDVDDrive == 1 && (__wkfSpiReadId() != 0 && __wkfSpiReadId() != 0xFFFFFFFF);
 }
 
-s32 deviceHandler_WKF_init(file_handle* file){
+s32 deviceHandler_WKF_init(file_handle* file) {
+	if(devices[DEVICE_CUR] == &__device_flippy || devices[DEVICE_CUR] == &__device_flippyflash) {
+		return EBUSY;
+	}
+	if(swissSettings.hasFlippyDrive) flippy_bypass(true);
 	if(!deviceHandler_WKF_test()) return ENODEV;
+	
 	wkfReinit();	// TODO extended error status
 	if(wkffs != NULL) {
 		f_unmount("wkf:/");

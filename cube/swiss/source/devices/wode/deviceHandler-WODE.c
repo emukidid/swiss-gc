@@ -14,6 +14,7 @@
 #include "gui/IPLFontWrite.h"
 #include "swiss.h"
 #include "main.h"
+#include "flippy.h"
 #include "patcher.h"
 #include "dvd.h"
 #include "WodeInterface.h"
@@ -230,6 +231,12 @@ s32 deviceHandler_WODE_setupFile(file_handle* file, file_handle* file2, Executab
 }
 
 s32 deviceHandler_WODE_init(file_handle* file) {
+	if(devices[DEVICE_CUR] == &__device_flippy || devices[DEVICE_CUR] == &__device_flippyflash) {
+		return EBUSY;
+	}
+	if(swissSettings.hasFlippyDrive) flippy_bypass(true);
+	if(!swissSettings.hasDVDDrive) return ENODEV;
+	
 	int res = startupWode();
 	wodeInited = !res ? 1:0;
 	return res;

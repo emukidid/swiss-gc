@@ -15,6 +15,7 @@
 #include "gui/IPLFontWrite.h"
 #include "swiss.h"
 #include "main.h"
+#include "flippy.h"
 #include "gcloader.h"
 #include "patcher.h"
 #include "dvd.h"
@@ -237,7 +238,13 @@ s32 deviceHandler_GCLoader_setupFile(file_handle* file, file_handle* file2, Exec
 	return 1;
 }
 
-s32 deviceHandler_GCLoader_init(file_handle* file){
+s32 deviceHandler_GCLoader_init(file_handle* file) {
+	if(devices[DEVICE_CUR] == &__device_flippy || devices[DEVICE_CUR] == &__device_flippyflash) {
+		return EBUSY;
+	}
+	if(swissSettings.hasFlippyDrive) flippy_bypass(true);
+	if(!swissSettings.hasDVDDrive) return ENODEV;
+	
 	if(gcloaderfs != NULL) {
 		f_unmount("gcldr:/");
 		free(gcloaderfs);
