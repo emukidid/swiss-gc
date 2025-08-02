@@ -138,6 +138,7 @@ package:   # create distribution package
 	@mv $(DIST)/MemoryCard $(SVN_REVISION)
 	@cd $(DIST)/PicoBoot/gekkoboot && zip -mr0 EXTRACT_TO_ROOT.zip *
 	@mv $(DIST)/PicoBoot $(SVN_REVISION)
+	@mv $(DIST)/PicoLoader $(SVN_REVISION)
 	@mv $(DIST)/USBGeckoRemoteServer $(SVN_REVISION)
 	@cd $(DIST)/Wii && zip -mr0 EXTRACT_TO_ROOT.zip *
 	@mv $(DIST)/Wii $(SVN_REVISION)
@@ -181,8 +182,10 @@ build-geckoserver:
 build-ipl:
 	@mkdir -p $(DIST)/Apploader/swiss/patches
 	@mkdir -p $(DIST)/PicoBoot/gekkoboot
+	@mkdir -p $(DIST)/PicoLoader
 	@$(DOL2IPL) $(DIST)/Apploader/swiss/patches/apploader.img $(PACKER)/reboot.dol *$(SVN_REVISION).dol
 	@$(DOL2IPL) $(DIST)/PicoBoot/$(SVN_REVISION).uf2 $(PACKER)/reboot.dol
+	@$(DOL2IPL) $(DIST)/PicoLoader/$(SVN_REVISION).uf2 $(DIST)/GCLoader/boot.iso
 	@cp $(DIST)/DOL/$(SVN_REVISION).dol $(DIST)/PicoBoot/gekkoboot/ipl.dol
 	@cp -r $(DIST)/Apploader/* $(DIST)/PicoBoot/gekkoboot
 

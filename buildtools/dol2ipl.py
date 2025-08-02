@@ -171,9 +171,19 @@ def main():
         print(f"Image size:    {size} bytes ({size // 1024}K)")
     elif executable.endswith(".elf"):
         pass
+    elif executable.endswith(".iso"):
+        if output.endswith(".uf2"):
+            out = pack_uf2(exe, 0x10031000, [0xE48BFF56])
+
+            with open(output, "wb") as f:
+                f.write(out)
+            return 0
+        else:
+            print("Unknown output format")
+            return 1
     else:
         print("Unknown input format")
-        return -1
+        return 1
 
     if output.endswith(".dol"):
         with open(output, "rb") as f:
@@ -191,7 +201,7 @@ def main():
     elif output.endswith(".img"):
         if entry != 0x81300000 or load != 0x01300000:
             print("Invalid entry point and base address (must be 0x81300000)")
-            return -1
+            return 1
 
         date = "" if len(sys.argv) < 4 else sys.argv[3]
         assert date <= "2004/02/01"
@@ -210,7 +220,7 @@ def main():
     elif output.endswith(".uf2"):
         if entry != 0x81300000 or load != 0x01300000:
             print("Invalid entry point and base address (must be 0x81300000)")
-            return -1
+            return 1
 
         img = scramble(bytearray(0x720) + img)[0x720:]
 
@@ -232,10 +242,11 @@ def main():
 
     else:
         print("Unknown output format")
-        return -1
+        return 1
 
     with open(output, "wb") as f:
         f.write(out)
+    return 0
 
 if __name__ == "__main__":
     sys.exit(main())
