@@ -60,6 +60,9 @@ static void driveInfoCallback(s32 result, dvdcmdblk *block) {
 	else if(result >= 0) {
 		swissSettings.hasDVDDrive = 1;
 		switch(DVDDriveInfo->rel_date) {
+			case 0:
+				*DVDDeviceCode = 0x0001;
+				break;
 			case 0x20220420:
 			case 0x20220426:
 				syssramex* sramex = __SYS_LockSramEx();
