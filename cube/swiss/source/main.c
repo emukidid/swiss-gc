@@ -106,15 +106,17 @@ void Initialise(void)
 	usleep(1000); //wait for modchip to disable (overkill)
 	__SYS_ReadROM(IPLInfo,256,0);	// Read IPL tag
 
-	if(!strncmp(&IPLInfo[0x55], "NTSC", 4))
-		swissSettings.sramVideo = SYS_VIDEO_NTSC;
-	else if(!strncmp(&IPLInfo[0x55], "PAL ", 4))
-		swissSettings.sramVideo = SYS_VIDEO_PAL;
-	else if(!strncmp(&IPLInfo[0x55], "MPAL", 4))
-		swissSettings.sramVideo = SYS_VIDEO_MPAL;
-	else if(!strncmp(&IPLInfo[0x55], "TDEV", 4) && (SYS_GetConsoleType() & SYS_CONSOLE_MASK) == SYS_CONSOLE_RETAIL) {
-		*(u32*)0x8000002C += SYS_CONSOLE_TDEV_HW1 - SYS_CONSOLE_RETAIL_HW1;
-		swissSettings.sramVideo = SYS_VIDEO_NTSC;
+	if(!strncmp(IPLInfo, "(C) ", 4)) {
+		if(!strncmp(&IPLInfo[0x55], "NTSC", 4) || (!IPLInfo[0x55] && (SYS_GetConsoleType() & SYS_CONSOLE_MASK) == SYS_CONSOLE_RETAIL))
+			swissSettings.sramVideo = SYS_VIDEO_NTSC;
+		else if(!strncmp(&IPLInfo[0x55], "PAL ", 4))
+			swissSettings.sramVideo = SYS_VIDEO_PAL;
+		else if(!strncmp(&IPLInfo[0x55], "MPAL", 4))
+			swissSettings.sramVideo = SYS_VIDEO_MPAL;
+		else if(!strncmp(&IPLInfo[0x55], "TDEV", 4) && (SYS_GetConsoleType() & SYS_CONSOLE_MASK) == SYS_CONSOLE_RETAIL) {
+			*(u32*)0x8000002C += SYS_CONSOLE_TDEV_HW1 - SYS_CONSOLE_RETAIL_HW1;
+			swissSettings.sramVideo = SYS_VIDEO_NTSC;
+		}
 	}
 
 	*(u32*)0x800000CC = swissSettings.sramVideo;
