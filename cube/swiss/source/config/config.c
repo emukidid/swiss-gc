@@ -146,6 +146,7 @@ int config_update_global(bool checkConfigDevice) {
 	// Write out Swiss settings
 	fprintf(fp, "# Swiss Configuration File!\r\n# Anything written in here will be lost!\r\n\r\n#!!Swiss Settings Start!!\r\n");
 	fprintf(fp, "SD/IDE Speed=%s\r\n", swissSettings.exiSpeed ? "32MHz":"16MHz");
+	fprintf(fp, "System Boot Mode=%s\r\n", swissSettings.sramBoot ? "Production":"Default");
 	fprintf(fp, "System Sound=%s\r\n", swissSettings.sramStereo ? "Stereo":"Mono");
 	fprintf(fp, "Screen Position=%+hi\r\n", swissSettings.sramHOffset);
 	fprintf(fp, "System Language=%s\r\n", sramLang[swissSettings.sramLanguage]);
@@ -776,8 +777,11 @@ void config_parse_global(char *configData) {
 				else if(!strcmp("SD/IDE Speed", name)) {
 					swissSettings.exiSpeed = !strcmp("32MHz", value);
 				}
+				else if(!strcmp("System Boot Mode", name)) {
+					swissSettings.sramBoot = !strcmp("Production", value) ? SYS_BOOT_PRODUCTION : SYS_BOOT_DEVELOPMENT;
+				}
 				else if(!strcmp("System Sound", name)) {
-					swissSettings.sramStereo = !strcmp("Stereo", value);
+					swissSettings.sramStereo = !strcmp("Stereo", value) ? SYS_SOUND_STEREO : SYS_SOUND_MONO;
 				}
 				else if(!strcmp("Screen Position", name)) {
 					swissSettings.sramHOffset = atoi(value);

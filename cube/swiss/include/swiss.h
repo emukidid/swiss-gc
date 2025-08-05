@@ -132,6 +132,7 @@ typedef struct {
 	int disableHypervisor;
 	int preferCleanBoot;
 	s8 sramHOffset;
+	u8 sramBoot;
 	u8 sramLanguage;
 	u8 sramVideo;
 	char rt4kHostIp[16];

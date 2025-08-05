@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2024, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2024-2025, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -55,6 +55,7 @@ static void initSRAM(void)
 void refreshSRAM(SwissSettings *settings)
 {
 	settings->sramHOffset = SYS_GetDisplayOffsetH();
+	settings->sramBoot = SYS_GetBootMode();
 	settings->sram60Hz = SYS_GetEuRGB60();
 	settings->sramLanguage = SYS_GetLanguage();
 	if (settings->sramLanguage > SYS_LANG_ENGLISH_US)
@@ -75,6 +76,7 @@ void refreshSRAM(SwissSettings *settings)
 void updateSRAM(SwissSettings *settings, bool syncSram)
 {
 	SYS_SetDisplayOffsetH(settings->sramHOffset);
+	SYS_SetBootMode(settings->sramBoot);
 	SYS_SetEuRGB60(settings->sram60Hz);
 	SYS_SetLanguage(settings->sramLanguage);
 	SYS_SetProgressiveScan(settings->sramProgressive);

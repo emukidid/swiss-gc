@@ -142,11 +142,11 @@ uiDrawObj_t * info_draw_page(int page_num) {
 		// IPL version string
 		DrawAddChild(container, DrawStyledLabel(640/2, 130, (char*)"IPL VERSION", 0.65f, true, defaultColor));
 		if(!strncmp(IPLInfo, "(C) ", 4)) {
-			if(!IPLInfo[0x55]) {
-				strcpy(topStr, "NTSC Revision 1.0");
+			if((SYS_GetConsoleType() & SYS_CONSOLE_MASK) == SYS_CONSOLE_RETAIL) {
+				sprintf(topStr, "%.*s", 0x11, IPLInfo[0x55] ? &IPLInfo[0x55] : "NTSC Revision 1.0");
 			}
 			else {
-				strcpy(topStr, &IPLInfo[0x55]);
+				sprintf(topStr, "%.*s (%s Mode)", 0x11, IPLInfo[0x55] ? &IPLInfo[0x55] : "DEV  Revision 1.0", swissSettings.sramBoot ? "Production" : "Development");
 			}
 		}
 		else {
