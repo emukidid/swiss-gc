@@ -195,6 +195,12 @@ const char* getHwNameByLocation(u32 location) {
 		if(EXI_GetType(chan, dev, &type) && ~type) {
 			return EXI_GetTypeString(type);
 		}
+		if(chan < EXI_CHANNEL_2 && dev == EXI_DEVICE_0) {
+			switch(EXI_ProbeEx(chan)) {
+				case 0: return "Probing";
+				case 1: return "Unknown";
+			}
+		}
 	}
 	return "Empty";
 }
