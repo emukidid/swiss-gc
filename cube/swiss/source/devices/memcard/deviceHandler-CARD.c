@@ -40,6 +40,7 @@ static device_info initial_CARD_info[2];
 
 static unsigned char *sys_area[2] = {NULL, NULL};
 static int card_init[2] = {0,0};
+static u16 card_memsize[2] = {0,0};
 static u32 card_sectorsize[2] = {8192, 8192};
 static GCI *gciInfo;
 static bool isCopyGCIMode = 0;
@@ -74,23 +75,22 @@ char *cardError(int error_code) {
 
 
 int initialize_card(int slot) {
-	int slot_error = CARD_ERROR_READY, i = 0;
+	int slot_error = CARD_ERROR_READY;
   
 	if(!card_init[slot]) {
 		/* Pass company identifier and number */
 		CARD_Init ("SWIS", "S0");
 		if(!sys_area[slot]) sys_area[slot] = memalign(32,CARD_WORKAREA);
 		  
-		/* Lets try 50 times to mount it. Sometimes it takes a while */
-		for(i = 0; i<50; i++) {
+		while((slot_error = CARD_ProbeEx (slot, NULL, NULL)) == CARD_ERROR_BUSY);
+		if(slot_error == CARD_ERROR_READY) {
 			slot_error = CARD_Mount (slot, sys_area[slot], card_removed_cb);
 			if(slot_error == CARD_ERROR_READY) {
-				CARD_GetSectorSize (slot, &card_sectorsize[slot]);
-				break;
+				slot_error = CARD_GetSectorSize (slot, &card_sectorsize[slot]);
 			}
 		}
 	}
-	card_init[slot] = slot_error == CARD_ERROR_READY ? 1 : 0;
+	card_init[slot] = slot_error == CARD_ERROR_READY;
 	return slot_error;
 }
 
@@ -468,14 +468,10 @@ char getGCIRegion(const char *gameID)
 s32 deviceHandler_CARD_init(file_handle* file){
 	int slot = (!strncmp((const char*)initial_CARDB.name, file->name, 7));
 	file->status = initialize_card(slot);
-	s32 memSize = 0, sectSize = 0;
 	if(file->status == CARD_ERROR_READY) {
-		int ret = CARD_ProbeEx(slot,&memSize,&sectSize);
+		int ret = CARD_GetMemSize(slot, &card_memsize[slot]);
 		if(ret == CARD_ERROR_READY) {
-			initial_CARD_info[slot].totalSpace = (u64)(memSize<<17);
-		}
-		else {
-			print_debug("CARD_ProbeEx failed %i\n", ret);
+			initial_CARD_info[slot].totalSpace = (u64)(card_memsize[slot]<<17);
 		}
 	}
 	initial_CARD_info[slot].freeSpace = 0LL;
@@ -529,13 +525,15 @@ s32 deviceHandler_CARD_closeFile(file_handle* file) {
 }
 
 bool deviceHandler_CARD_test_a() {
-	s32 memSize = 0, sectSize = 0;
-	return ((initialize_card(0)==CARD_ERROR_READY) && (CARD_ProbeEx(0, &memSize,&sectSize)==CARD_ERROR_READY));
+	int ret;
+	while ((ret = CARD_ProbeEx(CARD_SLOTA, NULL, NULL)) == CARD_ERROR_BUSY);
+	return ret == CARD_ERROR_READY;
 }
 
 bool deviceHandler_CARD_test_b() {
-	s32 memSize = 0, sectSize = 0;
-	return ((initialize_card(1)==CARD_ERROR_READY) && (CARD_ProbeEx(1, &memSize,&sectSize)==CARD_ERROR_READY));
+	int ret;
+	while ((ret = CARD_ProbeEx(CARD_SLOTB, NULL, NULL)) == CARD_ERROR_BUSY);
+	return ret == CARD_ERROR_READY;
 }
 
 char* deviceHandler_CARD_status(file_handle* file) {
