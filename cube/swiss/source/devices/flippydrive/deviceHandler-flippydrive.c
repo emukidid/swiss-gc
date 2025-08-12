@@ -239,7 +239,7 @@ s32 deviceHandler_Flippy_setupFile(file_handle* file, file_handle* file2, Execut
 		}
 		
 		if(getFragments(DEVICE_PATCHES, &patchFile, &fragList, &numFrags, FRAGS_CARD_A, 0, 0))
-			*(vu8*)VAR_CARD_A_ID = (patchFile.size * 8/1024/1024) & 0xFC;
+			*(vu8*)VAR_CARD_A_ID = (patchFile.size << 3 >> 20) & 0xFC;
 		
 		memset(&patchFile, 0, sizeof(file_handle));
 		concatf_path(patchFile.name, devices[DEVICE_PATCHES]->initial->name, "swiss/patches/MemoryCardB.%s.raw", wodeRegionToString(GCMDisk.RegionCode));
@@ -254,7 +254,7 @@ s32 deviceHandler_Flippy_setupFile(file_handle* file, file_handle* file2, Execut
 		}
 		
 		if(getFragments(DEVICE_PATCHES, &patchFile, &fragList, &numFrags, FRAGS_CARD_B, 0, 0))
-			*(vu8*)VAR_CARD_B_ID = (patchFile.size * 8/1024/1024) & 0xFC;
+			*(vu8*)VAR_CARD_B_ID = (patchFile.size << 3 >> 20) & 0xFC;
 	}
 	
 	if(fragList) {

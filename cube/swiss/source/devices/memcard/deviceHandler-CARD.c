@@ -15,6 +15,7 @@
 #include "gui/IPLFontWrite.h"
 #include "swiss.h"
 #include "main.h"
+#include "mcp.h"
 #include "images/gamecube_rgb.h"
 
 
@@ -471,7 +472,7 @@ s32 deviceHandler_CARD_init(file_handle* file){
 	if(file->status == CARD_ERROR_READY) {
 		int ret = CARD_GetMemSize(slot, &card_memsize[slot]);
 		if(ret == CARD_ERROR_READY) {
-			initial_CARD_info[slot].totalSpace = (u64)(card_memsize[slot]<<17);
+			initial_CARD_info[slot].totalSpace = (u64)(card_memsize[slot] << 20 >> 3);
 		}
 	}
 	initial_CARD_info[slot].freeSpace = 0LL;
@@ -527,12 +528,28 @@ s32 deviceHandler_CARD_closeFile(file_handle* file) {
 bool deviceHandler_CARD_test_a() {
 	int ret;
 	while ((ret = CARD_ProbeEx(CARD_SLOTA, NULL, NULL)) == CARD_ERROR_BUSY);
+	if (ret == CARD_ERROR_READY) {
+		u32 id;
+
+		if (MCP_GetDeviceID(CARD_SLOTA, &id) == MCP_RESULT_READY)
+			__device_card_a.hwName = "MemCard PRO GC";
+		else
+			__device_card_a.hwName = "Memory Card";
+	}
 	return ret == CARD_ERROR_READY;
 }
 
 bool deviceHandler_CARD_test_b() {
 	int ret;
 	while ((ret = CARD_ProbeEx(CARD_SLOTB, NULL, NULL)) == CARD_ERROR_BUSY);
+	if (ret == CARD_ERROR_READY) {
+		u32 id;
+
+		if (MCP_GetDeviceID(CARD_SLOTB, &id) == MCP_RESULT_READY)
+			__device_card_b.hwName = "MemCard PRO GC";
+		else
+			__device_card_b.hwName = "Memory Card";
+	}
 	return ret == CARD_ERROR_READY;
 }
 

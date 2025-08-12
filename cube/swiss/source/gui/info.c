@@ -27,6 +27,15 @@ const char* getDeviceInfoString(u32 location) {
 	if(location == bba_exists(LOC_ANY)) {
 		sprintf(topStr, "%s (%s)", getHwNameByLocation(location), bba_address_str());
 	}
+	else if(device == &__device_card_a || device == &__device_card_b) {
+		s32 exi_channel, mem_size, sector_size;
+		if(getExiDeviceByLocation(location, &exi_channel, NULL) && CARD_ProbeEx(exi_channel, &mem_size, &sector_size) == CARD_ERROR_READY) {
+			sprintf(topStr, "%s %i", device->hwName, (mem_size << 20 >> 3) / sector_size - 5);
+		}
+		else {
+			strcpy(topStr, device->hwName);
+		}
+	}
 	else if(device == &__device_dvd) {
 		if(swissSettings.hasDVDDrive == 1) {
 			u8* driveVersion = (u8*)DVDDriveInfo;
