@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2022, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2022-2025, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -35,7 +35,7 @@ s32 MCP_GetDeviceID(s32 chan, u32 *id)
 	bool err = false;
 	u8 cmd[2];
 
-	if (!EXI_Lock(chan, EXI_DEVICE_0, NULL)) return MCP_RESULT_BUSY;
+	if (!EXI_LockEx(chan, EXI_DEVICE_0)) return MCP_RESULT_BUSY;
 	if (!EXI_Select(chan, EXI_DEVICE_0, EXI_SPEED16MHZ)) {
 		EXI_Unlock(chan);
 		return MCP_RESULT_NOCARD;
@@ -44,10 +44,8 @@ s32 MCP_GetDeviceID(s32 chan, u32 *id)
 	cmd[0] = 0x8B;
 	cmd[1] = 0x00;
 
-	err |= !EXI_Imm(chan, cmd, 2, EXI_WRITE, NULL);
-	err |= !EXI_Sync(chan);
-	err |= !EXI_Imm(chan, id, 4, EXI_READ, NULL);
-	err |= !EXI_Sync(chan);
+	err |= !EXI_ImmEx(chan, cmd, sizeof(cmd), EXI_WRITE);
+	err |= !EXI_ImmEx(chan, id, sizeof(*id), EXI_READ);
 	err |= !EXI_Deselect(chan);
 	EXI_Unlock(chan);
 
@@ -64,7 +62,7 @@ s32 MCP_SetDiskID(s32 chan, const dvddiskid *diskID)
 	bool err = false;
 	u8 cmd[12];
 
-	if (!EXI_Lock(chan, EXI_DEVICE_0, NULL)) return MCP_RESULT_BUSY;
+	if (!EXI_LockEx(chan, EXI_DEVICE_0)) return MCP_RESULT_BUSY;
 	if (!EXI_Select(chan, EXI_DEVICE_0, EXI_SPEED16MHZ)) {
 		EXI_Unlock(chan);
 		return MCP_RESULT_NOCARD;
@@ -95,7 +93,7 @@ s32 MCP_GetDiskInfo(s32 chan, char diskInfo[64])
 	bool err = false;
 	u8 cmd[2];
 
-	if (!EXI_Lock(chan, EXI_DEVICE_0, NULL)) return MCP_RESULT_BUSY;
+	if (!EXI_LockEx(chan, EXI_DEVICE_0)) return MCP_RESULT_BUSY;
 	if (!EXI_Select(chan, EXI_DEVICE_0, EXI_SPEED16MHZ)) {
 		EXI_Unlock(chan);
 		return MCP_RESULT_NOCARD;
@@ -104,8 +102,7 @@ s32 MCP_GetDiskInfo(s32 chan, char diskInfo[64])
 	cmd[0] = 0x8B;
 	cmd[1] = 0x12;
 
-	err |= !EXI_Imm(chan, cmd, 2, EXI_WRITE, NULL);
-	err |= !EXI_Sync(chan);
+	err |= !EXI_ImmEx(chan, cmd, sizeof(cmd), EXI_WRITE);
 	err |= !EXI_ImmEx(chan, diskInfo, 64, EXI_READ);
 	err |= !EXI_Deselect(chan);
 	EXI_Unlock(chan);
@@ -118,7 +115,7 @@ s32 MCP_SetDiskInfo(s32 chan, const char diskInfo[64])
 	bool err = false;
 	u8 cmd[2];
 
-	if (!EXI_Lock(chan, EXI_DEVICE_0, NULL)) return MCP_RESULT_BUSY;
+	if (!EXI_LockEx(chan, EXI_DEVICE_0)) return MCP_RESULT_BUSY;
 	if (!EXI_Select(chan, EXI_DEVICE_0, EXI_SPEED16MHZ)) {
 		EXI_Unlock(chan);
 		return MCP_RESULT_NOCARD;
@@ -127,8 +124,7 @@ s32 MCP_SetDiskInfo(s32 chan, const char diskInfo[64])
 	cmd[0] = 0x8B;
 	cmd[1] = 0x13;
 
-	err |= !EXI_Imm(chan, cmd, 2, EXI_WRITE, NULL);
-	err |= !EXI_Sync(chan);
+	err |= !EXI_ImmEx(chan, cmd, sizeof(cmd), EXI_WRITE);
 	err |= !EXI_ImmEx(chan, (char *)diskInfo, 64, EXI_WRITE);
 	err |= !EXI_Deselect(chan);
 	EXI_Unlock(chan);
