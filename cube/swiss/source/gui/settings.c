@@ -79,7 +79,7 @@ static char *tooltips_network[PAGE_NETWORK_MAX+1] = {
 
 static char *tooltips_game_global[PAGE_GAME_GLOBAL_MAX+1] = {
 	"In-Game Reset: (A + Z + Start)\n\nReboot - Perform hot reset with a compatible device\nApploader - Requires /swiss/patches/apploader.img",
-	"Boot through IPL:\n\nWhen enabled, games will be booted with the GameCube\nlogo screen and Main Menu accessible with patches applied.",
+	"Load GameCube Main Menu:\n\nWhen enabled, games will be booted with the GameCube\nlogo screen and Main Menu accessible with patches applied.",
 	NULL,
 	NULL,
 	NULL,
@@ -294,7 +294,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 		bool enabledHypervisor = devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->features & FEAT_HYPERVISOR);
 		bool dbgEnable = devices[DEVICE_CUR] != &__device_usbgecko && deviceHandler_getDeviceAvailable(&__device_usbgecko);
 		drawSettingEntryString(page, &page_y_ofs, "In-Game Reset:", igrTypeStr[swissSettings.igrType], option == SET_IGR, enabledHypervisor);
-		drawSettingEntryString(page, &page_y_ofs, "Boot through IPL:", bs2BootStr[swissSettings.bs2Boot], option == SET_BS2BOOT, true);
+		drawSettingEntryString(page, &page_y_ofs, "Load GameCube Main Menu:", bs2BootStr[swissSettings.bs2Boot], option == SET_BS2BOOT, true);
 		drawSettingEntryBoolean(page, &page_y_ofs, "Boot without prompts:", swissSettings.autoBoot, option == SET_AUTOBOOT, true);
 		drawSettingEntryBoolean(page, &page_y_ofs, "Emulate Memory Card:", swissSettings.emulateMemoryCard, option == SET_EMULATE_MEMCARD, emulatedMemoryCard);
 		drawSettingEntryString(page, &page_y_ofs, "Disable MemCard PRO GameID:", disableMCPGameIDStr[swissSettings.disableMCPGameID], option == SET_DISABLE_MCPGAMEID, true);
