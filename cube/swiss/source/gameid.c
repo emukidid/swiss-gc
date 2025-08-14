@@ -48,7 +48,7 @@ static s32 onreset(s32 final)
 }
 
 static sys_resetinfo resetinfo = {
-	{NULL, NULL}, onreset, 0
+	{NULL, NULL}, onreset, ~0
 };
 
 __attribute((constructor))
