@@ -124,10 +124,7 @@ void Initialise(void)
 	swissSettings.fontEncode = SYS_GetFontEncoding();
 
 	GXRModeObj *vmode = getVideoMode();
-	setVideoMode(vmode);
-
-	init_font();
-	DrawInit(swissSettings.cubebootInvoked);
+	DrawInit(vmode, swissSettings.cubebootInvoked);
 }
 
 void __SYS_PreInit(void)

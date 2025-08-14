@@ -2232,7 +2232,9 @@ void DrawDispose(uiDrawObj_t *evt)
 	LWP_MutexUnlock(_videomutex);
 }
 
-void DrawInit(bool black) {
+void DrawInit(GXRModeObj *videoMode, bool black) {
+	setVideoMode(videoMode);
+	init_font();
 	init_textures();
 	uiDrawObj_t *container = DrawContainer();
 	if(!black) {
@@ -2325,6 +2327,7 @@ void DrawShutdown() {
 	video_thread = LWP_THREAD_NULL;
 	LWP_JoinThread(thread, NULL);
 	GX_SetCurrentGXThread();
+	unsetVideoMode();
 }
 
 void DrawVideoMode(GXRModeObj *videoMode)

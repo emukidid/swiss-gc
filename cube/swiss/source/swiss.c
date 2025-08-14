@@ -1229,11 +1229,6 @@ void load_app(ExecutableFile *fileToPatch)
 	DrawDispose(progBox);
 	DrawShutdown();
 	
-	VIDEO_SetPostRetraceCallback(NULL);
-	VIDEO_SetBlack(true);
-	VIDEO_Flush();
-	VIDEO_WaitVSync();
-	
 	print_debug("libogc shutdown and boot game!\n");
 	if(devices[DEVICE_CUR] == &__device_sd_a || devices[DEVICE_CUR] == &__device_sd_b || devices[DEVICE_CUR] == &__device_sd_c) {
 		s32 exi_channel;

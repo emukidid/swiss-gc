@@ -9,6 +9,7 @@ extern u32 *xfb[2];
 extern int whichfb;
 void updateVideoMode(GXRModeObj *m);
 void setVideoMode(GXRModeObj *m);
+void unsetVideoMode();
 char *getVideoModeString(GXRModeObj *m);
 GXRModeObj *getVideoMode();
 GXRModeObj *getVideoModeFromSwissSetting(int uiVMode);

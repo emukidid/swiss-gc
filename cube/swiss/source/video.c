@@ -258,3 +258,12 @@ void setVideoMode(GXRModeObj *m) {
 	
 	vmode = m;
 }
+
+void unsetVideoMode() {
+	VIDEO_SetPostRetraceCallback (NULL);
+	VIDEO_SetBlack (!swissSettings.forceVideoActive);
+	VIDEO_Flush ();
+	VIDEO_WaitVSync ();
+	
+	vmode = NULL;
+}
