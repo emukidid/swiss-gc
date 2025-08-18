@@ -1255,6 +1255,10 @@ void config_init_environ() {
 	if(value != NULL) {
 		swissSettings.cubebootInvoked = !!atoi(value);
 	}
+	value = getenv("FLIPPYDRIVE");
+	if(value != NULL) {
+		swissSettings.hasFlippyDrive = !!atoi(value);
+	}
 }
 
 SwissSettings backup;

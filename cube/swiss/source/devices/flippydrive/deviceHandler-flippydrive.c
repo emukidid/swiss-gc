@@ -318,6 +318,9 @@ s32 deviceHandler_Flippy_makeDir(file_handle* dir) {
 bool deviceHandler_Flippy_test() {
 	if (swissSettings.hasDVDDrive == 1) {
 		switch (DVDDriveInfo->rel_date) {
+			default:
+				if (!swissSettings.hasFlippyDrive)
+					return false;
 			case 0x20010608:
 			case 0x20010831:
 			case 0x20020402:
@@ -330,6 +333,8 @@ bool deviceHandler_Flippy_test() {
 					*DVDDeviceCode = 0x0001;
 					return false;
 				}
+			case 0x20220420:
+			case 0x20220426:
 				break;
 		}
 		switch (DVDDriveInfo->rel_date) {
