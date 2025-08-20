@@ -60,6 +60,9 @@ static void driveInfoCallback(s32 result, dvdcmdblk *block) {
 	else if(result >= 0) {
 		swissSettings.hasDVDDrive = 1;
 		switch(DVDDriveInfo->rel_date) {
+			default:
+				*DVDDeviceCode = 0x8000 | DVDDriveInfo->dev_code;
+				break;
 			case 0:
 				*DVDDeviceCode = 0x0001;
 				break;
@@ -69,9 +72,6 @@ static void driveInfoCallback(s32 result, dvdcmdblk *block) {
 				*DVDDeviceCode = sramex->dvddev_code;
 				__SYS_UnlockSramEx(FALSE);
 				return;
-			default:
-				*DVDDeviceCode = 0x8000 | DVDDriveInfo->dev_code;
-				break;
 		}
 	}
 	syssramex* sramex = __SYS_LockSramEx();

@@ -550,6 +550,9 @@ s32 deviceHandler_DVD_closeFile(file_handle* file){
 }
 
 bool deviceHandler_DVD_test() {
+	if (!swissSettings.hasDVDDrive)
+		return false;
+
 	if (*DVDDeviceCode & 0x8000) {
 		switch (*DVDDeviceCode & ~0x8000) {
 			case 0x0000:
