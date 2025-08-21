@@ -2561,6 +2561,14 @@ uiDrawObj_t* draw_game_info() {
 int info_game(ConfigEntry *config)
 {
 	if(swissSettings.cubebootInvoked) {
+		u32 buttons = padsButtonsHeld();
+		if(buttons & PAD_BUTTON_Y) {
+			if(findCheats(false) > 0) {
+				loadCheatsSelection();
+				DrawCheatsSelector(getRelativeName(curFile.name));
+				saveCheatsSelection();
+			}
+		}
 		return swissSettings.cubebootInvoked;
 	}
 	if(swissSettings.autoBoot) {

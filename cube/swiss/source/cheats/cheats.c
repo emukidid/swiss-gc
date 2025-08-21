@@ -22,6 +22,7 @@
 #include "patcher.h"
 #include "deviceHandler.h"
 #include "FrameBufferMagic.h"
+#include "IPLFontWrite.h"
 #include <xxhash.h>
 
 static CheatEntries _cheats;
@@ -270,11 +271,9 @@ int findCheats(bool silent) {
 	// Still fail?
 	if(devices[DEVICE_CHEATS] == NULL || cheatsFile->size == 0) {
 		if(!silent) {
-			while(padsButtonsHeld() & PAD_BUTTON_Y);
 			uiDrawObj_t *msgBox = DrawMessageBox(D_INFO,"No cheats file found.\nPress A to continue.");
 			DrawPublish(msgBox);
-			while(!(padsButtonsHeld() & PAD_BUTTON_A));
-			while(padsButtonsHeld() & PAD_BUTTON_A);
+			wait_press_A();
 			DrawDispose(msgBox);
 		}
 		free(cheatsFile);
@@ -292,11 +291,9 @@ int findCheats(bool silent) {
 	free(cheatsFile);
 
 	if(!silent && _cheats.num_cheats == 0) {
-		while(padsButtonsHeld() & PAD_BUTTON_Y);
 		uiDrawObj_t *msgBox = DrawMessageBox(D_INFO,"Empty or unreadable cheats file found.\nPress A to continue.");
 		DrawPublish(msgBox);
-		while(!(padsButtonsHeld() & PAD_BUTTON_A));
-		while(padsButtonsHeld() & PAD_BUTTON_A);
+		wait_press_A();
 		DrawDispose(msgBox);
 	}
 	return _cheats.num_cheats;
