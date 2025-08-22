@@ -34,6 +34,7 @@ typedef struct {
 } DOLHEADER __attribute__((aligned(32)));
 
 u32 DOLSize(DOLHEADER *dol);
+u32 DOLSizeFix(DOLHEADER *dol);
 int DOLtoARAM(unsigned char *dol, char *argz, size_t argz_len);
 int ELFtoARAM(unsigned char *elf, char *argz, size_t argz_len);
 int BINtoARAM(unsigned char *bin, size_t len, unsigned int entrypoint, unsigned int minaddress);

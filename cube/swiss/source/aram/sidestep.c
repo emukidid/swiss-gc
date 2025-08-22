@@ -253,6 +253,52 @@ u32 DOLSize(DOLHEADER *dol)
   return sizeinbytes;
 }
 
+u32 DOLSizeFix(DOLHEADER *dol)
+{
+  u32 sizeinbytes;
+  int i;
+
+  sizeinbytes = DOLHDRLENGTH;
+
+  /*** Go through DOL sections ***/
+  /*** Text sections ***/
+  for (i = 0; i < MAXTEXTSECTION; i++)
+  {
+    if (dol->textOffset[i])
+    {
+      dol->textOffset[i] -= dol->textAddress[i] & 0x1f;
+      dol->textLength[i] += dol->textAddress[i] & 0x1f;
+      dol->textAddress[i] = dol->textAddress[i] & ~0x1f;
+
+      /*** Round length to 32 bytes ***/
+      if (dol->textLength[i] & 0x1f)
+        dol->textLength[i] = (dol->textLength[i] & ~0x1f) + 0x20;
+      if ((dol->textOffset[i] + dol->textLength[i]) > sizeinbytes)
+        sizeinbytes = dol->textOffset[i] + dol->textLength[i];
+    }
+  }
+
+  /*** Data sections ***/
+  for (i = 0; i < MAXDATASECTION; i++)
+  {
+    if (dol->dataOffset[i])
+    {
+      dol->dataOffset[i] -= dol->dataAddress[i] & 0x1f;
+      dol->dataLength[i] += dol->dataAddress[i] & 0x1f;
+      dol->dataAddress[i] = dol->dataAddress[i] & ~0x1f;
+
+      /*** Round length to 32 bytes ***/
+      if (dol->dataLength[i] & 0x1f)
+        dol->dataLength[i] = (dol->dataLength[i] & ~0x1f) + 0x20;
+      if ((dol->dataOffset[i] + dol->dataLength[i]) > sizeinbytes)
+        sizeinbytes = dol->dataOffset[i] + dol->dataLength[i];
+    }
+  }
+
+  /*** Return DOL size ***/
+  return sizeinbytes;
+}
+
 /****************************************************************************
 * DOLtoARAM
 *

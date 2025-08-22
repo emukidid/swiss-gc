@@ -292,9 +292,10 @@ int parse_gcm(file_handle *file, file_handle *file2, ExecutableFile *filesToPatc
 				DrawPublish(DrawMessageBox(D_FAIL, "Failed to read Main DOL Header"));
 				while(1);
 			}
+			dolSize = DOLSize(&dolhdr);
 			filesToPatch[numFiles].file = file;
 			filesToPatch[numFiles].offset = dolOffset;
-			filesToPatch[numFiles].size = dolSize = DOLSize(&dolhdr);
+			filesToPatch[numFiles].size = DOLSizeFix(&dolhdr);
 			filesToPatch[numFiles].hash = get_gcm_boot_hash(diskHeader, file->meta);
 			filesToPatch[numFiles].type = PATCH_DOL;
 			filesToPatch[numFiles].fstOffset = diskHeader->FSTOffset;
