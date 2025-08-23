@@ -76,8 +76,10 @@ static s32 gcloaderSetupFile(file_handle* file, file_handle* file2, ExecutableFi
 			GCMDisk.RegionCode = getFontEncode() ? 0:1;
 		
 		if(devices[DEVICE_CUR]->writeFile(&bootFile, &GCMDisk, sizeof(DiskHeader)) == sizeof(DiskHeader) &&
-			!devices[DEVICE_CUR]->closeFile(&bootFile))
+			!devices[DEVICE_CUR]->closeFile(&bootFile)) {
+			devices[DEVICE_CUR]->hideFile(&bootFile, true);
 			getFragments(DEVICE_CUR, &bootFile, &disc1FragList, &disc1Frags, 0, 0, sizeof(DiskHeader));
+		}
 		devices[DEVICE_CUR]->closeFile(&bootFile);
 	}
 	
