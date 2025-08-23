@@ -23,16 +23,16 @@ char *endsWith(char *str, char *end) {
 }
 
 bool canLoadFileType(char *filename, char **extraExtensions) {
-	char *ext;
+	char **ext;
 	if(extraExtensions) {
-		for(ext = *extraExtensions; ext; ext++) {
-			if(endsWith(filename, ext)) {
+		for(ext = extraExtensions; *ext; ext++) {
+			if(endsWith(filename, *ext)) {
 				return !is_rom_name(filename);
 			}
 		}
 	}
-	for(ext = *knownExtensions; ext; ext++) {
-		if(endsWith(filename, ext)) {
+	for(ext = knownExtensions; *ext; ext++) {
+		if(endsWith(filename, *ext)) {
 			return !is_rom_name(filename);
 		}
 	}
