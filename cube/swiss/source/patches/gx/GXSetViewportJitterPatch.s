@@ -45,7 +45,7 @@ GXSetViewportJitterPatch:
 	blr
 	.long	0x3F000000
 	.long	0xBF000000
-	.long	0x43AB0AAB
+	.long	0x43AB0555
 	.long	0x4B7FFFFF
 
 .globl GXSetViewportJitterPatch_length
