@@ -199,11 +199,11 @@ static void DOLMinMax(DOLHEADER * dol)
   /*** Text sections ***/
   for (i = 0; i < MAXTEXTSECTION; i++)
   {
-    if (dol->textAddress[i] && dol->textLength[i])
+    if (dol->textOffset[i] && dol->textLength[i])
     {
       if (dol->textAddress[i] < minaddress)
         minaddress = dol->textAddress[i];
-      if ((dol->textAddress[i] + dol->textLength[i]) > maxaddress) 
+      if ((dol->textAddress[i] + dol->textLength[i]) > maxaddress)
         maxaddress = dol->textAddress[i] + dol->textLength[i];
     }
   }
@@ -211,7 +211,7 @@ static void DOLMinMax(DOLHEADER * dol)
   /*** Data sections ***/
   for (i = 0; i < MAXDATASECTION; i++)
   {
-    if (dol->dataAddress[i] && dol->dataLength[i])
+    if (dol->dataOffset[i] && dol->dataLength[i])
     {
       if (dol->dataAddress[i] < minaddress)
         minaddress = dol->dataAddress[i];
@@ -339,7 +339,7 @@ int DOLtoARAM(unsigned char *dol, char *argz, size_t argz_len)
   for (i = 0; i < MAXTEXTSECTION; i++)
   {
     /*** This may seem strange, but in developing d0lLZ we found some with section addresses with zero length ***/
-    if (dolhdr->textAddress[i] && dolhdr->textLength[i])
+    if (dolhdr->textOffset[i] && dolhdr->textLength[i])
     {
       if (dolhdr->entryPoint >= dolhdr->textAddress[i] &&
           dolhdr->entryPoint < (dolhdr->textAddress[i] + dolhdr->textLength[i]))
@@ -365,7 +365,7 @@ int DOLtoARAM(unsigned char *dol, char *argz, size_t argz_len)
   /*** Move data sections ***/
   for (i = 0; i < MAXDATASECTION; i++)
   {
-    if (dolhdr->dataAddress[i] && dolhdr->dataLength[i])
+    if (dolhdr->dataOffset[i] && dolhdr->dataLength[i])
     {
       ARAMPut(dol + dolhdr->dataOffset[i], (char *) ((dolhdr->dataAddress[i] - minaddress) + ARAMSTART),
               dolhdr->dataLength[i]);
@@ -413,7 +413,7 @@ static void ELFMinMax(Elf32_Ehdr *ehdr, Elf32_Phdr *phdr)
   /*** Go through ELF segments ***/
   for (i = 0; i < ehdr->e_phnum; i++)
   {
-    if (phdr[i].p_type == PT_LOAD)
+    if (phdr[i].p_type == PT_LOAD && phdr[i].p_filesz)
     {
       if (phdr[i].p_vaddr < minaddress)
         minaddress = phdr[i].p_vaddr;
@@ -456,7 +456,7 @@ int ELFtoARAM(unsigned char *elf, char *argz, size_t argz_len)
   /*** Move all ELF segments into ARAM ***/
   for (i = 0; i < ehdr->e_phnum; i++)
   {
-    if (phdr[i].p_type == PT_LOAD)
+    if (phdr[i].p_type == PT_LOAD && phdr[i].p_filesz)
     {
       if (ehdr->e_entry >= phdr[i].p_vaddr &&
           ehdr->e_entry < (phdr[i].p_vaddr + phdr[i].p_filesz))
