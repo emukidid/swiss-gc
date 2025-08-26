@@ -2178,6 +2178,10 @@ static void *videoUpdate(void *videoEventQueue) {
 			videoEventQueueEntry = videoEventQueueEntry->next;
 		}
 		
+		GXRModeObj *vmode = getVideoMode();
+		if(vmode->field_rendering) {
+			GX_SetViewportJitter(0.0f, 0.0f, vmode->fbWidth, vmode->efbHeight, 0.0f, 1.0f, VIDEO_GetNextField());
+		}
 		// Draw out every event
 		videoEventQueueEntry = (uiDrawObjQueue_t*)videoEventQueue;
 		while(videoEventQueueEntry != NULL) {
@@ -2187,7 +2191,6 @@ static void *videoUpdate(void *videoEventQueue) {
 		}
 		
 		//Copy EFB->XFB
-		GXRModeObj *vmode = getVideoMode();
 		u16 width = vmode->fbWidth;
 		u16 height = GX_SetDispCopyYScale(getYScaleFactor(vmode->efbHeight, vmode->xfbHeight));
 		GX_CopyDisp(xfb[whichfb], GX_TRUE);
