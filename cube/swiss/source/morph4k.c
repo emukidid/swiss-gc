@@ -29,7 +29,6 @@
 static bool morph4k_http_post(const char *path);
 
 static struct {
-    int sd;
     int nodelay;
     union {
         struct sockaddr sa;
@@ -37,7 +36,6 @@ static struct {
     };
     bool initialized;
 } morph4k = {
-    .sd = INVALID_SOCKET,
     .nodelay = 1,
     .initialized = false
 };
@@ -46,35 +44,52 @@ static bool morph4k_http_post(const char *path)
 {
     print_debug("morph4k_http_post: Sending request to %s\r\n", path);
 
+    int sd = net_socket(AF_INET, SOCK_STREAM, IPPROTO_IP);
+    if (sd == INVALID_SOCKET) {
+        return false;
+    }
+
+    if (net_setsockopt(sd, IPPROTO_TCP, TCP_NODELAY, &morph4k.nodelay, sizeof(morph4k.nodelay)) < 0) {
+        net_close(sd);
+
+        return false;
+    }
+
+    if (net_connect(sd, &morph4k.sa, sizeof(morph4k.sin)) < 0) {
+        net_close(sd);
+
+        return false;
+    }
+
     char request[512];
     int req_length = sprintf(request, 
         "POST %s HTTP/1.1\r\n"
         "Host: %s\r\n"
+        "Connection: close\r\n"
         "\r\n",
         path,
         swissSettings.morph4kHostIp);
 
-    if (net_send(morph4k.sd, request, req_length, 0) != req_length) {
-        return false;
-    }
+    bool success = false;
 
-    char response[512] = {0};
-    int bytes_received = net_recv(morph4k.sd, response, sizeof(response) - 1, 0);
-    
-    if (bytes_received > 0) {
-        response[bytes_received] = '\0';
+    if (net_send(sd, request, req_length, 0) == req_length) {
+        char response[512] = {0};
+        int bytes_received = net_recv(sd, response, sizeof(response) - 1, 0);
         
-        if (strncmp(response, "HTTP/1.1 200", 12) != 0) {
-            return false;
+        if (bytes_received > 0) {
+            response[bytes_received] = '\0';
+            
+            if (strncmp(response, "HTTP/1.1 200", 12) == 0) {
+                char drain_buffer[512];
+                while (net_recv(sd, drain_buffer, sizeof(drain_buffer), MSG_DONTWAIT) > 0);
+                success = true;
+            }
         }
-    
-        char drain_buffer[512];
-        while (net_recv(morph4k.sd, drain_buffer, sizeof(drain_buffer), MSG_DONTWAIT) > 0);
-
-        return true;
     }
 
-    return false;
+    net_close(sd);
+
+    return success;
 }
 
 bool morph4k_reset_gameid(void)
@@ -86,10 +101,6 @@ bool morph4k_reset_gameid(void)
     print_debug("morph4k_reset_gameid: Resetting GameID\r\n");
 
     bool result = morph4k_http_post("/gameid/0");
-    
-    if (!result) {
-        morph4k_deinit();
-    }
 
     return result;
 }
@@ -111,10 +122,6 @@ bool morph4k_send_gameid(const DiskHeader *header, uint64_t hash)
 
     bool result = morph4k_http_post(path);
 
-    if (!result) {
-        morph4k_deinit();
-    }
-
     return result;
 }
 
@@ -135,16 +142,12 @@ bool morph4k_apply_preset(char *preset_path)
 
     bool result = morph4k_http_post(path);
 
-    if (!result) {
-        morph4k_deinit();
-    }
-
     return result;
 }
 
 bool is_morph4k_alive(void)
 {
-    return morph4k.initialized && morph4k.sd != INVALID_SOCKET;
+    return morph4k.initialized;
 }
 
 bool morph4k_init(void)
@@ -160,56 +163,26 @@ bool morph4k_init(void)
         return false;
     }
 
-    print_debug("morph4k_init: Connecting to %s\r\n", swissSettings.morph4kHostIp);
+    print_debug("morph4k_init: Initializing Morph 4K at %s\r\n", swissSettings.morph4kHostIp);
 
-    struct sockaddr_in addr;
-    socklen_t addrlen = sizeof(addr);
-
-    if (
-        morph4k.sd != INVALID_SOCKET &&
-        !net_getpeername(morph4k.sd, (struct sockaddr *)&addr, &addrlen) &&
-        morph4k.sin.sin_family == addr.sin_family &&
-        morph4k.sin.sin_port == addr.sin_port &&
-        morph4k.sin.sin_addr.s_addr == addr.sin_addr.s_addr
-    ) {
-        goto same;
-    }
-
-    morph4k_deinit();
-    morph4k.sd = net_socket(AF_INET, SOCK_STREAM, IPPROTO_IP);
-
-    if (morph4k.sd == INVALID_SOCKET
-        || net_setsockopt(morph4k.sd, IPPROTO_TCP, TCP_NODELAY, &morph4k.nodelay, sizeof(morph4k.nodelay)) < 0
-        || net_connect(morph4k.sd, &morph4k.sa, sizeof(morph4k.sin)) < 0) {
-        goto fail;
-    }
-
-same:
     morph4k.initialized = true;
     
     if (!morph4k_reset_gameid()) {
-        goto fail;
+        morph4k.initialized = false;
+
+        return false;
     }
 
     if (!morph4k_apply_preset(swissSettings.morph4kPreset)) {
-        goto fail;
+        morph4k.initialized = false;
+        
+        return false;
     }
 
     return true;
-
-fail:
-    net_close(morph4k.sd);
-    morph4k.sd = INVALID_SOCKET;
-    morph4k.initialized = false;
-
-    return false;
 }
 
 void morph4k_deinit(void)
 {
-    if (morph4k.sd != INVALID_SOCKET) {
-        net_close(morph4k.sd);
-        morph4k.sd = INVALID_SOCKET;
-    }
     morph4k.initialized = false;
 }
