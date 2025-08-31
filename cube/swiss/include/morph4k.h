@@ -24,6 +24,7 @@
 
 #include "gcm.h"
 
+bool morph4k_reset_gameid(void);
 bool morph4k_send_gameid(const DiskHeader * header, uint64_t hash);
 bool morph4k_apply_preset(char *preset_path);
 bool is_morph4k_alive(void);
