@@ -173,7 +173,7 @@ def main():
         pass
     elif executable.endswith(".iso"):
         if output.endswith(".uf2"):
-            out = pack_uf2(exe, 0x10031000, [0xE48BFF56])
+            out = pack_uf2(exe, 0x10031000, [0xE48BFF56, 0xE48BFF59])
 
             with open(output, "wb") as f:
                 f.write(out)
