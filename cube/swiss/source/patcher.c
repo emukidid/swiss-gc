@@ -91,6 +91,8 @@ void *installPatch(int patchId) {
 			patch = VIConfigure1152i; patchSize = VIConfigure1152i_length; break;
 		case VI_CONFIGUREAUTOP:
 			patch = VIConfigureAutop; patchSize = VIConfigureAutop_length; break;
+		case VI_CONFIGUREFIELDMODE:
+			patch = VIConfigureFieldMode; patchSize = VIConfigureFieldMode_length; break;
 		case VI_CONFIGUREHOOK1:
 			patch = VIConfigureHook1; patchSize = VIConfigureHook1_length; break;
 		case VI_CONFIGUREHOOK1_GCVIDEO:
@@ -9809,6 +9811,9 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 					VIConfigureHook1 = getPatchAddr(VI_CONFIGUREHOOK1_GCVIDEO);
 			} else
 				VIConfigureHook1 = getPatchAddr(VI_CONFIGUREHOOK1);
+			
+			if (swissSettings.forceVJitter == 1)
+				VIConfigureHook1 = getPatchAddr(VI_CONFIGUREFIELDMODE);
 			
 			switch (swissSettings.gameVMode) {
 				case -2:
