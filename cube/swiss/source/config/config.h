@@ -12,6 +12,7 @@ typedef struct {
 	short forceVOffset;
 	int forceVFilter;
 	int forceVJitter;
+	int fixPixelCenter;
 	int disableDithering;
 	int forceAnisotropy;
 	int forceWidescreen;

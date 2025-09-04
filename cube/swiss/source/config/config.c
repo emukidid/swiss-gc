@@ -204,6 +204,7 @@ int config_update_global(bool checkConfigDevice) {
 	fprintf(fp, "Force Vertical Offset=%+hi\r\n", swissSettings.forceVOffset);
 	fprintf(fp, "Force Vertical Filter=%s\r\n", forceVFilterStr[swissSettings.forceVFilter]);
 	fprintf(fp, "Force Field Rendering=%s\r\n", forceVJitterStr[swissSettings.forceVJitter]);
+	fprintf(fp, "Fix Pixel Center=%s\r\n", fixPixelCenterStr[swissSettings.fixPixelCenter]);
 	fprintf(fp, "Disable Alpha Dithering=%s\r\n", swissSettings.disableDithering ? "Yes":"No");
 	fprintf(fp, "Force Anisotropic Filter=%s\r\n", swissSettings.forceAnisotropy ? "Yes":"No");
 	fprintf(fp, "Force Widescreen=%s\r\n", forceWidescreenStr[swissSettings.forceWidescreen]);
@@ -281,6 +282,7 @@ int config_update_game(ConfigEntry *entry, ConfigEntry *defaults, bool checkConf
 	if(entry->forceVOffset != defaults->forceVOffset) fprintf(fp, "Force Vertical Offset=%+hi\r\n", entry->forceVOffset);
 	if(entry->forceVFilter != defaults->forceVFilter) fprintf(fp, "Force Vertical Filter=%s\r\n", forceVFilterStr[entry->forceVFilter]);
 	if(entry->forceVJitter != defaults->forceVJitter) fprintf(fp, "Force Field Rendering=%s\r\n", forceVJitterStr[entry->forceVJitter]);
+	if(entry->fixPixelCenter != defaults->fixPixelCenter) fprintf(fp, "Fix Pixel Center=%s\r\n", fixPixelCenterStr[entry->fixPixelCenter]);
 	if(entry->disableDithering != defaults->disableDithering) fprintf(fp, "Disable Alpha Dithering=%s\r\n", entry->disableDithering ? "Yes":"No");
 	if(entry->forceAnisotropy != defaults->forceAnisotropy) fprintf(fp, "Force Anisotropic Filter=%s\r\n", entry->forceAnisotropy ? "Yes":"No");
 	if(entry->forceWidescreen != defaults->forceWidescreen) fprintf(fp, "Force Widescreen=%s\r\n", forceWidescreenStr[entry->forceWidescreen]);
@@ -324,6 +326,7 @@ void config_defaults(ConfigEntry *entry) {
 	entry->forceVOffset = in_range(swissSettings.aveCompat, GCDIGITAL_COMPAT, GCVIDEO_COMPAT) ? -3:0;
 	entry->forceVFilter = swissSettings.forceVFilter;
 	entry->forceVJitter = swissSettings.forceVJitter;
+	entry->fixPixelCenter = swissSettings.fixPixelCenter;
 	entry->disableDithering = swissSettings.disableDithering;
 	entry->forceAnisotropy = swissSettings.forceAnisotropy;
 	entry->forceWidescreen = swissSettings.forceWidescreen;
@@ -688,6 +691,14 @@ void config_parse_global(char *configData) {
 					for(int i = 0; i < 3; i++) {
 						if(!strcmp(forceVJitterStr[i], value)) {
 							swissSettings.forceVJitter = i;
+							break;
+						}
+					}
+				}
+				else if(!strcmp("Fix Pixel Center", name)) {
+					for(int i = 0; i < 3; i++) {
+						if(!strcmp(fixPixelCenterStr[i], value)) {
+							swissSettings.fixPixelCenter = i;
 							break;
 						}
 					}
@@ -1086,6 +1097,14 @@ void config_parse_game(char *configData, ConfigEntry *entry) {
 						}
 					}
 				}
+				else if(!strcmp("Fix Pixel Center", name)) {
+					for(int i = 0; i < 3; i++) {
+						if(!strcmp(fixPixelCenterStr[i], value)) {
+							entry->fixPixelCenter = i;
+							break;
+						}
+					}
+				}
 				else if(!strcmp("Disable Alpha Dithering", name)) {
 					entry->disableDithering = !strcmp("Yes", value);
 				}
@@ -1273,6 +1292,7 @@ void config_load_current(ConfigEntry *entry) {
 	swissSettings.forceVOffset = entry->forceVOffset;
 	swissSettings.forceVFilter = entry->forceVFilter;
 	swissSettings.forceVJitter = entry->forceVJitter;
+	swissSettings.fixPixelCenter = entry->fixPixelCenter;
 	swissSettings.disableDithering = entry->disableDithering;
 	swissSettings.forceAnisotropy = entry->forceAnisotropy;
 	swissSettings.forceWidescreen = entry->forceWidescreen;
@@ -1341,6 +1361,7 @@ void config_unload_current() {
 	swissSettings.forceVOffset = backup.forceVOffset;
 	swissSettings.forceVFilter = backup.forceVFilter;
 	swissSettings.forceVJitter = backup.forceVJitter;
+	swissSettings.fixPixelCenter = backup.fixPixelCenter;
 	swissSettings.disableDithering = backup.disableDithering;
 	swissSettings.forceAnisotropy = backup.forceAnisotropy;
 	swissSettings.forceWidescreen = backup.forceWidescreen;

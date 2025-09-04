@@ -34,6 +34,7 @@ char *gameVModeStr[] = {"Auto", "480i", "480sf", "240p", "960i", "480p", "1080i6
 char *forceHScaleStr[] = {"Auto", "1:1", "11:10", "9:8", "640px", "656px", "672px", "704px", "720px"};
 char *forceVFilterStr[] = {"Auto", "0", "1", "2"};
 char *forceVJitterStr[] = {"Auto", "On", "Off"};
+char *fixPixelCenterStr[] = {"No", "1/24", "1/12"};
 char *forceWidescreenStr[] = {"No", "3D", "2D+3D"};
 char *forcePollRateStr[] = {"No", "VSync", "1000Hz", "500Hz", "350Hz", "300Hz", "250Hz", "200Hz", "150Hz", "150Hz", "120Hz", "120Hz", "100Hz"};
 char *invertCStickStr[] = {"No", "X", "Y", "X&Y"};
@@ -96,6 +97,7 @@ static char *tooltips_game[PAGE_GAME_MAX+1] = {
 	"Force Vertical Offset:\n\n+0 - Standard value\n-2 - GCVideo-DVI compatible (480i)\n-3 - GCVideo-DVI compatible (default)\n-4 - GCVideo-DVI compatible (240p)\n-12 - Datapath VisionRGB (480p)",
 	"Force Vertical Filter:\n\nFor 480i & 576i:\n Auto - Do nothing (default)\n\nFor 240p & 288p:\n Auto - Equivalent to 0 (default)\n 0 - 50%/50% blend with lower lines\n 1 - 50%/50% blend with upper lines\n 2 - Discard even lines\n\nFor other video modes:\n Auto - Equivalent to 0 (default)\n 0 - 3\327MSAA resolve only\n 1 - 18.75%/62.5%/18.75% blend\n 2 - 25%/50%/25% blend (deflicker)",
 	NULL,
+	"Fix Pixel Center:\n\nNot to be confused with the \223480p Pixel Fix\224 on Wii.",
 	NULL,
 	NULL,
 	NULL,
@@ -318,20 +320,21 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 		bool enabledHypervisor = devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->features & FEAT_HYPERVISOR);
 		bool enabledCleanBoot = devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->location & LOC_DVD_CONNECTOR);
 		bool rt4kEnable = is_rt4k_alive();
-		if(option < SET_DEFAULT_TRIGGER_LEVEL) {
+		if(option < SET_DEFAULT_SWAP_CAMERA) {
 			drawSettingEntryString(page, &page_y_ofs, "Force Video Mode:", gameVModeStr[swissSettings.gameVMode], option == SET_DEFAULT_FORCE_VIDEOMODE, enabledVideoPatches);
 			drawSettingEntryString(page, &page_y_ofs, "Force Horizontal Scale:", forceHScaleStr[swissSettings.forceHScale], option == SET_DEFAULT_HORIZ_SCALE, enabledVideoPatches);
 			sprintf(forceVOffsetStr, "%+hi", swissSettings.forceVOffset);
 			drawSettingEntryString(page, &page_y_ofs, "Force Vertical Offset:", forceVOffsetStr, option == SET_DEFAULT_VERT_OFFSET, enabledVideoPatches);
 			drawSettingEntryString(page, &page_y_ofs, "Force Vertical Filter:", forceVFilterStr[swissSettings.forceVFilter], option == SET_DEFAULT_VERT_FILTER, enabledVideoPatches);
 			drawSettingEntryString(page, &page_y_ofs, "Force Field Rendering:", forceVJitterStr[swissSettings.forceVJitter], option == SET_FIELD_RENDER, enabledVideoPatches);
+			drawSettingEntryString(page, &page_y_ofs, "Fix Pixel Center:", fixPixelCenterStr[swissSettings.fixPixelCenter], option == SET_DEFAULT_PIXEL_CENTER, enabledVideoPatches);
 			drawSettingEntryBoolean(page, &page_y_ofs, "Disable Alpha Dithering:", swissSettings.disableDithering, option == SET_DEFAULT_ALPHA_DITHER, enabledVideoPatches);
 			drawSettingEntryBoolean(page, &page_y_ofs, "Force Anisotropic Filter:", swissSettings.forceAnisotropy, option == SET_DEFAULT_ANISO_FILTER, true);
 			drawSettingEntryString(page, &page_y_ofs, "Force Widescreen:", forceWidescreenStr[swissSettings.forceWidescreen], option == SET_DEFAULT_WIDESCREEN, true);
 			drawSettingEntryString(page, &page_y_ofs, "Force Polling Rate:", forcePollRateStr[swissSettings.forcePollRate], option == SET_DEFAULT_POLL_RATE, true);
 			drawSettingEntryString(page, &page_y_ofs, "Invert Camera Stick:", invertCStickStr[swissSettings.invertCStick], option == SET_DEFAULT_INVERT_CAMERA, true);
-			drawSettingEntryString(page, &page_y_ofs, "Swap Camera Stick:", swapCStickStr[swissSettings.swapCStick], option == SET_DEFAULT_SWAP_CAMERA, true);
 		} else {
+			drawSettingEntryString(page, &page_y_ofs, "Swap Camera Stick:", swapCStickStr[swissSettings.swapCStick], option == SET_DEFAULT_SWAP_CAMERA, true);
 			sprintf(triggerLevelStr, "%hhu", swissSettings.triggerLevel);
 			drawSettingEntryString(page, &page_y_ofs, "Digital Trigger Level:", triggerLevelStr, option == SET_DEFAULT_TRIGGER_LEVEL, true);
 			drawSettingEntryString(page, &page_y_ofs, "Emulate Audio Streaming:", emulateAudioStreamStr[swissSettings.emulateAudioStream], option == SET_DEFAULT_AUDIO_STREAM, emulatedAudioStream);
@@ -359,20 +362,21 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 			bool enabledHypervisor = devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->features & FEAT_HYPERVISOR);
 			bool enabledCleanBoot = devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->location & LOC_DVD_CONNECTOR);
 			bool rt4kEnable = is_rt4k_alive();
-			if(option < SET_TRIGGER_LEVEL) {
+			if(option < SET_SWAP_CAMERA) {
 				drawSettingEntryString(page, &page_y_ofs, "Force Video Mode:", gameVModeStr[gameConfig->gameVMode], option == SET_FORCE_VIDEOMODE, enabledVideoPatches);
 				drawSettingEntryString(page, &page_y_ofs, "Force Horizontal Scale:", forceHScaleStr[gameConfig->forceHScale], option == SET_HORIZ_SCALE, enabledVideoPatches);
 				sprintf(forceVOffsetStr, "%+hi", gameConfig->forceVOffset);
 				drawSettingEntryString(page, &page_y_ofs, "Force Vertical Offset:", forceVOffsetStr, option == SET_VERT_OFFSET, enabledVideoPatches);
 				drawSettingEntryString(page, &page_y_ofs, "Force Vertical Filter:", forceVFilterStr[gameConfig->forceVFilter], option == SET_VERT_FILTER, enabledVideoPatches);
 				drawSettingEntryString(page, &page_y_ofs, "Force Field Rendering:", forceVJitterStr[gameConfig->forceVJitter], option == SET_FIELD_RENDER, enabledVideoPatches);
+				drawSettingEntryString(page, &page_y_ofs, "Fix Pixel Center:", fixPixelCenterStr[gameConfig->fixPixelCenter], option == SET_PIXEL_CENTER, enabledVideoPatches);
 				drawSettingEntryBoolean(page, &page_y_ofs, "Disable Alpha Dithering:", gameConfig->disableDithering, option == SET_ALPHA_DITHER, enabledVideoPatches);
 				drawSettingEntryBoolean(page, &page_y_ofs, "Force Anisotropic Filter:", gameConfig->forceAnisotropy, option == SET_ANISO_FILTER, true);
 				drawSettingEntryString(page, &page_y_ofs, "Force Widescreen:", forceWidescreenStr[gameConfig->forceWidescreen], option == SET_WIDESCREEN, true);
 				drawSettingEntryString(page, &page_y_ofs, "Force Polling Rate:", forcePollRateStr[gameConfig->forcePollRate], option == SET_POLL_RATE, true);
 				drawSettingEntryString(page, &page_y_ofs, "Invert Camera Stick:", invertCStickStr[gameConfig->invertCStick], option == SET_INVERT_CAMERA, true);
-				drawSettingEntryString(page, &page_y_ofs, "Swap Camera Stick:", swapCStickStr[gameConfig->swapCStick], option == SET_SWAP_CAMERA, true);
 			} else {
+				drawSettingEntryString(page, &page_y_ofs, "Swap Camera Stick:", swapCStickStr[gameConfig->swapCStick], option == SET_SWAP_CAMERA, true);
 				sprintf(triggerLevelStr, "%hhu", gameConfig->triggerLevel);
 				drawSettingEntryString(page, &page_y_ofs, "Digital Trigger Level:", triggerLevelStr, option == SET_TRIGGER_LEVEL, true);
 				drawSettingEntryString(page, &page_y_ofs, "Emulate Audio Streaming:", emulateAudioStreamStr[gameConfig->emulateAudioStream], option == SET_AUDIO_STREAM, emulatedAudioStream);
@@ -387,20 +391,21 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 		}
 		else {
 			// Just draw the defaults again
-			if(option < SET_TRIGGER_LEVEL) {
+			if(option < SET_SWAP_CAMERA) {
 				drawSettingEntryString(page, &page_y_ofs, "Force Video Mode:", gameVModeStr[swissSettings.gameVMode], option == SET_FORCE_VIDEOMODE, false);
 				drawSettingEntryString(page, &page_y_ofs, "Force Horizontal Scale:", forceHScaleStr[swissSettings.forceHScale], option == SET_HORIZ_SCALE, false);
 				sprintf(forceVOffsetStr, "%+hi", swissSettings.forceVOffset);
 				drawSettingEntryString(page, &page_y_ofs, "Force Vertical Offset:", forceVOffsetStr, option == SET_VERT_OFFSET, false);
 				drawSettingEntryString(page, &page_y_ofs, "Force Vertical Filter:", forceVFilterStr[swissSettings.forceVFilter], option == SET_VERT_FILTER, false);
 				drawSettingEntryString(page, &page_y_ofs, "Force Field Rendering:", forceVJitterStr[swissSettings.forceVJitter], option == SET_FIELD_RENDER, false);
+				drawSettingEntryString(page, &page_y_ofs, "Fix Pixel Center:", fixPixelCenterStr[swissSettings.fixPixelCenter], option == SET_PIXEL_CENTER, false);
 				drawSettingEntryBoolean(page, &page_y_ofs, "Disable Alpha Dithering:", swissSettings.disableDithering, option == SET_ALPHA_DITHER, false);
 				drawSettingEntryBoolean(page, &page_y_ofs, "Force Anisotropic Filter:", swissSettings.forceAnisotropy, option == SET_ANISO_FILTER, false);
 				drawSettingEntryString(page, &page_y_ofs, "Force Widescreen:", forceWidescreenStr[swissSettings.forceWidescreen], option == SET_WIDESCREEN, false);
 				drawSettingEntryString(page, &page_y_ofs, "Force Polling Rate:", forcePollRateStr[swissSettings.forcePollRate], option == SET_POLL_RATE, false);
 				drawSettingEntryString(page, &page_y_ofs, "Invert Camera Stick:", invertCStickStr[swissSettings.invertCStick], option == SET_INVERT_CAMERA, false);
-				drawSettingEntryString(page, &page_y_ofs, "Swap Camera Stick:", swapCStickStr[swissSettings.swapCStick], option == SET_SWAP_CAMERA, false);
 			} else {
+				drawSettingEntryString(page, &page_y_ofs, "Swap Camera Stick:", swapCStickStr[swissSettings.swapCStick], option == SET_SWAP_CAMERA, false);
 				sprintf(triggerLevelStr, "%hhu", swissSettings.triggerLevel);
 				drawSettingEntryString(page, &page_y_ofs, "Digital Trigger Level:", triggerLevelStr, option == SET_TRIGGER_LEVEL, false);
 				drawSettingEntryString(page, &page_y_ofs, "Emulate Audio Streaming:", emulateAudioStreamStr[swissSettings.emulateAudioStream], option == SET_AUDIO_STREAM, false);
@@ -727,6 +732,12 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 					swissSettings.forceVJitter = (swissSettings.forceVJitter + 3) % 3;
 				}
 			break;
+			case SET_DEFAULT_PIXEL_CENTER:
+				if(swissSettings.disableVideoPatches < 2) {
+					swissSettings.fixPixelCenter += direction;
+					swissSettings.fixPixelCenter = (swissSettings.fixPixelCenter + 3) % 3;
+				}
+			break;
 			case SET_DEFAULT_ALPHA_DITHER:
 				if(swissSettings.disableVideoPatches < 2)
 					swissSettings.disableDithering ^= 1;
@@ -797,6 +808,7 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 					swissSettings.forceVOffset = 0;
 					swissSettings.forceVFilter = 0;
 					swissSettings.forceVJitter = 0;
+					swissSettings.fixPixelCenter = 0;
 					swissSettings.disableDithering = 0;
 					swissSettings.forceAnisotropy = 0;
 					swissSettings.forceWidescreen = 0;
@@ -855,6 +867,12 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 				if(swissSettings.disableVideoPatches < 2) {
 					gameConfig->forceVJitter += direction;
 					gameConfig->forceVJitter = (gameConfig->forceVJitter + 3) % 3;
+				}
+			break;
+			case SET_PIXEL_CENTER:
+				if(swissSettings.disableVideoPatches < 2) {
+					gameConfig->fixPixelCenter += direction;
+					gameConfig->fixPixelCenter = (gameConfig->fixPixelCenter + 3) % 3;
 				}
 			break;
 			case SET_ALPHA_DITHER:

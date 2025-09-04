@@ -21,7 +21,7 @@ GXSetViewportJitterPatch:
 1:	fmuls	%f3, %f0, %f3
 	lfs		%f11, -4 (%r9)
 	lfs		%f12, -8 (%r9)
-	lis		%r9, 5
+	lis		%r9, 6 - 1
 	fmuls	%f0, %f0, %f4
 	ori		%r8, %r9, 0x101A
 	li		%r6, 0x10

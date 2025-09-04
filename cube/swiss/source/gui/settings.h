@@ -100,6 +100,7 @@ enum SETTINGS_GAME_DEFAULTS {
 	SET_DEFAULT_VERT_OFFSET,
 	SET_DEFAULT_VERT_FILTER,
 	SET_DEFAULT_FIELD_RENDER,
+	SET_DEFAULT_PIXEL_CENTER,
 	SET_DEFAULT_ALPHA_DITHER,
 	SET_DEFAULT_ANISO_FILTER,
 	SET_DEFAULT_WIDESCREEN,
@@ -128,6 +129,7 @@ enum SETTINGS_GAME {
 	SET_VERT_OFFSET,
 	SET_VERT_FILTER,
 	SET_FIELD_RENDER,
+	SET_PIXEL_CENTER,
 	SET_ALPHA_DITHER,
 	SET_ANISO_FILTER,
 	SET_WIDESCREEN,
@@ -155,6 +157,7 @@ extern char *gameVModeStr[];
 extern char *forceHScaleStr[];
 extern char *forceVFilterStr[];
 extern char *forceVJitterStr[];
+extern char *fixPixelCenterStr[];
 extern char *forceWidescreenStr[];
 extern char *forcePollRateStr[];
 extern char *invertCStickStr[];

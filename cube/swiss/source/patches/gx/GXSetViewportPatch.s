@@ -14,7 +14,7 @@ GXSetViewportPatch:
 1:	fmuls	%f4, %f0, %f4
 	lfs		%f11, -4 (%r9)
 	lfs		%f12, -8 (%r9)
-	lis		%r9, 5
+	lis		%r9, 6 - 1
 	fmuls	%f0, %f0, %f3
 	ori		%r10, %r9, 0x101A
 	li		%r8, 0x10
