@@ -14815,6 +14815,26 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 				print_debug("Patched:[%.6s]\n", gameID);
 				break;
 		}
+	} else if ((!strncmp(gameID, "GPZE01", 6) || !strncmp(gameID, "GPZJ01", 6)) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 803424:
+				*(s16 *)(data + 0x80006C72 - 0x80006780 + 0x2540) = 0;
+				*(s16 *)(data + 0x80006C7A - 0x80006780 + 0x2540) = 640;
+				
+				*(s16 *)(data + 0x8000C1FA - 0x80006780 + 0x2540) = 0;
+				*(s16 *)(data + 0x8000C202 - 0x80006780 + 0x2540) = 640;
+				
+				*(s16 *)(data + 0x8000C3DA - 0x80006780 + 0x2540) = 0;
+				*(s16 *)(data + 0x8000C3E2 - 0x80006780 + 0x2540) = 640;
+				
+				SET_VI_WIDTH(data + 0x800C66D0 - 0x800BDCA0 + 0xBACA0, 704);
+				SET_VI_WIDTH(data + 0x800C670C - 0x800BDCA0 + 0xBACA0, 704);
+				SET_VI_WIDTH(data + 0x800C6748 - 0x800BDCA0 + 0xBACA0, 704);
+				SET_VI_WIDTH(data + 0x800C67C0 - 0x800BDCA0 + 0xBACA0, 704);
+				
+				print_debug("Patched:[%.6s]\n", gameID);
+				break;
+		}
 	} else if (!strncmp(gameID, "GSAE01", 6) && dataType == PATCH_DOL) {
 		switch (length) {
 			case 3398976:
