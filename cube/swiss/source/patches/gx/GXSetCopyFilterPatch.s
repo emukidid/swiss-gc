@@ -101,6 +101,6 @@ GXSetCopyFilterPatch:
 	stw		%r4, -0x8000 (%r12)
 	blr
 
-.globl GXSetCopyFilterPatch_length
-GXSetCopyFilterPatch_length:
-.long (GXSetCopyFilterPatch_length - GXSetCopyFilterPatch)
+.globl GXSetCopyFilterPatchLength
+GXSetCopyFilterPatchLength:
+.long (. - GXSetCopyFilterPatch) / 4

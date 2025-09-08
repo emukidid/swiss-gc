@@ -23,6 +23,6 @@ VIConfigureFieldMode:
 	stswi		%r5, %r4, 6
 1:
 
-.globl VIConfigureFieldMode_length
-VIConfigureFieldMode_length:
-.long (VIConfigureFieldMode_length - VIConfigureFieldMode)
+.globl VIConfigureFieldMode_size
+VIConfigureFieldMode_size:
+.long (. - VIConfigureFieldMode)

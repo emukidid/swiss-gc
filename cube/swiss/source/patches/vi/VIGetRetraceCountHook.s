@@ -7,6 +7,6 @@ VIGetRetraceCountHook:
 	sub			%r3, %r3, %r4
 	blr
 
-.globl VIGetRetraceCountHook_length
-VIGetRetraceCountHook_length:
-.long (VIGetRetraceCountHook_length - VIGetRetraceCountHook)
+.globl VIGetRetraceCountHook_size
+VIGetRetraceCountHook_size:
+.long (. - VIGetRetraceCountHook)

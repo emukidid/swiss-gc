@@ -13,6 +13,6 @@ VIConfigurePanHookD:
 	add			%r29, %r29, %r0
 	blr
 
-.globl VIConfigurePanHookD_length
-VIConfigurePanHookD_length:
-.long (VIConfigurePanHookD_length - VIConfigurePanHookD)
+.globl VIConfigurePanHookD_size
+VIConfigurePanHookD_size:
+.long (. - VIConfigurePanHookD)

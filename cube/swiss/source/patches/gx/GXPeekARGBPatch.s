@@ -9,6 +9,6 @@ GXPeekARGBPatch:
 	stw		%r0, 0 (%r5)
 	blr
 
-.globl GXPeekARGBPatch_length
-GXPeekARGBPatch_length:
-.long (GXPeekARGBPatch_length - GXPeekARGBPatch)
+.globl GXPeekARGBPatchLength
+GXPeekARGBPatchLength:
+.long (. - GXPeekARGBPatch) / 4

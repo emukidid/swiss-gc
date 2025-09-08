@@ -30,6 +30,6 @@ VIConfigure540p50:
 	stb			%r8, VAR_VFILTER_ON (%r4)
 	stw			%r0, 0 (%r3)
 
-.globl VIConfigure540p50_length
-VIConfigure540p50_length:
-.long (VIConfigure540p50_length - VIConfigure540p50)
+.globl VIConfigure540p50_size
+VIConfigure540p50_size:
+.long (. - VIConfigure540p50)

@@ -12,6 +12,6 @@ GXSetDispCopyYScaleStub1:
 	addi	%r3, %r3, 1
 	blr
 
-.globl GXSetDispCopyYScaleStub1_length
-GXSetDispCopyYScaleStub1_length:
-.long (GXSetDispCopyYScaleStub1_length - GXSetDispCopyYScaleStub1)
+.globl GXSetDispCopyYScaleStub1Length
+GXSetDispCopyYScaleStub1Length:
+.long (. - GXSetDispCopyYScaleStub1) / 4

@@ -57,6 +57,6 @@ VIConfigure240p:
 	stb			%r7, VAR_VFILTER_ON (%r4)
 	stw			%r0, 0 (%r3)
 
-.globl VIConfigure240p_length
-VIConfigure240p_length:
-.long (VIConfigure240p_length - VIConfigure240p)
+.globl VIConfigure240p_size
+VIConfigure240p_size:
+.long (. - VIConfigure240p)

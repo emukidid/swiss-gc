@@ -9,6 +9,6 @@ VIRetraceHandlerHook:
 	mtlr	%r0
 	blr
 
-.globl VIRetraceHandlerHook_length
-VIRetraceHandlerHook_length:
-.long (VIRetraceHandlerHook_length - VIRetraceHandlerHook)
+.globl VIRetraceHandlerHook_size
+VIRetraceHandlerHook_size:
+.long (. - VIRetraceHandlerHook)

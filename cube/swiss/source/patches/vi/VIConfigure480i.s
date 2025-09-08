@@ -54,6 +54,6 @@ VIConfigure480i:
 	stb			%r7, VAR_VFILTER_ON (%r4)
 	stw			%r0, 0 (%r3)
 
-.globl VIConfigure480i_length
-VIConfigure480i_length:
-.long (VIConfigure480i_length - VIConfigure480i)
+.globl VIConfigure480i_size
+VIConfigure480i_size:
+.long (. - VIConfigure480i)

@@ -11,6 +11,6 @@ GXPeekZPatch:
 	stw		%r0, 0 (%r5)
 	blr
 
-.globl GXPeekZPatch_length
-GXPeekZPatch_length:
-.long (GXPeekZPatch_length - GXPeekZPatch)
+.globl GXPeekZPatchLength
+GXPeekZPatchLength:
+.long (. - GXPeekZPatch) / 4

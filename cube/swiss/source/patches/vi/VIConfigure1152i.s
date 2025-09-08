@@ -29,6 +29,6 @@ VIConfigure1152i:
 	stb			%r8, 24 (%r3)
 	stw			%r0, 0 (%r3)
 
-.globl VIConfigure1152i_length
-VIConfigure1152i_length:
-.long (VIConfigure1152i_length - VIConfigure1152i)
+.globl VIConfigure1152i_size
+VIConfigure1152i_size:
+.long (. - VIConfigure1152i)

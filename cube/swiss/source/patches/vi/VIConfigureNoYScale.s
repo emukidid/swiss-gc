@@ -20,6 +20,6 @@ VIConfigureNoYScale:
 	sth			%r6, 8 (%r3)
 2:
 
-.globl VIConfigureNoYScale_length
-VIConfigureNoYScale_length:
-.long (VIConfigureNoYScale_length - VIConfigureNoYScale)
+.globl VIConfigureNoYScale_size
+VIConfigureNoYScale_size:
+.long (. - VIConfigureNoYScale)

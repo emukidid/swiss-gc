@@ -29,6 +29,6 @@ VIConfigure1080i50:
 	stb			%r8, 24 (%r3)
 	stw			%r0, 0 (%r3)
 
-.globl VIConfigure1080i50_length
-VIConfigure1080i50_length:
-.long (VIConfigure1080i50_length - VIConfigure1080i50)
+.globl VIConfigure1080i50_size
+VIConfigure1080i50_size:
+.long (. - VIConfigure1080i50)

@@ -26,6 +26,6 @@ GXSetDispCopyYScalePatch2:
 	addi	%sp, %sp, 16
 	blr
 
-.globl GXSetDispCopyYScalePatch2_length
-GXSetDispCopyYScalePatch2_length:
-.long (GXSetDispCopyYScalePatch2_length - GXSetDispCopyYScalePatch2)
+.globl GXSetDispCopyYScalePatch2Length
+GXSetDispCopyYScalePatch2Length:
+.long (. - GXSetDispCopyYScalePatch2) / 4

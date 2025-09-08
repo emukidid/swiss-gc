@@ -39,6 +39,6 @@ GXSetViewportPatch:
 	.long	0x43AB0555
 	.long	0x4B7FFFFF
 
-.globl GXSetViewportPatch_length
-GXSetViewportPatch_length:
-.long (GXSetViewportPatch_length - GXSetViewportPatch)
+.globl GXSetViewportPatchLength
+GXSetViewportPatchLength:
+.long (. - GXSetViewportPatch) / 4

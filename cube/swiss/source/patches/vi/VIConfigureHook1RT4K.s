@@ -24,6 +24,6 @@ VIConfigureHook1RT4K:
 	mtmsr		%r4
 	blr
 
-.globl VIConfigureHook1RT4K_length
-VIConfigureHook1RT4K_length:
-.long (VIConfigureHook1RT4K_length - VIConfigureHook1RT4K)
+.globl VIConfigureHook1RT4K_size
+VIConfigureHook1RT4K_size:
+.long (. - VIConfigureHook1RT4K)

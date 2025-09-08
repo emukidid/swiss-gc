@@ -32,6 +32,6 @@ getTimingPatch:
 	.long	38*6
 	.long	38*6
 
-.globl getTimingPatch_length
-getTimingPatch_length:
-.long (getTimingPatch_length - getTimingPatch)
+.globl getTimingPatchLength
+getTimingPatchLength:
+.long (. - getTimingPatch) / 4

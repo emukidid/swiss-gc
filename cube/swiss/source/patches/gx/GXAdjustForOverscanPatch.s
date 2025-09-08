@@ -58,6 +58,6 @@ GXAdjustForOverscanPatch:
 	stswi	%r5, %r4, 32
 	blr
 
-.globl GXAdjustForOverscanPatch_length
-GXAdjustForOverscanPatch_length:
-.long (GXAdjustForOverscanPatch_length - GXAdjustForOverscanPatch)
+.globl GXAdjustForOverscanPatchLength
+GXAdjustForOverscanPatchLength:
+.long (. - GXAdjustForOverscanPatch) / 4

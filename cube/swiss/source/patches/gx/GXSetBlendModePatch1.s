@@ -28,6 +28,6 @@ GXSetBlendModePatch1:
 	sth		%r8, 2 (%r10)
 	blr
 
-.globl GXSetBlendModePatch1_length
-GXSetBlendModePatch1_length:
-.long (GXSetBlendModePatch1_length - GXSetBlendModePatch1)
+.globl GXSetBlendModePatch1Length
+GXSetBlendModePatch1Length:
+.long (. - GXSetBlendModePatch1) / 4

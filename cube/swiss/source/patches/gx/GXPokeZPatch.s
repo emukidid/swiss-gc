@@ -10,6 +10,6 @@ GXPokeZPatch:
 	stw		%r5, 0 (%r6)
 	blr
 
-.globl GXPokeZPatch_length
-GXPokeZPatch_length:
-.long (GXPokeZPatch_length - GXPokeZPatch)
+.globl GXPokeZPatchLength
+GXPokeZPatchLength:
+.long (. - GXPokeZPatch) / 4

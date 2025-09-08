@@ -19,6 +19,6 @@ GXSetScissorHook:
 	add			%r3, %r3, %r0
 1:	trap
 
-.globl GXSetScissorHook_length
-GXSetScissorHook_length:
-.long (GXSetScissorHook_length - GXSetScissorHook)
+.globl GXSetScissorHook_size
+GXSetScissorHook_size:
+.long (. - GXSetScissorHook)

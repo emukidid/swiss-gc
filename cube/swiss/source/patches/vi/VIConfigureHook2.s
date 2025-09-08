@@ -13,6 +13,6 @@ VIConfigureHook2:
 	stw		%r0, 0 (%r3)
 	blr
 
-.globl VIConfigureHook2_length
-VIConfigureHook2_length:
-.long (VIConfigureHook2_length - VIConfigureHook2)
+.globl VIConfigureHook2_size
+VIConfigureHook2_size:
+.long (. - VIConfigureHook2)
