@@ -33,7 +33,7 @@ char *uiVModeStr[] = {"Auto", "480i", "480sf", "480p", "576i", "576sf", "576p"};
 char *gameVModeStr[] = {"Auto", "480i", "480sf", "240p", "960i", "480p", "1080i60", "540p60", "576i", "576sf", "288p", "1152i", "576p", "1080i50", "540p50"};
 char *forceHScaleStr[] = {"Auto", "1:1", "11:10", "9:8", "640px", "656px", "672px", "704px", "720px"};
 char *forceVFilterStr[] = {"Auto", "0", "1", "2"};
-char *forceVJitterStr[] = {"Auto", "On", "Off"};
+char *forceVJitterStr[] = {"Auto", "On", "Off", "TAA"};
 char *fixPixelCenterStr[] = {"No", "1/24", "1/12"};
 char *forceWidescreenStr[] = {"No", "3D", "2D+3D"};
 char *forcePollRateStr[] = {"No", "VSync", "1000Hz", "500Hz", "350Hz", "300Hz", "250Hz", "200Hz", "150Hz", "150Hz", "120Hz", "120Hz", "100Hz"};
@@ -729,7 +729,7 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 			case SET_DEFAULT_FIELD_RENDER:
 				if(swissSettings.disableVideoPatches < 2) {
 					swissSettings.forceVJitter += direction;
-					swissSettings.forceVJitter = (swissSettings.forceVJitter + 3) % 3;
+					swissSettings.forceVJitter = (swissSettings.forceVJitter + 4) % 4;
 				}
 			break;
 			case SET_DEFAULT_PIXEL_CENTER:
@@ -866,7 +866,7 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 			case SET_FIELD_RENDER:
 				if(swissSettings.disableVideoPatches < 2) {
 					gameConfig->forceVJitter += direction;
-					gameConfig->forceVJitter = (gameConfig->forceVJitter + 3) % 3;
+					gameConfig->forceVJitter = (gameConfig->forceVJitter + 4) % 4;
 				}
 			break;
 			case SET_PIXEL_CENTER:

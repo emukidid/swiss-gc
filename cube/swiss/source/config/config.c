@@ -688,7 +688,7 @@ void config_parse_global(char *configData) {
 					}
 				}
 				else if(!strcmp("Force Field Rendering", name)) {
-					for(int i = 0; i < 3; i++) {
+					for(int i = 0; i < 4; i++) {
 						if(!strcmp(forceVJitterStr[i], value)) {
 							swissSettings.forceVJitter = i;
 							break;
@@ -1090,7 +1090,7 @@ void config_parse_game(char *configData, ConfigEntry *entry) {
 					}
 				}
 				else if(!strcmp("Force Field Rendering", name)) {
-					for(int i = 0; i < 3; i++) {
+					for(int i = 0; i < 4; i++) {
 						if(!strcmp(forceVJitterStr[i], value)) {
 							entry->forceVJitter = i;
 							break;

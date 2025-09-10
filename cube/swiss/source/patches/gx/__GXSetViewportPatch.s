@@ -1,7 +1,7 @@
 #include "reservedarea.h"
 
-.globl GXSetViewportPatch
-GXSetViewportPatch:
+.globl __GXSetViewportPatch
+__GXSetViewportPatch:
 	lis		%r10, VAR_AREA
 	lis		%r9, 0
 	lbz		%r10, VAR_CURRENT_FIELD (%r10)
@@ -39,6 +39,6 @@ GXSetViewportPatch:
 	.long	0x43AB0555
 	.long	0x4B7FFFFF
 
-.globl GXSetViewportPatchLength
-GXSetViewportPatchLength:
-.long (. - GXSetViewportPatch) / 4
+.globl __GXSetViewportPatchLength
+__GXSetViewportPatchLength:
+.long (. - __GXSetViewportPatch) / 4
