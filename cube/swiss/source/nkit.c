@@ -1876,8 +1876,8 @@ static const struct {
 	{{ "GSXJ13\x00\x00" }, true,  0x4E, 0x9053, 0x24A75A9E, 0x334B20CD2BC5C26A, 1364707328,   +95270912, {  717026356,   +15721284, 6496, 0x8928 }, "Star Wars: The Clone Wars" },
 	{{ "GSXP64\x00\x00" }, true,  0x8D, 0xE85F, 0x5350B404, 0x86B56B9D6184430B, 1392834560,   +67143680, {  732639460,   +15562704, 6496, 0x9211 }, "Star Wars: The Clone Wars" },
 	{{ "GSXS64\x00\x00" }, true,  0xA3, 0x9D36, 0x7F6214A4, 0x2779F962534147BC, 1393418240,   +66560000, {  726797288,   +15430704, 6496, 0x04DB }, "Star Wars: Las Guerras Clon" },
-	{{ "GSYE6S\x00\x00" }, true,  0x66, 0x0711, 0x2C34401A, 0xDD8B3BD444212E82,  588488704,  +871489536, {  473008912,     +396456, 6496, 0xA89D }, "Shrek Super Party" },
-	{{ "GSYP6S\x00\x00" }, true,  0x73, 0x61E7, 0x7675F608, 0x60E42AF8F6A46140,  607197184,  +852781056, {  506408848,     +362800, 6496, 0xA89D }, "Shrek Super Party" },
+	{{ "GSYE6S\x00\x00" }, true,  0x26, 0x0711, 0x2C34401A, 0xDD8B3BD444212E82,  588881920,  +871096320, {  473405368,          +0, 6496, 0xA89D }, "Shrek Super Party" },
+	{{ "GSYP6S\x00\x00" }, true,  0x9E, 0x61E7, 0x7675F608, 0x60E42AF8F6A46140,  607590400,  +852387840, {  506771648,          +0, 6496, 0xA89D }, "Shrek Super Party" },
 	{{ "GSZP41\x00\x00" }, false, 0xE6, 0x407B, 0xE649640A, 0xF7D1C748F341BE08,  524728320,  +935249920, {  524703604,     +730224, 8096, 0x0881 }, "Speed Challenge: Jacques Villeneuve's Racing Vision" },
 	{{ "GT2J18\x00\x00" }, false, 0xD3, 0xB57F, 0xD9B37F9B, 0x9AD90A2883AE442A, 1454006272,    +5971968, { 1101011888,      +14324, 6496, 0x582D }, "Tengai Makyou II: Manji Maru" },
 	{{ "GT3D52\x00\x00" }, true,  0x65, 0x850F, 0xF33F9B32, 0xF8559FB90F7A7A1D, 1453072384,    +6905856, { 1302953984,          +0, 6496, 0x3EBF }, "Tony Hawk's Pro Skater 3" },
@@ -2537,6 +2537,8 @@ static const struct {
 	{{ "GPMEAF\x00\x00" }, true,  0x47, 0x1CEA, 0x2E6425F3, 0x272C8825B749E04B, 1154119680,  +305858560, {  172111684,     +520148, 6496, 0x1480 }, "Pac-Man Fever" },
 	{{ "GPZE01\x00\x00" }, false, 0x5E, 0xF60D, 0x0F13C224, 0x1C69883B549A7E38, 1459980288,       -2048, {   33311960,         -16, 6496, 0x59D7 }, "Nintendo Puzzle Collection" },
 	{{ "GPZE01\x00\x00" }, false, 0x7C, 0xF60D, 0x0F13C224, 0x1C69883B549A7E38, 1459980288,       -2048, {   33311960,         -16, 6496, 0x59D7 }, "Nintendo Puzzle Collection" },
+	{{ "GSYE6S\x00\x00" }, true,  0x66, 0x0711, 0x2C34401A, 0xDD8B3BD444212E82,  588488704,  +871489536, {  473008912,     +396456, 6496, 0xA89D }, "Shrek Super Party" },
+	{{ "GSYP6S\x00\x00" }, true,  0x73, 0x61E7, 0x7675F608, 0x60E42AF8F6A46140,  607197184,  +852781056, {  506408848,     +362800, 6496, 0xA89D }, "Shrek Super Party" },
 	{{ "GXQP41\x00\x00" }, false, 0x55, 0x904A, 0xD0B0EDE0, 0x260C8DE80E2C787E, 1459980288,       -2048, {  479137452,        -312, 8096, 0xA071 }, "Taxi 3: The Game" },
 	{{ "GXQP41\x00\x00" }, false, 0xCE, 0x904A, 0xD0B0EDE0, 0x260C8DE80E2C787E, 1459980288,       -2048, {  479137452,        -312, 8096, 0xA071 }, "Taxi 3: The Game" },
 	{{ "GY3E01\x00\x00" }, false, 0x0A, 0x112A, 0x696F5AC7, 0x780C22857F53C0D0, 1459980288,       -2048, { 1198941300,         -96, 6496, 0x12FC }, "Donkey Konga 3: Tabehoudai! Haru Mogitate 50-kyoku" },
@@ -2548,7 +2550,7 @@ static const struct {
 	{{ "RELSAB\x00\x00" }, false, 0xAC, 0xBA9E, 0x1D74AD4A, 0x1A5F0EA47A582D7E, 1455841280,    +4136960, {         ~0,          +0,    0, 0xFFFF }, "Memory Card Utility Program" },
 	{{ "RELSAB\x00\x00" }, true,  0x44, 0xFCCE, 0x146E4A5A, 0x1E9563341CFB48F4, 1459947520,      +30720, { 1193673280,          +0, 6496, 0x8F7A }, "Summoner: The Prophecy" },
 	{{ "RELSAB\x00\x00" }, true,  0xD6, 0xD9CE, 0x16D7BCCE, 0xB64ADF7A4E8423B8, 1459978240,          +0, { 1193214528,          +0, 6496, 0x1458 }, "Summoner: The Prophecy" },
-#define TOTAL_GCM_COUNT (VALID_GCM_COUNT + 69)
+#define TOTAL_GCM_COUNT (VALID_GCM_COUNT + 71)
 };
 
 uint8_t fletcher8(const void *buffer, size_t size)
