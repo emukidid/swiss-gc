@@ -494,7 +494,7 @@ int install_code(int final)
 	return 1;
 }
 
-void make_pattern(u32 *data, u32 offsetFoundAt, u32 length, FuncPattern *functionPattern)
+void make_pattern(u32 *data, int dataType, u32 offsetFoundAt, u32 length, FuncPattern *functionPattern)
 {
 	u32 i, j;
 	
@@ -539,6 +539,7 @@ void make_pattern(u32 *data, u32 offsetFoundAt, u32 length, FuncPattern *functio
 	}
 	
 	functionPattern->offsetFoundAt = offsetFoundAt;
+	functionPattern->properAddress = Calc_ProperAddress(data, dataType, offsetFoundAt * sizeof(u32));
 }
 
 bool compare_pattern(FuncPattern *FPatA, FuncPattern *FPatB)
@@ -546,14 +547,15 @@ bool compare_pattern(FuncPattern *FPatA, FuncPattern *FPatB)
 	return memcmp(FPatA, FPatB, sizeof(u32) * 6) == 0;
 }
 
-bool find_pattern(u32 *data, u32 offsetFoundAt, u32 length, FuncPattern *functionPattern)
+bool find_pattern(u32 *data, int dataType, u32 offsetFoundAt, u32 length, FuncPattern *functionPattern)
 {
 	FuncPattern FP;
 	
-	make_pattern(data, offsetFoundAt, length, &FP);
+	make_pattern(data, dataType, offsetFoundAt, length, &FP);
 	
 	if (functionPattern && compare_pattern(&FP, functionPattern)) {
 		functionPattern->offsetFoundAt = FP.offsetFoundAt;
+		functionPattern->properAddress = FP.properAddress;
 		return true;
 	}
 	
@@ -569,7 +571,7 @@ bool find_pattern(u32 *data, u32 offsetFoundAt, u32 length, FuncPattern *functio
 	return false;
 }
 
-bool find_pattern_before(u32 *data, u32 length, FuncPattern *FPatA, FuncPattern *FPatB)
+bool find_pattern_before(u32 *data, int dataType, u32 length, FuncPattern *FPatA, FuncPattern *FPatB)
 {
 	u32 offsetFoundAt = FPatA->offsetFoundAt - FPatB->Length;
 	
@@ -584,10 +586,10 @@ bool find_pattern_before(u32 *data, u32 length, FuncPattern *FPatA, FuncPattern 
 		data[offsetFoundAt - 1] != 0x4C000064)
 		offsetFoundAt--;
 	
-	return find_pattern(data, offsetFoundAt, length, FPatB);
+	return find_pattern(data, dataType, offsetFoundAt, length, FPatB);
 }
 
-bool find_pattern_after(u32 *data, u32 length, FuncPattern *FPatA, FuncPattern *FPatB)
+bool find_pattern_after(u32 *data, int dataType, u32 length, FuncPattern *FPatA, FuncPattern *FPatB)
 {
 	u32 offsetFoundAt = FPatA->offsetFoundAt + FPatA->Length;
 	
@@ -597,7 +599,7 @@ bool find_pattern_after(u32 *data, u32 length, FuncPattern *FPatA, FuncPattern *
 	if (offsetFoundAt >= length / sizeof(u32))
 		return false;
 	
-	return find_pattern(data, offsetFoundAt, length, FPatB);
+	return find_pattern(data, dataType, offsetFoundAt, length, FPatB);
 }
 
 u32 branch(u32 *dst, u32 *src)
@@ -740,7 +742,7 @@ bool findi_pattern(u32 *data, int dataType, u32 offsetFoundAt, u32 offsetFoundAt
 	if (functionPattern && functionPattern->offsetFoundAt)
 		return address == data + functionPattern->offsetFoundAt;
 	
-	return address && find_pattern(data, address - data, length, functionPattern);
+	return address && find_pattern(data, dataType, address - data, length, functionPattern);
 }
 
 bool findi_patterns(u32 *data, int dataType, u32 offsetFoundAt, u32 offsetFoundAt2, u32 length, ...)
@@ -769,7 +771,7 @@ bool findp_pattern(u32 *data, int dataType, u32 offsetFoundAt, u32 offsetFoundAt
 	if (functionPattern && functionPattern->offsetFoundAt)
 		return address == data + functionPattern->offsetFoundAt;
 	
-	return address && find_pattern(data, address - data, length, functionPattern);
+	return address && find_pattern(data, dataType, address - data, length, functionPattern);
 }
 
 bool findp_patterns(u32 *data, int dataType, u32 offsetFoundAt, u32 offsetFoundAt2, u32 length, ...)
@@ -795,7 +797,7 @@ bool findx_pattern(u32 *data, int dataType, u32 offsetFoundAt, u32 length, FuncP
 	if (functionPattern && functionPattern->offsetFoundAt)
 		return offsetFoundAt == functionPattern->offsetFoundAt;
 	
-	return offsetFoundAt && find_pattern(data, offsetFoundAt, length, functionPattern);
+	return offsetFoundAt && find_pattern(data, dataType, offsetFoundAt, length, functionPattern);
 }
 
 bool findx_patterns(u32 *data, int dataType, u32 offsetFoundAt, u32 length, ...)
@@ -1842,7 +1844,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		}
 		
 		FuncPattern fp;
-		make_pattern(data, i, length, &fp);
+		make_pattern(data, dataType, i, length, &fp);
 		
 		for (j = 0; j < sizeof(ClearArenaSigs) / sizeof(FuncPattern); j++) {
 			if (compare_pattern(&fp, &ClearArenaSigs[j])) {
@@ -2643,7 +2645,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							                                               &SetInterruptMaskSigs[1],
 							                                               &SetInterruptMaskSigs[2], NULL) &&
 							findx_pattern (data, dataType, i + 27, length, &OSRestoreInterruptsSig) &&
-							find_pattern_before(data, length, &fp, &__OSMaskInterruptsSigs[0]))
+							find_pattern_before(data, dataType, length, &fp, &__OSMaskInterruptsSigs[0]))
 							__OSUnmaskInterruptsSigs[j].offsetFoundAt = i;
 						break;
 					case 1:
@@ -2652,14 +2654,14 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							                                               &SetInterruptMaskSigs[4],
 							                                               &SetInterruptMaskSigs[5], NULL) &&
 							findx_pattern (data, dataType, i + 25, length, &OSRestoreInterruptsSig) &&
-							find_pattern_before(data, length, &fp, &__OSMaskInterruptsSigs[1]))
+							find_pattern_before(data, dataType, length, &fp, &__OSMaskInterruptsSigs[1]))
 							__OSUnmaskInterruptsSigs[j].offsetFoundAt = i;
 						break;
 					case 2:
 						if (findx_pattern(data, dataType, i +  7, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i + 19, length, &SetInterruptMaskSigs[6]) &&
 							findx_pattern(data, dataType, i + 23, length, &OSRestoreInterruptsSig) &&
-							find_pattern_before(data, length, &fp, &__OSMaskInterruptsSigs[2]))
+							find_pattern_before(data, dataType, length, &fp, &__OSMaskInterruptsSigs[2]))
 							__OSUnmaskInterruptsSigs[j].offsetFoundAt = i;
 						break;
 				}
@@ -3396,7 +3398,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 35, length, &OSRestoreInterruptsSig) &&
 							findx_pattern(data, dataType, i + 44, length, &__OSMaskInterruptsSigs[0]) &&
 							findx_pattern(data, dataType, i + 46, length, &OSRestoreInterruptsSig) &&
-							find_pattern_before(data, length, &fp, &EXIAttachSigs[0]))
+							find_pattern_before(data, dataType, length, &fp, &EXIAttachSigs[0]))
 							EXIDetachSigs[j].offsetFoundAt = i;
 						break;
 					case 1:
@@ -3406,7 +3408,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 35, length, &OSRestoreInterruptsSig) &&
 							findx_pattern(data, dataType, i + 44, length, &__OSMaskInterruptsSigs[0]) &&
 							findx_pattern(data, dataType, i + 46, length, &OSRestoreInterruptsSig) &&
-							find_pattern_before(data, length, &fp, &EXIAttachSigs[1]))
+							find_pattern_before(data, dataType, length, &fp, &EXIAttachSigs[1]))
 							EXIDetachSigs[j].offsetFoundAt = i;
 						break;
 					case 2:
@@ -3417,7 +3419,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_patterns(data, dataType, i + 45, length, &__OSMaskInterruptsSigs[0],
 							                                               &__OSMaskInterruptsSigs[1], NULL) &&
 							findx_pattern (data, dataType, i + 47, length, &OSRestoreInterruptsSig) &&
-							find_pattern_before(data, length, &fp, &EXIAttachSigs[2]))
+							find_pattern_before(data, dataType, length, &fp, &EXIAttachSigs[2]))
 							EXIDetachSigs[j].offsetFoundAt = i;
 						break;
 					case 3:
@@ -3427,7 +3429,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 27, length, &OSRestoreInterruptsSig) &&
 							findx_pattern(data, dataType, i + 36, length, &__OSMaskInterruptsSigs[1]) &&
 							findx_pattern(data, dataType, i + 38, length, &OSRestoreInterruptsSig) &&
-							find_pattern_before(data, length, &fp, &EXIAttachSigs[3]))
+							find_pattern_before(data, dataType, length, &fp, &EXIAttachSigs[3]))
 							EXIDetachSigs[j].offsetFoundAt = i;
 						break;
 					case 4:
@@ -3437,7 +3439,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 27, length, &OSRestoreInterruptsSig) &&
 							findx_pattern(data, dataType, i + 36, length, &__OSMaskInterruptsSigs[1]) &&
 							findx_pattern(data, dataType, i + 38, length, &OSRestoreInterruptsSig) &&
-							find_pattern_before(data, length, &fp, &EXIAttachSigs[4]))
+							find_pattern_before(data, dataType, length, &fp, &EXIAttachSigs[4]))
 							EXIDetachSigs[j].offsetFoundAt = i;
 						break;
 					case 5:
@@ -3447,7 +3449,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 25, length, &OSRestoreInterruptsSig) &&
 							findx_pattern(data, dataType, i + 34, length, &__OSMaskInterruptsSigs[1]) &&
 							findx_pattern(data, dataType, i + 36, length, &OSRestoreInterruptsSig) &&
-							find_pattern_before(data, length, &fp, &EXIAttachSigs[5]))
+							find_pattern_before(data, dataType, length, &fp, &EXIAttachSigs[5]))
 							EXIDetachSigs[j].offsetFoundAt = i;
 						break;
 					case 6:
@@ -3457,7 +3459,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 27, length, &OSRestoreInterruptsSig) &&
 							findx_pattern(data, dataType, i + 36, length, &__OSMaskInterruptsSigs[1]) &&
 							findx_pattern(data, dataType, i + 38, length, &OSRestoreInterruptsSig) &&
-							find_pattern_before(data, length, &fp, &EXIAttachSigs[6]))
+							find_pattern_before(data, dataType, length, &fp, &EXIAttachSigs[6]))
 							EXIDetachSigs[j].offsetFoundAt = i;
 						break;
 					case 7:
@@ -3467,7 +3469,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 25, length, &OSRestoreInterruptsSig) &&
 							findx_pattern(data, dataType, i + 34, length, &__OSMaskInterruptsSigs[2]) &&
 							findx_pattern(data, dataType, i + 36, length, &OSRestoreInterruptsSig) &&
-							find_pattern_before(data, length, &fp, &EXIAttachSigs[7]))
+							find_pattern_before(data, dataType, length, &fp, &EXIAttachSigs[7]))
 							EXIDetachSigs[j].offsetFoundAt = i;
 						break;
 				}
@@ -3484,7 +3486,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 				findx_pattern(data, dataType, i + 73, length, &__OSMaskInterruptsSigs[1]) &&
 				findx_pattern(data, dataType, i + 76, length, &__OSMaskInterruptsSigs[1]) &&
 				findx_pattern(data, dataType, i + 78, length, &OSRestoreInterruptsSig) &&
-				find_pattern_after(data, length, &fp, &EXISelectSigs[6]))
+				find_pattern_after(data, dataType, length, &fp, &EXISelectSigs[6]))
 				EXISelectSDSig.offsetFoundAt = i;
 		}
 		
@@ -3501,7 +3503,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 55, length, &__OSUnmaskInterruptsSigs[0]) &&
 							findx_pattern(data, dataType, i + 57, length, &OSRestoreInterruptsSig) &&
 							findx_pattern(data, dataType, i + 63, length, &__EXIProbeSigs[0]) &&
-							find_pattern_before(data, length, &fp, &EXISelectSigs[0]))
+							find_pattern_before(data, dataType, length, &fp, &EXISelectSigs[0]))
 							EXIDeselectSigs[j].offsetFoundAt = i;
 						break;
 					case 1:
@@ -3514,7 +3516,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 55, length, &__OSUnmaskInterruptsSigs[0]) &&
 							findx_pattern(data, dataType, i + 57, length, &OSRestoreInterruptsSig) &&
 							findx_pattern(data, dataType, i + 63, length, &__EXIProbeSigs[1]) &&
-							find_pattern_before(data, length, &fp, &EXISelectSigs[1]))
+							find_pattern_before(data, dataType, length, &fp, &EXISelectSigs[1]))
 							EXIDeselectSigs[j].offsetFoundAt = i;
 						break;
 					case 2:
@@ -3529,7 +3531,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							                                               &__OSUnmaskInterruptsSigs[1], NULL) &&
 							findx_pattern (data, dataType, i + 58, length, &OSRestoreInterruptsSig) &&
 							findx_pattern (data, dataType, i + 64, length, &__EXIProbeSigs[2]) &&
-							find_pattern_before(data, length, &fp, &EXISelectSigs[2]))
+							find_pattern_before(data, dataType, length, &fp, &EXISelectSigs[2]))
 							EXIDeselectSigs[j].offsetFoundAt = i;
 						break;
 					case 3:
@@ -3541,7 +3543,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 44, length, &__OSUnmaskInterruptsSigs[1]) &&
 							findx_pattern(data, dataType, i + 46, length, &OSRestoreInterruptsSig) &&
 							findx_pattern(data, dataType, i + 52, length, &__EXIProbeSigs[3]) &&
-							find_pattern_before(data, length, &fp, &EXISelectSigs[3]))
+							find_pattern_before(data, dataType, length, &fp, &EXISelectSigs[3]))
 							EXIDeselectSigs[j].offsetFoundAt = i;
 						break;
 					case 4:
@@ -3553,7 +3555,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 44, length, &__OSUnmaskInterruptsSigs[1]) &&
 							findx_pattern(data, dataType, i + 46, length, &OSRestoreInterruptsSig) &&
 							findx_pattern(data, dataType, i + 52, length, &__EXIProbeSigs[3]) &&
-							find_pattern_before(data, length, &fp, &EXISelectSigs[3]))
+							find_pattern_before(data, dataType, length, &fp, &EXISelectSigs[3]))
 							EXIDeselectSigs[j].offsetFoundAt = i;
 						break;
 					case 5:
@@ -3565,7 +3567,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 44, length, &__OSUnmaskInterruptsSigs[1]) &&
 							findx_pattern(data, dataType, i + 46, length, &OSRestoreInterruptsSig) &&
 							findx_pattern(data, dataType, i + 52, length, &__EXIProbeSigs[4]) &&
-							find_pattern_before(data, length, &fp, &EXISelectSigs[4]))
+							find_pattern_before(data, dataType, length, &fp, &EXISelectSigs[4]))
 							EXIDeselectSigs[j].offsetFoundAt = i;
 						break;
 					case 6:
@@ -3578,7 +3580,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 45, length, &__OSUnmaskInterruptsSigs[1]) &&
 							findx_pattern(data, dataType, i + 47, length, &OSRestoreInterruptsSig) &&
 							findx_pattern(data, dataType, i + 53, length, &__EXIProbeSigs[5]) &&
-							find_pattern_before(data, length, &fp, &EXISelectSigs[5]))
+							find_pattern_before(data, dataType, length, &fp, &EXISelectSigs[5]))
 							EXIDeselectSigs[j].offsetFoundAt = i;
 						break;
 					case 7:
@@ -3592,7 +3594,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							                                               &__OSUnmaskInterruptsSigs[2], NULL) &&
 							findx_pattern (data, dataType, i + 46, length, &OSRestoreInterruptsSig) &&
 							findx_pattern (data, dataType, i + 52, length, &__EXIProbeSigs[6]) &&
-							find_pattern_before(data, length, &fp, &EXISelectSigs[6]))
+							find_pattern_before(data, dataType, length, &fp, &EXISelectSigs[6]))
 							EXIDeselectSigs[j].offsetFoundAt = i;
 						break;
 					case 8:
@@ -3612,7 +3614,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							get_immediate(data,  i + 107, i + 108, &address) && address == 0x800030C0 &&
 							get_immediate(data,  i + 118, i + 119, &address) && address == 0x800030C0 &&
 							findx_pattern(data, dataType, i + 122, length, &OSRestoreInterruptsSig) &&
-							find_pattern_before(data, length, &fp, &EXISelectSigs[7]))
+							find_pattern_before(data, dataType, length, &fp, &EXISelectSigs[7]))
 							EXIDeselectSigs[j].offsetFoundAt = i;
 						break;
 				}
@@ -3968,7 +3970,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 25, length, &OSRestoreInterruptsSig) &&
 							findx_pattern(data, dataType, i + 33, length, &SetExiInterruptMaskSigs[0]) &&
 							findx_pattern(data, dataType, i + 53, length, &OSRestoreInterruptsSig) &&
-							find_pattern_before(data, length, &fp, &EXILockSigs[0]))
+							find_pattern_before(data, dataType, length, &fp, &EXILockSigs[0]))
 							EXIUnlockSigs[j].offsetFoundAt = i;
 						break;
 					case 1:
@@ -3977,7 +3979,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 25, length, &OSRestoreInterruptsSig) &&
 							findx_pattern(data, dataType, i + 33, length, &SetExiInterruptMaskSigs[1]) &&
 							findx_pattern(data, dataType, i + 53, length, &OSRestoreInterruptsSig) &&
-							find_pattern_before(data, length, &fp, &EXILockSigs[1]))
+							find_pattern_before(data, dataType, length, &fp, &EXILockSigs[1]))
 							EXIUnlockSigs[j].offsetFoundAt = i;
 						break;
 					case 2:
@@ -3986,7 +3988,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 26, length, &OSRestoreInterruptsSig) &&
 							findx_pattern(data, dataType, i + 34, length, &SetExiInterruptMaskSigs[2]) &&
 							findx_pattern(data, dataType, i + 54, length, &OSRestoreInterruptsSig) &&
-							find_pattern_before(data, length, &fp, &EXILockSigs[2]))
+							find_pattern_before(data, dataType, length, &fp, &EXILockSigs[2]))
 							EXIUnlockSigs[j].offsetFoundAt = i;
 						break;
 					case 3:
@@ -3995,7 +3997,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 18, length, &OSRestoreInterruptsSig) &&
 							findx_pattern(data, dataType, i + 26, length, &SetExiInterruptMaskSigs[3]) &&
 							findx_pattern(data, dataType, i + 45, length, &OSRestoreInterruptsSig) &&
-							find_pattern_before(data, length, &fp, &EXILockSigs[3]))
+							find_pattern_before(data, dataType, length, &fp, &EXILockSigs[3]))
 							EXIUnlockSigs[j].offsetFoundAt = i;
 						break;
 					case 4:
@@ -4004,7 +4006,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 18, length, &OSRestoreInterruptsSig) &&
 							findx_pattern(data, dataType, i + 26, length, &SetExiInterruptMaskSigs[4]) &&
 							findx_pattern(data, dataType, i + 45, length, &OSRestoreInterruptsSig) &&
-							find_pattern_before(data, length, &fp, &EXILockSigs[4]))
+							find_pattern_before(data, dataType, length, &fp, &EXILockSigs[4]))
 							EXIUnlockSigs[j].offsetFoundAt = i;
 						break;
 					case 5:
@@ -4013,7 +4015,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 15, length, &OSRestoreInterruptsSig) &&
 							findx_pattern(data, dataType, i + 23, length, &SetExiInterruptMaskSigs[5]) &&
 							findx_pattern(data, dataType, i + 43, length, &OSRestoreInterruptsSig) &&
-							find_pattern_before(data, length, &fp, &EXILockSigs[5]))
+							find_pattern_before(data, dataType, length, &fp, &EXILockSigs[5]))
 							EXIUnlockSigs[j].offsetFoundAt = i;
 						break;
 					case 6:
@@ -4022,7 +4024,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 18, length, &OSRestoreInterruptsSig) &&
 							findx_pattern(data, dataType, i + 26, length, &SetExiInterruptMaskSigs[6]) &&
 							findx_pattern(data, dataType, i + 45, length, &OSRestoreInterruptsSig) &&
-							find_pattern_before(data, length, &fp, &EXILockSigs[6]))
+							find_pattern_before(data, dataType, length, &fp, &EXILockSigs[6]))
 							EXIUnlockSigs[j].offsetFoundAt = i;
 						break;
 					case 7:
@@ -4036,7 +4038,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 69, length, &__OSMaskInterruptsSigs[2]) &&
 							findx_pattern(data, dataType, i + 72, length, &__OSUnmaskInterruptsSigs[2]) &&
 							findx_pattern(data, dataType, i + 91, length, &OSRestoreInterruptsSig) &&
-							find_pattern_before(data, length, &fp, &EXILockSigs[7]))
+							find_pattern_before(data, dataType, length, &fp, &EXILockSigs[7]))
 							EXIUnlockSigs[j].offsetFoundAt = i;
 						break;
 				}
@@ -4148,7 +4150,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 						if (findx_pattern(data, dataType, i + 12, length, &__OSGetSystemTimeSigs[0]) &&
 							findx_pattern(data, dataType, i + 41, length, &SetTimeoutAlarmSigs[0]) &&
 							findx_pattern(data, dataType, i + 48, length, &SetTimeoutAlarmSigs[0]) &&
-							find_pattern_before(data, length, &SetTimeoutAlarmSigs[0], &AlarmHandlerForTimeoutSigs[0]))
+							find_pattern_before(data, dataType, length, &SetTimeoutAlarmSigs[0], &AlarmHandlerForTimeoutSigs[0]))
 							ReadSigs[j].offsetFoundAt = i;
 						break;
 					case 1:
@@ -4156,7 +4158,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							                                               &__OSGetSystemTimeSigs[1], NULL) &&
 							findx_pattern (data, dataType, i + 43, length, &SetTimeoutAlarmSigs[0]) &&
 							findx_pattern (data, dataType, i + 50, length, &SetTimeoutAlarmSigs[0]) &&
-							find_pattern_before(data, length, &SetTimeoutAlarmSigs[0], &AlarmHandlerForTimeoutSigs[0]))
+							find_pattern_before(data, dataType, length, &SetTimeoutAlarmSigs[0], &AlarmHandlerForTimeoutSigs[0]))
 							ReadSigs[j].offsetFoundAt = i;
 						break;
 					case 2:
@@ -4204,17 +4206,17 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 112, length, &DoJustReadSigs[0])) {
 							DVDLowReadSigs[j].offsetFoundAt = i;
 							
-							if (find_pattern_after(data, length, &DVDLowReadSigs[0], &DVDLowSeekSigs[0]) &&
-								find_pattern_after(data, length, &DVDLowSeekSigs[0], &DVDLowWaitCoverCloseSigs[0]) &&
-								find_pattern_after(data, length, &DVDLowWaitCoverCloseSigs[0], &DVDLowReadDiskIDSigs[0]) &&
-								find_pattern_after(data, length, &DVDLowReadDiskIDSigs[0], &DVDLowStopMotorSigs[0]) &&
-								find_pattern_after(data, length, &DVDLowStopMotorSigs[0], &DVDLowRequestErrorSigs[0]) &&
-								find_pattern_after(data, length, &DVDLowRequestErrorSigs[0], &DVDLowInquirySigs[0]) &&
-								find_pattern_after(data, length, &DVDLowInquirySigs[0], &DVDLowAudioStreamSigs[0]) &&
-								find_pattern_after(data, length, &DVDLowAudioStreamSigs[0], &DVDLowRequestAudioStatusSigs[0]) &&
-								find_pattern_after(data, length, &DVDLowRequestAudioStatusSigs[0], &DVDLowAudioBufferConfigSigs[0]) &&
-								find_pattern_after(data, length, &DVDLowAudioBufferConfigSigs[0], &DVDLowResetSigs[0]))
-								find_pattern_after(data, length, &DVDLowResetSigs[0], &DVDLowSetResetCoverCallbackSigs[0]);
+							if (find_pattern_after(data, dataType, length, &DVDLowReadSigs[0], &DVDLowSeekSigs[0]) &&
+								find_pattern_after(data, dataType, length, &DVDLowSeekSigs[0], &DVDLowWaitCoverCloseSigs[0]) &&
+								find_pattern_after(data, dataType, length, &DVDLowWaitCoverCloseSigs[0], &DVDLowReadDiskIDSigs[0]) &&
+								find_pattern_after(data, dataType, length, &DVDLowReadDiskIDSigs[0], &DVDLowStopMotorSigs[0]) &&
+								find_pattern_after(data, dataType, length, &DVDLowStopMotorSigs[0], &DVDLowRequestErrorSigs[0]) &&
+								find_pattern_after(data, dataType, length, &DVDLowRequestErrorSigs[0], &DVDLowInquirySigs[0]) &&
+								find_pattern_after(data, dataType, length, &DVDLowInquirySigs[0], &DVDLowAudioStreamSigs[0]) &&
+								find_pattern_after(data, dataType, length, &DVDLowAudioStreamSigs[0], &DVDLowRequestAudioStatusSigs[0]) &&
+								find_pattern_after(data, dataType, length, &DVDLowRequestAudioStatusSigs[0], &DVDLowAudioBufferConfigSigs[0]) &&
+								find_pattern_after(data, dataType, length, &DVDLowAudioBufferConfigSigs[0], &DVDLowResetSigs[0]))
+								find_pattern_after(data, dataType, length, &DVDLowResetSigs[0], &DVDLowSetResetCoverCallbackSigs[0]);
 						}
 						break;
 					case 1:
@@ -4225,17 +4227,17 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern (data, dataType, i + 112, length, &DoJustReadSigs[0])) {
 							DVDLowReadSigs[j].offsetFoundAt = i;
 							
-							if (find_pattern_after(data, length, &DVDLowReadSigs[1], &DVDLowSeekSigs[1]) &&
-								find_pattern_after(data, length, &DVDLowSeekSigs[1], &DVDLowWaitCoverCloseSigs[1]) &&
-								find_pattern_after(data, length, &DVDLowWaitCoverCloseSigs[1], &DVDLowReadDiskIDSigs[1]) &&
-								find_pattern_after(data, length, &DVDLowReadDiskIDSigs[1], &DVDLowStopMotorSigs[1]) &&
-								find_pattern_after(data, length, &DVDLowStopMotorSigs[1], &DVDLowRequestErrorSigs[1]) &&
-								find_pattern_after(data, length, &DVDLowRequestErrorSigs[1], &DVDLowInquirySigs[1]) &&
-								find_pattern_after(data, length, &DVDLowInquirySigs[1], &DVDLowAudioStreamSigs[1]) &&
-								find_pattern_after(data, length, &DVDLowAudioStreamSigs[1], &DVDLowRequestAudioStatusSigs[1]) &&
-								find_pattern_after(data, length, &DVDLowRequestAudioStatusSigs[1], &DVDLowAudioBufferConfigSigs[1]) &&
-								find_pattern_after(data, length, &DVDLowAudioBufferConfigSigs[1], &DVDLowResetSigs[0]))
-								find_pattern_after(data, length, &DVDLowResetSigs[0], &DVDLowSetResetCoverCallbackSigs[0]);
+							if (find_pattern_after(data, dataType, length, &DVDLowReadSigs[1], &DVDLowSeekSigs[1]) &&
+								find_pattern_after(data, dataType, length, &DVDLowSeekSigs[1], &DVDLowWaitCoverCloseSigs[1]) &&
+								find_pattern_after(data, dataType, length, &DVDLowWaitCoverCloseSigs[1], &DVDLowReadDiskIDSigs[1]) &&
+								find_pattern_after(data, dataType, length, &DVDLowReadDiskIDSigs[1], &DVDLowStopMotorSigs[1]) &&
+								find_pattern_after(data, dataType, length, &DVDLowStopMotorSigs[1], &DVDLowRequestErrorSigs[1]) &&
+								find_pattern_after(data, dataType, length, &DVDLowRequestErrorSigs[1], &DVDLowInquirySigs[1]) &&
+								find_pattern_after(data, dataType, length, &DVDLowInquirySigs[1], &DVDLowAudioStreamSigs[1]) &&
+								find_pattern_after(data, dataType, length, &DVDLowAudioStreamSigs[1], &DVDLowRequestAudioStatusSigs[1]) &&
+								find_pattern_after(data, dataType, length, &DVDLowRequestAudioStatusSigs[1], &DVDLowAudioBufferConfigSigs[1]) &&
+								find_pattern_after(data, dataType, length, &DVDLowAudioBufferConfigSigs[1], &DVDLowResetSigs[0]))
+								find_pattern_after(data, dataType, length, &DVDLowResetSigs[0], &DVDLowSetResetCoverCallbackSigs[0]);
 						}
 						break;
 					case 3:
@@ -4245,17 +4247,17 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_patterns(data, dataType, i + 125, length, &ReadSigs[2], &ReadSigs[3], NULL)) {
 							DVDLowReadSigs[j].offsetFoundAt = i;
 							
-							if (find_pattern_after(data, length, &DVDLowReadSigs[3], &DVDLowSeekSigs[3]) &&
-								find_pattern_after(data, length, &DVDLowSeekSigs[3], &DVDLowWaitCoverCloseSigs[2]) &&
-								find_pattern_after(data, length, &DVDLowWaitCoverCloseSigs[2], &DVDLowReadDiskIDSigs[3]) &&
-								find_pattern_after(data, length, &DVDLowReadDiskIDSigs[3], &DVDLowStopMotorSigs[3]) &&
-								find_pattern_after(data, length, &DVDLowStopMotorSigs[3], &DVDLowRequestErrorSigs[3]) &&
-								find_pattern_after(data, length, &DVDLowRequestErrorSigs[3], &DVDLowInquirySigs[3]) &&
-								find_pattern_after(data, length, &DVDLowInquirySigs[3], &DVDLowAudioStreamSigs[3]) &&
-								find_pattern_after(data, length, &DVDLowAudioStreamSigs[3], &DVDLowRequestAudioStatusSigs[3]) &&
-								find_pattern_after(data, length, &DVDLowRequestAudioStatusSigs[3], &DVDLowAudioBufferConfigSigs[3]) &&
-								find_pattern_after(data, length, &DVDLowAudioBufferConfigSigs[3], &DVDLowResetSigs[1]))
-								find_pattern_after(data, length, &DVDLowResetSigs[1], &DVDLowSetResetCoverCallbackSigs[1]);
+							if (find_pattern_after(data, dataType, length, &DVDLowReadSigs[3], &DVDLowSeekSigs[3]) &&
+								find_pattern_after(data, dataType, length, &DVDLowSeekSigs[3], &DVDLowWaitCoverCloseSigs[2]) &&
+								find_pattern_after(data, dataType, length, &DVDLowWaitCoverCloseSigs[2], &DVDLowReadDiskIDSigs[3]) &&
+								find_pattern_after(data, dataType, length, &DVDLowReadDiskIDSigs[3], &DVDLowStopMotorSigs[3]) &&
+								find_pattern_after(data, dataType, length, &DVDLowStopMotorSigs[3], &DVDLowRequestErrorSigs[3]) &&
+								find_pattern_after(data, dataType, length, &DVDLowRequestErrorSigs[3], &DVDLowInquirySigs[3]) &&
+								find_pattern_after(data, dataType, length, &DVDLowInquirySigs[3], &DVDLowAudioStreamSigs[3]) &&
+								find_pattern_after(data, dataType, length, &DVDLowAudioStreamSigs[3], &DVDLowRequestAudioStatusSigs[3]) &&
+								find_pattern_after(data, dataType, length, &DVDLowRequestAudioStatusSigs[3], &DVDLowAudioBufferConfigSigs[3]) &&
+								find_pattern_after(data, dataType, length, &DVDLowAudioBufferConfigSigs[3], &DVDLowResetSigs[1]))
+								find_pattern_after(data, dataType, length, &DVDLowResetSigs[1], &DVDLowSetResetCoverCallbackSigs[1]);
 						}
 						break;
 					case 4:
@@ -4265,17 +4267,17 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 125, length, &ReadSigs[4])) {
 							DVDLowReadSigs[j].offsetFoundAt = i;
 							
-							if (find_pattern_after(data, length, &DVDLowReadSigs[4], &DVDLowSeekSigs[4]) &&
-								find_pattern_after(data, length, &DVDLowSeekSigs[4], &DVDLowWaitCoverCloseSigs[3]) &&
-								find_pattern_after(data, length, &DVDLowWaitCoverCloseSigs[3], &DVDLowReadDiskIDSigs[4]) &&
-								find_pattern_after(data, length, &DVDLowReadDiskIDSigs[4], &DVDLowStopMotorSigs[4]) &&
-								find_pattern_after(data, length, &DVDLowStopMotorSigs[4], &DVDLowRequestErrorSigs[4]) &&
-								find_pattern_after(data, length, &DVDLowRequestErrorSigs[4], &DVDLowInquirySigs[4]) &&
-								find_pattern_after(data, length, &DVDLowInquirySigs[4], &DVDLowAudioStreamSigs[4]) &&
-								find_pattern_after(data, length, &DVDLowAudioStreamSigs[4], &DVDLowRequestAudioStatusSigs[4]) &&
-								find_pattern_after(data, length, &DVDLowRequestAudioStatusSigs[4], &DVDLowAudioBufferConfigSigs[4]) &&
-								find_pattern_after(data, length, &DVDLowAudioBufferConfigSigs[4], &DVDLowResetSigs[1]))
-								find_pattern_after(data, length, &DVDLowResetSigs[1], &DVDLowSetResetCoverCallbackSigs[1]);
+							if (find_pattern_after(data, dataType, length, &DVDLowReadSigs[4], &DVDLowSeekSigs[4]) &&
+								find_pattern_after(data, dataType, length, &DVDLowSeekSigs[4], &DVDLowWaitCoverCloseSigs[3]) &&
+								find_pattern_after(data, dataType, length, &DVDLowWaitCoverCloseSigs[3], &DVDLowReadDiskIDSigs[4]) &&
+								find_pattern_after(data, dataType, length, &DVDLowReadDiskIDSigs[4], &DVDLowStopMotorSigs[4]) &&
+								find_pattern_after(data, dataType, length, &DVDLowStopMotorSigs[4], &DVDLowRequestErrorSigs[4]) &&
+								find_pattern_after(data, dataType, length, &DVDLowRequestErrorSigs[4], &DVDLowInquirySigs[4]) &&
+								find_pattern_after(data, dataType, length, &DVDLowInquirySigs[4], &DVDLowAudioStreamSigs[4]) &&
+								find_pattern_after(data, dataType, length, &DVDLowAudioStreamSigs[4], &DVDLowRequestAudioStatusSigs[4]) &&
+								find_pattern_after(data, dataType, length, &DVDLowRequestAudioStatusSigs[4], &DVDLowAudioBufferConfigSigs[4]) &&
+								find_pattern_after(data, dataType, length, &DVDLowAudioBufferConfigSigs[4], &DVDLowResetSigs[1]))
+								find_pattern_after(data, dataType, length, &DVDLowResetSigs[1], &DVDLowSetResetCoverCallbackSigs[1]);
 						}
 						break;
 					case 5:
@@ -4285,16 +4287,16 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 219, length, &__OSGetSystemTimeSigs[2])) {
 							DVDLowReadSigs[j].offsetFoundAt = i;
 							
-							if (find_pattern_after(data, length, &DVDLowReadSigs[5], &DVDLowSeekSigs[5]) &&
-								find_pattern_after(data, length, &DVDLowSeekSigs[5], &DVDLowWaitCoverCloseSigs[4]) &&
-								find_pattern_after(data, length, &DVDLowWaitCoverCloseSigs[4], &DVDLowReadDiskIDSigs[5]) &&
-								find_pattern_after(data, length, &DVDLowReadDiskIDSigs[5], &DVDLowStopMotorSigs[5]) &&
-								find_pattern_after(data, length, &DVDLowStopMotorSigs[5], &DVDLowRequestErrorSigs[5]) &&
-								find_pattern_after(data, length, &DVDLowRequestErrorSigs[5], &DVDLowInquirySigs[5]) &&
-								find_pattern_after(data, length, &DVDLowInquirySigs[5], &DVDLowAudioStreamSigs[5]) &&
-								find_pattern_after(data, length, &DVDLowAudioStreamSigs[5], &DVDLowRequestAudioStatusSigs[5]) &&
-								find_pattern_after(data, length, &DVDLowRequestAudioStatusSigs[5], &DVDLowAudioBufferConfigSigs[5]))
-								find_pattern_after(data, length, &DVDLowAudioBufferConfigSigs[5], &DVDLowResetSigs[2]);
+							if (find_pattern_after(data, dataType, length, &DVDLowReadSigs[5], &DVDLowSeekSigs[5]) &&
+								find_pattern_after(data, dataType, length, &DVDLowSeekSigs[5], &DVDLowWaitCoverCloseSigs[4]) &&
+								find_pattern_after(data, dataType, length, &DVDLowWaitCoverCloseSigs[4], &DVDLowReadDiskIDSigs[5]) &&
+								find_pattern_after(data, dataType, length, &DVDLowReadDiskIDSigs[5], &DVDLowStopMotorSigs[5]) &&
+								find_pattern_after(data, dataType, length, &DVDLowStopMotorSigs[5], &DVDLowRequestErrorSigs[5]) &&
+								find_pattern_after(data, dataType, length, &DVDLowRequestErrorSigs[5], &DVDLowInquirySigs[5]) &&
+								find_pattern_after(data, dataType, length, &DVDLowInquirySigs[5], &DVDLowAudioStreamSigs[5]) &&
+								find_pattern_after(data, dataType, length, &DVDLowAudioStreamSigs[5], &DVDLowRequestAudioStatusSigs[5]) &&
+								find_pattern_after(data, dataType, length, &DVDLowRequestAudioStatusSigs[5], &DVDLowAudioBufferConfigSigs[5]))
+								find_pattern_after(data, dataType, length, &DVDLowAudioBufferConfigSigs[5], &DVDLowResetSigs[2]);
 						}
 						break;
 				}
@@ -4521,11 +4523,11 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 176, length, &DVDLowInquirySigs[0])) {
 							stateBusySigs[j].offsetFoundAt = i;
 							
-							find_pattern_after(data, length, &DVDLowSeekSigs[0], &DVDLowWaitCoverCloseSigs[0]);
-							find_pattern_after(data, length, &DVDLowStopMotorSigs[0], &DVDLowRequestErrorSigs[0]);
+							find_pattern_after(data, dataType, length, &DVDLowSeekSigs[0], &DVDLowWaitCoverCloseSigs[0]);
+							find_pattern_after(data, dataType, length, &DVDLowStopMotorSigs[0], &DVDLowRequestErrorSigs[0]);
 							
-							if (find_pattern_after(data, length, &DVDLowAudioBufferConfigSigs[0], &DVDLowResetSigs[0]))
-								find_pattern_after(data, length, &DVDLowResetSigs[0], &DVDLowSetResetCoverCallbackSigs[0]);
+							if (find_pattern_after(data, dataType, length, &DVDLowAudioBufferConfigSigs[0], &DVDLowResetSigs[0]))
+								find_pattern_after(data, dataType, length, &DVDLowResetSigs[0], &DVDLowSetResetCoverCallbackSigs[0]);
 						}
 						break;
 					case 1:
@@ -4546,11 +4548,11 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 176, length, &DVDLowInquirySigs[1])) {
 							stateBusySigs[j].offsetFoundAt = i;
 							
-							find_pattern_after(data, length, &DVDLowSeekSigs[1], &DVDLowWaitCoverCloseSigs[1]);
-							find_pattern_after(data, length, &DVDLowStopMotorSigs[1], &DVDLowRequestErrorSigs[1]);
+							find_pattern_after(data, dataType, length, &DVDLowSeekSigs[1], &DVDLowWaitCoverCloseSigs[1]);
+							find_pattern_after(data, dataType, length, &DVDLowStopMotorSigs[1], &DVDLowRequestErrorSigs[1]);
 							
-							if (find_pattern_after(data, length, &DVDLowAudioBufferConfigSigs[1], &DVDLowResetSigs[0]))
-								find_pattern_after(data, length, &DVDLowResetSigs[0], &DVDLowSetResetCoverCallbackSigs[0]);
+							if (find_pattern_after(data, dataType, length, &DVDLowAudioBufferConfigSigs[1], &DVDLowResetSigs[0]))
+								find_pattern_after(data, dataType, length, &DVDLowResetSigs[0], &DVDLowSetResetCoverCallbackSigs[0]);
 						}
 						break;
 					case 2:
@@ -4571,11 +4573,11 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 195, length, &DVDLowInquirySigs[1])) {
 							stateBusySigs[j].offsetFoundAt = i;
 							
-							find_pattern_after(data, length, &DVDLowSeekSigs[1], &DVDLowWaitCoverCloseSigs[1]);
-							find_pattern_after(data, length, &DVDLowStopMotorSigs[1], &DVDLowRequestErrorSigs[1]);
+							find_pattern_after(data, dataType, length, &DVDLowSeekSigs[1], &DVDLowWaitCoverCloseSigs[1]);
+							find_pattern_after(data, dataType, length, &DVDLowStopMotorSigs[1], &DVDLowRequestErrorSigs[1]);
 							
-							if (find_pattern_after(data, length, &DVDLowAudioBufferConfigSigs[1], &DVDLowResetSigs[0]))
-								find_pattern_after(data, length, &DVDLowResetSigs[0], &DVDLowSetResetCoverCallbackSigs[0]);
+							if (find_pattern_after(data, dataType, length, &DVDLowAudioBufferConfigSigs[1], &DVDLowResetSigs[0]))
+								find_pattern_after(data, dataType, length, &DVDLowResetSigs[0], &DVDLowSetResetCoverCallbackSigs[0]);
 						}
 						break;
 					case 3:
@@ -4597,11 +4599,11 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 203, length, &DVDLowStopMotorSigs[1])) {
 							stateBusySigs[j].offsetFoundAt = i;
 							
-							find_pattern_after(data, length, &DVDLowSeekSigs[1], &DVDLowWaitCoverCloseSigs[1]);
-							find_pattern_after(data, length, &DVDLowStopMotorSigs[1], &DVDLowRequestErrorSigs[1]);
+							find_pattern_after(data, dataType, length, &DVDLowSeekSigs[1], &DVDLowWaitCoverCloseSigs[1]);
+							find_pattern_after(data, dataType, length, &DVDLowStopMotorSigs[1], &DVDLowRequestErrorSigs[1]);
 							
-							if (find_pattern_after(data, length, &DVDLowAudioBufferConfigSigs[1], &DVDLowResetSigs[0]))
-								find_pattern_after(data, length, &DVDLowResetSigs[0], &DVDLowSetResetCoverCallbackSigs[0]);
+							if (find_pattern_after(data, dataType, length, &DVDLowAudioBufferConfigSigs[1], &DVDLowResetSigs[0]))
+								find_pattern_after(data, dataType, length, &DVDLowResetSigs[0], &DVDLowSetResetCoverCallbackSigs[0]);
 						}
 						break;
 					case 4:
@@ -4622,11 +4624,11 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 171, length, &DVDLowInquirySigs[2])) {
 							stateBusySigs[j].offsetFoundAt = i;
 							
-							find_pattern_after(data, length, &DVDLowSeekSigs[2], &DVDLowWaitCoverCloseSigs[2]);
-							find_pattern_after(data, length, &DVDLowStopMotorSigs[2], &DVDLowRequestErrorSigs[2]);
+							find_pattern_after(data, dataType, length, &DVDLowSeekSigs[2], &DVDLowWaitCoverCloseSigs[2]);
+							find_pattern_after(data, dataType, length, &DVDLowStopMotorSigs[2], &DVDLowRequestErrorSigs[2]);
 							
-							if (find_pattern_after(data, length, &DVDLowAudioBufferConfigSigs[2], &DVDLowResetSigs[1]))
-								find_pattern_after(data, length, &DVDLowResetSigs[1], &DVDLowSetResetCoverCallbackSigs[1]);
+							if (find_pattern_after(data, dataType, length, &DVDLowAudioBufferConfigSigs[2], &DVDLowResetSigs[1]))
+								find_pattern_after(data, dataType, length, &DVDLowResetSigs[1], &DVDLowSetResetCoverCallbackSigs[1]);
 						}
 						break;
 					case 5:
@@ -4647,11 +4649,11 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 171, length, &DVDLowInquirySigs[3])) {
 							stateBusySigs[j].offsetFoundAt = i;
 							
-							find_pattern_after(data, length, &DVDLowSeekSigs[3], &DVDLowWaitCoverCloseSigs[2]);
-							find_pattern_after(data, length, &DVDLowStopMotorSigs[3], &DVDLowRequestErrorSigs[3]);
+							find_pattern_after(data, dataType, length, &DVDLowSeekSigs[3], &DVDLowWaitCoverCloseSigs[2]);
+							find_pattern_after(data, dataType, length, &DVDLowStopMotorSigs[3], &DVDLowRequestErrorSigs[3]);
 							
-							if (find_pattern_after(data, length, &DVDLowAudioBufferConfigSigs[3], &DVDLowResetSigs[1]))
-								find_pattern_after(data, length, &DVDLowResetSigs[1], &DVDLowSetResetCoverCallbackSigs[1]);
+							if (find_pattern_after(data, dataType, length, &DVDLowAudioBufferConfigSigs[3], &DVDLowResetSigs[1]))
+								find_pattern_after(data, dataType, length, &DVDLowResetSigs[1], &DVDLowSetResetCoverCallbackSigs[1]);
 						}
 						break;
 					case 6:
@@ -4672,11 +4674,11 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 171, length, &DVDLowInquirySigs[4])) {
 							stateBusySigs[j].offsetFoundAt = i;
 							
-							find_pattern_after(data, length, &DVDLowSeekSigs[4], &DVDLowWaitCoverCloseSigs[3]);
-							find_pattern_after(data, length, &DVDLowStopMotorSigs[4], &DVDLowRequestErrorSigs[4]);
+							find_pattern_after(data, dataType, length, &DVDLowSeekSigs[4], &DVDLowWaitCoverCloseSigs[3]);
+							find_pattern_after(data, dataType, length, &DVDLowStopMotorSigs[4], &DVDLowRequestErrorSigs[4]);
 							
-							if (find_pattern_after(data, length, &DVDLowAudioBufferConfigSigs[4], &DVDLowResetSigs[1]))
-								find_pattern_after(data, length, &DVDLowResetSigs[1], &DVDLowSetResetCoverCallbackSigs[1]);
+							if (find_pattern_after(data, dataType, length, &DVDLowAudioBufferConfigSigs[4], &DVDLowResetSigs[1]))
+								find_pattern_after(data, dataType, length, &DVDLowResetSigs[1], &DVDLowSetResetCoverCallbackSigs[1]);
 						}
 						break;
 					case 7:
@@ -4697,11 +4699,11 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 171, length, &DVDLowInquirySigs[4])) {
 							stateBusySigs[j].offsetFoundAt = i;
 							
-							find_pattern_after(data, length, &DVDLowSeekSigs[4], &DVDLowWaitCoverCloseSigs[3]);
-							find_pattern_after(data, length, &DVDLowStopMotorSigs[4], &DVDLowRequestErrorSigs[4]);
+							find_pattern_after(data, dataType, length, &DVDLowSeekSigs[4], &DVDLowWaitCoverCloseSigs[3]);
+							find_pattern_after(data, dataType, length, &DVDLowStopMotorSigs[4], &DVDLowRequestErrorSigs[4]);
 							
-							if (find_pattern_after(data, length, &DVDLowAudioBufferConfigSigs[4], &DVDLowResetSigs[1]))
-								find_pattern_after(data, length, &DVDLowResetSigs[1], &DVDLowSetResetCoverCallbackSigs[1]);
+							if (find_pattern_after(data, dataType, length, &DVDLowAudioBufferConfigSigs[4], &DVDLowResetSigs[1]))
+								find_pattern_after(data, dataType, length, &DVDLowResetSigs[1], &DVDLowSetResetCoverCallbackSigs[1]);
 						}
 						break;
 					case 8:
@@ -4722,11 +4724,11 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 188, length, &DVDLowInquirySigs[4])) {
 							stateBusySigs[j].offsetFoundAt = i;
 							
-							find_pattern_after(data, length, &DVDLowSeekSigs[4], &DVDLowWaitCoverCloseSigs[3]);
-							find_pattern_after(data, length, &DVDLowStopMotorSigs[4], &DVDLowRequestErrorSigs[4]);
+							find_pattern_after(data, dataType, length, &DVDLowSeekSigs[4], &DVDLowWaitCoverCloseSigs[3]);
+							find_pattern_after(data, dataType, length, &DVDLowStopMotorSigs[4], &DVDLowRequestErrorSigs[4]);
 							
-							if (find_pattern_after(data, length, &DVDLowAudioBufferConfigSigs[4], &DVDLowResetSigs[1]))
-								find_pattern_after(data, length, &DVDLowResetSigs[1], &DVDLowSetResetCoverCallbackSigs[1]);
+							if (find_pattern_after(data, dataType, length, &DVDLowAudioBufferConfigSigs[4], &DVDLowResetSigs[1]))
+								find_pattern_after(data, dataType, length, &DVDLowResetSigs[1], &DVDLowSetResetCoverCallbackSigs[1]);
 						}
 						break;
 					case 9:
@@ -4747,9 +4749,9 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 175, length, &DVDLowInquirySigs[5])) {
 							stateBusySigs[j].offsetFoundAt = i;
 							
-							find_pattern_after(data, length, &DVDLowSeekSigs[5], &DVDLowWaitCoverCloseSigs[4]);
-							find_pattern_after(data, length, &DVDLowStopMotorSigs[5], &DVDLowRequestErrorSigs[5]);
-							find_pattern_after(data, length, &DVDLowAudioBufferConfigSigs[5], &DVDLowResetSigs[2]);
+							find_pattern_after(data, dataType, length, &DVDLowSeekSigs[5], &DVDLowWaitCoverCloseSigs[4]);
+							find_pattern_after(data, dataType, length, &DVDLowStopMotorSigs[5], &DVDLowRequestErrorSigs[5]);
+							find_pattern_after(data, dataType, length, &DVDLowAudioBufferConfigSigs[5], &DVDLowResetSigs[2]);
 						}
 						break;
 					case 10:
@@ -4771,11 +4773,11 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 196, length, &DVDLowStopMotorSigs[4])) {
 							stateBusySigs[j].offsetFoundAt = i;
 							
-							find_pattern_after(data, length, &DVDLowSeekSigs[4], &DVDLowWaitCoverCloseSigs[3]);
-							find_pattern_after(data, length, &DVDLowStopMotorSigs[4], &DVDLowRequestErrorSigs[4]);
+							find_pattern_after(data, dataType, length, &DVDLowSeekSigs[4], &DVDLowWaitCoverCloseSigs[3]);
+							find_pattern_after(data, dataType, length, &DVDLowStopMotorSigs[4], &DVDLowRequestErrorSigs[4]);
 							
-							if (find_pattern_after(data, length, &DVDLowAudioBufferConfigSigs[4], &DVDLowResetSigs[1]))
-								find_pattern_after(data, length, &DVDLowResetSigs[1], &DVDLowSetResetCoverCallbackSigs[1]);
+							if (find_pattern_after(data, dataType, length, &DVDLowAudioBufferConfigSigs[4], &DVDLowResetSigs[1]))
+								find_pattern_after(data, dataType, length, &DVDLowResetSigs[1], &DVDLowSetResetCoverCallbackSigs[1]);
 						}
 						break;
 				}
@@ -4871,9 +4873,9 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 159, length, &OSRestoreInterruptsSig)) {
 							DVDCancelAsyncSigs[j].offsetFoundAt = i;
 							
-							if (find_pattern_before(data, length, &DVDLowBreakSigs[0], &SetBreakAlarmSigs[0]) &&
-								find_pattern_before(data, length, &SetBreakAlarmSigs[0], &AlarmHandlerForBreakSigs[0]))
-								find_pattern_before(data, length, &AlarmHandlerForBreakSigs[0], &DoBreakSigs[0]);
+							if (find_pattern_before(data, dataType, length, &DVDLowBreakSigs[0], &SetBreakAlarmSigs[0]) &&
+								find_pattern_before(data, dataType, length, &SetBreakAlarmSigs[0], &AlarmHandlerForBreakSigs[0]))
+								find_pattern_before(data, dataType, length, &AlarmHandlerForBreakSigs[0], &DoBreakSigs[0]);
 						}
 						break;
 					case 1:
@@ -4887,9 +4889,9 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 159, length, &OSRestoreInterruptsSig)) {
 							DVDCancelAsyncSigs[j].offsetFoundAt = i;
 							
-							if (find_pattern_before(data, length, &DVDLowBreakSigs[1], &SetBreakAlarmSigs[0]) &&
-								find_pattern_before(data, length, &SetBreakAlarmSigs[0], &AlarmHandlerForBreakSigs[0]))
-								find_pattern_before(data, length, &AlarmHandlerForBreakSigs[0], &DoBreakSigs[0]);
+							if (find_pattern_before(data, dataType, length, &DVDLowBreakSigs[1], &SetBreakAlarmSigs[0]) &&
+								find_pattern_before(data, dataType, length, &SetBreakAlarmSigs[0], &AlarmHandlerForBreakSigs[0]))
+								find_pattern_before(data, dataType, length, &AlarmHandlerForBreakSigs[0], &DoBreakSigs[0]);
 						}
 						break;
 					case 2:
@@ -4903,9 +4905,9 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 164, length, &OSRestoreInterruptsSig)) {
 							DVDCancelAsyncSigs[j].offsetFoundAt = i;
 							
-							if (find_pattern_before(data, length, &DVDLowBreakSigs[1], &SetBreakAlarmSigs[0]) &&
-								find_pattern_before(data, length, &SetBreakAlarmSigs[0], &AlarmHandlerForBreakSigs[0]))
-								find_pattern_before(data, length, &AlarmHandlerForBreakSigs[0], &DoBreakSigs[0]);
+							if (find_pattern_before(data, dataType, length, &DVDLowBreakSigs[1], &SetBreakAlarmSigs[0]) &&
+								find_pattern_before(data, dataType, length, &SetBreakAlarmSigs[0], &AlarmHandlerForBreakSigs[0]))
+								find_pattern_before(data, dataType, length, &AlarmHandlerForBreakSigs[0], &DoBreakSigs[0]);
 						}
 						break;
 					case 3:
@@ -4939,9 +4941,9 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 147, length, &OSRestoreInterruptsSig)) {
 							DVDCancelAsyncSigs[j].offsetFoundAt = i;
 							
-							if (find_pattern_before(data, length, &DVDLowBreakSigs[3], &SetBreakAlarmSigs[1]) &&
-								find_pattern_before(data, length, &SetBreakAlarmSigs[1], &AlarmHandlerForBreakSigs[1]))
-								find_pattern_before(data, length, &AlarmHandlerForBreakSigs[1], &DoBreakSigs[1]);
+							if (find_pattern_before(data, dataType, length, &DVDLowBreakSigs[3], &SetBreakAlarmSigs[1]) &&
+								find_pattern_before(data, dataType, length, &SetBreakAlarmSigs[1], &AlarmHandlerForBreakSigs[1]))
+								find_pattern_before(data, dataType, length, &AlarmHandlerForBreakSigs[1], &DoBreakSigs[1]);
 						}
 						break;
 					case 6:
@@ -4955,9 +4957,9 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 147, length, &OSRestoreInterruptsSig)) {
 							DVDCancelAsyncSigs[j].offsetFoundAt = i;
 							
-							if (find_pattern_before(data, length, &DVDLowBreakSigs[4], &SetBreakAlarmSigs[1]) &&
-								find_pattern_before(data, length, &SetBreakAlarmSigs[1], &AlarmHandlerForBreakSigs[1]))
-								find_pattern_before(data, length, &AlarmHandlerForBreakSigs[1], &DoBreakSigs[1]);
+							if (find_pattern_before(data, dataType, length, &DVDLowBreakSigs[4], &SetBreakAlarmSigs[1]) &&
+								find_pattern_before(data, dataType, length, &SetBreakAlarmSigs[1], &AlarmHandlerForBreakSigs[1]))
+								find_pattern_before(data, dataType, length, &AlarmHandlerForBreakSigs[1], &DoBreakSigs[1]);
 						}
 						break;
 					case 7:
@@ -4972,9 +4974,9 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern (data, dataType, i + 150, length, &OSRestoreInterruptsSig)) {
 							DVDCancelAsyncSigs[j].offsetFoundAt = i;
 							
-							if (find_pattern_before(data, length, &DVDLowBreakSigs[4], &SetBreakAlarmSigs[1]) &&
-								find_pattern_before(data, length, &SetBreakAlarmSigs[1], &AlarmHandlerForBreakSigs[1]))
-								find_pattern_before(data, length, &AlarmHandlerForBreakSigs[1], &DoBreakSigs[1]);
+							if (find_pattern_before(data, dataType, length, &DVDLowBreakSigs[4], &SetBreakAlarmSigs[1]) &&
+								find_pattern_before(data, dataType, length, &SetBreakAlarmSigs[1], &AlarmHandlerForBreakSigs[1]))
+								find_pattern_before(data, dataType, length, &AlarmHandlerForBreakSigs[1], &DoBreakSigs[1]);
 						}
 						break;
 					case 8:
@@ -4999,31 +5001,31 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					case 0:
 						if (findx_pattern(data, dataType, i +  4, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i + 54, length, &OSRestoreInterruptsSig) &&
-							find_pattern_before(data, length, &fp, &DVDGetCurrentDiskIDSigs[0]))
+							find_pattern_before(data, dataType, length, &fp, &DVDGetCurrentDiskIDSigs[0]))
 							DVDCheckDiskSigs[j].offsetFoundAt = i;
 						break;
 					case 1:
 						if (findx_pattern(data, dataType, i +  4, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i + 59, length, &OSRestoreInterruptsSig) &&
-							find_pattern_before(data, length, &fp, &DVDGetCurrentDiskIDSigs[0]))
+							find_pattern_before(data, dataType, length, &fp, &DVDGetCurrentDiskIDSigs[0]))
 							DVDCheckDiskSigs[j].offsetFoundAt = i;
 						break;
 					case 2:
 						if (findx_pattern(data, dataType, i +  4, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i + 50, length, &OSRestoreInterruptsSig) &&
-							find_pattern_before(data, length, &fp, &DVDGetCurrentDiskIDSigs[1]))
+							find_pattern_before(data, dataType, length, &fp, &DVDGetCurrentDiskIDSigs[1]))
 							DVDCheckDiskSigs[j].offsetFoundAt = i;
 						break;
 					case 3:
 						if (findx_pattern(data, dataType, i +  4, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i + 54, length, &OSRestoreInterruptsSig) &&
-							find_pattern_before(data, length, &fp, &DVDGetCurrentDiskIDSigs[1]))
+							find_pattern_before(data, dataType, length, &fp, &DVDGetCurrentDiskIDSigs[1]))
 							DVDCheckDiskSigs[j].offsetFoundAt = i;
 						break;
 					case 4:
 						if (findx_pattern(data, dataType, i +  4, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i + 55, length, &OSRestoreInterruptsSig) &&
-							find_pattern_before(data, length, &fp, &DVDGetCurrentDiskIDSigs[1]))
+							find_pattern_before(data, dataType, length, &fp, &DVDGetCurrentDiskIDSigs[1]))
 							DVDCheckDiskSigs[j].offsetFoundAt = i;
 						break;
 				}
@@ -8288,7 +8290,7 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 			continue;
 		
 		FuncPattern fp;
-		make_pattern(data, i, length, &fp);
+		make_pattern(data, dataType, i, length, &fp);
 		
 		for (j = 0; j < sizeof(OSGetProgressiveModeSigs) / sizeof(FuncPattern); j++) {
 			if (compare_pattern(&fp, &OSGetProgressiveModeSigs[j])) {
@@ -8494,7 +8496,7 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 							__VIRetraceHandlerSigs[j].offsetFoundAt = i;
 						
 						if (findx_pattern(data, dataType, i + 60, length, &getCurrentFieldEvenOddSigs[3]))
-							find_pattern_before(data, length, &getCurrentFieldEvenOddSigs[3], &VIGetRetraceCountSig);
+							find_pattern_before(data, dataType, length, &getCurrentFieldEvenOddSigs[3], &VIGetRetraceCountSig);
 						break;
 					case 4:
 						if (findx_pattern(data, dataType, i +  39, length, &OSSetCurrentContextSig) &&
@@ -8503,7 +8505,7 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 							__VIRetraceHandlerSigs[j].offsetFoundAt = i;
 						
 						if (findx_pattern(data, dataType, i + 60, length, &getCurrentFieldEvenOddSigs[4]))
-							find_pattern_before(data, length, &getCurrentFieldEvenOddSigs[4], &VIGetRetraceCountSig);
+							find_pattern_before(data, dataType, length, &getCurrentFieldEvenOddSigs[4], &VIGetRetraceCountSig);
 						break;
 					case 5:
 						if (findx_pattern(data, dataType, i +  42, length, &OSSetCurrentContextSig) &&
@@ -8512,7 +8514,7 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 							__VIRetraceHandlerSigs[j].offsetFoundAt = i;
 						
 						if (findx_pattern(data, dataType, i + 63, length, &getCurrentFieldEvenOddSigs[4]))
-							find_pattern_before(data, length, &getCurrentFieldEvenOddSigs[4], &VIGetRetraceCountSig);
+							find_pattern_before(data, dataType, length, &getCurrentFieldEvenOddSigs[4], &VIGetRetraceCountSig);
 						break;
 					case 6:
 						if (findx_pattern(data, dataType, i +  42, length, &OSSetCurrentContextSig) &&
@@ -8521,7 +8523,7 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 							__VIRetraceHandlerSigs[j].offsetFoundAt = i;
 						
 						if (findx_pattern(data, dataType, i + 63, length, &getCurrentFieldEvenOddSigs[4]))
-							find_pattern_before(data, length, &getCurrentFieldEvenOddSigs[4], &VIGetRetraceCountSig);
+							find_pattern_before(data, dataType, length, &getCurrentFieldEvenOddSigs[4], &VIGetRetraceCountSig);
 						break;
 					case 7:
 						if (findx_pattern(data, dataType, i +  47, length, &OSSetCurrentContextSig) &&
@@ -8530,7 +8532,7 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 							__VIRetraceHandlerSigs[j].offsetFoundAt = i;
 						
 						if (findx_pattern(data, dataType, i + 68, length, &getCurrentFieldEvenOddSigs[5]))
-							find_pattern_before(data, length, &getCurrentFieldEvenOddSigs[5], &VIGetRetraceCountSig);
+							find_pattern_before(data, dataType, length, &getCurrentFieldEvenOddSigs[5], &VIGetRetraceCountSig);
 						break;
 					case 8:
 						if (findx_pattern(data, dataType, i +  44, length, &OSSetCurrentContextSig) &&
@@ -8540,7 +8542,7 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 							__VIRetraceHandlerSigs[j].offsetFoundAt = i;
 						
 						if (findx_pattern(data, dataType, i + 80, length, &getCurrentFieldEvenOddSigs[4]))
-							find_pattern_before(data, length, &getCurrentFieldEvenOddSigs[4], &VIGetRetraceCountSig);
+							find_pattern_before(data, dataType, length, &getCurrentFieldEvenOddSigs[4], &VIGetRetraceCountSig);
 						break;
 					case 9:
 						if (findx_pattern(data, dataType, i +  49, length, &OSSetCurrentContextSig) &&
@@ -8550,7 +8552,7 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 							__VIRetraceHandlerSigs[j].offsetFoundAt = i;
 						
 						if (findx_pattern(data, dataType, i + 85, length, &getCurrentFieldEvenOddSigs[5]))
-							find_pattern_before(data, length, &getCurrentFieldEvenOddSigs[5], &VIGetRetraceCountSig);
+							find_pattern_before(data, dataType, length, &getCurrentFieldEvenOddSigs[5], &VIGetRetraceCountSig);
 						break;
 				}
 			}
@@ -8813,20 +8815,20 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 				switch (j) {
 					case 0:
 						if (findx_pattern(data, dataType, i + 22, length, &getCurrentHalfLineSigs[0])) {
-							find_pattern_before(data, length, &getCurrentHalfLineSigs[0], &VIGetRetraceCountSig);
+							find_pattern_before(data, dataType, length, &getCurrentHalfLineSigs[0], &VIGetRetraceCountSig);
 							getCurrentFieldEvenOddSigs[j].offsetFoundAt = i;
 						}
 						break;
 					case 1:
 						if (findx_pattern(data, dataType, i +  3, length, &getCurrentHalfLineSigs[1])) {
-							find_pattern_before(data, length, &getCurrentHalfLineSigs[1], &VIGetRetraceCountSig);
+							find_pattern_before(data, dataType, length, &getCurrentHalfLineSigs[1], &VIGetRetraceCountSig);
 							getCurrentFieldEvenOddSigs[j].offsetFoundAt = i;
 						}
 						break;
 					case 2:
 						if (findx_pattern(data, dataType, i +  3, length, &getCurrentHalfLineSigs[2]) &&
-							find_pattern_before(data, length, &getCurrentHalfLineSigs[2], &GetCurrentDisplayPositionSigs[0])) {
-							find_pattern_before(data, length, &GetCurrentDisplayPositionSigs[0], &VIGetRetraceCountSig);
+							find_pattern_before(data, dataType, length, &getCurrentHalfLineSigs[2], &GetCurrentDisplayPositionSigs[0])) {
+							find_pattern_before(data, dataType, length, &GetCurrentDisplayPositionSigs[0], &VIGetRetraceCountSig);
 							getCurrentFieldEvenOddSigs[j].offsetFoundAt = i;
 						}
 						break;
@@ -8856,7 +8858,7 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 								if (findx_pattern(data, dataType, i +  5, length, &OSDisableInterruptsSig) &&
 									findx_pattern(data, dataType, i + 26, length, &OSRestoreInterruptsSig) &&
 									findx_pattern(data, dataType, i +  9, length, &GetCurrentDisplayPositionSigs[1])) {
-									find_pattern_before(data, length, &GetCurrentDisplayPositionSigs[1], &VIGetRetraceCountSig);
+									find_pattern_before(data, dataType, length, &GetCurrentDisplayPositionSigs[1], &VIGetRetraceCountSig);
 									VIGetNextFieldSigs[k].offsetFoundAt = i;
 								}
 								break;
@@ -8892,73 +8894,73 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 				switch (j) {
 					case 0:
 						if (findx_pattern(data, dataType, i + 1069, length, &GXSetDispCopySrcSigs[0]))
-							find_pattern_before(data, length, &GXSetDispCopySrcSigs[0], &GXAdjustForOverscanSigs[0]);
+							find_pattern_before(data, dataType, length, &GXSetDispCopySrcSigs[0], &GXAdjustForOverscanSigs[0]);
 						
 						findx_pattern(data, dataType, i + 1088, length, &GXSetDispCopyYScaleSigs[0]);
 						findx_pattern(data, dataType, i + 1095, length, &GXSetCopyFilterSigs[0]);
 						
 						if (findx_pattern(data, dataType, i + 1097, length, &GXSetDispCopyGammaSigs[0]))
-							find_pattern_after(data, length, &GXSetDispCopyGammaSigs[0], &GXCopyDispSigs[0]);
+							find_pattern_after(data, dataType, length, &GXSetDispCopyGammaSigs[0], &GXCopyDispSigs[0]);
 						
 						findx_pattern(data, dataType, i + 1033, length, &GXSetBlendModeSigs[0]);
 						findx_pattern(data, dataType, i +  727, length, &GXSetViewportSigs[0]);
 						break;
 					case 1:
 						if (findx_pattern(data, dataType, i + 480, length, &GXSetDispCopySrcSigs[0]))
-							find_pattern_before(data, length, &GXSetDispCopySrcSigs[0], &GXAdjustForOverscanSigs[0]);
+							find_pattern_before(data, dataType, length, &GXSetDispCopySrcSigs[0], &GXAdjustForOverscanSigs[0]);
 						
 						findx_pattern(data, dataType, i + 499, length, &GXSetDispCopyYScaleSigs[1]);
 						findx_pattern(data, dataType, i + 506, length, &GXSetCopyFilterSigs[0]);
 						
 						if (findx_pattern(data, dataType, i + 508, length, &GXSetDispCopyGammaSigs[0]))
-							find_pattern_after(data, length, &GXSetDispCopyGammaSigs[0], &GXCopyDispSigs[0]);
+							find_pattern_after(data, dataType, length, &GXSetDispCopyGammaSigs[0], &GXCopyDispSigs[0]);
 						
 						findx_pattern(data, dataType, i + 444, length, &GXSetBlendModeSigs[0]);
 						findx_pattern(data, dataType, i + 202, length, &GXSetViewportSigs[0]);
 						break;
 					case 2:
 						if (findx_pattern(data, dataType, i + 517, length, &GXSetDispCopySrcSigs[1]))
-							find_pattern_before(data, length, &GXSetDispCopySrcSigs[1], &GXAdjustForOverscanSigs[1]);
+							find_pattern_before(data, dataType, length, &GXSetDispCopySrcSigs[1], &GXAdjustForOverscanSigs[1]);
 						
 						findx_pattern(data, dataType, i + 536, length, &GXSetDispCopyYScaleSigs[2]);
 						findx_pattern(data, dataType, i + 543, length, &GXSetCopyFilterSigs[1]);
 						
 						if (findx_pattern(data, dataType, i + 545, length, &GXSetDispCopyGammaSigs[1]) &&
-							find_pattern_after(data, length, &GXSetDispCopyGammaSigs[1], &__GXVerifCopySig))
-							find_pattern_after(data, length, &__GXVerifCopySig, &GXCopyDispSigs[1]);
+							find_pattern_after(data, dataType, length, &GXSetDispCopyGammaSigs[1], &__GXVerifCopySig))
+							find_pattern_after(data, dataType, length, &__GXVerifCopySig, &GXCopyDispSigs[1]);
 						
 						findx_pattern(data, dataType, i + 481, length, &GXSetBlendModeSigs[1]);
 						findx_pattern(data, dataType, i + 210, length, &GXSetViewportSigs[1]);
 						break;
 					case 3:
 						if (findx_pattern(data, dataType, i + 917, length, &GXSetDispCopySrcSigs[2]))
-							find_pattern_before(data, length, &GXSetDispCopySrcSigs[2], &GXAdjustForOverscanSigs[2]);
+							find_pattern_before(data, dataType, length, &GXSetDispCopySrcSigs[2], &GXAdjustForOverscanSigs[2]);
 						
 						findx_pattern(data, dataType, i + 934, length, &GXSetDispCopyYScaleSigs[3]);
 						findx_pattern(data, dataType, i + 941, length, &GXSetCopyFilterSigs[2]);
 						
 						if (findx_pattern(data, dataType, i + 943, length, &GXSetDispCopyGammaSigs[2]))
-							find_pattern_after(data, length, &GXSetDispCopyGammaSigs[2], &GXCopyDispSigs[2]);
+							find_pattern_after(data, dataType, length, &GXSetDispCopyGammaSigs[2], &GXCopyDispSigs[2]);
 						
 						findx_pattern(data, dataType, i + 881, length, &GXSetBlendModeSigs[2]);
 						findx_pattern(data, dataType, i + 553, length, &GXSetViewportSigs[2]);
 						break;
 					case 4:
 						if (findx_pattern(data, dataType, i + 467, length, &GXSetDispCopySrcSigs[2]))
-							find_pattern_before(data, length, &GXSetDispCopySrcSigs[2], &GXAdjustForOverscanSigs[2]);
+							find_pattern_before(data, dataType, length, &GXSetDispCopySrcSigs[2], &GXAdjustForOverscanSigs[2]);
 						
 						findx_pattern(data, dataType, i + 484, length, &GXSetDispCopyYScaleSigs[3]);
 						findx_pattern(data, dataType, i + 491, length, &GXSetCopyFilterSigs[2]);
 						
 						if (findx_pattern(data, dataType, i + 493, length, &GXSetDispCopyGammaSigs[2]))
-							find_pattern_after(data, length, &GXSetDispCopyGammaSigs[2], &GXCopyDispSigs[2]);
+							find_pattern_after(data, dataType, length, &GXSetDispCopyGammaSigs[2], &GXCopyDispSigs[2]);
 						
 						findx_pattern(data, dataType, i + 431, length, &GXSetBlendModeSigs[2]);
 						findx_pattern(data, dataType, i + 186, length, &GXSetViewportSigs[2]);
 						break;
 					case 5:
 						if (findx_pattern(data, dataType, i + 482, length, &GXSetDispCopySrcSigs[2]))
-							find_pattern_before(data, length, &GXSetDispCopySrcSigs[2], &GXAdjustForOverscanSigs[2]);
+							find_pattern_before(data, dataType, length, &GXSetDispCopySrcSigs[2], &GXAdjustForOverscanSigs[2]);
 						
 						if (data[i + __GXInitGXSigs[j].Length - 2] == 0x7C0803A6)
 							findx_pattern(data, dataType, i + 499, length, &GXSetDispCopyYScaleSigs[4]);
@@ -8968,79 +8970,79 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 						findx_pattern(data, dataType, i + 506, length, &GXSetCopyFilterSigs[2]);
 						
 						if (findx_pattern(data, dataType, i + 508, length, &GXSetDispCopyGammaSigs[2]))
-							find_pattern_after(data, length, &GXSetDispCopyGammaSigs[2], &GXCopyDispSigs[2]);
+							find_pattern_after(data, dataType, length, &GXSetDispCopyGammaSigs[2], &GXCopyDispSigs[2]);
 						
 						findx_pattern(data, dataType, i + 446, length, &GXSetBlendModeSigs[2]);
 						findx_pattern(data, dataType, i + 202, length, &GXSetViewportSigs[2]);
 						break;
 					case 6:
 						if (findx_pattern(data, dataType, i + 497, length, &GXSetDispCopySrcSigs[3]))
-							find_pattern_before(data, length, &GXSetDispCopySrcSigs[3], &GXAdjustForOverscanSigs[2]);
+							find_pattern_before(data, dataType, length, &GXSetDispCopySrcSigs[3], &GXAdjustForOverscanSigs[2]);
 						
 						findx_pattern(data, dataType, i + 514, length, &GXSetDispCopyYScaleSigs[5]);
 						findx_pattern(data, dataType, i + 521, length, &GXSetCopyFilterSigs[2]);
 						
 						if (findx_pattern(data, dataType, i + 523, length, &GXSetDispCopyGammaSigs[2]))
-							find_pattern_after(data, length, &GXSetDispCopyGammaSigs[2], &GXCopyDispSigs[3]);
+							find_pattern_after(data, dataType, length, &GXSetDispCopyGammaSigs[2], &GXCopyDispSigs[3]);
 						
 						findx_pattern(data, dataType, i + 461, length, &GXSetBlendModeSigs[3]);
 						findx_pattern(data, dataType, i + 215, length, &GXSetViewportSigs[3]);
 						break;
 					case 7:
 						if (findx_pattern(data, dataType, i + 473, length, &GXSetDispCopySrcSigs[4]))
-							find_pattern_before(data, length, &GXSetDispCopySrcSigs[4], &GXAdjustForOverscanSigs[3]);
+							find_pattern_before(data, dataType, length, &GXSetDispCopySrcSigs[4], &GXAdjustForOverscanSigs[3]);
 						
 						findx_pattern(data, dataType, i + 492, length, &GXSetDispCopyYScaleSigs[6]);
 						findx_pattern(data, dataType, i + 499, length, &GXSetCopyFilterSigs[3]);
 						
 						if (findx_pattern(data, dataType, i + 501, length, &GXSetDispCopyGammaSigs[3]))
-							find_pattern_after(data, length, &GXSetDispCopyGammaSigs[3], &GXCopyDispSigs[4]);
+							find_pattern_after(data, dataType, length, &GXSetDispCopyGammaSigs[3], &GXCopyDispSigs[4]);
 						
 						findx_pattern(data, dataType, i + 433, length, &GXSetBlendModeSigs[5]);
 						findx_pattern(data, dataType, i + 202, length, &GXSetViewportSigs[4]);
 						break;
 					case 8:
 						if (findx_pattern(data, dataType, i + 475, length, &GXSetDispCopySrcSigs[4]))
-							find_pattern_before(data, length, &GXSetDispCopySrcSigs[4], &GXAdjustForOverscanSigs[3]);
+							find_pattern_before(data, dataType, length, &GXSetDispCopySrcSigs[4], &GXAdjustForOverscanSigs[3]);
 						
 						findx_pattern(data, dataType, i + 494, length, &GXSetDispCopyYScaleSigs[6]);
 						findx_pattern(data, dataType, i + 501, length, &GXSetCopyFilterSigs[4]);
 						
 						if (findx_pattern(data, dataType, i + 503, length, &GXSetDispCopyGammaSigs[3]))
-							find_pattern_after(data, length, &GXSetDispCopyGammaSigs[3], &GXCopyDispSigs[4]);
+							find_pattern_after(data, dataType, length, &GXSetDispCopyGammaSigs[3], &GXCopyDispSigs[4]);
 						
 						findx_pattern(data, dataType, i + 435, length, &GXSetBlendModeSigs[6]);
 						findx_pattern(data, dataType, i + 204, length, &GXSetViewportSigs[4]);
 						break;
 					case 9:
 						if (findx_pattern(data, dataType, i + 526, length, &GXSetDispCopySrcSigs[5]))
-							find_pattern_before(data, length, &GXSetDispCopySrcSigs[5], &GXAdjustForOverscanSigs[4]);
+							find_pattern_before(data, dataType, length, &GXSetDispCopySrcSigs[5], &GXAdjustForOverscanSigs[4]);
 						
 						findx_pattern(data, dataType, i + 543, length, &GXSetDispCopyYScaleSigs[7]);
 						findx_pattern(data, dataType, i + 550, length, &GXSetCopyFilterSigs[5]);
 						
 						if (findx_pattern(data, dataType, i + 552, length, &GXSetDispCopyGammaSigs[4]))
-							find_pattern_after(data, length, &GXSetDispCopyGammaSigs[4], &GXCopyDispSigs[5]);
+							find_pattern_after(data, dataType, length, &GXSetDispCopyGammaSigs[4], &GXCopyDispSigs[5]);
 						
 						findx_pattern(data, dataType, i + 490, length, &GXSetBlendModeSigs[3]);
 						
 						if (findx_pattern(data, dataType, i + 215, length, &GXSetViewportSigs[5]))
-							find_pattern_before(data, length, &GXSetViewportSigs[5], &GXSetViewportJitterSigs[5]);
+							find_pattern_before(data, dataType, length, &GXSetViewportSigs[5], &GXSetViewportJitterSigs[5]);
 						break;
 					case 10:
 						if (findx_pattern(data, dataType, i + 512, length, &GXSetDispCopySrcSigs[6]))
-							find_pattern_before(data, length, &GXSetDispCopySrcSigs[6], &GXAdjustForOverscanSigs[2]);
+							find_pattern_before(data, dataType, length, &GXSetDispCopySrcSigs[6], &GXAdjustForOverscanSigs[2]);
 						
 						findx_pattern(data, dataType, i + 529, length, &GXSetDispCopyYScaleSigs[8]);
 						findx_pattern(data, dataType, i + 536, length, &GXSetCopyFilterSigs[6]);
 						
 						if (findx_pattern(data, dataType, i + 538, length, &GXSetDispCopyGammaSigs[4]))
-							find_pattern_after(data, length, &GXSetDispCopyGammaSigs[4], &GXCopyDispSigs[6]);
+							find_pattern_after(data, dataType, length, &GXSetDispCopyGammaSigs[4], &GXCopyDispSigs[6]);
 						
 						findx_pattern(data, dataType, i + 478, length, &GXSetBlendModeSigs[4]);
 						
 						if (findx_pattern(data, dataType, i + 209, length, &GXSetViewportSigs[6]))
-							find_pattern_before(data, length, &GXSetViewportSigs[6], &GXSetViewportJitterSigs[6]);
+							find_pattern_before(data, dataType, length, &GXSetViewportSigs[6], &GXSetViewportJitterSigs[6]);
 						break;
 				}
 			}
@@ -10995,7 +10997,7 @@ void Patch_Widescreen(u32 *data, u32 length, int dataType)
 	for (i = 0; i < length / sizeof(u32); i++) {
 		if (data[i] != 0xED241828)
 			continue;
-		if (find_pattern(data, i, length, &MTXFrustumSig)) {
+		if (find_pattern(data, dataType, i, length, &MTXFrustumSig)) {
 			u32 *MTXFrustum = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 			u32 *MTXFrustumHook = NULL;
 			if (MTXFrustum) {
@@ -11011,7 +11013,7 @@ void Patch_Widescreen(u32 *data, u32 length, int dataType)
 	for (i = 0; i < length / sizeof(u32); i++) {
 		if (data[i + 2] != 0xED441828)
 			continue;
-		if (find_pattern(data, i, length, &MTXLightFrustumSig)) {
+		if (find_pattern(data, dataType, i, length, &MTXLightFrustumSig)) {
 			u32 *MTXLightFrustum = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 			u32 *MTXLightFrustumHook = NULL;
 			if (MTXLightFrustum) {
@@ -11027,7 +11029,7 @@ void Patch_Widescreen(u32 *data, u32 length, int dataType)
 	for (i = 0; i < length / sizeof(u32); i++) {
 		if (data[i] != 0x7C0802A6)
 			continue;
-		if (find_pattern(data, i, length, &MTXPerspectiveSig)) {
+		if (find_pattern(data, dataType, i, length, &MTXPerspectiveSig)) {
 			u32 *MTXPerspective = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 			u32 *MTXPerspectiveHook = NULL;
 			if (MTXPerspective) {
@@ -11043,7 +11045,7 @@ void Patch_Widescreen(u32 *data, u32 length, int dataType)
 	for (i = 0; i < length / sizeof(u32); i++) {
 		if (data[i] != 0x7C0802A6)
 			continue;
-		if (find_pattern(data, i, length, &MTXLightPerspectiveSig)) {
+		if (find_pattern(data, dataType, i, length, &MTXLightPerspectiveSig)) {
 			u32 *MTXLightPerspective = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 			u32 *MTXLightPerspectiveHook = NULL;
 			if (MTXLightPerspective) {
@@ -11060,7 +11062,7 @@ void Patch_Widescreen(u32 *data, u32 length, int dataType)
 		for (i = 0; i < length / sizeof(u32); i++) {
 			if (data[i] != 0xED041828)
 				continue;
-			if (find_pattern(data, i, length, &MTXOrthoSig)) {
+			if (find_pattern(data, dataType, i, length, &MTXOrthoSig)) {
 				u32 *MTXOrtho = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 				u32 *MTXOrthoHook = NULL;
 				if (MTXOrtho) {
@@ -11079,7 +11081,7 @@ void Patch_Widescreen(u32 *data, u32 length, int dataType)
 				continue;
 			
 			FuncPattern fp;
-			make_pattern(data, i, length, &fp);
+			make_pattern(data, dataType, i, length, &fp);
 			
 			for (j = 0; j < sizeof(GXSetScissorSigs) / sizeof(FuncPattern); j++) {
 				if (compare_pattern(&fp, &GXSetScissorSigs[j])) {
@@ -11104,7 +11106,7 @@ void Patch_Widescreen(u32 *data, u32 length, int dataType)
 				continue;
 			
 			FuncPattern fp;
-			make_pattern(data, i, length, &fp);
+			make_pattern(data, dataType, i, length, &fp);
 			
 			for (j = 0; j < sizeof(GXSetProjectionSigs) / sizeof(FuncPattern); j++) {
 				if (compare_pattern(&fp, &GXSetProjectionSigs[j])) {
@@ -11138,7 +11140,7 @@ int Patch_TexFilt(u32 *data, u32 length, int dataType)
 			continue;
 		
 		FuncPattern fp;
-		make_pattern(data, i, length, &fp);
+		make_pattern(data, dataType, i, length, &fp);
 		
 		for (j = 0; j < sizeof(GXInitTexObjLODSigs) / sizeof(FuncPattern); j++) {
 			if (compare_pattern(&fp, &GXInitTexObjLODSigs[j])) {
@@ -15383,7 +15385,7 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 			continue;
 		
 		FuncPattern fp;
-		make_pattern(data, i, length, &fp);
+		make_pattern(data, dataType, i, length, &fp);
 		
 		for (j = 0; j < sizeof(InitializeUARTSigs) / sizeof(FuncPattern); j++) {
 			if (compare_pattern(&fp, &InitializeUARTSigs[j])) {

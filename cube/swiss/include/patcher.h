@@ -15,6 +15,7 @@ typedef struct FuncPattern
 	u32 PatchLength;
 	const char *Name;
 	u32 offsetFoundAt;
+	u32 *properAddress;
 } FuncPattern;
 
 /* the SDGecko/IDE-EXI patches */
