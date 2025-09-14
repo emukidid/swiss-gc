@@ -8194,30 +8194,80 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 	
 	if (swissSettings.forceVJitter == 1) {
 		for (j = 0; j < sizeof(__GXSetViewportSigs) / sizeof(FuncPattern); j++) {
-			if (j == 1) {
-				__GXSetViewportSigs[j].Patch       = __GXSetViewportPatch;
-				__GXSetViewportSigs[j].PatchLength = __GXSetViewportPatchLength;
-			}
+			__GXSetViewportSigs[j].Patch       = __GXSetViewportPatch;
+			__GXSetViewportSigs[j].PatchLength = __GXSetViewportPatchLength;
 		}
 		
 		for (j = 0; j < sizeof(GXSetViewportJitterSigs) / sizeof(FuncPattern); j++) {
-			if (j == 0 || j == 2 || j == 3) {
-				GXSetViewportJitterSigs[j].Patch       = GXSetViewportJitterPatch;
-				GXSetViewportJitterSigs[j].PatchLength = GXSetViewportJitterPatchLength;
+			switch (j) {
+				case 0:
+					GXSetViewportJitterSigs[j].Patch       = GXSetViewportJitterPatch1;
+					GXSetViewportJitterSigs[j].PatchLength = GXSetViewportJitterPatch1Length;
+					break;
+				case 1:
+					GXSetViewportJitterSigs[j].Patch       = GXSetViewportJitterPatch2;
+					GXSetViewportJitterSigs[j].PatchLength = GXSetViewportJitterPatch2Length;
+					break;
+				case 2:
+				case 3:
+					GXSetViewportJitterSigs[j].Patch       = GXSetViewportJitterPatch1;
+					GXSetViewportJitterSigs[j].PatchLength = GXSetViewportJitterPatch1Length;
+					break;
+				case 5:
+					GXSetViewportJitterSigs[j].Patch       = GXSetViewportJitterPatch2;
+					GXSetViewportJitterSigs[j].PatchLength = GXSetViewportJitterPatch2Length;
+					break;
 			}
 		}
 	} else if (swissSettings.forceVJitter == 3) {
 		for (j = 0; j < sizeof(__GXSetViewportSigs) / sizeof(FuncPattern); j++) {
-			if (j == 1) {
-				__GXSetViewportSigs[j].Patch       = __GXSetViewportTAAPatch;
-				__GXSetViewportSigs[j].PatchLength = __GXSetViewportTAAPatchLength;
-			}
+			__GXSetViewportSigs[j].Patch       = __GXSetViewportTAAPatch;
+			__GXSetViewportSigs[j].PatchLength = __GXSetViewportTAAPatchLength;
 		}
 		
 		for (j = 0; j < sizeof(GXSetViewportJitterSigs) / sizeof(FuncPattern); j++) {
-			if (j == 0 || j == 2 || j == 3) {
-				GXSetViewportJitterSigs[j].Patch       = GXSetViewportJitterTAAPatch;
-				GXSetViewportJitterSigs[j].PatchLength = GXSetViewportJitterTAAPatchLength;
+			switch (j) {
+				case 0:
+					GXSetViewportJitterSigs[j].Patch       = GXSetViewportJitterTAAPatch;
+					GXSetViewportJitterSigs[j].PatchLength = GXSetViewportJitterTAAPatchLength;
+					break;
+				case 1:
+					GXSetViewportJitterSigs[j].Patch       = GXSetViewportJitterPatch2;
+					GXSetViewportJitterSigs[j].PatchLength = GXSetViewportJitterPatch2Length;
+					break;
+				case 2:
+				case 3:
+					GXSetViewportJitterSigs[j].Patch       = GXSetViewportJitterTAAPatch;
+					GXSetViewportJitterSigs[j].PatchLength = GXSetViewportJitterTAAPatchLength;
+					break;
+				case 5:
+					GXSetViewportJitterSigs[j].Patch       = GXSetViewportJitterPatch2;
+					GXSetViewportJitterSigs[j].PatchLength = GXSetViewportJitterPatch2Length;
+					break;
+			}
+		}
+	}
+	
+	if (swissSettings.forceVJitter == 1 || swissSettings.forceVJitter == 3) {
+		for (j = 0; j < sizeof(GXSetViewportSigs) / sizeof(FuncPattern); j++) {
+			switch (j) {
+				case 0:
+					GXSetViewportSigs[j].Patch       = GXSetViewportPatch1;
+					GXSetViewportSigs[j].PatchLength = GXSetViewportPatch1Length;
+					break;
+				case 1:
+					GXSetViewportSigs[j].Patch       = GXSetViewportPatch2;
+					GXSetViewportSigs[j].PatchLength = GXSetViewportPatch2Length;
+					break;
+				case 2:
+				case 3:
+					GXSetViewportSigs[j].Patch       = GXSetViewportPatch1;
+					GXSetViewportSigs[j].PatchLength = GXSetViewportPatch1Length;
+					break;
+				case 5:
+					GXSetViewportSigs[j].Patch       = GXSetViewportPatch2;
+					GXSetViewportSigs[j].PatchLength = GXSetViewportPatch2Length;
+					break;
 			}
 		}
 	}
@@ -10729,23 +10779,61 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 	for (j = 0; j < sizeof(GXSetViewportSigs) / sizeof(FuncPattern); j++)
 	if ((i = GXSetViewportSigs[j].offsetFoundAt)) {
 		u32 *GXSetViewport = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+		u32 *GXSetViewportJitter = NULL;
+		u32 *__GXSetViewport = NULL;
+		u32 __GXData = 0;
 		f32 *vpOffset = NULL;
 		
 		if (GXSetViewport) {
 			switch (j) {
-				case 0: findx_pattern(data, dataType, i + 16, length, &GXSetViewportJitterSigs[0]); break;
-				case 1: findx_pattern(data, dataType, i + 16, length, &GXSetViewportJitterSigs[1]); break;
-				case 2: findx_pattern(data, dataType, i +  4, length, &GXSetViewportJitterSigs[2]); break;
-				case 3: findx_pattern(data, dataType, i +  4, length, &GXSetViewportJitterSigs[3]); break;
-				case 4: findx_pattern(data, dataType, i +  1, length, &GXSetViewportJitterSigs[4]); break;
-				case 5: findx_pattern(data, dataType, i + 10, length, &__GXSetViewportSigs[1]);     break;
+				case 0:
+					if (findx_pattern(data, dataType, i + 16, length, &GXSetViewportJitterSigs[0]))
+						GXSetViewportJitter = GXSetViewportJitterSigs[0].properAddress;
+					break;
+				case 1:
+					if (findx_pattern(data, dataType, i + 16, length, &GXSetViewportJitterSigs[1]) &&
+						find_pattern_before(data, dataType, length, &GXSetViewportJitterSigs[1], &__GXSetViewportSigs[0])) {
+						__GXSetViewport = __GXSetViewportSigs[0].properAddress;
+						
+						__GXData = data[GXSetViewportJitterSigs[1].offsetFoundAt + 27] & 0x1FFFFF;
+					}
+					break;
+				case 2:
+					if (findx_pattern(data, dataType, i +  4, length, &GXSetViewportJitterSigs[2]))
+						GXSetViewportJitter = GXSetViewportJitterSigs[2].properAddress;
+					break;
+				case 3:
+					if (findx_pattern(data, dataType, i +  4, length, &GXSetViewportJitterSigs[3]))
+						GXSetViewportJitter = GXSetViewportJitterSigs[3].properAddress;
+					break;
+				case 4:
+					if (findx_pattern(data, dataType, i +  1, length, &GXSetViewportJitterSigs[4]))
+						GXSetViewportJitter = GXSetViewportJitterSigs[4].properAddress;
+					break;
+				case 5:
+					if (findx_pattern(data, dataType, i + 10, length, &__GXSetViewportSigs[1]))
+						__GXSetViewport = __GXSetViewportSigs[1].properAddress;
+					
+					__GXData = data[i + 3] & 0x1FFFFF;
+					break;
+				case 6:
+					__GXData = data[i + 0] & 0x1FFFFF;
+					vpOffset = loadResolve(data, dataType, i + 7, 2);
+					break;
 			}
-			if (j == 6)
-				vpOffset = loadResolve(data, dataType, i + 7, 2);
-			
 			if (swissSettings.fixPixelCenter)
 				if (vpOffset) *vpOffset = truncf(*vpOffset) + 0.5f / 12.0f * swissSettings.fixPixelCenter;
 			
+			if (GXSetViewportSigs[j].Patch) {
+				memset(data + i, 0, GXSetViewportSigs[j].Length * sizeof(u32));
+				memcpy(data + i, GXSetViewportSigs[j].Patch, GXSetViewportSigs[j].PatchLength * sizeof(u32));
+				
+				if (GXSetViewportSigs[j].Patch == GXSetViewportPatch2) {
+					data[i + 0] |= __GXData;
+					data[i + GXSetViewportSigs[j].PatchLength - 1] = branch(__GXSetViewport, GXSetViewport + GXSetViewportSigs[j].PatchLength - 1);
+				} else
+					data[i + GXSetViewportSigs[j].PatchLength - 1] = branch(GXSetViewportJitter, GXSetViewport + GXSetViewportSigs[j].PatchLength - 1);
+			}
 			print_debug("Found:[%s$%i] @ %08X\n", GXSetViewportSigs[j].Name, j, GXSetViewport);
 		}
 	}
@@ -10753,54 +10841,55 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 	for (j = 0; j < sizeof(GXSetViewportJitterSigs) / sizeof(FuncPattern); j++)
 	if ((i = GXSetViewportJitterSigs[j].offsetFoundAt)) {
 		u32 *GXSetViewportJitter = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+		u32 *__GXSetViewport = NULL;
 		u32 __GXData = 0;
 		f32 *vpOffset = NULL;
 		
 		if (GXSetViewportJitter) {
 			switch (j) {
-				case 1: findx_pattern(data, dataType, i + 43, length, &__GXSetViewportSigs[0]); break;
-				case 5: findx_pattern(data, dataType, i + 14, length, &__GXSetViewportSigs[1]); break;
-			}
-			switch (j) {
-				case 0: __GXData = data[i + 54]      & 0x1FFFFF; break;
-				case 1: __GXData = data[i + 27]      & 0x1FFFFF; break;
+				case 0:
+					__GXData = data[i + 54] & 0x1FFFFF;
+					vpOffset = loadResolve(data, dataType, i + 38, 2);
+					break;
+				case 1:
+					if (findx_pattern(data, dataType, i + 43, length, &__GXSetViewportSigs[0]))
+						__GXSetViewport = __GXSetViewportSigs[0].properAddress;
+					
+					__GXData = data[i + 27] & 0x1FFFFF;
+					break;
 				case 2:
-				case 3: __GXData = data[i + 18]      & 0x1FFFFF; break;
-				case 4: __GXData = data[i +  7] >> 5 & 0x1F0000; break;
-				case 5: __GXData = data[i +  7]      & 0x1FFFFF; break;
-				case 6: __GXData = data[i +  4]      & 0x1FFFFF; break;
-			}
-			switch (j) {
-				case 0: vpOffset = loadResolve(data, dataType, i + 38, 2); break;
-				case 2:
-				case 3: vpOffset = loadResolve(data, dataType, i + 16, 2); break;
-				case 6: vpOffset = loadResolve(data, dataType, i + 11, 2); break;
+				case 3:
+					__GXData = data[i + 18] & 0x1FFFFF;
+					vpOffset = loadResolve(data, dataType, i + 16, 2);
+					break;
+				case 5:
+					if (findx_pattern(data, dataType, i + 14, length, &__GXSetViewportSigs[1]))
+						__GXSetViewport = __GXSetViewportSigs[1].properAddress;
+					
+					__GXData = data[i +  7] & 0x1FFFFF;
+					break;
+				case 6:
+					__GXData = data[i +  4] & 0x1FFFFF;
+					vpOffset = loadResolve(data, dataType, i + 11, 2);
+					break;
 			}
 			if (swissSettings.fixPixelCenter)
 				if (vpOffset) *vpOffset = truncf(*vpOffset) + 0.5f / 12.0f * swissSettings.fixPixelCenter;
 			
-			if (swissSettings.forceVJitter == 1 || swissSettings.forceVJitter == 3) {
-				if (j == 5) {
-					if ((k = GXSetViewportSigs[5].offsetFoundAt)) {
-						u32 *GXSetViewport = Calc_ProperAddress(data, dataType, k * sizeof(u32));
-						
-						if (GXSetViewport) {
-							memset(data + i, 0, GXSetViewportJitterSigs[j].Length * sizeof(u32));
-							
-							data[i + 0] = branch(GXSetViewport, GXSetViewportJitter);
-						}
-					}
-				}
-			}
 			if (GXSetViewportJitterSigs[j].Patch) {
 				memset(data + i, 0, GXSetViewportJitterSigs[j].Length * sizeof(u32));
 				memcpy(data + i, GXSetViewportJitterSigs[j].Patch, GXSetViewportJitterSigs[j].PatchLength * sizeof(u32));
 				
 				data[i + 0] |= __GXData;
-				data[i + 2] |= ((u32)(GXSetViewportJitter + GXSetViewportJitterSigs[j].PatchLength) + 0x8000) >> 16;
-				data[i + 4] |= ((u32)(GXSetViewportJitter + GXSetViewportJitterSigs[j].PatchLength) & 0xFFFF);
 				
-				if (vpOffset) data[i + GXSetViewportJitterSigs[j].PatchLength - 2] = *(u32 *)vpOffset;
+				if (GXSetViewportJitterSigs[j].Patch == GXSetViewportJitterPatch2) {
+					data[i + GXSetViewportJitterSigs[j].PatchLength - 1] = branch(__GXSetViewport, GXSetViewportJitter + GXSetViewportJitterSigs[j].PatchLength - 1);
+				} else {
+					data[i + 2] |= ((u32)(GXSetViewportJitter + GXSetViewportJitterSigs[j].PatchLength) + 0x8000) >> 16;
+					data[i + 4] |= ((u32)(GXSetViewportJitter + GXSetViewportJitterSigs[j].PatchLength) & 0xFFFF);
+					
+					if (vpOffset) data[i + GXSetViewportJitterSigs[j].PatchLength - 2] = *(u32 *)vpOffset;
+				}
 			}
 			print_debug("Found:[%s$%i] @ %08X\n", GXSetViewportJitterSigs[j].Name, j, GXSetViewportJitter);
 		}
@@ -10813,8 +10902,12 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 		
 		if (__GXSetViewport) {
 			switch (j) {
-				case 0: vpOffset = loadResolve(data, dataType, i + 15, 2); break;
-				case 1: vpOffset = loadResolve(data, dataType, i + 20, 2); break;
+				case 0:
+					vpOffset = loadResolve(data, dataType, i + 15, 2);
+					break;
+				case 1:
+					vpOffset = loadResolve(data, dataType, i + 20, 2);
+					break;
 			}
 			if (swissSettings.fixPixelCenter)
 				if (vpOffset) *vpOffset = truncf(*vpOffset) + 0.5f / 12.0f * swissSettings.fixPixelCenter;
@@ -10824,7 +10917,7 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 				memcpy(data + i, __GXSetViewportSigs[j].Patch, __GXSetViewportSigs[j].PatchLength * sizeof(u32));
 				
 				data[i + 1] |= ((u32)(__GXSetViewport + __GXSetViewportSigs[j].PatchLength) + 0x8000) >> 16;
-				data[i + 3] |= ((u32)(__GXSetViewport + __GXSetViewportSigs[j].PatchLength) & 0xFFFF);
+				data[i + 2] |= ((u32)(__GXSetViewport + __GXSetViewportSigs[j].PatchLength) & 0xFFFF);
 				
 				if (vpOffset) data[i + __GXSetViewportSigs[j].PatchLength - 2] = *(u32 *)vpOffset;
 			}
@@ -14031,6 +14124,31 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 		}
 	} else if (!strncmp(gameID, "GAFE01", 6) && dataType == PATCH_DOL) {
 		switch (length) {
+			case 910368:
+				*(s16 *)(data + 0x8000672E - 0x800056C0 + 0x2620) = 0;
+				*(s16 *)(data + 0x80006732 - 0x800056C0 + 0x2620) = 0;
+				*(s16 *)(data + 0x80006736 - 0x800056C0 + 0x2620) = 640;
+				*(s16 *)(data + 0x8000673A - 0x800056C0 + 0x2620) = 480;
+				
+				*(s16 *)(data + 0x80006EF2 - 0x800056C0 + 0x2620) = 0;
+				*(s16 *)(data + 0x80006EF6 - 0x800056C0 + 0x2620) = 0;
+				*(s16 *)(data + 0x80006EFA - 0x800056C0 + 0x2620) = 640;
+				*(s16 *)(data + 0x80006EFE - 0x800056C0 + 0x2620) = 480;
+				
+				SET_VI_WIDTH(data + 0x800AFE58 - 0x800AD3C0 + 0xAA3C0, 640);
+				SET_VI_WIDTH(data + 0x800AFE94 - 0x800AD3C0 + 0xAA3C0, 640);
+				SET_VI_WIDTH(data + 0x800AFED0 - 0x800AD3C0 + 0xAA3C0, 640);
+				SET_VI_WIDTH(data + 0x800AFF0C - 0x800AD3C0 + 0xAA3C0, 640);
+				SET_VI_WIDTH(data + 0x800AFF48 - 0x800AD3C0 + 0xAA3C0, 704);
+				SET_VI_WIDTH(data + 0x800AFF84 - 0x800AD3C0 + 0xAA3C0, 704);
+				
+				SET_VI_WIDTH(data + 0x800E15B0 - 0x800AD3C0 + 0xAA3C0, 704);
+				SET_VI_WIDTH(data + 0x800E15EC - 0x800AD3C0 + 0xAA3C0, 704);
+				SET_VI_WIDTH(data + 0x800E1628 - 0x800AD3C0 + 0xAA3C0, 704);
+				SET_VI_WIDTH(data + 0x800E16A0 - 0x800AD3C0 + 0xAA3C0, 704);
+				
+				print_debug("Patched:[%.6s]\n", gameID);
+				break;
 			case 918720:
 				*(s16 *)(data + 0x8000672E - 0x800056C0 + 0x2620) = 0;
 				*(s16 *)(data + 0x80006732 - 0x800056C0 + 0x2620) = 0;

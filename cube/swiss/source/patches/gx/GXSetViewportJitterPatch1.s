@@ -1,7 +1,7 @@
 #include "reservedarea.h"
 
-.globl GXSetViewportJitterTAAPatch
-GXSetViewportJitterTAAPatch:
+.globl GXSetViewportJitterPatch1
+GXSetViewportJitterPatch1:
 	lwz		%r10, 0 (0)
 	cmplwi	%r3, 1
 	lis		%r9, 0
@@ -40,14 +40,14 @@ GXSetViewportJitterTAAPatch:
 	stfs	%f6, -0x8000 (%r9)
 	sth		%r7, 2 (%r10)
 	blr
-2:	fmadds	%f1, %f11, %f11, %f1
+2:	fmadds	%f2, %f11, %f11, %f2
 	beq		1b
-	fsubs	%f1, %f1, %f11
+	fsubs	%f2, %f2, %f11
 	b		1b
 	.long	0x3F000000
 	.long	0x43AB0555
 	.long	0x4B7FFFFF
 
-.globl GXSetViewportJitterTAAPatchLength
-GXSetViewportJitterTAAPatchLength:
-.long (. - GXSetViewportJitterTAAPatch) / 4
+.globl GXSetViewportJitterPatch1Length
+GXSetViewportJitterPatch1Length:
+.long (. - GXSetViewportJitterPatch1) / 4
