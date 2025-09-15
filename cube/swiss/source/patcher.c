@@ -8192,7 +8192,7 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 		}
 	}
 	
-	if (swissSettings.forceVJitter == 1) {
+	if (swissSettings.fixPixelCenter || swissSettings.forceVJitter == 1) {
 		for (j = 0; j < sizeof(__GXSetViewportSigs) / sizeof(FuncPattern); j++) {
 			__GXSetViewportSigs[j].Patch       = __GXSetViewportPatch;
 			__GXSetViewportSigs[j].PatchLength = __GXSetViewportPatchLength;
@@ -8248,7 +8248,7 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 		}
 	}
 	
-	if (swissSettings.forceVJitter == 1 || swissSettings.forceVJitter == 3) {
+	if (swissSettings.fixPixelCenter || swissSettings.forceVJitter == 1 || swissSettings.forceVJitter == 3) {
 		for (j = 0; j < sizeof(GXSetViewportSigs) / sizeof(FuncPattern); j++) {
 			switch (j) {
 				case 0:
@@ -9902,7 +9902,7 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 			} else
 				VIConfigureHook1 = getPatchAddr(VI_CONFIGUREHOOK1);
 			
-			if (swissSettings.forceVJitter == 1)
+			if (swissSettings.fixPixelCenter || swissSettings.forceVJitter == 1)
 				VIConfigureHook1 = getPatchAddr(VI_CONFIGUREFIELDMODE);
 			
 			switch (swissSettings.gameVMode) {

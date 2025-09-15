@@ -312,6 +312,7 @@ int config_update_game(ConfigEntry *entry, ConfigEntry *defaults, bool checkConf
 	return res;
 }
 
+static char fixPixelCenterEntries[][4] = {"00\0E", "DNDD", "G2BE", "G2BP", "GNBE", "GNBJ", "GNBP"};
 static char triggerLevelEntries[][4] = {"GKGE", "GKGJ", "GKGP", "GY2E", "GY2J", "GY2P", "GY3E", "GY3J", "GYBE", "GYBJ", "GYBP"};
 static char emulateAudioStreamEntries[][4] = {"UFZE", "UFZJ", "UFZP"};
 static char emulateReadSpeedEntries[][4] = {"DRSE", "GQSD", "GQSE", "GQSF", "GQSI", "GQSP", "GQSS", "GRSE", "GRSJ", "GRSP", "GTOJ"};
@@ -342,6 +343,12 @@ void config_defaults(ConfigEntry *entry) {
 	entry->preferCleanBoot = swissSettings.preferCleanBoot;
 	entry->rt4kProfile = swissSettings.rt4kProfile;
 
+	for(int i = 0; i < sizeof(fixPixelCenterEntries) / sizeof(*fixPixelCenterEntries); i++) {
+		if(!strncmp(entry->game_id, fixPixelCenterEntries[i], 4)) {
+			entry->fixPixelCenter = 1;
+			break;
+		}
+	}
 	for(int i = 0; i < sizeof(triggerLevelEntries) / sizeof(*triggerLevelEntries); i++) {
 		if(!strncmp(entry->game_id, triggerLevelEntries[i], 4)) {
 			entry->triggerLevel = 0;

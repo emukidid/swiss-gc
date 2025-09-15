@@ -2207,6 +2207,7 @@ void load_game() {
 	*(vu32**)VAR_EXI_REGS = NULL;
 	net_get_mac_address((u8*)VAR_CLIENT_MAC);
 	*(vu32**)VAR_EXI2_REGS = NULL;
+	*(vu8*)VAR_CURRENT_FIELD = VI_FRAME;
 	*(vu8*)VAR_TRIGGER_LEVEL = swissSettings.triggerLevel;
 	*(vu8*)VAR_CARD_A_ID = 0x00;
 	*(vu8*)VAR_CARD_B_ID = 0x00;
