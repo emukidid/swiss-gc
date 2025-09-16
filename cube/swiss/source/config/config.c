@@ -312,7 +312,7 @@ int config_update_game(ConfigEntry *entry, ConfigEntry *defaults, bool checkConf
 	return res;
 }
 
-static char fixPixelCenterEntries[][4] = {"00\0E", "DNDD", "G2BE", "G2BP", "GNBE", "GNBJ", "GNBP"};
+static char fixPixelCenterEntries[][4] = {"00\0E", "DNDD", "G2BE", "G2BP", "GD7E", "GD7P", "GEME", "GEMJ", "GEMP", "GNBE", "GNBJ", "GNBP", "GZBJ"};
 static char triggerLevelEntries[][4] = {"GKGE", "GKGJ", "GKGP", "GY2E", "GY2J", "GY2P", "GY3E", "GY3J", "GYBE", "GYBJ", "GYBP"};
 static char emulateAudioStreamEntries[][4] = {"UFZE", "UFZJ", "UFZP"};
 static char emulateReadSpeedEntries[][4] = {"DRSE", "GQSD", "GQSE", "GQSF", "GQSI", "GQSP", "GQSS", "GRSE", "GRSJ", "GRSP", "GTOJ"};

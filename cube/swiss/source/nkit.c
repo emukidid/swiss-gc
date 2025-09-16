@@ -131,6 +131,7 @@ static const struct {
 	{ "apploader.img", /* 2001/09/08       */  108544, 0x59AB007B4BB5165D },
 	{ "apploader.img", /* 2001/09/08       */  108544, 0x5E4B34B6C6A74809 },
 	{ "apploader.img", /* 2001/09/08       */  108544, 0x68362CDAF8230F6A },
+	{ "apploader.img", /* 2001/09/08       */  108544, 0x74A1F8C70C3D89F3 },
 	{ "apploader.img", /* 2001/09/08       */  108544, 0xD4942743AEBF6E7C },
 	{ "apploader.img", /* 2001/09/08       */  108544, 0xE2A2500D243E76BD },
 	{ "apploader.img", /* 2001/09/08       */  108544, 0xF408681F1858B65E },
@@ -176,7 +177,7 @@ static const struct {
 	{ "apploader.img", /* 2006/01/06       */  139520, 0xF01FA1F58FDF90EF },
 	{ "apploader.img", /* 2017/09/28       */  119360, 0xFA08F0DA6022973A },
 	{ "apploader.img", /* 2021/10/06       */    8416, 0x0C2EA9DF3E473E92 },
-#define NKIT_FIRM_COUNT (FIRM_COUNT + 118)
+#define NKIT_FIRM_COUNT (FIRM_COUNT + 119)
 	{ "240p Test Suite (World) (v1.04) (Program) (Aftermarket) (Unl).dol",        2301384, 0x71BCDBA149B3AAAF },
 	{ "240p Test Suite (World) (v1.06) (Program) (Aftermarket) (Unl).dol",         930560, 0x7EB7DDDAF5105457 },
 	{ "240p Test Suite (World) (v1.07) (Program) (Aftermarket) (Unl).dol",         932032, 0x4DAB8540272CCBD5 },
@@ -1459,6 +1460,7 @@ static const struct {
 	{{ "GNHE5d\x00\x00" }, false, 0x2C, 0xCCBB, 0x11A23CFC, 0x9D96DC5BD2CAB822,    3047424, +1456930816, {      94248,       +4056, 6496, 0x4C9F }, "Action Replay for GameCube" },
 	{{ "GNHE5d\x00\x00" }, false, 0x2D, 0xCCBB, 0x20410C84, 0xFD841AF194632025,     968704, +1459009536, {      94248,       +4056, 6496, 0xB8A4 }, "Action Replay Ultimate Codes for Use with Wario World" },
 	{{ "GNHE5d\x00\x00" }, false, 0x2E, 0xCCBB, 0x2E098A57, 0xED61A06E328BCADC,     929792, +1459048448, {      94248,       +4056, 6496, 0x71DF }, "CD avec les Codes Exclusifs et inédits pour le Jeu Metroid Prime" },
+	{{ "GNHE5d\x00\x00" }, false, 0x30, 0xCCBB, 0x534963A9, 0x4C74370EF6241C47,     630784, +1459347456, {      94248,       +4056, 6496, 0x1F49 }, "SD Media Launcher for GameCube / Wii" },
 	{{ "GNHE5d\x00\x00" }, false, 0x32, 0xCCBB, 0xF788D099, 0x20C822BDDEB80BC7,    1245184, +1458733056, {      94248,       +4056, 6496, 0x08F2 }, "Ultimate Codes for Use with Tom Clancy's Splinter Cell" },
 	{{ "GNHE5d\x00\x00" }, false, 0x33, 0xCCBB, 0xC7E200F3, 0x2B7A18F78F0474B8,    2117632, +1457860608, {      94248,       +4056, 6496, 0x3A76 }, "Action Replay Ultimate Cheats für Enter the Matrix" },
 	{{ "GNHE5d\x00\x00" }, false, 0x36, 0xCCBB, 0x4021811B, 0x0BD3C7BA76983FB6,    2174976, +1457803264, {      94248,       +4056, 6496, 0xCD3A }, "Karat GC-you Pro Action Replay PAR GC-you" },
@@ -2253,7 +2255,7 @@ static const struct {
 	{{ "UGPP01\x00\x01" }, false, 0x2A, 0x6D4F, 0x5ECD9681, 0x4E9244DEFB94F10C,    5079040, +1454899200, {    2317764,       +8764, 8096, 0x8972 }, "Game Boy Player Start-Up Disc" },
 	{{ "UGPP01\x00\x02" }, false, 0x3A, 0xCA50, 0x1E26380C, 0x483B4CE794041533,    5079040, +1454899200, {    2317764,       +8764, 8096, 0x8972 }, "Game Boy Player Start-Up Disc" },
 	{{ "XXXXXX\x00\x01" }, false, 0x83, 0x7056, 0x5995AC59, 0x5CBC3D9F00D75112, 1287913472,  +172064768, {         ~0,          +0,    0, 0xFFFF }, "LEGO Super Soccer Adventure" },
-#define REDUMP_COUNT (2011)
+#define REDUMP_COUNT (2012)
 	{{"00\0E01\x00\x00" }, false, 0x8B, 0x42A2, 0x499CF1AB, 0xC1BAC83BFBED3EDB,   31170560, +1428807680, {    7795364,      +23900, 6496, 0xBBEA }, "Nintendo Developer Demo" },
 	{{"00\0E01\x00\x00" }, false, 0xD9, 0x21CF, 0xBF114CB3, 0xC1BAC83BFBED3EDB,   31170560, +1428807680, {    7795364,      +23900, 6496, 0xBBEA }, "Nintendo Developer Demo" },
 	{{ "060J01\x00\x00" }, true,  0x7E, 0x27AC, 0x94C088DF, 0x55221BF909AB54CC,  171485184, +1288493056, {     238648, +1288483336, 6496, 0xFD76 }, "Diag Ver 3.1.1" },
