@@ -23,6 +23,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
+#include <unistd.h>
 #include <zlib.h>
 #include "aram/sidestep.h"
 #include "bba.h"
@@ -217,10 +218,12 @@ static void *usb_thread_func(void *arg)
 	while (usb_thread == LWP_GetSelf()) {
 		int chn = *(int *)arg - USBGECKO_MEMCARD_SLOT_A;
 
-		if (usb_isgeckoalive(chn)) {
+		if (usb_isgeckoalive(chn) && usb_checkrecv(chn)) {
 			wiiload_handler(chn, usb_read);
 			usb_flush(chn);
 		}
+
+		usleep(1000);
 	}
 
 	return NULL;
