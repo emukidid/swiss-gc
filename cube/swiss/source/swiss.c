@@ -313,7 +313,7 @@ uiDrawObj_t* renderFileBrowser(file_handle** directory, int num_files, uiDrawObj
 	DrawPublish(loadingBox);
 	meta_thread_start(loadingBox);
 	while(1) {
-		u64 startTime = gettime();
+		u32 retraceStart = VIDEO_GetRetraceCount();
 		DrawUpdateProgressLoading(loadingBox, +1);
 		uiDrawObj_t *newPanel = DrawContainer();
 		drawFiles(directory, num_files, newPanel);
@@ -424,7 +424,9 @@ uiDrawObj_t* renderFileBrowser(file_handle** directory, int num_files, uiDrawObj
 			break;
 		}
 		if(padsStickY() <= -16 || padsStickY() >= 16) {
-			usleep((abs(padsStickY()) > 64 ? 50000:100000) - abs(padsStickY()*64) - diff_usec(startTime, gettime()));
+			u32 retraceCount = lrintf((abs(padsStickY()) > 64 ? 0.045f : 0.1f) * VIDEO_GetRetraceRate());
+			while (VIDEO_GetRetraceCount() - retraceStart < retraceCount)
+				{ VIDEO_WaitVSync (); }
 		}
 		else {
 			while (padsButtonsHeld() & waitButtons)
@@ -550,7 +552,7 @@ uiDrawObj_t* renderFileCarousel(file_handle** directory, int num_files, uiDrawOb
 	DrawPublish(loadingBox);
 	meta_thread_start(loadingBox);
 	while(1) {
-		u64 startTime = gettime();
+		u32 retraceStart = VIDEO_GetRetraceCount();
 		DrawUpdateProgressLoading(loadingBox, +1);
 		uiDrawObj_t *newPanel = DrawContainer();
 		drawFilesCarousel(directory, num_files, newPanel);
@@ -661,7 +663,9 @@ uiDrawObj_t* renderFileCarousel(file_handle** directory, int num_files, uiDrawOb
 			break;
 		}
 		if(padsStickX() <= -16 || padsStickX() >= 16) {
-			usleep((abs(padsStickX()) > 64 ? 50000:100000) - abs(padsStickX()*64) - diff_usec(startTime, gettime()));
+			u32 retraceCount = lrintf((abs(padsStickX()) > 64 ? 0.045f : 0.1f) * VIDEO_GetRetraceRate());
+			while (VIDEO_GetRetraceCount() - retraceStart < retraceCount)
+				{ VIDEO_WaitVSync (); }
 		}
 		else {
 			while (padsButtonsHeld() & waitButtons)
@@ -725,7 +729,7 @@ uiDrawObj_t* renderFileFullwidth(file_handle** directory, int num_files, uiDrawO
 	DrawPublish(loadingBox);
 	meta_thread_start(loadingBox);
 	while(1) {
-		u64 startTime = gettime();
+		u32 retraceStart = VIDEO_GetRetraceCount();
 		DrawUpdateProgressLoading(loadingBox, +1);
 		uiDrawObj_t *newPanel = DrawContainer();
 		drawFilesFullwidth(directory, num_files, newPanel);
@@ -836,7 +840,9 @@ uiDrawObj_t* renderFileFullwidth(file_handle** directory, int num_files, uiDrawO
 			break;
 		}
 		if(padsStickY() <= -16 || padsStickY() >= 16) {
-			usleep((abs(padsStickY()) > 64 ? 50000:100000) - abs(padsStickY()*64) - diff_usec(startTime, gettime()));
+			u32 retraceCount = lrintf((abs(padsStickY()) > 64 ? 0.045f : 0.1f) * VIDEO_GetRetraceRate());
+			while (VIDEO_GetRetraceCount() - retraceStart < retraceCount)
+				{ VIDEO_WaitVSync (); }
 		}
 		else {
 			while (padsButtonsHeld() & waitButtons)
