@@ -177,7 +177,12 @@ static const struct {
 	{ "apploader.img", /* 2006/01/06       */  139520, 0xF01FA1F58FDF90EF },
 	{ "apploader.img", /* 2017/09/28       */  119360, 0xFA08F0DA6022973A },
 	{ "apploader.img", /* 2021/10/06       */    8416, 0x0C2EA9DF3E473E92 },
-#define NKIT_FIRM_COUNT (FIRM_COUNT + 119)
+	{ "apploader.img", /* 2024/08/26       */  113536, 0x4B7D6BB01FBDE643 },
+	{ "apploader.img", /* 2024/08/27       */  113536, 0xB4A43C8D09E516D9 },
+	{ "apploader.img", /* 2024/09/14       */  113536, 0xBECA9866ECE7A957 },
+	{ "apploader.img", /* 2024/09/17       */  113536, 0x623687789597750B },
+	{ "apploader.img", /* 2025/07/10       */  113536, 0xED22F838A52EABC5 },
+#define NKIT_FIRM_COUNT (FIRM_COUNT + 124)
 	{ "240p Test Suite (World) (v1.04) (Program) (Aftermarket) (Unl).dol",        2301384, 0x71BCDBA149B3AAAF },
 	{ "240p Test Suite (World) (v1.06) (Program) (Aftermarket) (Unl).dol",         930560, 0x7EB7DDDAF5105457 },
 	{ "240p Test Suite (World) (v1.07) (Program) (Aftermarket) (Unl).dol",         932032, 0x4DAB8540272CCBD5 },
@@ -186,10 +191,12 @@ static const struct {
 	{ "240p Test Suite (World) (v1.10b) (Program) (Aftermarket) (Unl).dol",       1576640, 0xF2F18B3601364308 },
 	{ "240p Test Suite (World) (v1.17) (Program) (Aftermarket) (Unl).dol",        1906336, 0x65A1EF7519BE163F },
 	{ "240p Test Suite (World) (v1.19) (Program) (Aftermarket) (Unl).dol",        1894464, 0x287F839D82D7D3CB },
+	{ "Eye Dropped (2024-02-19)(Aionmagan).dol",                                  3017408, 0x8EA7EC4B21E0ABA3 },
 	{ "Mama Bear Puzzle (2015)(Mihai, Sebastian).dol",                            1161216, 0x5577A5CF49894D65 },
 	{ "Mama Bear Puzzle (2015)(Mihai, Sebastian).elf",                            1667136, 0x9FDBE50048C2BC9E },
+	{ "Mike Visor (2024-02-17)(Aionmagan).dol",                                   3588096, 0xA57EED735FB757BE },
 	{ "Xeno Crisis (World) (En,Ja,Fr,De,Es,It,Nl,Pt-BR) (Aftermarket) (Unl).dol", 5331008, 0x34BF21CA529D0E02 },
-#define VALID_DOL_COUNT (NKIT_FIRM_COUNT + 11)
+#define VALID_DOL_COUNT (NKIT_FIRM_COUNT + 13)
 	{ "CleanRipGC-lz.dol",                     171136, 0x6C0308884F922929 },
 	{ "CleanRipGC.dol",                       1491392, 0x64E1342A4D52EC8A },
 	{ "cleanrip-gc.dol",                      1593248, 0x93B7BEAF5567F44B },
@@ -2406,6 +2413,11 @@ static const struct {
 	{{ "GM8P01\x00\x00" }, false, 0x24, 0x909C, 0x3B9499FB, 0xF12C663EF4B5642F, 1425532928,   +34445312, {  629056224,   +34443008, 8096, 0xEE10 }, "Metroid Prime" },
 	{{ "GMPP01\x00\x00" }, false, 0x0E, 0x39B0, 0xB7DA63ED, 0x895DFE61A45E24FC,  607344640,  +852633600, {  559136944,     +232500, 8096, 0x03FE }, "Mario Party 4" },
 	{{ "GMPP01\x00\x02" }, false, 0x6C, 0x9D34, 0xF0DE4105, 0x895DFE61A45E24FC,  607346688,  +852631552, {  559137448,     +264764, 8096, 0x03FE }, "Mario Party 4" },
+	{{ "GMSE04\x00\x00" }, true,  0x09, 0xA7F5, 0x73E9F414, 0x87D62E4362D694A4, 1400141824,   +59836416, { 1400133500,   +59811972, 6496, 0xF7D5 }, "Super Mario Eclipse" },
+	{{ "GMSE04\x00\x00" }, true,  0x5D, 0xDD14, 0x627E447B, 0x87D62E4362D694A4, 1386201088,   +73777152, { 1386194056,   +73760768, 6496, 0x6A2B }, "Super Mario Eclipse" },
+	{{ "GMSE04\x00\x01" }, true,  0xD8, 0x2694, 0x759F84AD, 0x87D62E4362D694A4, 1386240000,   +73738240, { 1386232984,   +73728000, 6496, 0x6A2B }, "Super Mario Eclipse" },
+	{{ "GMSE04\x00\x02" }, true,  0xB6, 0x9F67, 0x0E725F51, 0x87D62E4362D694A4, 1366890496,   +93087744, { 1366882280,   +93063192, 6496, 0x6A2B }, "Super Mario Eclipse" },
+	{{ "GMSE04\x00\x03" }, true,  0x27, 0x0DDC, 0xE62348EC, 0x87D62E4362D694A4, 1367558144,   +92420096, { 1367549960,   +92395512, 6496, 0x6A2B }, "Super Mario Eclipse" },
 	{{ "GMSP01\x00\x00" }, false, 0x1D, 0x6C8C, 0xF968261A, 0x784E17B83254CEE8,  404224000,     +100352, {  404214580,      +70348, 8096, 0x4911 }, "Super Mario Sunshine" },
 	{{ "GMUP5D\x00\x00" }, false, 0x80, 0xEE0B, 0xD442A6BF, 0x436DC9BED493D5DE, 1425692672,   +34285568, {    6644012,    +5580500, 6496, 0x093D }, "Dr. Muto" },
 	{{ "GNHE5d\x00\x00" }, false, 0x94, 0xCCBB, 0xE7F301B7, 0x111E626AC7CDE6B5,     428032, +1459550208, {      94248,       +4056, 6496, 0x5AE1 }, "Action Replay Ultimate Codes for Use with Enter the Matrix" },
@@ -2480,7 +2492,7 @@ static const struct {
 	{{ "SG4JDA\x00\x00" }, true,  0x52, 0xF019, 0x4BB4830A, 0x3645CAE26589C220, 1272594432,  +187383808, { 1272587604,  +187384140, 6496, 0x015D }, "Naruto: Clash of Ninja 4" },
 	{{ "SG4JDA\x00\x00" }, true,  0x9D, 0xB3B3, 0x424A4760, 0x38394EDF8E58393A, 1261602816,  +198375424, { 1261594344,  +198377400, 6496, 0x015D }, "Naruto: Clash of Ninja 4" },
 	{{ "TESTNA\x00\x00" }, false, 0xD2, 0x0C28, 0x6254FB97, 0xAA2E5EDD0EF81992,   26834944,       -1658, {         ~0,          +0,    0, 0xFFFF }, "Dodger Demo" },
-#define VALID_GCM_COUNT (REDUMP_COUNT + 224)
+#define VALID_GCM_COUNT (REDUMP_COUNT + 229)
 	{{ "101E01\x00\x05" }, true,  0x88, 0xB6FD, 0x4BB518CD, 0x27CFAD706924A030, 1435949056,   +24029184, {         ~0,          +0,    0, 0xFFFF }, "Hontai Kensa Disc DOL-USA" },
 	{{ "101E01\x00\x05" }, true,  0xC6, 0xB6FD, 0x4BB518CD, 0x27CFAD706924A030, 1435949056,   +24029184, {         ~0,          +0,    0, 0xFFFF }, "Hontai Kensa Disc DOL-USA" },
 	{{ "101J01\x00\x03" }, true,  0x67, 0xA361, 0x1A7B7608, 0x6E2DA2E062EF73BA, 1459453952,     +524288, {         ~0,          +0,    0, 0xFFFF }, "Hontai Kensa Disc DOL" },
