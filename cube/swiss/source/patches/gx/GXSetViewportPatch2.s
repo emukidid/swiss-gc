@@ -10,6 +10,8 @@ GXSetViewportPatch2:
 	stfs	%f4, 1280 (%r9)
 	stfs	%f5, 1284 (%r9)
 	stfs	%f6, 1288 (%r9)
+	lfs		%f8, 1296 (%r9)
+	lfs		%f7, 1292 (%r9)
 	lbz		%r3, VAR_CURRENT_FIELD (%r10)
 	b		.
 
