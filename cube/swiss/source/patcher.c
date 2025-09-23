@@ -8249,7 +8249,7 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 					break;
 			}
 		}
-	} else if (swissSettings.forceVJitter == 1 || swissSettings.fixPixelCenter) {
+	} else if (swissSettings.forceVJitter == 1 || (swissSettings.forceVJitter != 2 && swissSettings.fixPixelCenter)) {
 		for (j = 0; j < sizeof(__GXSetViewportSigs) / sizeof(FuncPattern); j++) {
 			__GXSetViewportSigs[j].Patch       = __GXSetViewportPatch;
 			__GXSetViewportSigs[j].PatchLength = __GXSetViewportPatchLength;
@@ -9938,7 +9938,7 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 			} else
 				VIConfigureHook1 = getPatchAddr(VI_CONFIGUREHOOK1);
 			
-			if (swissSettings.forceVJitter == 1 || swissSettings.fixPixelCenter)
+			if (swissSettings.forceVJitter == 1 || (swissSettings.forceVJitter != 2 && swissSettings.fixPixelCenter))
 				VIConfigureHook1 = getPatchAddr(VI_CONFIGUREFIELDMODE);
 			
 			switch (swissSettings.gameVMode) {
@@ -10638,9 +10638,7 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 	}
 	
 	for (j = 0; j < sizeof(VIGetNextFieldSigs) / sizeof(FuncPattern); j++)
-		if (VIGetNextFieldSigs[j].offsetFoundAt) break;
-	
-	if (j < sizeof(VIGetNextFieldSigs) / sizeof(FuncPattern) && (i = VIGetNextFieldSigs[j].offsetFoundAt)) {
+	if ((i = VIGetNextFieldSigs[j].offsetFoundAt)) {
 		u32 *VIGetNextField = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (VIGetNextField) {
@@ -10651,12 +10649,6 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 				if (j == 1)
 					data[i + 12] = 0x38600006;	// li		r3, 6
 			
-			if (swissSettings.forceVJitter == 2) {
-				memset(data + i, 0, VIGetNextFieldSigs[j].Length * sizeof(u32));
-				
-				data[i + 0] = 0x38600002;	// li		r3, 2
-				data[i + 1] = 0x4E800020;	// blr
-			}
 			print_debug("Found:[%s$%i] @ %08X\n", VIGetNextFieldSigs[j].Name, j, VIGetNextField);
 		}
 	}
@@ -10928,6 +10920,29 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 					vpOffset = data[i + 11] & 0x1FFFFF;
 					constant = loadResolve(data, dataType, i + 11, 2);
 					break;
+			}
+			if (swissSettings.forceVJitter == 2) {
+				switch (j) {
+					case 0:
+						data[i + 32] = 0x60000000;	// nop
+						break;
+					case 1:
+						data[i + 25] = 0x60000000;	// nop
+						break;
+					case 2:
+					case 3:
+						data[i + 12] = 0x60000000;	// nop
+						break;
+					case 4:
+						data[i + 11] = 0x60000000;	// nop
+						break;
+					case 5:
+						data[i +  6] = 0x60000000;	// nop
+						break;
+					case 6:
+						data[i +  3] = 0x60000000;	// nop
+						break;
+				}
 			}
 			if (swissSettings.fixPixelCenter)
 				if (constant) *constant = truncf(*constant) + 0.5f / 12.0f * swissSettings.fixPixelCenter;
