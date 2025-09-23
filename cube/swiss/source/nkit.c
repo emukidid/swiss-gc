@@ -206,7 +206,17 @@ static const struct {
 	{ "cleanrip-gc.dol",                      1859168, 0xB27D4814753386EF },
 	{ "cleanrip-gc.dol",                      1901888, 0x690543D39FC7E9F1 },
 	{ "cleanrip-gc.dol",                      1929280, 0xE526065DAA036D2A },
-#define TOTAL_DOL_COUNT (VALID_DOL_COUNT + 9)
+	{ "gcars.dol",                              69636, 0x080AEA94ED7A6252 },
+	{ "gcars.dol",                             224336, 0x57942F559BD5E065 },
+	{ "gcars.dol",                             225108, 0x1C8D121AB4A008FA },
+	{ "gcars.dol",                             226684, 0x123AC1AA15AC5402 },
+	{ "gcars.dol",                             226764, 0x8B5CC0E6BA2BE087 },
+	{ "gcars.dol",                             226804, 0xFDADA706017E4E1E },
+	{ "gcars.dol",                             226884, 0x77B98C85F6C871E1 },
+	{ "gcars.dol",                             231028, 0x7BC79D067E2E9B25 },
+	{ "gcars.dol",                             234836, 0x06607E83075D8B8E },
+	{ "gcars.dol",                             255308, 0x55D21F77483E5838 },
+#define TOTAL_DOL_COUNT (VALID_DOL_COUNT + 19)
 };
 
 static const dvddiskid NDDEMO = {
