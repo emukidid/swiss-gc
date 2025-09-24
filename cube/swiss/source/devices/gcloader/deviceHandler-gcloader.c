@@ -24,15 +24,11 @@ int gcloaderHwVersion;
 char *gcloaderVersionStr;
 static FATFS *gcloaderfs = NULL;
 
-file_handle initial_GCLoader =
-	{ "gcldr:/",       // directory
-	  0ULL,     // fileBase (u64)
-	  0,        // offset
-	  0,        // size
-	  IS_DIR,
-	  0,
-	  0
-	};
+file_handle initial_GCLoader = {
+	.name     = "gcldr:/",
+	.fileType = IS_DIR,
+	.device   = &__device_gcloader,
+};
 
 s32 deviceHandler_GCLoader_readFile(file_handle* file, void* buffer, u32 length) {
 	if(file->status == STATUS_MAPPED) {

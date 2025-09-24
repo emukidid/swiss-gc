@@ -1300,12 +1300,12 @@ void boot_dol(file_handle* file, int argc, char *argv[])
 	for(i = 0; i < file->size; i+= 131072) {
 		DrawUpdateProgressBar(progBar, (int)((float)((float)i/(float)file->size)*100));
 		
-		devices[DEVICE_CUR]->seekFile(file,i,DEVICE_HANDLER_SEEK_SET);
+		file->device->seekFile(file,i,DEVICE_HANDLER_SEEK_SET);
 		int size = i+131072 > file->size ? file->size-i : 131072; 
-		if(devices[DEVICE_CUR]->readFile(file,ptr,size)!=size) {
+		if(file->device->readFile(file,ptr,size)!=size) {
 			DrawDispose(progBar);
 			free(buffer);
-			devices[DEVICE_CUR]->closeFile(file);
+			file->device->closeFile(file);
 			uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL,"Failed to read DOL. Press A.");
 			DrawPublish(msgBox);
 			wait_press_A();
@@ -1319,7 +1319,7 @@ void boot_dol(file_handle* file, int argc, char *argv[])
 	if(!valid_dol_xxh3(file, hash)) {
 		DrawDispose(progBar);
 		free(buffer);
-		devices[DEVICE_CUR]->closeFile(file);
+		file->device->closeFile(file);
 		uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL,"DOL is corrupted. Press A.");
 		DrawPublish(msgBox);
 		wait_press_A();

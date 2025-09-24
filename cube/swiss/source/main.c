@@ -288,7 +288,7 @@ int main(int argc, char *argv[])
 			}
 			memcpy(&curDir, devices[DEVICE_CUR]->initial, sizeof(file_handle));
 			needsDeviceChange = 0;
-			DrawLoadBackdrop();
+			DrawLoadBackdrop(devices[DEVICE_CUR]);
 		}
 	}
 

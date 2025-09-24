@@ -20,19 +20,16 @@
 #include "gcm.h"
 #include "wkf.h"
 
-file_handle initial_DVD =
-{ "dvd:/",     // directory
-	  0ULL,     // fileBase (u64)
-	  0,        // offset
-	  0,        // size
-	  IS_DIR,
-	  DRV_ERROR
+file_handle initial_DVD = {
+	.name     = "dvd:/",
+	.fileType = IS_DIR,
+	.device   = &__device_dvd,
 };
 
 device_info initial_DVD_info = {
-	DISC_SIZE,
-	DISC_SIZE,
-	true
+	.freeSpace  = DISC_SIZE,
+	.totalSpace = DISC_SIZE,
+	.metric     = true
 };
 
 static char error_str[256];
@@ -308,8 +305,9 @@ s32 deviceHandler_DVD_readDir(file_handle* ffile, file_handle** dir, u32 type){
 				(*dir)[num].offset = 0;
 				(*dir)[num].size   = (isGC?DISC_SIZE:WII_D9_SIZE)-tmpOffset;
 				(*dir)[num].fileType = IS_FILE;
-				(*dir)[num].meta = 0;
 				(*dir)[num].status = STATUS_NOT_MAPPED;
+				(*dir)[num].meta = 0;
+				(*dir)[num].device = ffile->device;
 				num++;
 			}
 		}
@@ -340,6 +338,7 @@ s32 deviceHandler_DVD_readDir(file_handle* ffile, file_handle** dir, u32 type){
 			if((*dir)[i].name[strlen((*dir)[i].name)-1] == '/' )
 			(*dir)[i].name[strlen((*dir)[i].name)-1] = 0;	//get rid of trailing '/'
 			(*dir)[i].meta = 0;
+			(*dir)[i].device = ffile->device;
 			usedSpace += (*dir)[i].size;
 		}
 		//kill the large TOC so we can have a lot more memory ingame (256k more)
@@ -349,6 +348,7 @@ s32 deviceHandler_DVD_readDir(file_handle* ffile, file_handle** dir, u32 type){
 		if(strcmp((*dir)[0].name, ffile->name) == 0) {
 			concat_path((*dir)[0].name, ffile->name, "..");
 			(*dir)[0].fileType = IS_SPECIAL;
+			(*dir)[0].device = ffile->device;
 		}
 		else if(dvdDiscTypeInt == ISO9660_GAMECUBE_DISC) {
 			DiskHeader *diskHeader = get_gcm_header(ffile);
@@ -362,6 +362,7 @@ s32 deviceHandler_DVD_readDir(file_handle* ffile, file_handle** dir, u32 type){
 			(*dir)[num_entries].size = DISC_SIZE;
 			(*dir)[num_entries].fileType = IS_FILE;
 			(*dir)[num_entries].meta = 0;
+			(*dir)[num_entries].device = ffile->device;
 			num_entries++;
 
 			free(diskHeader);

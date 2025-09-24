@@ -139,13 +139,13 @@ file_handle* usbgecko_get_entry() {
 	// Try get a reply
 	usb_recvbuffer_safe(1, get_buffer(), 1);
 	if(get_buffer()[0] == ANS_READY) {
-		usb_recvbuffer_safe(1, get_buffer(), offsetof(file_handle, lockCount));
+		usb_recvbuffer_safe(1, get_buffer(), offsetof(file_handle, device));
 		if(!get_buffer()[0]) {
 			return NULL;
 		}
 		else {
 			memset(&filehndl, 0, sizeof(file_handle));
-			memcpy(&filehndl, get_buffer(), offsetof(file_handle, lockCount));
+			memcpy(&filehndl, get_buffer(), offsetof(file_handle, device));
 			filehndl.size = bswap32(filehndl.size);
 			return &filehndl;
 		}

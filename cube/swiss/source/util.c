@@ -325,7 +325,7 @@ bool deleteFileOrDir(file_handle* entry) {
 	if(entry->fileType == IS_DIR) {
 		print_debug("Entering dir for deletion: %s\n", entry);
 		file_handle* dirEntries = NULL;
-		int dirEntryCount = devices[DEVICE_CUR]->readDir(entry, &dirEntries, -1);
+		int dirEntryCount = entry->device->readDir(entry, &dirEntries, -1);
 		int i;
 		for(i = 0; i < dirEntryCount; i++) {
 			if(!deleteFileOrDir(&dirEntries[i])) {
@@ -334,11 +334,11 @@ bool deleteFileOrDir(file_handle* entry) {
 		}
 		if(dirEntries) free(dirEntries);
 		print_debug("Finally, deleting empty directory: %s\n", entry);
-		return !devices[DEVICE_CUR]->deleteFile(entry);
+		return !entry->device->deleteFile(entry);
 	}
 	if(entry->fileType == IS_FILE) {
 		print_debug("Deleting file: %s\n", entry);
-		return !devices[DEVICE_CUR]->deleteFile(entry);
+		return !entry->device->deleteFile(entry);
 	}
 	return true;	// IS_SPECIAL can be ignored.
 }

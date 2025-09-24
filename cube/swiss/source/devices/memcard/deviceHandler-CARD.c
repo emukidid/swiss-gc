@@ -19,22 +19,16 @@
 #include "images/gamecube_rgb.h"
 
 
-file_handle initial_CARDA =
-	{ "carda:/",       // directory
-	  0,
-	  0,          // offset
-	  0,          // size
-	  IS_DIR,
-	  0
+file_handle initial_CARDA = {
+	.name     = "carda:/",
+	.fileType = IS_DIR,
+	.device   = &__device_card_a,
 };
 
-file_handle initial_CARDB =
-	{ "cardb:/",       // directory
-	  0	,
-	  0,          // offset
-	  0,          // size
-	  IS_DIR,
-	  0
+file_handle initial_CARDB = {
+	.name     = "cardb:/",
+	.fileType = IS_DIR,
+	.device   = &__device_card_b,
 };
 
 static device_info initial_CARD_info[2];
@@ -121,6 +115,7 @@ s32 deviceHandler_CARD_readDir(file_handle* ffile, file_handle** dir, u32 type){
 	*dir = calloc(num_entries, sizeof(file_handle));
 	concat_path((*dir)[0].name, ffile->name, "..");
 	(*dir)[0].fileType = IS_SPECIAL;
+	(*dir)[0].device   = ffile->device;
 
 	int usedSpace = 0;
 	ret = CARD_FindFirst (slot, memcard_dir, true);
@@ -135,6 +130,7 @@ s32 deviceHandler_CARD_readDir(file_handle* ffile, file_handle** dir, u32 type){
 		(*dir)[i].fileBase = memcard_dir->fileno;
 		(*dir)[i].size     = memcard_dir->filelen;
 		(*dir)[i].fileType = IS_FILE;
+		(*dir)[i].device   = ffile->device;
 		memcpy( (*dir)[i].other, memcard_dir, sizeof(card_dir));
 		usedSpace += (*dir)[i].size;
 		ret = CARD_FindNext (memcard_dir);

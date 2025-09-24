@@ -44,22 +44,14 @@
 extern int net_initialized;
 int smb_initialized = 0;
 
-file_handle initial_SMB =
-	{ "smb:/", // file name
-	  0ULL,      // discoffset (u64)
-	  0,         // offset
-	  0,         // size
-	  IS_DIR,
-	  0,
-	  0
-	};
-
-device_info initial_SMB_info = {
-	0LL,
-	0LL,
-	true
+file_handle initial_SMB = {
+	.name     = "smb:/",
+	.fileType = IS_DIR,
+	.device   = &__device_smb,
 };
-	
+
+device_info initial_SMB_info;
+
 device_info* deviceHandler_SMB_info(file_handle* file) {
 	return &initial_SMB_info;
 }
@@ -71,9 +63,10 @@ void readDeviceInfoSMB() {
 	int res = statvfs("smb:/", &buf);
 	initial_SMB_info.freeSpace = !res ? (u64)((u64)buf.f_bfree*(u64)buf.f_bsize):0LL;
 	initial_SMB_info.totalSpace = !res ? (u64)((u64)buf.f_blocks*(u64)buf.f_bsize):0LL;
+	initial_SMB_info.metric = true;
 	DrawDispose(msgBox);
 }
-	
+
 // Connect to the share specified in settings.cfg
 void init_samba() {
   
@@ -108,6 +101,7 @@ s32 deviceHandler_SMB_readDir(file_handle* ffile, file_handle** dir, u32 type){
 	*dir = calloc(num_entries, sizeof(file_handle));
 	concat_path((*dir)[0].name, ffile->name, "..");
 	(*dir)[0].fileType = IS_SPECIAL;
+	(*dir)[0].device   = ffile->device;
 	
 	// Read each entry of the directory
 	do {
@@ -132,6 +126,7 @@ s32 deviceHandler_SMB_readDir(file_handle* ffile, file_handle** dir, u32 type){
 				(*dir)[i].fileBase = fstat.st_ino;
 				(*dir)[i].size     = fstat.st_size;
 				(*dir)[i].fileType = S_ISDIR(fstat.st_mode) ? IS_DIR : IS_FILE;
+				(*dir)[i].device   = ffile->device;
 				++i;
 			}
 		}

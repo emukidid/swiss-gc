@@ -139,16 +139,10 @@ static s32 (*write_rom[])(file_handle* file, const void* buffer, u32 length) =
 	write_rom_void
 };
 
-file_handle initial_SYS =
-{
-	"sys:/",
-	0ULL,
-	0,
-	0,
-	IS_DIR,
-	0,
-	0,
-	NULL
+file_handle initial_SYS = {
+	.name     = "sys:/",
+	.fileType = IS_DIR,
+	.device   = &__device_sys,
 };
 
 device_info* deviceHandler_SYS_info(file_handle* file) {
@@ -215,6 +209,7 @@ static void descrambler(unsigned int offset, void* buffer, unsigned int length) 
 bool load_rom_ipl(DEVICEHANDLER_INTERFACE* device, void** buffer, u32* length) {
 	file_handle* file = calloc(1, sizeof(file_handle));
 	concat_path(file->name, device->initial->name, "swiss/patches/ipl.bin");
+	file->device = device;
 
 	BS2Header bs2Header;
 	device->seekFile(file, 0x800, DEVICE_HANDLER_SEEK_SET);
@@ -412,12 +407,14 @@ s32 deviceHandler_SYS_readDir(file_handle* ffile, file_handle** dir, u32 type) {
 	*dir = calloc(num_entries, sizeof(file_handle));
 	concat_path((*dir)[i].name, ffile->name, "..");
 	(*dir)[i].fileType = IS_SPECIAL;
+	(*dir)[i].device   = ffile->device;
 
 	for(i = ROM_IPL; i < NUM_ROMS; i++) {
 		concat_path((*dir)[i].name, ffile->name, rom_names[i]);
 		(*dir)[i].fileBase = i;
 		(*dir)[i].size     = rom_sizes[i];
 		(*dir)[i].fileType = IS_FILE;
+		(*dir)[i].device   = ffile->device;
 	}
 
 	return num_entries;

@@ -50,6 +50,8 @@ typedef struct {
 	BNRDesc bannerDesc;
 } file_meta;
 
+typedef struct DEVICEHANDLER_STRUCT DEVICEHANDLER_INTERFACE;
+
 typedef struct {
 	char name[PATHNAME_MAX]; 		// File or Folder, absolute path goes here
 	uint64_t fileBase;   	// Raw sector on device
@@ -63,6 +65,7 @@ typedef struct {
 	file_meta *meta;
 	u8 other[128];			// Store anything else we want here
 	void* uiObj;			// UI associated with this file_handle
+	DEVICEHANDLER_INTERFACE *device;
 	vu32 lockCount;
 	lwp_t thread;
 } file_handle;	// Note: If the contents of this change, recompile pc/usbgecko/main.c
@@ -176,8 +179,6 @@ typedef char* (* _fn_details)(file_handle*);
 #define DEVICE_ID_MAX		DEVICE_ID_K
 #define DEVICE_ID_UNK		(DEVICE_ID_MAX + 1)
 
-typedef struct DEVICEHANDLER_STRUCT DEVICEHANDLER_INTERFACE;
-
 struct DEVICEHANDLER_STRUCT {
 	u8 				deviceUniqueId;
 	const char*		hwName;
@@ -267,7 +268,7 @@ extern const char* getHwNameByLocation(u32 location);
 extern bool getFragments(int deviceSlot, file_handle *file, file_frag **fragList, u32 *totFrags, u8 fileNum, u32 forceBaseOffset, u32 forceSize);
 extern void print_frag_list(file_frag *fragList, u32 totFrags);
 
-extern FILE* openFileStream(int deviceSlot, file_handle *file);
+extern FILE* openFileStream(file_handle *file);
 
 #endif
 

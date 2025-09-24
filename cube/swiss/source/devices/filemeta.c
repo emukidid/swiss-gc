@@ -67,7 +67,7 @@ file_meta* meta_alloc() {
 				if(dirEntries[i]->meta && trylockFile(dirEntries[i])) {
 					meta_free(dirEntries[i]->meta);
 					dirEntries[i]->meta = NULL;
-					devices[DEVICE_CUR]->closeFile(dirEntries[i]);
+					dirEntries[i]->device->closeFile(dirEntries[i]);
 					unlockFile(dirEntries[i]);
 					break;
 				}
@@ -121,8 +121,8 @@ void populate_save_meta(file_handle *f, u8 bannerFormat, u32 bannerOffset, u32 c
 			case CARD_BANNER_CI:
 				f->meta->bannerSize = CARD_BANNER_W * CARD_BANNER_H + 256 * 2;
 				f->meta->banner = memalign(32, f->meta->bannerSize);
-				devices[DEVICE_CUR]->seekFile(f, bannerOffset, DEVICE_HANDLER_SEEK_SET);
-				if(devices[DEVICE_CUR]->readFile(f, f->meta->banner, f->meta->bannerSize) == f->meta->bannerSize) {
+				f->device->seekFile(f, bannerOffset, DEVICE_HANDLER_SEEK_SET);
+				if(f->device->readFile(f, f->meta->banner, f->meta->bannerSize) == f->meta->bannerSize) {
 					meta_create_direct_texture_ci(f->meta);
 				}
 				else {
@@ -133,8 +133,8 @@ void populate_save_meta(file_handle *f, u8 bannerFormat, u32 bannerOffset, u32 c
 			case CARD_BANNER_RGB:
 				f->meta->bannerSize = CARD_BANNER_W * CARD_BANNER_H * 2;
 				f->meta->banner = memalign(32, f->meta->bannerSize);
-				devices[DEVICE_CUR]->seekFile(f, bannerOffset, DEVICE_HANDLER_SEEK_SET);
-				if(devices[DEVICE_CUR]->readFile(f, f->meta->banner, f->meta->bannerSize) == f->meta->bannerSize) {
+				f->device->seekFile(f, bannerOffset, DEVICE_HANDLER_SEEK_SET);
+				if(f->device->readFile(f, f->meta->banner, f->meta->bannerSize) == f->meta->bannerSize) {
 					meta_create_direct_texture(f->meta);
 				}
 				else {
@@ -146,8 +146,8 @@ void populate_save_meta(file_handle *f, u8 bannerFormat, u32 bannerOffset, u32 c
 	}
 	if(commentOffset != -1) {
 		char comment[64];
-		devices[DEVICE_CUR]->seekFile(f, commentOffset, DEVICE_HANDLER_SEEK_SET);
-		if(devices[DEVICE_CUR]->readFile(f, comment, 64) == 64) {
+		f->device->seekFile(f, commentOffset, DEVICE_HANDLER_SEEK_SET);
+		if(f->device->readFile(f, comment, 64) == 64) {
 			snprintf(f->meta->bannerDesc.description, BNR_DESC_LEN, "%.32s\n%.32s", &comment[0], &comment[32]);
 			fixBannerDesc(f->meta->bannerDesc.description, BNR_DESC_LEN);
 		}
@@ -164,8 +164,8 @@ void populate_game_meta(file_handle *f, u32 bannerOffset, u32 bannerSize) {
 	}
 	else if(bannerSize) {
 		BNR *banner = memalign(32, bannerSize);
-		devices[DEVICE_CUR]->seekFile(f, bannerOffset, DEVICE_HANDLER_SEEK_SET);
-		if(devices[DEVICE_CUR]->readFile(f, banner, bannerSize) != bannerSize) {
+		f->device->seekFile(f, bannerOffset, DEVICE_HANDLER_SEEK_SET);
+		if(f->device->readFile(f, banner, bannerSize) != bannerSize) {
 			print_debug("Banner read failed %i from offset %08X\n", bannerSize, bannerOffset);
 		}
 		else {
@@ -226,7 +226,7 @@ void populate_meta(file_handle *f) {
 			else
 				f->meta->fileTypeTexObj = &fileimgTexObj;
 			
-			if(devices[DEVICE_CUR] == &__device_wode && f->status == STATUS_NOT_MAPPED) {
+			if(f->device == &__device_wode && f->status == STATUS_NOT_MAPPED) {
 				f->meta->bannerSum = 0xFFFF;
 				f->meta->bannerSize = BNR_PIXELDATA_LEN;
 				f->meta->banner = memalign(32,BNR_PIXELDATA_LEN);
@@ -244,7 +244,7 @@ void populate_meta(file_handle *f) {
 				f->meta->fileTypeTexObj = &gcmimgTexObj;
 				f->meta->displayName = strncpy(f->meta->bannerDesc.fullGameName, isoInfo->name, BNR_FULL_TEXT_LEN);
 			}
-			else if(devices[DEVICE_CUR] == &__device_card_a || devices[DEVICE_CUR] == &__device_card_b) {
+			else if(f->device == &__device_card_a || f->device == &__device_card_b) {
 				card_dir* dir = (card_dir*)&f->other;
 				card_stat stat;
 				if(CARD_GetStatus(dir->chn, dir->fileno, &stat) == CARD_ERROR_READY) {
@@ -261,11 +261,11 @@ void populate_meta(file_handle *f) {
 			}
 			else if(endsWith(f->name,".gci") || endsWith(f->name,".gcs") || endsWith(f->name,".sav")) {
 				GCI gci;
-				devices[DEVICE_CUR]->seekFile(f, 0, DEVICE_HANDLER_SEEK_SET);
-				if(devices[DEVICE_CUR]->readFile(f, &gci, sizeof(GCI)) == sizeof(GCI)) {
+				f->device->seekFile(f, 0, DEVICE_HANDLER_SEEK_SET);
+				if(f->device->readFile(f, &gci, sizeof(GCI)) == sizeof(GCI)) {
 					if(!memcmp(&gci, "DATELGC_SAVE", 12)) {
-						devices[DEVICE_CUR]->seekFile(f, 0x80, DEVICE_HANDLER_SEEK_SET);
-						devices[DEVICE_CUR]->readFile(f, &gci, sizeof(GCI));
+						f->device->seekFile(f, 0x80, DEVICE_HANDLER_SEEK_SET);
+						f->device->readFile(f, &gci, sizeof(GCI));
 						#pragma GCC diagnostic push
 						#pragma GCC diagnostic ignored "-Wrestrict"
 						swab(&gci.reserved01, &gci.reserved01, 2);
@@ -273,8 +273,8 @@ void populate_meta(file_handle *f) {
 						#pragma GCC diagnostic pop
 					}
 					else if(!memcmp(&gci, "GCSAVE", 6)) {
-						devices[DEVICE_CUR]->seekFile(f, 0x110, DEVICE_HANDLER_SEEK_SET);
-						devices[DEVICE_CUR]->readFile(f, &gci, sizeof(GCI));
+						f->device->seekFile(f, 0x110, DEVICE_HANDLER_SEEK_SET);
+						f->device->readFile(f, &gci, sizeof(GCI));
 					}
 					if(f->size - f->offset == gci.filesize8 * 8192) {
 						if(gci.icon_addr != -1) gci.icon_addr += f->offset;
@@ -314,8 +314,8 @@ void populate_meta(file_handle *f) {
 			}
 			else if(endsWith(f->name,".tgc")) {
 				TGCHeader tgcHeader;
-				devices[DEVICE_CUR]->seekFile(f, 0, DEVICE_HANDLER_SEEK_SET);
-				if(devices[DEVICE_CUR]->readFile(f, &tgcHeader, sizeof(TGCHeader)) == sizeof(TGCHeader) && tgcHeader.magic == TGC_MAGIC) {
+				f->device->seekFile(f, 0, DEVICE_HANDLER_SEEK_SET);
+				if(f->device->readFile(f, &tgcHeader, sizeof(TGCHeader)) == sizeof(TGCHeader) && tgcHeader.magic == TGC_MAGIC) {
 					populate_game_meta(f, tgcHeader.bannerStart, tgcHeader.bannerLength);
 					f->meta->fileTypeTexObj = &tgcimgTexObj;
 				}
@@ -326,14 +326,14 @@ void populate_meta(file_handle *f) {
 				concat_path(bannerFile->name, bannerFile->name, "opening.bnr");
 				bannerFile->meta = f->meta;
 				
-				if (devices[DEVICE_CUR]->readFile(bannerFile, NULL, 0) == 0 && bannerFile->size)
+				if (f->device->readFile(bannerFile, NULL, 0) == 0 && bannerFile->size)
 					populate_game_meta(bannerFile, 0, bannerFile->size);
 				
-				devices[DEVICE_CUR]->closeFile(bannerFile);
+				f->device->closeFile(bannerFile);
 				free(bannerFile);
 			}
-			if(devices[DEVICE_CUR] == &__device_flippy || devices[DEVICE_CUR] == &__device_flippyflash) {
-				devices[DEVICE_CUR]->closeFile(f);
+			if(f->device == &__device_flippy || f->device == &__device_flippyflash) {
+				f->device->closeFile(f);
 			}
 		}
 		else if (f->fileType == IS_DIR) {
@@ -342,21 +342,23 @@ void populate_meta(file_handle *f) {
 			file_handle *bannerFile = calloc(1, sizeof(file_handle));
 			concat_path(bannerFile->name, f->name, "opening.bnr");
 			bannerFile->meta = f->meta;
+			bannerFile->device = f->device;
 			
-			if (devices[DEVICE_CUR]->readFile(bannerFile, NULL, 0) == 0 && bannerFile->size) {
+			if (f->device->readFile(bannerFile, NULL, 0) == 0 && bannerFile->size) {
 				populate_game_meta(bannerFile, 0, bannerFile->size);
 				
 				file_handle *bootFile = calloc(1, sizeof(file_handle));
 				concat_path(bootFile->name, f->name, "default.dol");
 				bootFile->meta = f->meta;
+				bootFile->device = f->device;
 				
-				if (devices[DEVICE_CUR]->readFile(bootFile, NULL, 0) == 0 && bootFile->size) {
-					devices[DEVICE_CUR]->closeFile(bootFile);
+				if (f->device->readFile(bootFile, NULL, 0) == 0 && bootFile->size) {
+					f->device->closeFile(bootFile);
 					
 					f = memcpy(f, bootFile, offsetof(file_handle, uiObj));
 					f->meta->fileTypeTexObj = &dolimgTexObj;
 				}
-				devices[DEVICE_CUR]->closeFile(bootFile);
+				f->device->closeFile(bootFile);
 				free(bootFile);
 			} else if (!fnmatch("*/apps", f->name, FNM_PATHNAME | FNM_CASEFOLD))
 				f->meta->displayName = "Applications";
@@ -366,24 +368,25 @@ void populate_meta(file_handle *f) {
 				file_handle *bootFile = calloc(1, sizeof(file_handle));
 				concat_path(bootFile->name, f->name, "boot.dol");
 				bootFile->meta = f->meta;
+				bootFile->device = f->device;
 				
-				if (devices[DEVICE_CUR]->readFile(bootFile, NULL, 0) == 0 && bootFile->size) {
-					devices[DEVICE_CUR]->closeFile(bootFile);
+				if (f->device->readFile(bootFile, NULL, 0) == 0 && bootFile->size) {
+					f->device->closeFile(bootFile);
 					
 					concatf_path(bootFile->name, f->name, "%s.dol", getRelativeName(f->name));
 					bootFile->size = 0;
 					
-					if (devices[DEVICE_CUR]->readFile(bootFile, NULL, 0) == 0 && bootFile->size) {
-						devices[DEVICE_CUR]->closeFile(bootFile);
+					if (f->device->readFile(bootFile, NULL, 0) == 0 && bootFile->size) {
+						f->device->closeFile(bootFile);
 						
 						f = memcpy(f, bootFile, offsetof(file_handle, uiObj));
 						f->meta->fileTypeTexObj = &dolimgTexObj;
 					}
 				}
-				devices[DEVICE_CUR]->closeFile(bootFile);
+				f->device->closeFile(bootFile);
 				free(bootFile);
 			}
-			devices[DEVICE_CUR]->closeFile(bannerFile);
+			f->device->closeFile(bannerFile);
 			free(bannerFile);
 		}
 		else if (f->fileType == IS_SPECIAL) {
@@ -400,7 +403,7 @@ void repopulate_meta(file_handle *f) {
 
 file_handle* meta_find_disc2(file_handle *f) {
 	file_handle* disc2File = NULL;
-	if(is_multi_disc(f->meta) && !(devices[DEVICE_CUR]->quirks & QUIRK_GCLOADER_NO_DISC_2)) {
+	if(is_multi_disc(f->meta) && !(f->device->quirks & QUIRK_GCLOADER_NO_DISC_2)) {
 		file_handle* dirEntries = getCurrentDirEntries();
 		int dirEntryCount = getCurrentDirEntryCount();
 		for(int i = 0; i < 2; i++) {

@@ -21,15 +21,11 @@
 extern int net_initialized;
 static FSP_SESSION *fsp_session;
 
-file_handle initial_FSP =
-	{ "fsp:/",      // directory
-	  0ULL,     // fileBase (u64)
-	  0,        // offset
-	  0,        // size
-	  IS_DIR,
-	  0,
-	  0
-	};
+file_handle initial_FSP = {
+	.name     = "fsp:/",
+	.fileType = IS_DIR,
+	.device   = &__device_fsp,
+};
 
 device_info* deviceHandler_FSP_info(file_handle* file) {
 	return NULL;
@@ -47,6 +43,7 @@ s32 deviceHandler_FSP_readDir(file_handle* ffile, file_handle** dir, u32 type) {
 	*dir = calloc(num_entries, sizeof(file_handle));
 	concat_path((*dir)[0].name, ffile->name, "..");
 	(*dir)[0].fileType = IS_SPECIAL;
+	(*dir)[0].device   = ffile->device;
 	
 	// Read each entry of the directory
 	while( !fsp_readdir_native(dp, &entry, &result) && result == &entry ){
@@ -64,6 +61,7 @@ s32 deviceHandler_FSP_readDir(file_handle* ffile, file_handle** dir, u32 type) {
 			if(concat_path((*dir)[i].name, ffile->name, entry.name) < PATHNAME_MAX) {
 				(*dir)[i].size     = entry.size;
 				(*dir)[i].fileType = (entry.type == FSP_RDTYPE_DIR) ? IS_DIR : IS_FILE;
+				(*dir)[i].device   = ffile->device;
 				++i;
 			}
 		}

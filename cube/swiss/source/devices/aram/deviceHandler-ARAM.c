@@ -17,15 +17,11 @@
 
 static FATFS *aramfs = NULL;
 
-file_handle initial_ARAM =
-	{ "ram:/",       // directory
-	  0ULL,     // fileBase (u64)
-	  0,        // offset
-	  0,        // size
-	  IS_DIR,
-	  0,
-	  0
-	};
+file_handle initial_ARAM = {
+	.name     = "ram:/",
+	.fileType = IS_DIR,
+	.device   = &__device_aram,
+};
 
 s32 deviceHandler_ARAM_init(file_handle* file) {
 	if(aramfs != NULL) {

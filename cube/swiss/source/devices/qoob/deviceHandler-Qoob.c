@@ -40,21 +40,18 @@ struct qoobEntryHeader {
 
 char iplBlock[256] __attribute__((aligned(32)));
 
-file_handle initial_Qoob =
-	{ "qoob:/",       // directory
-	  0ULL,     // fileBase (u64)
-	  0,        // offset
-	  0,        // size
-	  IS_DIR,
-	  0
-	};
-	
-device_info initial_Qoob_info = {
-	0x200000,
-	0x200000,
-	false
+file_handle initial_Qoob = {
+	.name     = "qoob:/",
+	.fileType = IS_DIR,
+	.device   = &__device_qoob,
 };
-	
+
+device_info initial_Qoob_info = {
+	.freeSpace  = 0x200000,
+	.totalSpace = 0x200000,
+	.metric     = false
+};
+
 device_info* deviceHandler_Qoob_info(file_handle* file) {
 	return &initial_Qoob_info;
 }
@@ -98,6 +95,7 @@ s32 deviceHandler_Qoob_readDir(file_handle* ffile, file_handle** dir, u32 type) 
 	*dir = calloc(num_entries, sizeof(file_handle));
 	concat_path((*dir)[0].name, ffile->name, "..");
 	(*dir)[0].fileType = IS_SPECIAL;
+	(*dir)[0].device   = ffile->device;
 	
 	u32 usedSpace = 0;
 	
@@ -159,6 +157,7 @@ s32 deviceHandler_Qoob_readDir(file_handle* ffile, file_handle** dir, u32 type) 
 				(*dir)[i].fileBase = block;
 				(*dir)[i].size     = sizeToBlocks(entryHeader.size) * QOOB_BLOCK_SIZE;
 				(*dir)[i].fileType = IS_FILE;
+				(*dir)[i].device   = ffile->device;
 				usedSpace += (*dir)[i].size;
 				++i;
 				

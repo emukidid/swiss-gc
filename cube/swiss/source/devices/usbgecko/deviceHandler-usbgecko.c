@@ -18,15 +18,11 @@
 
 #define NO_PC (-1)
 
-file_handle initial_USBGecko =
-	{ "./",     // directory
-	  0ULL,     // fileBase (u64)
-	  0,        // offset
-	  0,        // size
-	  IS_DIR,
-	  0,
-	  0
-	};
+file_handle initial_USBGecko = {
+	.name     = "./",
+	.fileType = IS_DIR,
+	.device   = &__device_usbgecko,
+};
 
 device_info* deviceHandler_USBGecko_info(file_handle* file) {
 	return NULL;
@@ -40,6 +36,7 @@ s32 deviceHandler_USBGecko_readDir(file_handle* ffile, file_handle** dir, u32 ty
 	*dir = calloc(num_entries, sizeof(file_handle));
 	concat_path((*dir)[0].name, ffile->name, "..");
 	(*dir)[0].fileType = IS_SPECIAL;
+	(*dir)[0].device   = ffile->device;
 	
 	uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Reading directory"));
 	// Read each entry of the directory
@@ -55,6 +52,7 @@ s32 deviceHandler_USBGecko_readDir(file_handle* ffile, file_handle** dir, u32 ty
 		if(strlcpy((*dir)[i].name, entry->name, PATHNAME_MAX) < PATHNAME_MAX) {
 			(*dir)[i].size     = entry->size;
 			(*dir)[i].fileType = entry->fileType + IS_FILE;
+			(*dir)[i].device   = ffile->device;
 			++i;
 		}
 	}

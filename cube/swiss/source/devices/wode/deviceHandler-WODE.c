@@ -24,14 +24,11 @@ char *wode_regions_str[] = {"JPN","USA","EUR","ALL","KOR"};
 char disktype[] = {'?', 'G','W','W','I' };
 s32 wodeInited = 0;
 
-file_handle initial_WODE =
-	{ "wode:/",     // directory
-	  0ULL,     // fileBase (u64)
-	  0,        // offset
-	  0,        // size
-	  IS_DIR,
-	  DRV_ERROR
-	};
+file_handle initial_WODE = {
+	.name     = "wode:/",
+	.fileType = IS_DIR,
+	.device   = &__device_wode,
+};
 
 s32 startupWode() {
 	if(OpenWode() == 0) {
@@ -74,6 +71,7 @@ s32 deviceHandler_WODE_readDir(file_handle* ffile, file_handle** dir, u32 type){
 	*dir = calloc(num_entries, sizeof(file_handle));
 	concat_path((*dir)[0].name, ffile->name, "..");
 	(*dir)[0].fileType = IS_SPECIAL;
+	(*dir)[0].device = ffile->device;
 
 	numPartitions = GetNumPartitions();
 	for(i=0;i<numPartitions;i++) {
@@ -89,6 +87,7 @@ s32 deviceHandler_WODE_readDir(file_handle* ffile, file_handle** dir, u32 type){
 				concatf_path((*dir)[num_entries].name, ffile->name, "%.64s.gcm", &tmp.name[0]);
 				(*dir)[num_entries].size = DISC_SIZE;
 				(*dir)[num_entries].fileType = IS_FILE;
+				(*dir)[num_entries].device = ffile->device;
 				memcpy(&(*dir)[num_entries].other, &tmp, sizeof(ISOInfo_t));
 				print_debug("Adding WODE entry: %s part:%08X iso:%08X region:%08X\n",
 					&tmp.name[0], tmp.iso_partition, tmp.iso_number, tmp.iso_region);

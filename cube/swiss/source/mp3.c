@@ -13,8 +13,8 @@ static int volume = 192;
 
 s32 mp3Reader(void *cbdata, void *dst, s32 size) {
 	file_handle *file = cbdata;
-	devices[DEVICE_CUR]->seekFile(file,file->offset,DEVICE_HANDLER_SEEK_SET);
-	int ret = devices[DEVICE_CUR]->readFile(file,dst,size);
+	file->device->seekFile(file,file->offset,DEVICE_HANDLER_SEEK_SET);
+	int ret = file->device->readFile(file,dst,size);
 	return ret;
 }
 
@@ -108,7 +108,7 @@ int play_mp3(file_handle *file, int numFiles, int curMP3) {
 	}
 	if(player != NULL)
 		DrawDispose(player);
-	devices[DEVICE_CUR]->closeFile(file);
+	file->device->closeFile(file);
 	return ret;
 }
 

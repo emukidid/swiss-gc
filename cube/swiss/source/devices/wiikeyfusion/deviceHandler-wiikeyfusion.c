@@ -22,15 +22,11 @@
 
 static FATFS *wkffs = NULL;
 
-file_handle initial_WKF =
-	{ "wkf:/",       // directory
-	  0ULL,     // fileBase (u64)
-	  0,        // offset
-	  0,        // size
-	  IS_DIR,
-	  0,
-	  0
-	};
+file_handle initial_WKF = {
+	.name     = "wkf:/",
+	.fileType = IS_DIR,
+	.device   = &__device_wkf,
+};
 
 s32 deviceHandler_WKF_setupFile(file_handle* file, file_handle* file2, ExecutableFile* filesToPatch, int numToPatch) {
 	int i;

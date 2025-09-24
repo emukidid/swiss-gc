@@ -33,15 +33,15 @@ DiskHeader *get_gcm_header(file_handle *file) {
 	diskHeader=(DiskHeader*)memalign(32,sizeof(DiskHeader));
 	if(!diskHeader) return NULL;
 	
-	if(devices[DEVICE_CUR] == &__device_dvd && file->fileType == IS_DIR) {
+	if(file->device == &__device_dvd && file->fileType == IS_DIR) {
 		if(DVD_Read(diskHeader, 0, sizeof(DiskHeader)) != sizeof(DiskHeader)) {
 			free(diskHeader);
 			return NULL;
 		}
 	}
 	else {
-		devices[DEVICE_CUR]->seekFile(file,0,DEVICE_HANDLER_SEEK_SET);
-		if(devices[DEVICE_CUR]->readFile(file,diskHeader,sizeof(DiskHeader)) != sizeof(DiskHeader)) {
+		file->device->seekFile(file,0,DEVICE_HANDLER_SEEK_SET);
+		if(file->device->readFile(file,diskHeader,sizeof(DiskHeader)) != sizeof(DiskHeader)) {
 			free(diskHeader);
 			return NULL;
 		}
@@ -61,15 +61,15 @@ char *get_fst(file_handle *file, u32 file_offset, u32 file_size) {
 	FST=(char*)memalign(32,file_size);
 	if(!FST) return NULL;
 	
-	if(devices[DEVICE_CUR] == &__device_dvd && file->fileType == IS_DIR) {
+	if(file->device == &__device_dvd && file->fileType == IS_DIR) {
 		if(DVD_Read(FST, file_offset, file_size) != file_size) {
 			free(FST);
 			return NULL;
 		}
 	}
- 	else {
-		devices[DEVICE_CUR]->seekFile(file,file_offset,DEVICE_HANDLER_SEEK_SET);
-		if(devices[DEVICE_CUR]->readFile(file,FST,file_size) != file_size) {
+	else {
+		file->device->seekFile(file,file_offset,DEVICE_HANDLER_SEEK_SET);
+		if(file->device->readFile(file,FST,file_size) != file_size) {
 			free(FST);
 			return NULL;
 		}
@@ -147,8 +147,8 @@ bool valid_dol_file(file_handle *file, u32 file_offset, u32 file_size) {
 		return false;
 	}
 	DOLHEADER dolhdr;
-	devices[DEVICE_CUR]->seekFile(file, file_offset, DEVICE_HANDLER_SEEK_SET);
-	devices[DEVICE_CUR]->readFile(file, &dolhdr, DOLHDRLENGTH);
+	file->device->seekFile(file, file_offset, DEVICE_HANDLER_SEEK_SET);
+	file->device->readFile(file, &dolhdr, DOLHDRLENGTH);
 	
 	int i;
 	for(i = 0; i < MAXTEXTSECTION; i++) {
@@ -186,16 +186,16 @@ u32 calc_elf_segments_size(file_handle *file, u32 file_offset, u32 *file_size) {
 	u32 size = 0;
 	
 	Elf32_Ehdr *ehdr = calloc(1, sizeof(Elf32_Ehdr));
-	devices[DEVICE_CUR]->seekFile(file, file_offset, DEVICE_HANDLER_SEEK_SET);
-	devices[DEVICE_CUR]->readFile(file, ehdr, sizeof(Elf32_Ehdr));
+	file->device->seekFile(file, file_offset, DEVICE_HANDLER_SEEK_SET);
+	file->device->readFile(file, ehdr, sizeof(Elf32_Ehdr));
 	if(!valid_elf_image(ehdr)) {
 		free(ehdr);
 		return size;
 	}
 	
 	Elf32_Phdr *phdr = calloc(ehdr->e_phnum, sizeof(Elf32_Phdr));
-	devices[DEVICE_CUR]->seekFile(file, file_offset + ehdr->e_phoff, DEVICE_HANDLER_SEEK_SET);
-	devices[DEVICE_CUR]->readFile(file, phdr, ehdr->e_phnum * sizeof(Elf32_Phdr));
+	file->device->seekFile(file, file_offset + ehdr->e_phoff, DEVICE_HANDLER_SEEK_SET);
+	file->device->readFile(file, phdr, ehdr->e_phnum * sizeof(Elf32_Phdr));
 	
 	*file_size = ehdr->e_phoff + ehdr->e_phnum * sizeof(Elf32_Phdr);
 	
@@ -218,20 +218,20 @@ u32 get_iso_boot_record(file_handle *file) {
 	u32 file_offset = 17 * DI_SECTOR_SIZE;
 	
 	struct di_boot_record boot_record;
-	devices[DEVICE_CUR]->seekFile(file, file_offset, DEVICE_HANDLER_SEEK_SET);
-	if(devices[DEVICE_CUR]->readFile(file, &boot_record, sizeof(boot_record)) != sizeof(boot_record)) return 0;
+	file->device->seekFile(file, file_offset, DEVICE_HANDLER_SEEK_SET);
+	if(file->device->readFile(file, &boot_record, sizeof(boot_record)) != sizeof(boot_record)) return 0;
 	if(memcmp(boot_record.boot_system_id, "EL TORITO SPECIFICATION", 23)) return 0;
 	file_offset = boot_record.boot_catalog_offset * DI_SECTOR_SIZE;
 	
 	struct di_validation_entry validation_entry;
-	devices[DEVICE_CUR]->seekFile(file, file_offset, DEVICE_HANDLER_SEEK_SET);
-	if(devices[DEVICE_CUR]->readFile(file, &validation_entry, sizeof(validation_entry)) != sizeof(validation_entry)) return 0;
+	file->device->seekFile(file, file_offset, DEVICE_HANDLER_SEEK_SET);
+	if(file->device->readFile(file, &validation_entry, sizeof(validation_entry)) != sizeof(validation_entry)) return 0;
 	if(validation_entry.header_id != 1 || validation_entry.key_55 != 0x55 || validation_entry.key_AA != 0xAA) return 0;
 	file_offset += sizeof(validation_entry);
 	
 	struct di_default_entry default_entry;
-	devices[DEVICE_CUR]->seekFile(file, file_offset, DEVICE_HANDLER_SEEK_SET);
-	if(devices[DEVICE_CUR]->readFile(file, &default_entry, sizeof(default_entry)) != sizeof(default_entry)) return 0;
+	file->device->seekFile(file, file_offset, DEVICE_HANDLER_SEEK_SET);
+	if(file->device->readFile(file, &default_entry, sizeof(default_entry)) != sizeof(default_entry)) return 0;
 	if(default_entry.boot_indicator != 0x88) return 0;
 	file_offset = default_entry.load_rba * DI_SECTOR_SIZE;
 	
@@ -252,8 +252,8 @@ int parse_gcm(file_handle *file, file_handle *file2, ExecutableFile *filesToPatc
 	// Patch the apploader too!
 	// Calc Apploader size
 	ApploaderHeader apploaderHeader;
-	devices[DEVICE_CUR]->seekFile(file,0x2440,DEVICE_HANDLER_SEEK_SET);
-	if(devices[DEVICE_CUR]->readFile(file,&apploaderHeader,sizeof(ApploaderHeader)) != sizeof(ApploaderHeader)) {
+	file->device->seekFile(file,0x2440,DEVICE_HANDLER_SEEK_SET);
+	if(file->device->readFile(file,&apploaderHeader,sizeof(ApploaderHeader)) != sizeof(ApploaderHeader)) {
 		DrawPublish(DrawMessageBox(D_FAIL, "Failed to read Apploader Header"));
 		while(1);
 	}
@@ -287,8 +287,8 @@ int parse_gcm(file_handle *file, file_handle *file2, ExecutableFile *filesToPatc
 			// Multi-DOL games may re-load the main DOL, so make sure we patch it too.
 			// Calc size
 			DOLHEADER dolhdr;
-			devices[DEVICE_CUR]->seekFile(file,dolOffset,DEVICE_HANDLER_SEEK_SET);
-			if(devices[DEVICE_CUR]->readFile(file,&dolhdr,DOLHDRLENGTH) != DOLHDRLENGTH) {
+			file->device->seekFile(file,dolOffset,DEVICE_HANDLER_SEEK_SET);
+			if(file->device->readFile(file,&dolhdr,DOLHDRLENGTH) != DOLHDRLENGTH) {
 				DrawPublish(DrawMessageBox(D_FAIL, "Failed to read Main DOL Header"));
 				while(1);
 			}
@@ -427,8 +427,8 @@ int parse_tgc(file_handle *file, ExecutableFile *filesToPatch, u32 tgc_base, cha
 	int		numFiles = 0;
 	
 	TGCHeader tgcHeader;
-	devices[DEVICE_CUR]->seekFile(file,tgc_base,DEVICE_HANDLER_SEEK_SET);
-	devices[DEVICE_CUR]->readFile(file,&tgcHeader,sizeof(TGCHeader));
+	file->device->seekFile(file,tgc_base,DEVICE_HANDLER_SEEK_SET);
+	file->device->readFile(file,&tgcHeader,sizeof(TGCHeader));
 	
 	if(tgcHeader.magic != TGC_MAGIC) return 0;
 	if(tgcHeader.fstMaxLength > GCMDisk.MaxFSTSize) {
@@ -437,8 +437,8 @@ int parse_tgc(file_handle *file, ExecutableFile *filesToPatch, u32 tgc_base, cha
 	
 	if(tgcHeader.apploaderOffset != 0) {
 		ApploaderHeader apploaderHeader;
-		devices[DEVICE_CUR]->seekFile(file,tgc_base+tgcHeader.apploaderOffset,DEVICE_HANDLER_SEEK_SET);
-		devices[DEVICE_CUR]->readFile(file,&apploaderHeader,sizeof(ApploaderHeader));
+		file->device->seekFile(file,tgc_base+tgcHeader.apploaderOffset,DEVICE_HANDLER_SEEK_SET);
+		file->device->readFile(file,&apploaderHeader,sizeof(ApploaderHeader));
 		
 		filesToPatch[numFiles].file = file;
 		filesToPatch[numFiles].offset = tgc_base+tgcHeader.apploaderOffset;
@@ -784,6 +784,7 @@ int read_fst(file_handle *file, file_handle** dir, u64 *usedSpace) {
 		(*dir)[idx].size = DISC_SIZE;
 		(*dir)[idx].fileType = IS_FILE;
 		(*dir)[idx].meta = 0;
+		(*dir)[idx].device = file->device;
 		idx++;
 	}
 	
@@ -808,6 +809,7 @@ int read_fst(file_handle *file, file_handle** dir, u64 *usedSpace) {
 		(*dir)[idx].size = 0;
 		(*dir)[idx].fileType = IS_SPECIAL;
 		(*dir)[idx].meta = 0;
+		(*dir)[idx].device = file->device;
 		idx++;
 	}
 	//print_debug("Found DIR [%03i]:%s\n",parent_dir_offset,isRoot ? "ROOT":filename);
@@ -838,6 +840,7 @@ int read_fst(file_handle *file, file_handle** dir, u64 *usedSpace) {
 				(*dir)[idx].size = size;
 				(*dir)[idx].fileType = IS_DIR;
 				(*dir)[idx].meta = 0;
+				(*dir)[idx].device = file->device;
 				idx++;
 				// Skip the entries that sit in this dir
 				i = size-1;
@@ -857,6 +860,7 @@ int read_fst(file_handle *file, file_handle** dir, u64 *usedSpace) {
 			(*dir)[idx].size = size;
 			(*dir)[idx].fileType = IS_FILE;
 			(*dir)[idx].meta = 0;
+			(*dir)[idx].device = file->device;
 			idx++;
 		}
 	}

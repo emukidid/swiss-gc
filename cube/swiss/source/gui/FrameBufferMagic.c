@@ -1166,18 +1166,18 @@ static void _DrawFileBrowserButton(uiDrawObj_t *evt) {
 			
 			// Print specific stats
 			if(file->fileType==IS_FILE) {
-				if(devices[DEVICE_CUR] == &__device_wode) {
+				if(file->device == &__device_wode) {
 					ISOInfo_t* isoInfo = (ISOInfo_t*)&file->other;
 					sprintf(fbTextBuffer,"Partition: %i, ISO: %i", isoInfo->iso_partition,isoInfo->iso_number);
 				}
-				else if(devices[DEVICE_CUR] == &__device_card_a || devices[DEVICE_CUR] == &__device_card_b) {
+				else if(file->device == &__device_card_a || file->device == &__device_card_b) {
 					formatBytes(stpcpy(fbTextBuffer, "Size: "), file->size, 8192, false);
 				}
-				else if(devices[DEVICE_CUR] == &__device_qoob) {
+				else if(file->device == &__device_qoob) {
 					formatBytes(stpcpy(fbTextBuffer, "Size: "), file->size, 65536, false);
 				}
 				else {
-					formatBytes(stpcpy(fbTextBuffer, "Size: "), file->size, 0, !(devices[DEVICE_CUR]->location & LOC_SYSTEM));
+					formatBytes(stpcpy(fbTextBuffer, "Size: "), file->size, 0, !(file->device->location & LOC_SYSTEM));
 				}
 				drawString(data->x2 - (borderSize + (GetTextSizeInPixels(fbTextBuffer)*0.45f)), 
 					data->y2-(borderSize+24), fbTextBuffer, 0.45f, false, defaultColor);
@@ -1282,18 +1282,18 @@ static void _DrawFileBrowserButton(uiDrawObj_t *evt) {
 		
 		// Print specific stats
 		if(file->fileType==IS_FILE) {
-			if(devices[DEVICE_CUR] == &__device_wode) {
+			if(file->device == &__device_wode) {
 				ISOInfo_t* isoInfo = (ISOInfo_t*)&file->other;
 				sprintf(fbTextBuffer,"Partition: %i, ISO: %i", isoInfo->iso_partition,isoInfo->iso_number);
 			}
-			else if(devices[DEVICE_CUR] == &__device_card_a || devices[DEVICE_CUR] == &__device_card_b) {
+			else if(file->device == &__device_card_a || file->device == &__device_card_b) {
 				formatBytes(fbTextBuffer, file->size, 8192, false);
 			}
-			else if(devices[DEVICE_CUR] == &__device_qoob) {
+			else if(file->device == &__device_qoob) {
 				formatBytes(fbTextBuffer, file->size, 65536, false);
 			}
 			else {
-				formatBytes(fbTextBuffer, file->size, 0, !(devices[DEVICE_CUR]->location & LOC_SYSTEM));
+				formatBytes(fbTextBuffer, file->size, 0, !(file->device->location & LOC_SYSTEM));
 			}
 			drawString(data->x2 - ((borderSize) + (GetTextSizeInPixels(fbTextBuffer)*0.45)), 
 				data->y1+borderSize+21, fbTextBuffer, 0.45f, false, defaultColor);
@@ -2251,14 +2251,15 @@ void DrawInit(GXRModeObj *videoMode, bool black) {
 	LWP_CreateThread(&video_thread, videoUpdate, videoEventQueue, video_thread_stack, VIDEO_STACK_SIZE, VIDEO_PRIORITY);
 }
 
-void DrawLoadBackdrop() {
+void DrawLoadBackdrop(DEVICEHANDLER_INTERFACE *device) {
 	file_handle *backdropFile = calloc(1, sizeof(file_handle));
-	concat_path(backdropFile->name, devices[DEVICE_CUR]->initial->name, "swiss/backdrop.tpl");
+	concat_path(backdropFile->name, device->initial->name, "swiss/backdrop.tpl");
+	backdropFile->device = device;
 	
 	s32 id = 0;
 	u32 fmt;
 	u16 width, height;
-	if(TPL_OpenTPLFromHandle(&backdropTPL, openFileStream(DEVICE_CUR, backdropFile)) >= 0) {
+	if(TPL_OpenTPLFromHandle(&backdropTPL, openFileStream(backdropFile)) >= 0) {
 		time_t curtime;
 		if(time(&curtime) != (time_t)-1) {
 			struct tm *tm = localtime(&curtime);

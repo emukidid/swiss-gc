@@ -135,7 +135,7 @@ void DrawArgsSelector(const char *fileName);
 void DrawCheatsSelector(const char *fileName);
 void DrawGetTextEntry(int entryMode, const char *label, void *src, int size);
 void DrawInit(GXRModeObj *videoMode, bool black);
-void DrawLoadBackdrop();
+void DrawLoadBackdrop(DEVICEHANDLER_INTERFACE *device);
 void DrawShutdown();
 void DrawVideoMode(GXRModeObj *videoMode);
 

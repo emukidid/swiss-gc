@@ -32,65 +32,41 @@ int GET_SLOT(file_handle* file) {
 	return file->name[3] - 'a';
 }
 
-file_handle initial_SD_A =
-	{ "sda:/",       // directory
-	  0ULL,     // fileBase (u64)
-	  0,        // offset
-	  0,        // size
-	  IS_DIR,
-	  0,
-	  0
-	};
-	
-file_handle initial_SD_B =
-	{ "sdb:/",       // directory
-	  0ULL,     // fileBase (u64)
-	  0,        // offset
-	  0,        // size
-	  IS_DIR,
-	  0,
-	  0
-	};
-	
-file_handle initial_SD_C =
-	{ "sdc:/",       // directory
-	  0ULL,     // fileBase (u64)
-	  0,        // offset
-	  0,        // size
-	  IS_DIR,
-	  0,
-	  0
-	};	
-	
-file_handle initial_ATA_A =
-	{ "ataa:/",       // directory
-	  0ULL,     // fileBase (u64)
-	  0,        // offset
-	  0,        // size
-	  IS_DIR,
-	  0,
-	  0
-	};
-	
-file_handle initial_ATA_B =
-	{ "atab:/",       // directory
-	  0ULL,     // fileBase (u64)
-	  0,        // offset
-	  0,        // size
-	  IS_DIR,
-	  0,
-	  0
-	};
-	
-file_handle initial_ATA_C =
-	{ "atac:/",       // directory
-	  0ULL,     // fileBase (u64)
-	  0,        // offset
-	  0,        // size
-	  IS_DIR,
-	  0,
-	  0
-	};
+file_handle initial_SD_A = {
+	.name     = "sda:/",
+	.fileType = IS_DIR,
+	.device   = &__device_sd_a,
+};
+
+file_handle initial_SD_B = {
+	.name     = "sdb:/",
+	.fileType = IS_DIR,
+	.device   = &__device_sd_b,
+};
+
+file_handle initial_SD_C = {
+	.name     = "sdc:/",
+	.fileType = IS_DIR,
+	.device   = &__device_sd_c,
+};
+
+file_handle initial_ATA_A = {
+	.name     = "ataa:/",
+	.fileType = IS_DIR,
+	.device   = &__device_ata_a,
+};
+
+file_handle initial_ATA_B = {
+	.name     = "atab:/",
+	.fileType = IS_DIR,
+	.device   = &__device_ata_b,
+};
+
+file_handle initial_ATA_C = {
+	.name     = "atac:/",
+	.fileType = IS_DIR,
+	.device   = &__device_ata_c,
+};
 
 static device_info initial_FAT_info[FF_VOLUMES];
 
@@ -119,6 +95,7 @@ s32 deviceHandler_FAT_readDir(file_handle* ffile, file_handle** dir, u32 type) {
 	*dir = calloc(num_entries, sizeof(file_handle));
 	concat_path((*dir)[0].name, ffile->name, "..");
 	(*dir)[0].fileType = IS_SPECIAL;
+	(*dir)[0].device   = ffile->device;
 
 	// Read each entry of the directory
 	while( f_readdir(dp, &entry) == FR_OK && entry.fname[0] != '\0') {
@@ -135,6 +112,7 @@ s32 deviceHandler_FAT_readDir(file_handle* ffile, file_handle** dir, u32 type) {
 				(*dir)[i].size       = entry.fsize;
 				(*dir)[i].fileAttrib = entry.fattrib;
 				(*dir)[i].fileType   = (entry.fattrib & AM_DIR) ? IS_DIR : IS_FILE;
+				(*dir)[i].device     = ffile->device;
 				++i;
 			}
 		}
