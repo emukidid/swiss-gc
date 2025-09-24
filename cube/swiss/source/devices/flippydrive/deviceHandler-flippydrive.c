@@ -64,6 +64,7 @@ s32 deviceHandler_Flippy_readDir(file_handle* ffile, file_handle** dir, u32 type
 				(*dir)[i].size       = entry.size;
 				(*dir)[i].fileAttrib = entry.attributes;
 				(*dir)[i].fileType   = (entry.type == FLIPPY_TYPE_DIR) ? IS_DIR : IS_FILE;
+				(*dir)[i].blockSize  = endsWith(entry.name,".fdi") ? 4096 : 512;
 				(*dir)[i].device     = ffile->device;
 				++i;
 			}

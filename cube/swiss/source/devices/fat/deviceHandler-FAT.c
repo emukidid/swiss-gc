@@ -88,6 +88,7 @@ s32 deviceHandler_FAT_readDir(file_handle* ffile, file_handle** dir, u32 type) {
 	FFDIR* dp = malloc(sizeof(FFDIR));
 	memset(dp, 0, sizeof(FFDIR));
 	if(f_opendir(dp, ffile->name) != FR_OK) return -1;
+	FATFS* fatfs = dp->obj.fs;
 	FILINFO entry;
 	
 	// Set everything up to read
@@ -112,6 +113,7 @@ s32 deviceHandler_FAT_readDir(file_handle* ffile, file_handle** dir, u32 type) {
 				(*dir)[i].size       = entry.fsize;
 				(*dir)[i].fileAttrib = entry.fattrib;
 				(*dir)[i].fileType   = (entry.fattrib & AM_DIR) ? IS_DIR : IS_FILE;
+				(*dir)[i].blockSize  = fatfs->ssize;
 				(*dir)[i].device     = ffile->device;
 				++i;
 			}

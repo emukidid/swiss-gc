@@ -45,6 +45,7 @@ typedef struct {
 	uint32_t size;      			// size of the file
 	uint8_t fileType;			// IS_FILE or IS_DIR
 	uint8_t fileAttrib;
+	uint16_t blockSize;
 	int32_t status;            	// is the device ok
 	uint32_t fp;				// file pointer
 	uint32_t ffsFp;				// file pointer (FATFS)

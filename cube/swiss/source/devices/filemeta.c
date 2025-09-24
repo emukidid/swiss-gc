@@ -163,9 +163,8 @@ void populate_game_meta(file_handle *f, u32 bannerOffset, u32 bannerSize) {
 		print_debug("Banner not found or out of range\n");
 	}
 	else if(bannerSize) {
-		BNR *banner = memalign(32, bannerSize);
-		f->device->seekFile(f, bannerOffset, DEVICE_HANDLER_SEEK_SET);
-		if(f->device->readFile(f, banner, bannerSize) != bannerSize) {
+		BNR *banner = readFileBlockAligned(f, bannerOffset, bannerSize);
+		if(!banner) {
 			print_debug("Banner read failed %i from offset %08X\n", bannerSize, bannerOffset);
 		}
 		else {

@@ -30,21 +30,18 @@ DiskHeader *get_gcm_header(file_handle *file) {
 	DiskHeader *diskHeader;
 	
 	// Grab disc header
-	diskHeader=(DiskHeader*)memalign(32,sizeof(DiskHeader));
-	if(!diskHeader) return NULL;
-	
 	if(file->device == &__device_dvd && file->fileType == IS_DIR) {
+		diskHeader = (DiskHeader*)memalign(32, sizeof(DiskHeader));
+		if(!diskHeader) return NULL;
+		
 		if(DVD_Read(diskHeader, 0, sizeof(DiskHeader)) != sizeof(DiskHeader)) {
 			free(diskHeader);
 			return NULL;
 		}
 	}
 	else {
-		file->device->seekFile(file,0,DEVICE_HANDLER_SEEK_SET);
-		if(file->device->readFile(file,diskHeader,sizeof(DiskHeader)) != sizeof(DiskHeader)) {
-			free(diskHeader);
-			return NULL;
-		}
+		diskHeader = (DiskHeader*)readFileBlockAligned(file, 0, sizeof(DiskHeader));
+		if(!diskHeader) return NULL;
 	}
 	
 	if(!valid_gcm_magic(diskHeader)) {
@@ -58,21 +55,18 @@ char *get_fst(file_handle *file, u32 file_offset, u32 file_size) {
 	char *FST;
 	
 	// Alloc and read FST
-	FST=(char*)memalign(32,file_size);
-	if(!FST) return NULL;
-	
 	if(file->device == &__device_dvd && file->fileType == IS_DIR) {
+		FST = (char*)memalign(32, file_size);
+		if(!FST) return NULL;
+		
 		if(DVD_Read(FST, file_offset, file_size) != file_size) {
 			free(FST);
 			return NULL;
 		}
 	}
 	else {
-		file->device->seekFile(file,file_offset,DEVICE_HANDLER_SEEK_SET);
-		if(file->device->readFile(file,FST,file_size) != file_size) {
-			free(FST);
-			return NULL;
-		}
+		FST = (char*)readFileBlockAligned(file, file_offset, file_size);
+		if(!FST) return NULL;
 	}
 	return FST;
 }

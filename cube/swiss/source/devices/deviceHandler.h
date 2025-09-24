@@ -59,6 +59,7 @@ typedef struct {
 	u32 size;      			// size of the file
 	u8 fileType;			// IS_FILE or IS_DIR
 	u8 fileAttrib;
+	u16 blockSize;
 	s32 status;            	// is the device ok
 	void *fp;				// file pointer
 	FIL* ffsFp;				// file pointer (FATFS)
@@ -269,6 +270,7 @@ extern bool getFragments(int deviceSlot, file_handle *file, file_frag **fragList
 extern void print_frag_list(file_frag *fragList, u32 totFrags);
 
 extern FILE* openFileStream(file_handle *file);
+extern void* readFileBlockAligned(file_handle *file, u32 offset, u32 length);
 
 #endif
 
