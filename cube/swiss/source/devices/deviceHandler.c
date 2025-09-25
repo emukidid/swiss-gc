@@ -309,7 +309,7 @@ bool getFragments(int deviceSlot, file_handle *file, file_frag **fragList, u32 *
 	return true;
 }
 
-void print_frag_list(file_frag *fragList, u32 totFrags) {
+void printFragments(file_frag *fragList, u32 totFrags) {
 	print_debug("== Fragments List ==\n");
 	for(int i = 0; i < totFrags; i++) {
 		print_debug("Frag %i: ofs in file: [0x%08X] len [0x%08X] LBA on disk [0x%012llX]\n",
@@ -318,8 +318,7 @@ void print_frag_list(file_frag *fragList, u32 totFrags) {
 	print_debug("== Fragments End ==\n");
 }
 
-FILE* openFileStream(file_handle *file)
-{
+FILE* openFileStream(file_handle *file) {
 	if(file->device->readFile(file, NULL, 0) != 0 || !file->size) {
 		return NULL;
 	}

@@ -267,7 +267,7 @@ extern const char* getHwNameByLocation(u32 location);
 #define MAX_FRAGS 40
 
 extern bool getFragments(int deviceSlot, file_handle *file, file_frag **fragList, u32 *totFrags, u8 fileNum, u32 forceBaseOffset, u32 forceSize);
-extern void print_frag_list(file_frag *fragList, u32 totFrags);
+extern void printFragments(file_frag *fragList, u32 totFrags);
 
 extern FILE* openFileStream(file_handle *file);
 extern void* readFileBlockAligned(file_handle *file, u32 offset, u32 length);

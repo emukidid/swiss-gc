@@ -399,7 +399,7 @@ static void drawInit()
 	GX_SetZMode(GX_DISABLE,GX_ALWAYS,GX_FALSE);
 
 	GX_ClearVtxDesc();
-	GX_SetVtxDesc(GX_VA_PTNMTXIDX, GX_PNMTX0);
+	GX_SetVtxDesc(GX_VA_PNMTXIDX, GX_PNMTX0);
 	GX_SetVtxDesc(GX_VA_TEX0MTXIDX, GX_TEXMTX0);
 	GX_SetVtxDesc(GX_VA_POS, GX_DIRECT);
 	GX_SetVtxDesc(GX_VA_CLR0, GX_DIRECT);

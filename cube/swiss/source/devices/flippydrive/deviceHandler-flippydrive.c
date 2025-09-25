@@ -253,7 +253,7 @@ s32 deviceHandler_Flippy_setupFile(file_handle* file, file_handle* file2, Execut
 	}
 	
 	if(fragList) {
-		print_frag_list(fragList, numFrags);
+		printFragments(fragList, numFrags);
 		*(vu32**)VAR_FRAG_LIST = installPatch2(fragList, (numFrags + 1) * sizeof(file_frag));
 		free(fragList);
 		fragList = NULL;
