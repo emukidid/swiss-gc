@@ -92,7 +92,7 @@ static void *net_thread_func(void *arg)
 void init_network_async(void)
 {
 	if (!net_initialized && net_thread == LWP_THREAD_NULL)
-		LWP_CreateThread(&net_thread, net_thread_func, NULL, NULL, 0, LWP_PRIO_NORMAL);
+		LWP_CreateThread(&net_thread, net_thread_func, NULL, NULL, 0, LWP_PRIO_LOWEST);
 }
 
 bool init_network(void)

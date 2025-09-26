@@ -155,6 +155,6 @@ void init_httpd_thread() {
 							NULL,			/* arg pointer for thread */
 							NULL,			/* stack base */ 
 							16*1024,		/* stack size */
-							40				/* thread priority */ );
+							LWP_PRIO_NORMAL	/* thread priority */ );
 	}
 }

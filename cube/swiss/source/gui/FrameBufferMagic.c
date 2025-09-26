@@ -88,7 +88,7 @@ static char fbTextBuffer[256];
 
 // Video threading vars
 #define VIDEO_STACK_SIZE (64*1024)
-#define VIDEO_PRIORITY 100
+#define VIDEO_PRIORITY LWP_PRIO_HIGHEST
 static char  video_thread_stack[VIDEO_STACK_SIZE];
 static lwp_t video_thread = LWP_THREAD_NULL;
 static mutex_t _videomutex = LWP_MUTEX_NULL;
