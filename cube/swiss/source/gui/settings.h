@@ -35,6 +35,7 @@ enum SETTINGS_GLOBAL {
 	SET_FLATTEN_DIR,
 	SET_INIT_DRIVE,
 	SET_STOP_MOTOR,
+	SET_AUDIO_BUFFER,
 	SET_EXI_SPEED,
 	SET_AVE_COMPAT,
 	SET_FORCE_DTVSTATUS,
@@ -162,6 +163,7 @@ extern char *forceWidescreenStr[];
 extern char *forcePollRateStr[];
 extern char *invertCStickStr[];
 extern char *swapCStickStr[];
+extern char *configAudioBufferStr[];
 extern char *disableMCPGameIDStr[];
 extern char *disableVideoPatchesStr[];
 extern char *emulateAudioStreamStr[];

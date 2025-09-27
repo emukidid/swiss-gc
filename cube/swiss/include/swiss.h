@@ -118,6 +118,7 @@ typedef struct {
 	int sramStereo;
 	int initDVDDriveAtStart;
 	int stopMotor;
+	int configAudioBuffer;
 	int enableFileManagement;
 	int disableMCPGameID;
 	int disableVideoPatches;

@@ -48,6 +48,7 @@ bool valid_gcm_magic(const DiskHeader *header);
 bool valid_gcm_size(const DiskHeader *header, off_t size);
 bool valid_gcm_size2(const DiskHeader *header, off_t size);
 
+bool needs_audio_buffer(const dvddiskid *diskId);
 bool needs_flippy_bypass(const file_handle *file, uint64_t hash);
 bool needs_nkit_reencode(const DiskHeader *header, off_t size);
 

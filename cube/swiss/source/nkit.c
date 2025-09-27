@@ -2681,13 +2681,7 @@ bool is_streaming_disc(const DiskHeader *header)
 				return nkit_dat[i].streaming;
 	}
 
-	for (int i = 0; i < TOTAL_GCM_COUNT; i++)
-		if (!memcmp(header, nkit_dat[i].header, 6) &&
-			header->DiscID == nkit_dat[i].disknum &&
-			header->Version == nkit_dat[i].gamever)
-			return nkit_dat[i].streaming;
-
-	return header->AudioStreaming;
+	return needs_audio_buffer((dvddiskid *)header);
 }
 
 bool is_verifiable_disc(const DiskHeader *header)
@@ -2943,6 +2937,30 @@ bool valid_gcm_size(const DiskHeader *header, off_t size)
 bool valid_gcm_size2(const DiskHeader *header, off_t size)
 {
 	return size == header->UserPos + header->UserLength;
+}
+
+bool needs_audio_buffer(const dvddiskid *diskId)
+{
+	if (!diskId->streaming)
+		return false;
+
+	for (int i = 0; i < TOTAL_GCM_COUNT; i++) {
+		if (!memcmp(diskId, nkit_dat[i].header, 6) &&
+			diskId->disknum == nkit_dat[i].disknum &&
+			diskId->gamever == nkit_dat[i].gamever) {
+			bool streaming = nkit_dat[i].streaming;
+
+			for (int j = i + 1; j < TOTAL_GCM_COUNT; j++)
+				if (!memcmp(diskId, nkit_dat[j].header, 6) &&
+					diskId->disknum == nkit_dat[j].disknum &&
+					diskId->gamever == nkit_dat[j].gamever)
+					streaming |= nkit_dat[j].streaming;
+
+			return streaming;
+		}
+	}
+
+	return diskId->streaming;
 }
 
 bool needs_flippy_bypass(const file_handle *file, uint64_t hash)

@@ -49,7 +49,7 @@ extern file_entries *DVDToc;
 extern int isXenoGC;
 int dvd_read_directoryentries(u64 offset, int size);
 unsigned int dvd_get_error(void);
-void dvd_set_streaming(char stream);
+void dvd_set_streaming(bool enable, u8 size);
 unsigned int dvd_read_id();
 void dvd_motor_off();
 void dvd_motor_on_extra();

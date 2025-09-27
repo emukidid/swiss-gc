@@ -18,6 +18,7 @@
 #include "patcher.h"
 #include "dvd.h"
 #include "gcm.h"
+#include "nkit.h"
 #include "wkf.h"
 
 file_handle initial_DVD = {
@@ -125,7 +126,7 @@ char *dvd_error_str()
   return &error_str[0];
 }
 
-int initialize_disc(u32 streaming) {
+int initialize_disc(int streaming) {
 	int patched = NORMAL_MODE;
 	uiDrawObj_t* progBar = DrawPublish(DrawProgressBar(true, 0, "DVD Initializing"));
 	if(is_gamecube())
@@ -142,7 +143,7 @@ int initialize_disc(u32 streaming) {
 		progBar = DrawPublish(DrawProgressBar(true, 0, "Resetting DVD drive - Detect Media"));
 		dvd_reset();
 		npdp_start();
-		dvd_read_id();
+		DVD_ReadID(DVDDiskID);
 		// Avoid lid open scenario
 		if((dvd_get_error()>>24) && (dvd_get_error()>>24 != 1)) {
 			DrawDispose(progBar);
@@ -157,29 +158,26 @@ int initialize_disc(u32 streaming) {
 			DrawDispose(progBar);
 			return DRV_ERROR;
 		}
-		if((streaming == ENABLE_AUDIO) || (streaming == DISABLE_AUDIO)) {
-			dvd_set_streaming(streaming);
-		}
-		else {
-			dvd_set_streaming(*(char*)0x80000008);
-		}
 	}
 	else {  //Wii, in GC Mode
 		dvd_reset();
-		dvd_read_id();
-		if((streaming == ENABLE_AUDIO) || (streaming == DISABLE_AUDIO)) {
-			dvd_set_streaming(streaming);
-		}
-		else {
-			dvd_set_streaming(*(char*)0x80000008);
-		}
+		DVD_ReadID(DVDDiskID);
 	}
-	dvd_read_id();
+	switch(streaming) {
+		case DISABLE_AUDIO:
+			dvd_set_streaming(false, 0);
+			break;
+		case ENABLE_AUDIO:
+			dvd_set_streaming(needs_audio_buffer(DVDDiskID), DVDDiskID->streambufsize ? : 10);
+			break;
+		default:
+			dvd_set_streaming(DVDDiskID->streaming, DVDDiskID->streambufsize ? : 10);
+			break;
+	}
 	DrawDispose(progBar);
 	if(dvd_get_error()) {
 		return DRV_ERROR;
 	}
-			
 	return patched;
 }
 
@@ -249,7 +247,7 @@ s32 deviceHandler_DVD_readDir(file_handle* ffile, file_handle** dir, u32 type){
 	dvd_get_error(); // Clear any 0x052400's
 	
 	if(dvd_get_error() || !dvd_init) { //if some error
-		ret = initialize_disc(ENABLE_BYDISK);
+		ret = initialize_disc(swissSettings.configAudioBuffer);
 		if(ret == DRV_ERROR) {    //try init
 			return -1; //fail
 		}
@@ -416,7 +414,7 @@ s32 deviceHandler_DVD_setupFile(file_handle* file, file_handle* file2, Executabl
 			print_debug("Set Status - done %08X\n",dvd_get_error());
 			dvd_read_id();
 			print_debug("Read ID %08X\n",dvd_get_error());
-			dvd_set_streaming(swissSettings.audioStreaming);
+			dvd_set_streaming(swissSettings.audioStreaming, 10);
 			DrawDispose(msgBox);
 		}
 		dvd_set_offset(file->fileBase);
@@ -531,7 +529,7 @@ s32 deviceHandler_DVD_init(file_handle* file){
 	if(swissSettings.hasFlippyDrive) flippy_bypass(true);
 	if(!swissSettings.hasDVDDrive) return ENODEV;
 	
-	file->status = initialize_disc(ENABLE_BYDISK);
+	file->status = initialize_disc(swissSettings.configAudioBuffer);
 	dvd_init = file->status != DRV_ERROR;
 	return dvd_init ? 0 : EIO;
 }

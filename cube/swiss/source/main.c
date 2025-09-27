@@ -241,6 +241,7 @@ int main(int argc, char *argv[])
 	swissSettings.uiVMode = 0; 		// Auto UI mode
 	swissSettings.gameVMode = 0;	// Auto video mode
 	swissSettings.lastDTVStatus = getRawDTVStatus();
+	swissSettings.configAudioBuffer = ENABLE_BYDISK;
 	swissSettings.emulateAudioStream = 1;
 	swissSettings.ftpPort = 21;
 	swissSettings.fspPort = 21;

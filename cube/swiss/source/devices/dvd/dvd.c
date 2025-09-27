@@ -50,12 +50,12 @@ unsigned int dvd_read_id()
 	return 0;
 }
 
-void dvd_set_streaming(char stream)
+void dvd_set_streaming(bool enable, u8 size)
 {
-	if(stream)
+	if(enable)
 	{
 		dvd[0] = 0x2E;
-		dvd[2] = 0xE4010000;
+		dvd[2] = 0xE4010000 | size;
 		dvd[7] = 1;
 		while (dvd[7] & 1);
 	}
@@ -489,6 +489,7 @@ int DVD_ReadID(dvddiskid *diskID)
 	dvd[5] = (unsigned int)diskID;
 	dvd[6] = 0x20;
 	dvd[7] = 3; // enable reading!
+	DCInvalidateRange(diskID, 0x20);
 	while (dvd[7] & 1);
 	if (dvd[6])
 		return 1;
