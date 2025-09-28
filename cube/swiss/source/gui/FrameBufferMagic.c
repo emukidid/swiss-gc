@@ -37,6 +37,7 @@ TPLFile backdropTPL;
 GXTexObj backdropTexObj;
 GXTlutObj backdropTlutObj;
 GXTexObj backdropIndTexObj;
+GXTexObj bannerMaskTexObj;
 GXTexObj gcdvdsmallTexObj;
 GXTexObj sdsmallTexObj;
 GXTlutObj sdsmallTlutObj;
@@ -332,6 +333,7 @@ static void init_textures()
 	GX_InitTexObjUserData(&backdropTexObj, &backdropTlutObj);
 	TPL_GetTexture(&imagesTPL, backdrop_ind, &backdropIndTexObj);
 	GX_InitTexObjUserData(&backdropIndTexObj, &backdropTexObj);
+	TPL_GetTexture(&imagesTPL, banner_mask, &bannerMaskTexObj);
 	TPL_GetTexture(&imagesTPL, gcdvdsmall, &gcdvdsmallTexObj);
 	TPL_GetTextureCI(&imagesTPL, sdsmall, &sdsmallTexObj, &sdsmallTlutObj, GX_TLUT0);
 	GX_InitTexObjUserData(&sdsmallTexObj, &sdsmallTlutObj);
@@ -663,8 +665,8 @@ uiDrawObj_t* DrawImage(int textureId, int x, int y, int width, int height, int d
 static void _DrawTexObjNow(GXTexObj *texObj, int x, int y, int width, int height, int depth, float s1, float s2, float t1, float t2, int centered)
 {
 	if(GX_GetTexObjMagFilt(texObj) == GX_NEAR) {
-		GX_SetTevColorIn(GX_TEVSTAGE1, GX_CC_ZERO, GX_CC_CPREV, GX_CC_APREV, GX_CC_ZERO);
-		GX_SetTevAlphaIn(GX_TEVSTAGE1, GX_CA_ZERO, GX_CA_ZERO,  GX_CA_ZERO,  GX_CA_APREV);
+		GX_SetNumTevStages(1);
+		GX_SetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_INVSRCALPHA, GX_LO_CLEAR);
 	}
 	GX_InvalidateTexAll();
 	GXTlutObj *tlutObj = GX_GetTexObjUserData(texObj);
@@ -1109,8 +1111,8 @@ static void _DrawFileBrowserButton(uiDrawObj_t *evt) {
 				bnr_width *= (file->meta->banner ? 2 : 1);
 				bnr_height *= (file->meta->banner ? 2 : 1);
 				if(file->meta->banner) {
-					GX_SetTevColorIn(GX_TEVSTAGE1, GX_CC_ZERO, GX_CC_CPREV, GX_CC_APREV, GX_CC_ZERO);
-					GX_SetTevAlphaIn(GX_TEVSTAGE1, GX_CA_ZERO, GX_CA_ZERO,  GX_CA_ZERO,  GX_CA_APREV);
+					GX_SetNumTevStages(1);
+					GX_SetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_INVSRCALPHA, GX_LO_CLEAR);
 				}
 				GX_InvalidateTexAll();
 				GXTlutObj *tlutObj = GX_GetTexObjUserData(texObj);
@@ -1194,13 +1196,16 @@ static void _DrawFileBrowserButton(uiDrawObj_t *evt) {
 			if(file->meta && (file->meta->banner || file->meta->fileTypeTexObj)) {
 				GXTexObj *texObj = (file->meta->banner ? &file->meta->bannerTexObj : file->meta->fileTypeTexObj);
 				if(file->meta->banner) {
-					GX_SetTevColorIn(GX_TEVSTAGE1, GX_CC_ZERO, GX_CC_CPREV, GX_CC_APREV, GX_CC_ZERO);
-					GX_SetTevAlphaIn(GX_TEVSTAGE1, GX_CA_ZERO, GX_CA_ZERO,  GX_CA_ZERO,  GX_CA_APREV);
+					GX_SetTevOrder(GX_TEVSTAGE1, GX_TEXCOORD0, GX_TEXMAP1, GX_COLOR0A0);
+					GX_SetTevColorIn(GX_TEVSTAGE1, GX_CC_ZERO, GX_CC_ZERO, GX_CC_ZERO, GX_CC_CPREV);
+					GX_SetTevAlphaIn(GX_TEVSTAGE1, GX_CA_ZERO, GX_CA_APREV, GX_CA_TEXA, GX_CA_ZERO);
+					GX_SetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_INVSRCALPHA, GX_LO_CLEAR);
 				}
 				GX_InvalidateTexAll();
 				GXTlutObj *tlutObj = GX_GetTexObjUserData(texObj);
 				if(tlutObj) GX_LoadTlut(tlutObj, GX_GetTexObjTlut(texObj));
 				GX_LoadTexObj(texObj, GX_TEXMAP0);
+				GX_LoadTexObj(&bannerMaskTexObj, GX_TEXMAP1);
 				GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
 					GX_Position3f32((float)x_start,(float) data->y2-borderSize, 0.0f ); // bottom left
 					GX_Color4u8(255, 255, 255, data->alpha);
@@ -1240,13 +1245,16 @@ static void _DrawFileBrowserButton(uiDrawObj_t *evt) {
 		if(file->meta && (file->meta->banner || file->meta->fileTypeTexObj)) {
 			GXTexObj *texObj = (file->meta->banner ? &file->meta->bannerTexObj : file->meta->fileTypeTexObj);
 			if(file->meta->banner) {
-				GX_SetTevColorIn(GX_TEVSTAGE1, GX_CC_ZERO, GX_CC_CPREV, GX_CC_APREV, GX_CC_ZERO);
-				GX_SetTevAlphaIn(GX_TEVSTAGE1, GX_CA_ZERO, GX_CA_ZERO,  GX_CA_ZERO,  GX_CA_APREV);
+				GX_SetTevOrder(GX_TEVSTAGE1, GX_TEXCOORD0, GX_TEXMAP1, GX_COLOR0A0);
+				GX_SetTevColorIn(GX_TEVSTAGE1, GX_CC_ZERO, GX_CC_ZERO, GX_CC_ZERO, GX_CC_CPREV);
+				GX_SetTevAlphaIn(GX_TEVSTAGE1, GX_CA_ZERO, GX_CA_APREV, GX_CA_TEXA, GX_CA_ZERO);
+				GX_SetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_INVSRCALPHA, GX_LO_CLEAR);
 			}
 			GX_InvalidateTexAll();
 			GXTlutObj *tlutObj = GX_GetTexObjUserData(texObj);
 			if(tlutObj) GX_LoadTlut(tlutObj, GX_GetTexObjTlut(texObj));
 			GX_LoadTexObj(texObj, GX_TEXMAP0);
+			GX_LoadTexObj(&bannerMaskTexObj, GX_TEXMAP1);
 			GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
 				GX_Position3f32((float) data->x1+7,(float) data->y1+4, 0.0f );
 				GX_Color4u8(255, 255, 255, data->alpha);
