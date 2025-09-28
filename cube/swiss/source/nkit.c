@@ -120,6 +120,7 @@ static const struct {
 	{ "apploader.img", /* 2001/09/08       */  106432, 0xF85E26EDCBD56532 },
 	{ "apploader.img", /* 2001/09/08       */  106432, 0xFBAAB18472269433 },
 	{ "apploader.img", /* 2001/09/08       */  106432, 0xFCAC1C8931A46F0B },
+	{ "apploader.img", /* 2001/09/08       */  106624, 0x33E2DEFC39B12631 },
 	{ "apploader.img", /* 2001/09/08       */  106624, 0x383E6B83504C990F },
 	{ "apploader.img", /* 2001/09/08       */  106624, 0x5E3AB428129E0DC6 },
 	{ "apploader.img", /* 2001/09/08       */  106624, 0x6D67F99B2EFD3E7E },
@@ -182,7 +183,7 @@ static const struct {
 	{ "apploader.img", /* 2024/09/14       */  113536, 0xBECA9866ECE7A957 },
 	{ "apploader.img", /* 2024/09/17       */  113536, 0x623687789597750B },
 	{ "apploader.img", /* 2025/07/10       */  113536, 0xED22F838A52EABC5 },
-#define NKIT_FIRM_COUNT (FIRM_COUNT + 124)
+#define NKIT_FIRM_COUNT (FIRM_COUNT + 125)
 	{ "240p Test Suite (World) (v1.04) (Program) (Aftermarket) (Unl).dol",        2301384, 0x71BCDBA149B3AAAF },
 	{ "240p Test Suite (World) (v1.06) (Program) (Aftermarket) (Unl).dol",         930560, 0x7EB7DDDAF5105457 },
 	{ "240p Test Suite (World) (v1.07) (Program) (Aftermarket) (Unl).dol",         932032, 0x4DAB8540272CCBD5 },
@@ -407,8 +408,8 @@ static const struct {
 	{{ "DRSEAF\x00\x00" }, false, 0x57, 0xF2AF, 0x989E11D9, 0xA60F5B909DC1B199,  126695424, +1333282816, {   39425384, +1333283128, 6496, 0x8804 }, "Soulcalibur II" },
 	{{ "DSTJ13\x00\x00" }, false, 0xBB, 0x45BC, 0x190F43D4, 0x682095BA117EDC39, 1066573824,  +393404416, { 1066566848,     +102184, 6496, 0x7461 }, "SSX Tricky" },
 	{{ "DSWJ13\x00\x00" }, false, 0xAC, 0x74F1, 0x913AE6A5, 0x74A9B62FACA1FFD1, 1393250304,   +66727936, {    2562816,      +25856, 6496, 0xD5EA }, "Star Wars: Rogue Squadron II" },
-	{{ "DTLX01\x00\x00" }, false, 0x3D, 0x06A6, 0x1891D9AF, 0x2869303EC5A42690,    2775040, +1457203200, {      94248,       +4056, 6496, 0x6505 }, "Action Replay for GameCube" },
-	{{ "DTLX01\x00\x00" }, false, 0x51, 0x0BA7, 0x020106B3, 0x2869303EC5A42690,    2775040, +1457203200, {      94248,       +4056, 6496, 0x6505 }, "Action Replay for GameCube" },
+	{{ "DTLX01\x00\x00" }, false, 0x3D, 0x06A6, 0x1891D9AF, 0x2869303EC5A42690,    2775040, +1457203200, {      94248,       +4056, 6496, 0x6505 }, "Action Replay for GameCube / SD Media Launcher for GameCube/Wii" },
+	{{ "DTLX01\x00\x00" }, false, 0x51, 0x0BA7, 0x020106B3, 0x2869303EC5A42690,    2775040, +1457203200, {      94248,       +4056, 6496, 0x6505 }, "Action Replay for GameCube / SD Media Launcher for GameCube/Wii" },
 	{{ "DTLX01\x00\x00" }, false, 0x60, 0x2535, 0xCD1D9D4B, 0xD27E3365D4C00C0A,    1216512, +1458761728, {      94248,       +4056, 6496, 0x82CD }, "FreeLoader for GameCube" },
 	{{ "DVJP08\x00\x00" }, false, 0x62, 0xED77, 0xAFF83635, 0x30826E48078F043E,  190525440, +1269452800, {   30065764, +1269078236, 6496, 0x721F }, "Viewtiful Joe" },
 	{{ "DW3JG2\x00\x00" }, false, 0x91, 0xBFD1, 0xF676C652, 0xA436AB7293BC7D67, 1384224768,   +75753472, { 1375158684,    +2290552, 6496, 0x9BB7 }, "WWE WrestleMania X8" },
@@ -1504,6 +1505,7 @@ static const struct {
 	{{ "GNHE5d\x00\x00" }, false, 0x73, 0xCCBB, 0x4B9B91E6, 0xAEC6721D4E3AB041,     866304, +1459111936, {      94248,       +4056, 6496, 0x71CD }, "Cube CD 15 (34)" },
 	{{ "GNHE5d\x00\x00" }, false, 0x7B, 0xCCBB, 0xCC3182C3, 0x009AEBA340070CC2,   11837440, +1448140800, {      94248,       +4056, 6496, 0xCC3B }, "Max Play" },
 	{{ "GNHE5d\x00\x00" }, false, 0x7C, 0xCCBB, 0x26649910, 0x76B7CDED51201288,    2185216, +1457793024, {      94248,       +4056, 6496, 0xCD3A }, "Karat GC-you Pro Action Replay PAR GC-you" },
+	{{ "GNHE5d\x00\x00" }, false, 0x7E, 0xCCBB, 0x23C778CB, 0xBFCC85C796AEB6C6,    3287040, +1456691200, {      94248,       +4056, 6496, 0x4C9F }, "Action Replay for GameCube" },
 	{{ "GNHE5d\x00\x00" }, false, 0x83, 0xCCBB, 0x564BDDF9, 0x91E9D9008467BF60,    1906688, +1458071552, {      94248,       +4056, 6496, 0x98DE }, "Cube CD 02 (21)" },
 	{{ "GNHE5d\x00\x00" }, false, 0x88, 0xCCBB, 0xF61CF908, 0xE369CEC46FA0233D,    3311616, +1456666624, {      94248,       +4056, 6496, 0x4C9F }, "Action Replay for GameCube" },
 	{{ "GNHE5d\x00\x00" }, false, 0x89, 0xCCBB, 0x31DAF617, 0x6EF3EBBCCC9774A4,    1284096, +1458694144, {      94248,       +4056, 6496, 0x400E }, "Action Replay Ultimate Codes for Use with The Legend of Zelda: Twilight Princess" },
@@ -2272,7 +2274,7 @@ static const struct {
 	{{ "UGPP01\x00\x01" }, false, 0x2A, 0x6D4F, 0x5ECD9681, 0x4E9244DEFB94F10C,    5079040, +1454899200, {    2317764,       +8764, 8096, 0x8972 }, "Game Boy Player Start-Up Disc" },
 	{{ "UGPP01\x00\x02" }, false, 0x3A, 0xCA50, 0x1E26380C, 0x483B4CE794041533,    5079040, +1454899200, {    2317764,       +8764, 8096, 0x8972 }, "Game Boy Player Start-Up Disc" },
 	{{ "XXXXXX\x00\x01" }, false, 0x83, 0x7056, 0x5995AC59, 0x5CBC3D9F00D75112, 1287913472,  +172064768, {         ~0,          +0,    0, 0xFFFF }, "LEGO Super Soccer Adventure" },
-#define REDUMP_COUNT (2012)
+#define REDUMP_COUNT (2013)
 	{{"00\0E01\x00\x00" }, false, 0x8B, 0x42A2, 0x499CF1AB, 0xC1BAC83BFBED3EDB,   31170560, +1428807680, {    7795364,      +23900, 6496, 0xBBEA }, "Nintendo Developer Demo" },
 	{{"00\0E01\x00\x00" }, false, 0xD9, 0x21CF, 0xBF114CB3, 0xC1BAC83BFBED3EDB,   31170560, +1428807680, {    7795364,      +23900, 6496, 0xBBEA }, "Nintendo Developer Demo" },
 	{{ "060J01\x00\x00" }, true,  0x7E, 0x27AC, 0x94C088DF, 0x55221BF909AB54CC,  171485184, +1288493056, {     238648, +1288483336, 6496, 0xFD76 }, "Diag Ver 3.1.1" },
