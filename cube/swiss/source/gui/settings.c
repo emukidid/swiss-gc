@@ -231,6 +231,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 		int scrollBarTabHeight = (int)((float)scrollBarHeight/(float)SET_PAGE_1_NEXT);
 		DrawAddChild(page, DrawVertScrollBar(getVideoMode()->fbWidth-45, page_y_ofs, 25, scrollBarHeight, (float)((float)option/(float)(SET_PAGE_1_NEXT-1)),scrollBarTabHeight));
 		DrawAddChild(page, DrawLabel(page_x_ofs_key, 65, "Global Settings (1/5):"));
+		bool dvdEnable = deviceHandler_getDeviceAvailable(&__device_dvd);
 		bool dtvEnable = !in_range(swissSettings.aveCompat, AVE_N_DOL_COMPAT, AVE_P_DOL_COMPAT);
 		bool rt4kEnable = in_range(swissSettings.aveCompat, GCDIGITAL_COMPAT, GCVIDEO_COMPAT);
 		// TODO settings to a new typedef that ties type etc all together, then draw a "page" of these rather than this at some point.
@@ -250,9 +251,9 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 			drawSettingEntryBoolean(page, &page_y_ofs, "Hide unknown file types:", swissSettings.hideUnknownFileTypes, option == SET_HIDE_UNK, true);
 		} else {
 			drawSettingEntryString(page, &page_y_ofs, "Flatten directory:", swissSettings.flattenDir, option == SET_FLATTEN_DIR, true);
-			drawSettingEntryBoolean(page, &page_y_ofs, "Init DVD Drive at startup:", swissSettings.initDVDDriveAtStart, option == SET_INIT_DRIVE, true);
-			drawSettingEntryBoolean(page, &page_y_ofs, "Stop DVD Drive motor:", swissSettings.stopMotor, option == SET_STOP_MOTOR, true);
-			drawSettingEntryString(page, &page_y_ofs, "Configure Audio Buffer:", configAudioBufferStr[swissSettings.configAudioBuffer], option == SET_AUDIO_BUFFER, true);
+			drawSettingEntryBoolean(page, &page_y_ofs, "Init DVD Drive at startup:", swissSettings.initDVDDriveAtStart, option == SET_INIT_DRIVE, dvdEnable);
+			drawSettingEntryBoolean(page, &page_y_ofs, "Stop DVD Drive motor:", swissSettings.stopMotor, option == SET_STOP_MOTOR, dvdEnable);
+			drawSettingEntryString(page, &page_y_ofs, "Configure Audio Buffer:", configAudioBufferStr[swissSettings.configAudioBuffer], option == SET_AUDIO_BUFFER, dvdEnable);
 			drawSettingEntryString(page, &page_y_ofs, "SD/IDE-EXI Speed:", swissSettings.exiSpeed ? "32 MHz" : "16 MHz", option == SET_EXI_SPEED, true);
 			drawSettingEntryString(page, &page_y_ofs, "AVE Compatibility:", aveCompatStr[swissSettings.aveCompat], option == SET_AVE_COMPAT, true);
 			drawSettingEntryBoolean(page, &page_y_ofs, "Force DTV Status:", swissSettings.forceDTVStatus, option == SET_FORCE_DTVSTATUS, dtvEnable);
@@ -520,14 +521,18 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 				DrawGetTextEntry(ENTRYMODE_NUMERIC|ENTRYMODE_ALPHA, "Flatten directory", &swissSettings.flattenDir, sizeof(swissSettings.flattenDir) - 1);
 			break;
 			case SET_INIT_DRIVE:
-				swissSettings.initDVDDriveAtStart ^= 1;
+				if(deviceHandler_getDeviceAvailable(&__device_dvd))
+					swissSettings.initDVDDriveAtStart ^= 1;
 			break;
 			case SET_STOP_MOTOR:
-				swissSettings.stopMotor ^= 1;
+				if(deviceHandler_getDeviceAvailable(&__device_dvd))
+					swissSettings.stopMotor ^= 1;
 			break;
 			case SET_AUDIO_BUFFER:
-				swissSettings.configAudioBuffer += direction;
-				swissSettings.configAudioBuffer = (swissSettings.configAudioBuffer + 3) % 3;
+				if(deviceHandler_getDeviceAvailable(&__device_dvd)) {
+					swissSettings.configAudioBuffer += direction;
+					swissSettings.configAudioBuffer = (swissSettings.configAudioBuffer + 3) % 3;
+				}
 			break;
 			case SET_EXI_SPEED:
 				swissSettings.exiSpeed ^= 1;
