@@ -2366,6 +2366,7 @@ static const struct {
 	{{ "GEAP8P\x00\x00" }, false, 0x6D, 0xE97B, 0xDE5D8B4B, 0xBCF792111F227773, 1440671744,   +19306496, { 1221746028,   +17478292, 8096, 0x90EE }, "Skies of Arcadia: Legends" },
 	{{ "GEAP8P\x00\x00" }, false, 0x87, 0x44D4, 0x0CCE9042, 0x9B16498254607B48, 1445722112,   +14256128, { 1221750612,   +12339372, 8096, 0x1EBE }, "Skies of Arcadia: Legends Maeson" },
 	{{ "GEAP8P\x00\x00" }, false, 0xA2, 0x44D4, 0x7C966541, 0xB214B86A3A60F822, 1445722112,   +14256128, { 1221750612,   +12339372, 8096, 0x1EBE }, "Skies of Arcadia: Legends Maeson" },
+	{{ "GFEE01\x00\x00" }, false, 0x4A, 0x4275, 0x1661430C, 0x316050A7421877E3, 1300903936,   +93407232, {  669183468,   +15798804, 6496, 0xAD7F }, "Path of Radiance: Reverse Recruitment Ultimate" },
 	{{ "GFEJ01\x00\x00" }, false, 0x9B, 0xFC08, 0xE97ACE52, 0x8C16FBB32540FEAC, 1290264576,  +169713664, {  660224316,  +165844676, 6496, 0x4D38 }, "Fire Emblem: Souen no Kiseki" },
 	{{ "GFTP01\x00\x00" }, false, 0xCB, 0x3F77, 0x963DEB2E, 0x7EF65CF2B33925E9, 1336121344,  +123856896, {    2083652,  +123826684, 8096, 0x9AC5 }, "Mario Golf: Toadstool Tour" },
 	{{ "GGSEA4\x10\x00" }, false, 0x16, 0xCD03, 0xD1B33770, 0xBB75D2E06575ECBC, 1316773888,  +143204352, {  596774724,      +32956, 6496, 0x215E }, "Metal Gear Solid: The Twin Snakes" },
@@ -2504,7 +2505,7 @@ static const struct {
 	{{ "SG4JDA\x00\x00" }, true,  0x52, 0xF019, 0x4BB4830A, 0x3645CAE26589C220, 1272594432,  +187383808, { 1272587604,  +187384140, 6496, 0x015D }, "Naruto: Clash of Ninja 4" },
 	{{ "SG4JDA\x00\x00" }, true,  0x9D, 0xB3B3, 0x424A4760, 0x38394EDF8E58393A, 1261602816,  +198375424, { 1261594344,  +198377400, 6496, 0x015D }, "Naruto: Clash of Ninja 4" },
 	{{ "TESTNA\x00\x00" }, false, 0xD2, 0x0C28, 0x6254FB97, 0xAA2E5EDD0EF81992,   26834944,       -1658, {         ~0,          +0,    0, 0xFFFF }, "Dodger Demo" },
-#define VALID_GCM_COUNT (REDUMP_COUNT + 229)
+#define VALID_GCM_COUNT (REDUMP_COUNT + 230)
 	{{ "101E01\x00\x05" }, true,  0x88, 0xB6FD, 0x4BB518CD, 0x27CFAD706924A030, 1435949056,   +24029184, {         ~0,          +0,    0, 0xFFFF }, "Hontai Kensa Disc DOL-USA" },
 	{{ "101E01\x00\x05" }, true,  0xC6, 0xB6FD, 0x4BB518CD, 0x27CFAD706924A030, 1435949056,   +24029184, {         ~0,          +0,    0, 0xFFFF }, "Hontai Kensa Disc DOL-USA" },
 	{{ "101J01\x00\x03" }, true,  0x67, 0xA361, 0x1A7B7608, 0x6E2DA2E062EF73BA, 1459453952,     +524288, {         ~0,          +0,    0, 0xFFFF }, "Hontai Kensa Disc DOL" },
