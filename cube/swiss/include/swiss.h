@@ -96,6 +96,8 @@ typedef struct {
 	int exiSpeed;
 	int uiVMode;	// What mode to force Swiss into
 	int gameVMode;	// What mode to force a Game into
+	int gameVModeNtsc;
+	int gameVModePal;
 	int forceHScale;
 	short forceVOffset;
 	int forceVFilter;

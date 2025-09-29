@@ -93,7 +93,8 @@ static char *tooltips_game_global[PAGE_GAME_GLOBAL_MAX+1] = {
 	"WiiRD debugging:\n\nDisabled - Boot as normal (default)\nEnabled - This will start a game with the WiiRD debugger enabled & paused\n\nThe WiiRD debugger takes up more memory and can cause issues."
 };
 
-static char *tooltips_game[PAGE_GAME_MAX+1] = {
+static char *tooltips_game[PAGE_GAME_DEFAULTS_MAX+1] = {
+	NULL,
 	NULL,
 	NULL,
 	"Force Vertical Offset:\n\n+0 - Standard value\n-2 - GCVideo-DVI compatible (480i)\n-3 - GCVideo-DVI compatible (default)\n-4 - GCVideo-DVI compatible (240p)\n-12 - Datapath VisionRGB (480p)",
@@ -139,7 +140,7 @@ char* get_tooltip(int page_num, int option) {
 		textPtr = tooltips_game[option];
 	}
 	else if(page_num == PAGE_GAME) {
-		textPtr = tooltips_game[option];
+		textPtr = tooltips_game[option+1];
 	}
 	return textPtr;
 }
@@ -323,20 +324,21 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 		bool enabledHypervisor = devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->features & FEAT_HYPERVISOR);
 		bool enabledCleanBoot = devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->location & LOC_DVD_CONNECTOR);
 		bool rt4kEnable = is_rt4k_alive();
-		if(option < SET_DEFAULT_SWAP_CAMERA) {
-			drawSettingEntryString(page, &page_y_ofs, "Force Video Mode:", gameVModeStr[swissSettings.gameVMode], option == SET_DEFAULT_FORCE_VIDEOMODE, enabledVideoPatches);
+		if(option < SET_DEFAULT_INVERT_CAMERA) {
+			drawSettingEntryString(page, &page_y_ofs, "Force NTSC Video Mode:", gameVModeStr[swissSettings.gameVModeNtsc], option == SET_DEFAULT_NTSC_VIDEOMODE, enabledVideoPatches);
+			drawSettingEntryString(page, &page_y_ofs, "Force PAL Video Mode:", gameVModeStr[swissSettings.gameVModePal], option == SET_DEFAULT_PAL_VIDEOMODE, enabledVideoPatches);
 			drawSettingEntryString(page, &page_y_ofs, "Force Horizontal Scale:", forceHScaleStr[swissSettings.forceHScale], option == SET_DEFAULT_HORIZ_SCALE, enabledVideoPatches);
 			sprintf(forceVOffsetStr, "%+hi", swissSettings.forceVOffset);
 			drawSettingEntryString(page, &page_y_ofs, "Force Vertical Offset:", forceVOffsetStr, option == SET_DEFAULT_VERT_OFFSET, enabledVideoPatches);
 			drawSettingEntryString(page, &page_y_ofs, "Force Vertical Filter:", forceVFilterStr[swissSettings.forceVFilter], option == SET_DEFAULT_VERT_FILTER, enabledVideoPatches);
-			drawSettingEntryString(page, &page_y_ofs, "Force Field Rendering:", forceVJitterStr[swissSettings.forceVJitter], option == SET_FIELD_RENDER, enabledVideoPatches);
+			drawSettingEntryString(page, &page_y_ofs, "Force Field Rendering:", forceVJitterStr[swissSettings.forceVJitter], option == SET_DEFAULT_FIELD_RENDER, enabledVideoPatches);
 			drawSettingEntryString(page, &page_y_ofs, "Fix Pixel Center:", fixPixelCenterStr[swissSettings.fixPixelCenter], option == SET_DEFAULT_PIXEL_CENTER, enabledVideoPatches);
 			drawSettingEntryBoolean(page, &page_y_ofs, "Disable Alpha Dithering:", swissSettings.disableDithering, option == SET_DEFAULT_ALPHA_DITHER, enabledVideoPatches);
 			drawSettingEntryBoolean(page, &page_y_ofs, "Force Anisotropic Filter:", swissSettings.forceAnisotropy, option == SET_DEFAULT_ANISO_FILTER, true);
 			drawSettingEntryString(page, &page_y_ofs, "Force Widescreen:", forceWidescreenStr[swissSettings.forceWidescreen], option == SET_DEFAULT_WIDESCREEN, true);
 			drawSettingEntryString(page, &page_y_ofs, "Force Polling Rate:", forcePollRateStr[swissSettings.forcePollRate], option == SET_DEFAULT_POLL_RATE, true);
-			drawSettingEntryString(page, &page_y_ofs, "Invert Camera Stick:", invertCStickStr[swissSettings.invertCStick], option == SET_DEFAULT_INVERT_CAMERA, true);
 		} else {
+			drawSettingEntryString(page, &page_y_ofs, "Invert Camera Stick:", invertCStickStr[swissSettings.invertCStick], option == SET_DEFAULT_INVERT_CAMERA, true);
 			drawSettingEntryString(page, &page_y_ofs, "Swap Camera Stick:", swapCStickStr[swissSettings.swapCStick], option == SET_DEFAULT_SWAP_CAMERA, true);
 			sprintf(triggerLevelStr, "%hhu", swissSettings.triggerLevel);
 			drawSettingEntryString(page, &page_y_ofs, "Digital Trigger Level:", triggerLevelStr, option == SET_DEFAULT_TRIGGER_LEVEL, true);
@@ -699,20 +701,38 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 	}
 	else if(page == PAGE_GAME_DEFAULTS) {
 		switch(option) {
-			case SET_DEFAULT_FORCE_VIDEOMODE:
+			case SET_DEFAULT_NTSC_VIDEOMODE:
 				if(swissSettings.disableVideoPatches < 2) {
-					swissSettings.gameVMode += direction;
-					swissSettings.gameVMode = (swissSettings.gameVMode + 15) % 15;
+					swissSettings.gameVModeNtsc += direction;
+					swissSettings.gameVModeNtsc = (swissSettings.gameVModeNtsc + 8) % 8;
 					if(!getDTVStatus()) {
-						while(in_range(swissSettings.gameVMode, 4, 7) || in_range(swissSettings.gameVMode, 11, 14)) {
-							swissSettings.gameVMode += direction;
-							swissSettings.gameVMode = (swissSettings.gameVMode + 15) % 15;
+						while(in_range(swissSettings.gameVModeNtsc, 4, 7)) {
+							swissSettings.gameVModeNtsc += direction;
+							swissSettings.gameVModeNtsc = (swissSettings.gameVModeNtsc + 8) % 8;
 						}
 					}
 					else if(swissSettings.aveCompat != CMPV_DOL_COMPAT) {
-						while(in_range(swissSettings.gameVMode, 6, 7) || in_range(swissSettings.gameVMode, 13, 14)) {
-							swissSettings.gameVMode += direction;
-							swissSettings.gameVMode = (swissSettings.gameVMode + 15) % 15;
+						while(in_range(swissSettings.gameVModeNtsc, 6, 7)) {
+							swissSettings.gameVModeNtsc += direction;
+							swissSettings.gameVModeNtsc = (swissSettings.gameVModeNtsc + 8) % 8;
+						}
+					}
+				}
+			break;
+			case SET_DEFAULT_PAL_VIDEOMODE:
+				if(swissSettings.disableVideoPatches < 2) {
+					swissSettings.gameVModePal += direction;
+					swissSettings.gameVModePal = (swissSettings.gameVModePal + 15) % 15;
+					if(!getDTVStatus()) {
+						while(in_range(swissSettings.gameVModePal, 4, 7) || in_range(swissSettings.gameVModePal, 11, 14)) {
+							swissSettings.gameVModePal += direction;
+							swissSettings.gameVModePal = (swissSettings.gameVModePal + 15) % 15;
+						}
+					}
+					else if(swissSettings.aveCompat != CMPV_DOL_COMPAT) {
+						while(in_range(swissSettings.gameVModePal, 6, 7) || in_range(swissSettings.gameVModePal, 13, 14)) {
+							swissSettings.gameVModePal += direction;
+							swissSettings.gameVModePal = (swissSettings.gameVModePal + 15) % 15;
 						}
 					}
 				}
@@ -810,7 +830,8 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 			break;
 			case SET_DEFAULT_DEFAULTS:
 				if(direction == 0) {
-					swissSettings.gameVMode = 0;
+					swissSettings.gameVModeNtsc = 0;
+					swissSettings.gameVModePal = 0;
 					swissSettings.forceHScale = 0;
 					swissSettings.forceVOffset = 0;
 					swissSettings.forceVFilter = 0;

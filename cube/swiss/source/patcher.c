@@ -8126,43 +8126,6 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 		{ 221, 6, 1, 3, 1, 5, NULL, 0, "IDct10_GC" };
 	_SDA2_BASE_ = _SDA_BASE_ = 0;
 	
-	switch (swissSettings.gameVMode) {
-		case 2: case 9: case 5: case 12: case -1: case -2:
-			if (!swissSettings.forceVFilter)
-				swissSettings.forceVFilter = 1;
-			break;
-		case 3: case 10:
-			swissSettings.forceVOffset &= ~1;
-			if (!swissSettings.forceVFilter)
-				swissSettings.forceVFilter = 1;
-			if (!swissSettings.forceVJitter)
-				swissSettings.forceVJitter = 2;
-			break;
-		case 4: case 11:
-			swissSettings.forceVOffset &= ~1;
-			if (!swissSettings.forceVFilter)
-				swissSettings.forceVFilter = 1;
-			if (!swissSettings.forceVJitter)
-				swissSettings.forceVJitter = 1;
-			break;
-		case 6: case 13:
-			if (!swissSettings.forceHScale)
-				swissSettings.forceHScale = 1;
-			swissSettings.forceVOffset &= ~1;
-			if (!swissSettings.forceVFilter)
-				swissSettings.forceVFilter = 1;
-			if (!swissSettings.forceVJitter)
-				swissSettings.forceVJitter = 1;
-			break;
-		case 7: case 14:
-			if (!swissSettings.forceHScale)
-				swissSettings.forceHScale = 1;
-			swissSettings.forceVOffset &= ~1;
-			if (!swissSettings.forceVFilter)
-				swissSettings.forceVFilter = 1;
-			break;
-	}
-	
 	if (in_range(swissSettings.gameVMode, 1, 7)) {
 		for (j = 0; j < sizeof(GXAdjustForOverscanSigs) / sizeof(FuncPattern); j++) {
 			GXAdjustForOverscanSigs[j].Patch       = GXAdjustForOverscanPatch;

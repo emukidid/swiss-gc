@@ -200,7 +200,8 @@ int config_update_global(bool checkConfigDevice) {
 	fprintf(fp, "FlattenDir=%s\r\n", swissSettings.flattenDir);
 
 	// Write out the default game config portion too
-	fprintf(fp, "Force Video Mode=%s\r\n", gameVModeStr[swissSettings.gameVMode]);
+	fprintf(fp, "Force NTSC Video Mode=%s\r\n", gameVModeStr[swissSettings.gameVModeNtsc]);
+	fprintf(fp, "Force PAL Video Mode=%s\r\n", gameVModeStr[swissSettings.gameVModePal]);
 	fprintf(fp, "Force Horizontal Scale=%s\r\n", forceHScaleStr[swissSettings.forceHScale]);
 	fprintf(fp, "Force Vertical Offset=%+hi\r\n", swissSettings.forceVOffset);
 	fprintf(fp, "Force Vertical Filter=%s\r\n", forceVFilterStr[swissSettings.forceVFilter]);
@@ -322,7 +323,7 @@ static char emulateEthernetEntries[][4] = {"DPSJ", "GHEE", "GHEJ", "GKYE", "GKYJ
 void config_defaults(ConfigEntry *entry) {
 	strcpy(entry->comment, "No Comment");
 	strcpy(entry->status, "Unknown");
-	entry->gameVMode = swissSettings.gameVMode;
+	entry->gameVMode = entry->region == 'P' ? swissSettings.gameVModePal : swissSettings.gameVModeNtsc;
 	entry->forceHScale = swissSettings.forceHScale;
 	entry->forceVOffset = swissSettings.forceVOffset;
 	entry->forceVOffset = in_range(swissSettings.aveCompat, GCDIGITAL_COMPAT, GCVIDEO_COMPAT) ? -3:0;
@@ -668,10 +669,18 @@ void config_parse_global(char *configData) {
 			if(value != NULL) {
 				//print_debug("Name [%s] Value [%s]\n", name, value);
 
-				if(!strcmp("Force Video Mode", name)) {
+				if(!strcmp("Force NTSC Video Mode", name)) {
+					for(int i = 0; i < 8; i++) {
+						if(!strcmp(gameVModeStr[i], value)) {
+							swissSettings.gameVModeNtsc = i;
+							break;
+						}
+					}
+				}
+				else if(!strcmp("Force PAL Video Mode", name)) {
 					for(int i = 0; i < 15; i++) {
 						if(!strcmp(gameVModeStr[i], value)) {
-							swissSettings.gameVMode = i;
+							swissSettings.gameVModePal = i;
 							break;
 						}
 					}
@@ -1369,6 +1378,43 @@ void config_load_current(ConfigEntry *entry) {
 	
 	if(!strncmp(entry->game_id, "GB3E", 4))
 		swissSettings.sramProgressive = 0;
+	
+	switch(swissSettings.gameVMode) {
+		case 2: case 9: case 5: case 12: case -1: case -2:
+			if(!swissSettings.forceVFilter)
+				swissSettings.forceVFilter = 1;
+			break;
+		case 3: case 10:
+			swissSettings.forceVOffset &= ~1;
+			if(!swissSettings.forceVFilter)
+				swissSettings.forceVFilter = 1;
+			if(!swissSettings.forceVJitter)
+				swissSettings.forceVJitter = 2;
+			break;
+		case 4: case 11:
+			swissSettings.forceVOffset &= ~1;
+			if(!swissSettings.forceVFilter)
+				swissSettings.forceVFilter = 1;
+			if(!swissSettings.forceVJitter)
+				swissSettings.forceVJitter = 1;
+			break;
+		case 6: case 13:
+			if(!swissSettings.forceHScale)
+				swissSettings.forceHScale = 1;
+			swissSettings.forceVOffset &= ~1;
+			if(!swissSettings.forceVFilter)
+				swissSettings.forceVFilter = 1;
+			if(!swissSettings.forceVJitter)
+				swissSettings.forceVJitter = 1;
+			break;
+		case 7: case 14:
+			if(!swissSettings.forceHScale)
+				swissSettings.forceHScale = 1;
+			swissSettings.forceVOffset &= ~1;
+			if(!swissSettings.forceVFilter)
+				swissSettings.forceVFilter = 1;
+			break;
+	}
 }
 
 void config_unload_current() {
