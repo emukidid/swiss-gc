@@ -393,6 +393,7 @@ static const struct {
 	{{ "DEZP8P\x00\x00" }, false, 0x36, 0x3FB2, 0x097DA801, 0xDC83BF86B6AB678A,  387362816, +1072615424, {  357034728, +1072617304, 8096, 0x9B40 }, "Billy Hatcher and the Giant Egg" },
 	{{ "DFIJ13\x00\x00" }, false, 0x32, 0x46CD, 0x7BDC7837, 0x564B21524D7D6551, 1311358976,  +148619264, { 1311351652,     +110200, 6496, 0x6371 }, "2002 FIFA World Cup" },
 	{{ "DGAJB2\x00\x00" }, true,  0x97, 0x5F59, 0x05458FAD, 0xEC3C56AA5A9CDE26,  716726272,  +743251968, {  716719748,  +743251996, 6496, 0x81D4 }, "Kidou Senshi Gundam: Senshi-tachi no Kiseki" },
+	{{ "DKNJ01\x00\x00" }, false, 0x50, 0xBAC0, 0x915156C6, 0xB5E976D396698FBF,  894486528,  +565491712, {  885347632,    +1125388, 6496, 0x53F0 }, "Kinnikuman Nisei: Shinsedai Choujin vs. Densetsu Choujin Event-you Disc" },
 	{{ "DLSE64\x00\x00" }, true,  0x31, 0x9B82, 0x1621D87A, 0x0EF434C4F59AA81D, 1007726592,  +452251648, {  369815476,  +451573484, 6496, 0xCC14 }, "Star Wars: Rogue Squadron III: Rebel Strike" },
 	{{ "DLSP64\x00\x00" }, true,  0x4A, 0xB5CA, 0x3657BA07, 0xDCEEF3970A1C9674,  687478784,  +772499456, {  404997056,  +772481952, 6496, 0xCC14 }, "Star Wars: Rogue Squadron III: Rebel Strike" },
 	{{ "DM2J8P\x00\x00" }, true,  0x96, 0x6274, 0xA589AF5A, 0x0D2CD0B64E89D021, 1004939264,  +455038976, {   79151836,  +455021220, 6496, 0x4FD6 }, "Super Monkey Ball 2" },
@@ -2274,7 +2275,7 @@ static const struct {
 	{{ "UGPP01\x00\x01" }, false, 0x2A, 0x6D4F, 0x5ECD9681, 0x4E9244DEFB94F10C,    5079040, +1454899200, {    2317764,       +8764, 8096, 0x8972 }, "Game Boy Player Start-Up Disc" },
 	{{ "UGPP01\x00\x02" }, false, 0x3A, 0xCA50, 0x1E26380C, 0x483B4CE794041533,    5079040, +1454899200, {    2317764,       +8764, 8096, 0x8972 }, "Game Boy Player Start-Up Disc" },
 	{{ "XXXXXX\x00\x01" }, false, 0x83, 0x7056, 0x5995AC59, 0x5CBC3D9F00D75112, 1287913472,  +172064768, {         ~0,          +0,    0, 0xFFFF }, "LEGO Super Soccer Adventure" },
-#define REDUMP_COUNT (2013)
+#define REDUMP_COUNT (2014)
 	{{"00\0E01\x00\x00" }, false, 0x8B, 0x42A2, 0x499CF1AB, 0xC1BAC83BFBED3EDB,   31170560, +1428807680, {    7795364,      +23900, 6496, 0xBBEA }, "Nintendo Developer Demo" },
 	{{"00\0E01\x00\x00" }, false, 0xD9, 0x21CF, 0xBF114CB3, 0xC1BAC83BFBED3EDB,   31170560, +1428807680, {    7795364,      +23900, 6496, 0xBBEA }, "Nintendo Developer Demo" },
 	{{ "060J01\x00\x00" }, true,  0x7E, 0x27AC, 0x94C088DF, 0x55221BF909AB54CC,  171485184, +1288493056, {     238648, +1288483336, 6496, 0xFD76 }, "Diag Ver 3.1.1" },
