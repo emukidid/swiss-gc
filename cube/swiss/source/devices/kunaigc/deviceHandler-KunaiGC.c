@@ -245,7 +245,7 @@ char* deviceHandler_KunaiGC_status(file_handle* file) {
 }
 
 DEVICEHANDLER_INTERFACE __device_kunaigc = {
-    .deviceUniqueId = DEVICE_ID_J,
+    .deviceUniqueId = DEVICE_ID_L,
     .hwName = "KunaiGC IPL",
     .deviceName = "KunaiGC",
     .deviceDescription = "KunaiGC File System",
