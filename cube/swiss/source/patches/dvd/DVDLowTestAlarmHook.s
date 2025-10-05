@@ -7,6 +7,6 @@ DVDLowTestAlarmHook:
 	addze	%r3, %r0
 	blr
 
-.globl DVDLowTestAlarmHook_length
-DVDLowTestAlarmHook_length:
-.long (DVDLowTestAlarmHook_length - DVDLowTestAlarmHook)
+.globl DVDLowTestAlarmHook_size
+DVDLowTestAlarmHook_size:
+.long (. - DVDLowTestAlarmHook)

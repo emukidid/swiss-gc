@@ -16,16 +16,16 @@
 .set VAR_TVMODE,			0x00CC	# TV format
 
 .set VAR_CURRENT_DISC,		0x09B0	# current disc number
-.set VAR_SECOND_DISC,		0x09B1	# second disc present
-.set VAR_DRIVE_PATCHED,		0x09B2	# disc drive patched
-.set VAR_EMU_READ_SPEED,	0x09B3	# emulate read speed
-.set VAR_EXI_REGS,			0x09B4	# pointer to EXI registers
-.set VAR_EXI_SLOT,			0x09B8	# is the EXI slot (0 = slot a, 1 = slot b)
-.set VAR_EXI_CPR,			0x09B9	# is the EXI frequency (4 = 16mhz, 5 = 32mhz)
-.set VAR_SD_SHIFT,			0x09BA	# is the SD Card shift amount when issueing read cmds
-.set VAR_ATA_LBA48,			0x09BA	# Is the HDD in use a 48 bit LBA supported HDD?
-.set VAR_IGR_EXIT_TYPE,		0x09BB	# IGR exit type
-.set VAR_FRAG_LIST,			0x09BC	# pointer to fragments (u32 offset, u32 size, u32 rawsector)
+.set VAR_DRIVE_FLAGS,		0x09B1	# disc drive patched
+.set VAR_EMU_READ_SPEED,	0x09B2	# emulate read speed
+.set VAR_IGR_TYPE,			0x09B3	# IGR exit type
+.set VAR_FRAG_LIST,			0x09B4	# pointer to fragments (u32 offset, u32 size, u32 rawsector)
+.set VAR_SD_SHIFT,			0x09B8	# is the SD Card shift amount when issueing read cmds
+.set VAR_ATA_LBA48,			0x09B8	# Is the HDD in use a 48 bit LBA supported HDD?
+.set VAR_EXI_SLOT,			0x09B9	# is the EXI slot (0 = slot a, 1 = slot b)
+.set VAR_EXI_CPR,			0x09BA	# is the EXI frequency (4 = 16mhz, 5 = 32mhz)
+.set VAR_EXI2_CPR,			0x09BB	# is the EXI2 frequency (4 = 16mhz, 5 = 32mhz)
+.set VAR_EXI_REGS,			0x09BC	# pointer to EXI registers
 
 .set VAR_DISC_1_ID,			0x09CC	# disc 1 header
 .set VAR_DISC_2_ID,			0x09D4	# disc 2 header
@@ -58,6 +58,7 @@
 
 .set VAR_PATCHES_BASE,		0x3000	# Patches get copied to below this area.
 
+.set VAR_PAD_BUTTON,		0x30E4	# PAD buttons
 .set VAR_RMODE,				0x30F8	# render mode
 
 # Cheat Engine + Cheats buffer	(0x817FE000)
@@ -78,16 +79,16 @@ extern char VAR_JUMP_TABLE[0x20];	// Dolphin OS jump table
 extern char VAR_TVMODE[4];			// TV format
 
 extern char VAR_CURRENT_DISC[1];	// current disc number
-extern char VAR_SECOND_DISC[1];		// second disc present
-extern char VAR_DRIVE_PATCHED[1];	// disc drive patched
+extern char VAR_DRIVE_FLAGS[1];		// disc drive patched
 extern char VAR_EMU_READ_SPEED[1];	// emulate read speed
-extern char VAR_EXI_REGS[4];		// pointer to EXI registers
-extern char VAR_EXI_SLOT[1];		// is the EXI slot (0 = slot a, 1 = slot b)
-extern char VAR_EXI_CPR[1];			// is the EXI frequency (4 = 16mhz, 5 = 32mhz)
-extern char VAR_SD_SHIFT[1];		// is the SD Card shift amount when issueing read cmds
-extern char VAR_ATA_LBA48[1];		// Is the HDD in use a 48 bit LBA supported HDD?
 extern char VAR_IGR_TYPE[1];		// IGR exit type
 extern char VAR_FRAG_LIST[4];		// pointer to fragments (u32 offset, u32 size, u32 rawsector)
+extern char VAR_SD_SHIFT[1];		// is the SD Card shift amount when issueing read cmds
+extern char VAR_ATA_LBA48[1];		// Is the HDD in use a 48 bit LBA supported HDD?
+extern char VAR_EXI_SLOT[1];		// is the EXI slot (0 = slot a, 1 = slot b)
+extern char VAR_EXI_CPR[2];			// is the EXI frequency (4 = 16mhz, 5 = 32mhz)
+extern char VAR_EXI2_CPR[1];		// is the EXI2 frequency (4 = 16mhz, 5 = 32mhz)
+extern char VAR_EXI_REGS[4];		// pointer to EXI registers
 
 extern char VAR_DISC_1_ID[8];		// disc 1 header
 extern char VAR_DISC_2_ID[8];		// disc 2 header
@@ -121,6 +122,7 @@ extern char VAR_SECTOR_BUF[0x200];	// 0x200 of read data
 
 extern char VAR_PATCHES_BASE[];		// Patches get copied to below this area.
 
+extern char VAR_PAD_BUTTON[2];		// PAD buttons
 extern char VAR_RMODE[4];			// render mode
 
 // Cheat Engine + Cheats buffer (0x817FE000)
@@ -129,9 +131,8 @@ extern char VAR_RMODE[4];			// render mode
 
 // IGR Types
 #define IGR_OFF			0
-#define IGR_HARDRESET	1
-#define IGR_BOOTBIN		2
-#define IGR_USBGKOFLASH	3
+#define IGR_HOTRESET	1
+#define IGR_APPLOADER	2
 
 // FAT Fragments
 #define FRAGS_NULL		(char)-1

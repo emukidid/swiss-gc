@@ -181,7 +181,7 @@ void drawFontInit(void)
 	GX_SetZMode(GX_DISABLE,GX_ALWAYS,GX_FALSE);
 
 	GX_ClearVtxDesc();
-	GX_SetVtxDesc(GX_VA_PTNMTXIDX, GX_PNMTX0);
+	GX_SetVtxDesc(GX_VA_PNMTXIDX, GX_PNMTX0);
 	GX_SetVtxDesc(GX_VA_TEX0MTXIDX, GX_TEXMTX0);
 	GX_SetVtxDesc(GX_VA_POS, GX_DIRECT);
 	GX_SetVtxDesc(GX_VA_CLR0, GX_DIRECT);
@@ -328,7 +328,7 @@ int GetCharsThatFitInWidth(char *string, int max, float scale)
 	int strWidth = 0;
 	int charCount = 0;
 	char* string_work = string;
-	//print_gecko("String [%s] max %i\r\n", string, max);
+	//print_debug("String [%s] max %i\n", string, max);
 	while(*string_work)
 	{
 		unsigned char c = *string_work;

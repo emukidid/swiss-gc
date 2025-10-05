@@ -37,7 +37,7 @@ static struct {
 	bba_page_t (*page)[8];
 	ppc_context_t *entry;
 	ppc_context_t *exit;
-	void (*callback)(void);
+	bba_callback callback;
 } _bba;
 
 static struct {
@@ -47,7 +47,7 @@ static struct {
 	bool read, patch;
 } dvd;
 
-static void exi_callback();
+static void exi_lock();
 
 #include "tcpip.c"
 
@@ -190,9 +190,13 @@ void bba_outs(uint16_t reg, const void *val, uint32_t len)
 	exi_deselect();
 }
 
-void bba_transmit_fifo(const void *data, size_t size)
+void bba_input(void *data, size_t size, uint8_t offset)
 {
-	if (!size) return;
+	if (size) bba_ins(_bba.rrp << 8 | offset, data, size);
+}
+
+void bba_output(const void *data, size_t size)
+{
 	DCStoreRange(__builtin_assume_aligned(data, 32), size);
 
 	while (bba_in8(BBA_NCRA) & (BBA_NCRA_ST0 | BBA_NCRA_ST1));
@@ -200,10 +204,10 @@ void bba_transmit_fifo(const void *data, size_t size)
 	bba_out8(BBA_NCRA, (bba_in8(BBA_NCRA) & ~BBA_NCRA_ST0) | BBA_NCRA_ST1);
 }
 
-void bba_receive_dma(void *data, size_t size, uint8_t offset)
+void bba_output_async(const void *data, size_t size, bba_callback callback)
 {
-	if (!size) return;
-	bba_ins(_bba.rrp << 8 | offset, data, size);
+	bba_output(data, size);
+	callback();
 }
 
 static void bba_receive(void)
@@ -217,14 +221,14 @@ static void bba_receive(void)
 		size_t size = sizeof(bba_header_t) + MIN_FRAME_SIZE;
 
 		DCInvalidateRange(__builtin_assume_aligned(bba, 32), size);
-		bba_receive_dma(bba, size, 0);
+		bba_input(bba, size, 0);
 		bba_out8(BBA_RRP, bba->next);
 
 		size = bba->length - sizeof(*bba);
 		#ifdef ETH_EMULATOR
 		if (!eth_input(page, (void *)bba->data, size)) {
 			DCInvalidateRange(__builtin_assume_aligned(bba->data + MIN_FRAME_SIZE, 32), size - MIN_FRAME_SIZE);
-			bba_receive_dma(bba->data + MIN_FRAME_SIZE, size - MIN_FRAME_SIZE, sizeof(*bba) + MIN_FRAME_SIZE);
+			bba_input(bba->data + MIN_FRAME_SIZE, size - MIN_FRAME_SIZE, sizeof(bba_header_t) + MIN_FRAME_SIZE);
 			eth_mac_receive(bba->data, size);
 		}
 		#else
@@ -257,42 +261,44 @@ static void exi_callback()
 	}
 }
 
+static void exi_lock()
+{
+	if (EXILock(EXI_CHANNEL_0, EXI_DEVICE_2, exi_lock))
+		exi_callback();
+}
+
 static void exi_coroutine()
 {
-	if (EXILock(EXI_CHANNEL_0, EXI_DEVICE_2, exi_callback)) {
-		_bba.locked = true;
+	_bba.locked = true;
 
-		set_interrupt_handler(OS_INTERRUPT_EXI_0_TC, exi_callback);
-		unmask_interrupts(OS_INTERRUPTMASK_EXI_0_TC);
+	set_interrupt_handler(OS_INTERRUPT_EXI_0_TC, exi_callback);
+	unmask_interrupts(OS_INTERRUPTMASK_EXI_0_TC);
 
-		if (_bba.callback) {
-			_bba.callback();
-			_bba.callback = NULL;
-		}
+	bba_cmd_out8(0x02, BBA_CMD_IRMASKALL);
 
-		uint8_t status = bba_cmd_in8(0x03);
-		bba_cmd_out8(0x02, BBA_CMD_IRMASKALL);
-
-		if (status & 0x80) bba_interrupt();
-
-		bba_cmd_out8(0x03, status);
-		bba_cmd_out8(0x02, BBA_CMD_IRMASKNONE);
-
-		mask_interrupts(OS_INTERRUPTMASK_EXI_0_TC);
-
-		_bba.locked = false;
-		if (!setjmp(_bba.entry))
-			longjmp(_bba.exit, 1);
-	} else {
-		if (!setjmp(_bba.entry))
-			longjmp(_bba.exit, 2);
+	if (_bba.callback) {
+		_bba.callback();
+		_bba.callback = NULL;
 	}
+
+	uint8_t status = bba_cmd_in8(0x03);
+
+	if (status & 0x80) bba_interrupt();
+
+	bba_cmd_out8(0x03, status);
+	bba_cmd_out8(0x02, BBA_CMD_IRMASKNONE);
+
+	mask_interrupts(OS_INTERRUPTMASK_EXI_0_TC);
+
+	_bba.locked = false;
+	if (!setjmp(_bba.entry))
+		longjmp(_bba.exit, 1);
 }
 
 static void exi_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 {
 	exi_clear_interrupts(EXI_CHANNEL_2, true, false, false);
-	exi_callback();
+	exi_lock();
 }
 
 void bba_init(void **arenaLo, void **arenaHi)
@@ -342,9 +348,9 @@ void schedule_read(OSTick ticks)
 
 void perform_read(uint32_t address, uint32_t length, uint32_t offset)
 {
-	if ((*VAR_IGR_TYPE & 0x80) && offset == 0x2440) {
+	if ((*VAR_DRIVE_FLAGS & 0b0010) && offset == 0x2440) {
+		*VAR_DRIVE_FLAGS &= ~0b0011;
 		*VAR_CURRENT_DISC = FRAGS_APPLOADER;
-		*VAR_SECOND_DISC = 0;
 	}
 
 	dvd.buffer = OSPhysicalToUncached(address);
@@ -375,7 +381,7 @@ void trickle_read()
 
 bool change_disc(void)
 {
-	if (*VAR_SECOND_DISC) {
+	if (*VAR_DRIVE_FLAGS & 0b0001) {
 		*VAR_CURRENT_DISC ^= 1;
 		return true;
 	}
@@ -389,6 +395,10 @@ void reset_devices(void)
 	while (EXI[EXI_CHANNEL_1][3] & 0b000001);
 	while (EXI[EXI_CHANNEL_2][3] & 0b000001);
 
+	EXI[EXI_CHANNEL_0][0] = 0;
+	EXI[EXI_CHANNEL_1][0] = 0;
+	EXI[EXI_CHANNEL_2][0] = 0;
+
 	reset_device();
-	ipl_set_config(0);
+	ipl_set_config(1);
 }

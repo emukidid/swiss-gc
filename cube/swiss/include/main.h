@@ -25,7 +25,8 @@ enum useCheats
 //File type
 enum fileTypes
 {
-  IS_FILE=0,
+  IS_UNKNOWN=0,
+  IS_FILE,
   IS_DIR,
   IS_SPECIAL
 };
@@ -115,9 +116,7 @@ extern char *dvdDiscTypeStr;
 extern int dvdDiscTypeInt;
 extern int drive_status;
 
-extern u32 __SYS_SyncSram();
-extern u32 __SYS_CheckSram();
-extern void __SYS_ReadROM(void *buf,u32 len,u32 offset);
 extern void populateDeviceAvailability();
+extern void refreshDeviceCode(bool subdevice);
 #endif
 

@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2019-2023, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2019-2024, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -229,9 +229,9 @@ void schedule_read(OSTick ticks)
 
 void perform_read(uint32_t address, uint32_t length, uint32_t offset)
 {
-	if ((*VAR_IGR_TYPE & 0x80) && offset == 0x2440) {
+	if ((*VAR_DRIVE_FLAGS & 0b0010) && offset == 0x2440) {
+		*VAR_DRIVE_FLAGS &= ~0b0011;
 		*VAR_CURRENT_DISC = FRAGS_APPLOADER;
-		*VAR_SECOND_DISC = 0;
 	}
 
 	dvd.buffer = OSPhysicalToUncached(address);
@@ -262,7 +262,7 @@ void trickle_read()
 
 bool change_disc(void)
 {
-	if (*VAR_SECOND_DISC) {
+	if (*VAR_DRIVE_FLAGS & 0b0001) {
 		usb_unlock_file();
 		*VAR_CURRENT_DISC ^= 1;
 		return usb_serve_file() && usb_lock_file();
@@ -277,7 +277,11 @@ void reset_devices(void)
 	while (EXI[EXI_CHANNEL_1][3] & 0b000001);
 	while (EXI[EXI_CHANNEL_2][3] & 0b000001);
 
+	EXI[EXI_CHANNEL_0][0] = 0;
+	EXI[EXI_CHANNEL_1][0] = 0;
+	EXI[EXI_CHANNEL_2][0] = 0;
+
 	reset_device();
 	usb_unlock_file();
-	ipl_set_config(0);
+	ipl_set_config(1);
 }

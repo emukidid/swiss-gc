@@ -261,7 +261,7 @@ SECTIONS
 	/* These must appear regardless of  .  */
 }
 
-__isIPL = 0;
+__isIPL = 1;
 __stack_addr = (__bss_start + SIZEOF(.bss) + 0x80000 + 7) & (-8);
 __stack_end = (__bss_start + SIZEOF(.bss));
 __intrstack_addr = (__stack_addr + 0x4000);

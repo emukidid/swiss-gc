@@ -43,7 +43,7 @@ static inline u8 ataReadStatusReg(int chn)
 	}
 	// read ATA_REG_CMDSTATUS1 | 0x00 (dummy)
 	u16 dat = 0x1700;
-	EXI_Lock(chn, dev, NULL);
+	EXI_LockEx(chn,dev);
 	EXI_Select(chn,dev,swissSettings.exiSpeed ? EXI_SPEED32MHZ:EXI_SPEED16MHZ);
 	EXI_ImmEx(chn,&dat,2,EXI_WRITE);
 	EXI_ImmEx(chn,&dat,1,EXI_READ);
@@ -62,7 +62,7 @@ static inline u8 ataReadErrorReg(int chn)
 	}
 	// read ATA_REG_ERROR | 0x00 (dummy)
 	u16 dat = 0x1100;
-	EXI_Lock(chn, dev, NULL);
+	EXI_LockEx(chn,dev);
 	EXI_Select(chn,dev,swissSettings.exiSpeed ? EXI_SPEED32MHZ:EXI_SPEED16MHZ);
 	EXI_ImmEx(chn,&dat,2,EXI_WRITE);
 	EXI_ImmEx(chn,&dat,1,EXI_READ);
@@ -80,7 +80,7 @@ static inline void ataWriteByte(int chn, u8 addr, u8 data)
 		dev = EXI_DEVICE_2;
 	}
 	u32 dat = 0x80000000 | (addr << 24) | (data<<16);
-	EXI_Lock(chn, dev, NULL);
+	EXI_LockEx(chn,dev);
 	EXI_Select(chn,dev,swissSettings.exiSpeed ? EXI_SPEED32MHZ:EXI_SPEED16MHZ);
 	EXI_ImmEx(chn,&dat,3,EXI_WRITE);
 	EXI_Deselect(chn);
@@ -97,7 +97,7 @@ static inline void ataWriteu16(int chn, u16 data)
 	}
 	// write 16 bit to ATA_REG_DATA | data LSB | data MSB | 0x00 (dummy)
 	u32 dat = 0xD0000000 | (((data>>8) & 0xff)<<16) | ((data & 0xff)<<8);
-	EXI_Lock(chn, dev, NULL);
+	EXI_LockEx(chn,dev);
 	EXI_Select(chn,dev,swissSettings.exiSpeed ? EXI_SPEED32MHZ:EXI_SPEED16MHZ);
 	EXI_ImmEx(chn,&dat,4,EXI_WRITE);
 	EXI_Deselect(chn);
@@ -115,7 +115,7 @@ static inline u16 ataReadu16(int chn)
 	}
 	// read 16 bit from ATA_REG_DATA | 0x00 (dummy)
 	u16 dat = 0x5000;
-	EXI_Lock(chn, dev, NULL);
+	EXI_LockEx(chn,dev);
 	EXI_Select(chn,dev,swissSettings.exiSpeed ? EXI_SPEED32MHZ:EXI_SPEED16MHZ);
 	EXI_ImmEx(chn,&dat,2,EXI_WRITE);
 	EXI_ImmEx(chn,&dat,2,EXI_READ); // read LSB & MSB
@@ -136,7 +136,7 @@ static inline void ata_read_buffer(int chn, u32 *dst)
 	u16 dwords = 128;	// 128 * 4 = 512 bytes
 	// (31:29) 011b | (28:24) 10000b | (23:16) <num_words_LSB> | (15:8) <num_words_MSB> | (7:0) 00h (4 bytes)
 	u32 dat = 0x70000000 | ((dwords&0xff) << 16) | (((dwords>>8)&0xff) << 8);
-	EXI_Lock(chn, dev, NULL);
+	EXI_LockEx(chn,dev);
 	EXI_Select(chn,dev,swissSettings.exiSpeed ? EXI_SPEED32MHZ:EXI_SPEED16MHZ);
 	EXI_ImmEx(chn,&dat,4,EXI_WRITE);
 	if(_ideexi_version == IDE_EXI_V1) {
@@ -146,14 +146,14 @@ static inline void ata_read_buffer(int chn, u32 *dst)
 		u32 i = 0;
 		u32 *ptr = dst;
 		for(i = 0; i < dwords; i++) {
-			EXI_Lock(chn, dev, NULL);
+			EXI_LockEx(chn,dev);
 			EXI_Select(chn,dev,swissSettings.exiSpeed ? EXI_SPEED32MHZ:EXI_SPEED16MHZ);
 			EXI_ImmEx(chn,ptr,4,EXI_READ);
 			ptr++;
 			EXI_Deselect(chn);
 			EXI_Unlock(chn);
 		}
-		EXI_Lock(chn, dev, NULL);
+		EXI_LockEx(chn,dev);
 		EXI_Select(chn,dev,swissSettings.exiSpeed ? EXI_SPEED32MHZ:EXI_SPEED16MHZ);
 		EXI_ImmEx(chn,&dat,4,EXI_READ);
 		EXI_Deselect(chn);
@@ -177,7 +177,7 @@ static inline void ata_write_buffer(int chn, u32 *src)
 	u16 dwords = 128;	// 128 * 4 = 512 bytes
 	// (23:21) 111b | (20:16) 10000b | (15:8) <num_words_LSB> | (7:0) <num_words_MSB> (3 bytes)
 	u32 dat = 0xF0000000 | ((dwords&0xff) << 16) | (((dwords>>8)&0xff) << 8);
-	EXI_Lock(chn, dev, NULL);
+	EXI_LockEx(chn,dev);
 	EXI_Select(chn,dev,swissSettings.exiSpeed ? EXI_SPEED32MHZ:EXI_SPEED16MHZ);
 	EXI_ImmEx(chn,&dat,3,EXI_WRITE);
 	EXI_DmaEx(chn, src,512,EXI_WRITE);
@@ -190,7 +190,7 @@ static inline void ata_write_buffer(int chn, u32 *src)
 void print_hdd_sector(u32 *dest) {
 	int i = 0;
 	for (i = 0; i < 512/4; i+=4) {
-		print_gecko("%08X:%08X %08X %08X %08X\r\n",i*4,dest[i],dest[i+1],dest[i+2],dest[i+3]);
+		print_debug("%08X:%08X %08X %08X %08X\n",i*4,dest[i],dest[i+1],dest[i+2],dest[i+3]);
 	}
 }
 
@@ -213,13 +213,13 @@ int _ideExiVersion(int chn) {
 	}
 	u32 cid = 0;
 	EXI_GetID(chn,dev,&cid);
-	print_gecko("IDE-EXI ID: %08X\r\n",cid);
+	print_debug("IDE-EXI ID: %08X\n",cid);
 	if((cid&~0xff)==EXI_IDE_ID) {
-		print_gecko("IDE-EXI v2+ detected\r\n");
+		print_debug("IDE-EXI v2+ detected\n");
 		return (cid&0xff)-'1';
 	}
 	else {
-		print_gecko("Unknown - assume IDE-EXI v1\r\n");
+		print_debug("Unknown - assume IDE-EXI v1\n");
 		return IDE_EXI_V1;
 	}
 }
@@ -247,11 +247,11 @@ u32 _ataDriveIdentify(int chn) {
 		tmp = ataReadStatusReg(chn);
 		usleep(100000);	//sleep for 0.1 seconds
 		retries--;
-		print_gecko("(%08X) Waiting for BSY to clear..\r\n", tmp);
+		print_debug("(%08X) Waiting for BSY to clear..\n", tmp);
 	}
 	while((tmp & ATA_SR_BSY) && retries);
 	if(!retries) {
-		print_gecko("Exceeded retries..\r\n");
+		print_debug("Exceeded retries..\n");
 		return -1;
 	}
     
@@ -264,11 +264,11 @@ u32 _ataDriveIdentify(int chn) {
 		tmp = ataReadStatusReg(chn); 
 		usleep(100000);	//sleep for 0.1 seconds
 		retries--;
-		print_gecko("(%08X) Waiting for DRQ to toggle..\r\n", tmp);
+		print_debug("(%08X) Waiting for DRQ to toggle..\n", tmp);
 	}
 	while((!(tmp & ATA_SR_DRQ)) && retries);
 	if(!retries) {
-		print_gecko("(%08X) Drive did not respond in time, failing IDE-EXI init..\r\n", tmp);
+		print_debug("(%08X) Drive did not respond in time, failing IDE-EXI init..\n", tmp);
 		return -1;
 	}
 	usleep(2000);
@@ -319,21 +319,21 @@ u32 _ataDriveIdentify(int chn) {
 		i--;
 	}
 	
-	print_gecko("%d GB HDD Connected\r\n", ataDriveInfo.sizeInGigaBytes);
-	print_gecko("LBA 48-Bit Mode %s\r\n", ataDriveInfo.lba48Support ? "Supported" : "Not Supported");
+	print_debug("%d GB HDD Connected\n", ataDriveInfo.sizeInGigaBytes);
+	print_debug("LBA 48-Bit Mode %s\n", ataDriveInfo.lba48Support ? "Supported" : "Not Supported");
 	if(!ataDriveInfo.lba48Support) {
-		print_gecko("Cylinders: %i\r\n",ataDriveInfo.cylinders);
-		print_gecko("Heads Per Cylinder: %i\r\n",ataDriveInfo.heads);
-		print_gecko("Sectors Per Track: %i\r\n",ataDriveInfo.sectors);
+		print_debug("Cylinders: %i\n",ataDriveInfo.cylinders);
+		print_debug("Heads Per Cylinder: %i\n",ataDriveInfo.heads);
+		print_debug("Sectors Per Track: %i\n",ataDriveInfo.sectors);
 	}
-	print_gecko("Model: %s\r\n",ataDriveInfo.model);
-	print_gecko("Serial: %s\r\n",ataDriveInfo.serial); 
+	print_debug("Model: %s\n",ataDriveInfo.model);
+	print_debug("Serial: %s\n",ataDriveInfo.serial); 
 	//print_hdd_sector(&buffer);
 	
 	//int unlockStatus = ataUnlock(chn, 1, "password\0", ATA_CMD_UNLOCK);
-	//print_gecko("Unlock Status was: %i\r\n",unlockStatus);
+	//print_debug("Unlock Status was: %i\n",unlockStatus);
 	//unlockStatus = ataUnlock(chn, 1, "password\0", ATA_CMD_SECURITY_DISABLE);
-	//print_gecko("Disable Status was: %i\r\n",unlockStatus);
+	//print_debug("Disable Status was: %i\n",unlockStatus);
 	// Return ok
 	return 0;
 }
@@ -353,11 +353,11 @@ int ataUnlock(int chn, int useMaster, char *password, int command)
 		tmp = ataReadStatusReg(chn);
 		usleep(100000);	//sleep for 0.1 seconds
 		retries--;
-		print_gecko("UNLOCK (%08X) Waiting for BSY to clear..\r\n", tmp);
+		print_debug("UNLOCK (%08X) Waiting for BSY to clear..\n", tmp);
 	}
 	while((tmp & ATA_SR_BSY) && retries);
 	if(!retries) {
-		print_gecko("UNLOCK Exceeded retries..\r\n");
+		print_debug("UNLOCK Exceeded retries..\n");
 		return -1;
 	}
     
@@ -370,11 +370,11 @@ int ataUnlock(int chn, int useMaster, char *password, int command)
 		tmp = ataReadStatusReg(chn); 
 		usleep(100000);	//sleep for 0.1 seconds
 		retries--;
-		print_gecko("UNLOCK (%08X) Waiting for DRQ to toggle..\r\n", tmp);
+		print_debug("UNLOCK (%08X) Waiting for DRQ to toggle..\n", tmp);
 	}
 	while((!(tmp & ATA_SR_DRQ)) && retries);
 	if(!retries) {
-		print_gecko("UNLOCK (%08X) Drive did not respond in time, failing IDE-EXI init..\r\n", tmp);
+		print_debug("UNLOCK (%08X) Drive did not respond in time, failing IDE-EXI init..\n", tmp);
 		return -1;
 	}
 	usleep(2000);
@@ -398,7 +398,7 @@ int ataUnlock(int chn, int useMaster, char *password, int command)
 	
 	// If the error bit was set, fail.
 	if(temp & ATA_SR_ERR) {
-		print_gecko("Error: %02X\r\n", ataReadErrorReg(chn));
+		print_debug("Error: %02X\n", ataReadErrorReg(chn));
 		return 1;
 	}
 	
@@ -450,7 +450,7 @@ int _ataReadSector(int chn, u64 lba, u32 *Buffer)
 	
 	// If the error bit was set, fail.
 	if(temp & ATA_SR_ERR) {
-		print_gecko("Error: %02X", ataReadErrorReg(chn));
+		print_debug("Error: %02X\n", ataReadErrorReg(chn));
 		return 1;
 	}
 
@@ -513,7 +513,7 @@ int _ataWriteSector(int chn, u64 lba, u32 *Buffer)
 	
 	// If the error bit was set, fail.
 	if(temp & ATA_SR_ERR) {
-		print_gecko("Error: %02X", ataReadErrorReg(chn));
+		print_debug("Error: %02X\n", ataReadErrorReg(chn));
 		return 1;
 	}
 	// Wait for drive to request data transfer
@@ -547,9 +547,9 @@ int ataReadSectors(int chn, u64 sector, unsigned int numSectors, unsigned char *
 {
 	int ret = 0;
 	while(numSectors) {
-		//print_gecko("Reading, sec %08X, numSectors %i, dest %08X ..\r\n", (u32)(sector&0xFFFFFFFF),numSectors, (u32)dest);
+		//print_debug("Reading, sec %08X, numSectors %i, dest %08X ..\n", (u32)(sector&0xFFFFFFFF),numSectors, (u32)dest);
 		if((ret=_ataReadSector(chn,sector,(u32*)dest))) {
-			print_gecko("(%08X) Failed to read!..\r\n", ret);
+			print_debug("(%08X) Failed to read!..\n", ret);
 			return -1;
 		}
 		//print_hdd_sector((u32*)dest);
@@ -567,7 +567,7 @@ int ataWriteSectors(int chn, u64 sector,unsigned int numSectors, unsigned char *
 	int ret = 0;
 	while(numSectors) {
 		if((ret=_ataWriteSector(chn,sector,(u32*)src))) {
-			print_gecko("(%08X) Failed to write!..\r\n", ret);
+			print_debug("(%08X) Failed to write!..\n", ret);
 			return -1;
 		}
 		src+=512;
@@ -595,97 +595,97 @@ int ataShutdown(int chn) {
 }
 
 
-static bool __ataa_startup(void)
+static bool __ataa_startup(DISC_INTERFACE *disc)
 {
 	return ataIsInserted(0);
 }
 
-static bool __ataa_isInserted(void)
+static bool __ataa_isInserted(DISC_INTERFACE *disc)
 {
 	return ataIsInserted(0);
 }
 
-static bool __ataa_readSectors(sec_t sector, sec_t numSectors, void *buffer)
+static bool __ataa_readSectors(DISC_INTERFACE *disc, sec_t sector, sec_t numSectors, void *buffer)
 {
 	return !ataReadSectors(0, (u64)sector, numSectors, buffer);
 }
 
-static bool __ataa_writeSectors(sec_t sector, sec_t numSectors, void *buffer)
+static bool __ataa_writeSectors(DISC_INTERFACE *disc, sec_t sector, sec_t numSectors, void *buffer)
 {
 	return !ataWriteSectors(0, (u64)sector, numSectors, buffer);
 }
 
-static bool __ataa_clearStatus(void)
+static bool __ataa_clearStatus(DISC_INTERFACE *disc)
 {
 	return true;
 }
 
-static bool __ataa_shutdown(void)
+static bool __ataa_shutdown(DISC_INTERFACE *disc)
 {
 	return true;
 }
 
-static bool __atab_startup(void)
+static bool __atab_startup(DISC_INTERFACE *disc)
 {
 	return ataIsInserted(1);
 }
 
-static bool __atab_isInserted(void)
+static bool __atab_isInserted(DISC_INTERFACE *disc)
 {
 	return ataIsInserted(1);
 }
 
-static bool __atab_readSectors(sec_t sector, sec_t numSectors, void *buffer)
+static bool __atab_readSectors(DISC_INTERFACE *disc, sec_t sector, sec_t numSectors, void *buffer)
 {
 	return !ataReadSectors(1, (u64)sector, numSectors, buffer);
 }
 
-static bool __atab_writeSectors(sec_t sector, sec_t numSectors, void *buffer)
+static bool __atab_writeSectors(DISC_INTERFACE *disc, sec_t sector, sec_t numSectors, void *buffer)
 {
 	return !ataWriteSectors(1, (u64)sector, numSectors, buffer);
 }
 
-static bool __atab_clearStatus(void)
+static bool __atab_clearStatus(DISC_INTERFACE *disc)
 {
 	return true;
 }
 
-static bool __atab_shutdown(void)
+static bool __atab_shutdown(DISC_INTERFACE *disc)
 {
 	return true;
 }
 
-static bool __atac_startup(void)
+static bool __atac_startup(DISC_INTERFACE *disc)
 {
 	return ataIsInserted(2);
 }
 
-static bool __atac_isInserted(void)
+static bool __atac_isInserted(DISC_INTERFACE *disc)
 {
 	return ataIsInserted(2);
 }
 
-static bool __atac_readSectors(sec_t sector, sec_t numSectors, void *buffer)
+static bool __atac_readSectors(DISC_INTERFACE *disc, sec_t sector, sec_t numSectors, void *buffer)
 {
 	return !ataReadSectors(2, (u64)sector, numSectors, buffer);
 }
 
-static bool __atac_writeSectors(sec_t sector, sec_t numSectors, void *buffer)
+static bool __atac_writeSectors(DISC_INTERFACE *disc, sec_t sector, sec_t numSectors, void *buffer)
 {
 	return !ataWriteSectors(2, (u64)sector, numSectors, buffer);
 }
 
-static bool __atac_clearStatus(void)
+static bool __atac_clearStatus(DISC_INTERFACE *disc)
 {
 	return true;
 }
 
-static bool __atac_shutdown(void)
+static bool __atac_shutdown(DISC_INTERFACE *disc)
 {
 	return true;
 }
 
-const DISC_INTERFACE __io_ataa = {
+DISC_INTERFACE __io_ataa = {
 	DEVICE_TYPE_GC_ATA,
 	FEATURE_MEDIUM_CANREAD | FEATURE_MEDIUM_CANWRITE | FEATURE_GAMECUBE_SLOTA,
 	(FN_MEDIUM_STARTUP)&__ataa_startup,
@@ -693,9 +693,11 @@ const DISC_INTERFACE __io_ataa = {
 	(FN_MEDIUM_READSECTORS)&__ataa_readSectors,
 	(FN_MEDIUM_WRITESECTORS)&__ataa_writeSectors,
 	(FN_MEDIUM_CLEARSTATUS)&__ataa_clearStatus,
-	(FN_MEDIUM_SHUTDOWN)&__ataa_shutdown
+	(FN_MEDIUM_SHUTDOWN)&__ataa_shutdown,
+	0x1000000000000,
+	512
 } ;
-const DISC_INTERFACE __io_atab = {
+DISC_INTERFACE __io_atab = {
 	DEVICE_TYPE_GC_ATA,
 	FEATURE_MEDIUM_CANREAD | FEATURE_MEDIUM_CANWRITE | FEATURE_GAMECUBE_SLOTB,
 	(FN_MEDIUM_STARTUP)&__atab_startup,
@@ -703,9 +705,11 @@ const DISC_INTERFACE __io_atab = {
 	(FN_MEDIUM_READSECTORS)&__atab_readSectors,
 	(FN_MEDIUM_WRITESECTORS)&__atab_writeSectors,
 	(FN_MEDIUM_CLEARSTATUS)&__atab_clearStatus,
-	(FN_MEDIUM_SHUTDOWN)&__atab_shutdown
+	(FN_MEDIUM_SHUTDOWN)&__atab_shutdown,
+	0x1000000000000,
+	512
 } ;
-const DISC_INTERFACE __io_atac = {
+DISC_INTERFACE __io_atac = {
 	DEVICE_TYPE_GC_ATA,
 	FEATURE_MEDIUM_CANREAD | FEATURE_MEDIUM_CANWRITE | FEATURE_GAMECUBE_PORT1,
 	(FN_MEDIUM_STARTUP)&__atac_startup,
@@ -713,5 +717,7 @@ const DISC_INTERFACE __io_atac = {
 	(FN_MEDIUM_READSECTORS)&__atac_readSectors,
 	(FN_MEDIUM_WRITESECTORS)&__atac_writeSectors,
 	(FN_MEDIUM_CLEARSTATUS)&__atac_clearStatus,
-	(FN_MEDIUM_SHUTDOWN)&__atac_shutdown
+	(FN_MEDIUM_SHUTDOWN)&__atac_shutdown,
+	0x1000000000000,
+	512
 } ;

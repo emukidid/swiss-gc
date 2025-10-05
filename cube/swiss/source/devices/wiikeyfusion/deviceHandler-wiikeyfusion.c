@@ -15,28 +15,25 @@
 #include "gui/IPLFontWrite.h"
 #include "swiss.h"
 #include "main.h"
+#include "flippy.h"
 #include "wkf.h"
 #include "patcher.h"
 #include "dvd.h"
 
 static FATFS *wkffs = NULL;
 
-file_handle initial_WKF =
-	{ "wkf:/",       // directory
-	  0ULL,     // fileBase (u64)
-	  0,        // offset
-	  0,        // size
-	  IS_DIR,
-	  0,
-	  0
-	};
+file_handle initial_WKF = {
+	.name     = "wkf:/",
+	.fileType = IS_DIR,
+	.device   = &__device_wkf,
+};
 
 s32 deviceHandler_WKF_setupFile(file_handle* file, file_handle* file2, ExecutableFile* filesToPatch, int numToPatch) {
 	int i;
 	file_frag *fragList = NULL;
 	u32 numFrags = 0;
 	
-	if(numToPatch < 0) {
+	if(numToPatch < 0 || !devices[DEVICE_CUR]->emulated()) {
 		if(!getFragments(DEVICE_CUR, file, &fragList, &numFrags, 0, 0, 0) || numFrags != 1) {
 			free(fragList);
 			return 0;
@@ -48,7 +45,7 @@ s32 deviceHandler_WKF_setupFile(file_handle* file, file_handle* file2, Executabl
 	
 	// Check if there are any fragments in our patch location for this game
 	if(devices[DEVICE_PATCHES] != NULL) {
-		print_gecko("Save Patch device found\r\n");
+		print_debug("Save Patch device found\n");
 		
 		// Look for patch files, if we find some, open them and add them as fragments
 		file_handle patchFile;
@@ -74,22 +71,9 @@ s32 deviceHandler_WKF_setupFile(file_handle* file, file_handle* file2, Executabl
 			}
 		}
 		
-		if(swissSettings.igrType == IGR_BOOTBIN || endsWith(file->name,".tgc")) {
+		if(swissSettings.igrType == IGR_APPLOADER || endsWith(file->name,".tgc")) {
 			memset(&patchFile, 0, sizeof(file_handle));
 			concat_path(patchFile.name, devices[DEVICE_PATCHES]->initial->name, "swiss/patches/apploader.img");
-			
-			ApploaderHeader apploaderHeader;
-			if(devices[DEVICE_PATCHES]->readFile(&patchFile, &apploaderHeader, sizeof(ApploaderHeader)) != sizeof(ApploaderHeader) || apploaderHeader.rebootSize != reboot_bin_size) {
-				devices[DEVICE_PATCHES]->deleteFile(&patchFile);
-				
-				memset(&apploaderHeader, 0, sizeof(ApploaderHeader));
-				apploaderHeader.rebootSize = reboot_bin_size;
-				
-				devices[DEVICE_PATCHES]->seekFile(&patchFile, 0, DEVICE_HANDLER_SEEK_SET);
-				devices[DEVICE_PATCHES]->writeFile(&patchFile, &apploaderHeader, sizeof(ApploaderHeader));
-				devices[DEVICE_PATCHES]->writeFile(&patchFile, reboot_bin, reboot_bin_size);
-				devices[DEVICE_PATCHES]->closeFile(&patchFile);
-			}
 			
 			getFragments(DEVICE_PATCHES, &patchFile, &fragList, &numFrags, FRAGS_APPLOADER, 0x2440, 0);
 			devices[DEVICE_PATCHES]->closeFile(&patchFile);
@@ -100,17 +84,17 @@ s32 deviceHandler_WKF_setupFile(file_handle* file, file_handle* file2, Executabl
 				memset(&patchFile, 0, sizeof(file_handle));
 				concatf_path(patchFile.name, devices[DEVICE_PATCHES]->initial->name, "swiss/patches/MemoryCardA.%s.raw", wodeRegionToString(GCMDisk.RegionCode));
 				concatf_path(txtbuffer, devices[DEVICE_PATCHES]->initial->name, "swiss/saves/MemoryCardA.%s.raw", wodeRegionToString(GCMDisk.RegionCode));
-				ensure_path(DEVICE_PATCHES, "swiss/saves", NULL);
+				ensure_path(DEVICE_PATCHES, "swiss/saves", NULL, false);
 				devices[DEVICE_PATCHES]->renameFile(&patchFile, txtbuffer);	// TODO remove this in our next major release
 				
-				if(devices[DEVICE_PATCHES]->readFile(&patchFile, NULL, 0) != 0) {
+				if(devices[DEVICE_PATCHES]->statFile(&patchFile)) {
 					devices[DEVICE_PATCHES]->seekFile(&patchFile, 16*1024*1024, DEVICE_HANDLER_SEEK_SET);
 					devices[DEVICE_PATCHES]->writeFile(&patchFile, NULL, 0);
 					devices[DEVICE_PATCHES]->closeFile(&patchFile);
 				}
 				
 				if(getFragments(DEVICE_PATCHES, &patchFile, &fragList, &numFrags, FRAGS_CARD_A, 0, 31.5*1024*1024))
-					*(vu8*)VAR_CARD_A_ID = (patchFile.size * 8/1024/1024) & 0xFC;
+					*(vu8*)VAR_CARD_A_ID = (patchFile.size << 3 >> 20) & 0xFC;
 				devices[DEVICE_PATCHES]->closeFile(&patchFile);
 			}
 			
@@ -118,29 +102,30 @@ s32 deviceHandler_WKF_setupFile(file_handle* file, file_handle* file2, Executabl
 				memset(&patchFile, 0, sizeof(file_handle));
 				concatf_path(patchFile.name, devices[DEVICE_PATCHES]->initial->name, "swiss/patches/MemoryCardB.%s.raw", wodeRegionToString(GCMDisk.RegionCode));
 				concatf_path(txtbuffer, devices[DEVICE_PATCHES]->initial->name, "swiss/saves/MemoryCardB.%s.raw", wodeRegionToString(GCMDisk.RegionCode));
-				ensure_path(DEVICE_PATCHES, "swiss/saves", NULL);
+				ensure_path(DEVICE_PATCHES, "swiss/saves", NULL, false);
 				devices[DEVICE_PATCHES]->renameFile(&patchFile, txtbuffer);	// TODO remove this in our next major release
 				
-				if(devices[DEVICE_PATCHES]->readFile(&patchFile, NULL, 0) != 0) {
+				if(devices[DEVICE_PATCHES]->statFile(&patchFile)) {
 					devices[DEVICE_PATCHES]->seekFile(&patchFile, 16*1024*1024, DEVICE_HANDLER_SEEK_SET);
 					devices[DEVICE_PATCHES]->writeFile(&patchFile, NULL, 0);
 					devices[DEVICE_PATCHES]->closeFile(&patchFile);
 				}
 				
 				if(getFragments(DEVICE_PATCHES, &patchFile, &fragList, &numFrags, FRAGS_CARD_B, 0, 31.5*1024*1024))
-					*(vu8*)VAR_CARD_B_ID = (patchFile.size * 8/1024/1024) & 0xFC;
+					*(vu8*)VAR_CARD_B_ID = (patchFile.size << 3 >> 20) & 0xFC;
 				devices[DEVICE_PATCHES]->closeFile(&patchFile);
 			}
 		}
 		
 		s32 exi_channel, exi_device;
 		if(getExiDeviceByLocation(devices[DEVICE_PATCHES]->location, &exi_channel, &exi_device)) {
+			exi_device = sdgecko_getDevice(exi_channel);
 			// Card Type
 			*(vu8*)VAR_SD_SHIFT = sdgecko_getAddressingType(exi_channel) ? 0:9;
 			// Copy the actual freq
 			*(vu8*)VAR_EXI_CPR = (exi_channel << 6) | ((1 << exi_device) << 3) | sdgecko_getSpeed(exi_channel);
 			// Device slot (0, 1 or 2)
-			*(vu8*)VAR_EXI_SLOT = exi_channel;
+			*(vu8*)VAR_EXI_SLOT = (*(vu8*)VAR_EXI_SLOT & 0xF0) | (((exi_device << 2) | exi_channel) & 0x0F);
 			*(vu32**)VAR_EXI_REGS = ((vu32(*)[5])0xCC006800)[exi_channel];
 		}
 	}
@@ -159,7 +144,7 @@ s32 deviceHandler_WKF_setupFile(file_handle* file, file_handle* file2, Executabl
 	}
 	
 	if(fragList) {
-		print_frag_list(fragList, numFrags);
+		printFragments(fragList, numFrags);
 		*(vu32**)VAR_FRAG_LIST = installPatch2(fragList, (numFrags + 1) * sizeof(file_frag));
 		free(fragList);
 		fragList = NULL;
@@ -168,17 +153,21 @@ s32 deviceHandler_WKF_setupFile(file_handle* file, file_handle* file2, Executabl
 }
 
 bool deviceHandler_WKF_test() {
-	return swissSettings.hasDVDDrive && (__wkfSpiReadId() != 0 && __wkfSpiReadId() != 0xFFFFFFFF);
+	return swissSettings.hasDVDDrive == 1 && (__wkfSpiReadId() != 0 && __wkfSpiReadId() != 0xFFFFFFFF);
 }
 
-s32 deviceHandler_WKF_init(file_handle* file){
+s32 deviceHandler_WKF_init(file_handle* file) {
+	if(devices[DEVICE_CUR] == &__device_flippy || devices[DEVICE_CUR] == &__device_flippyflash) {
+		return EBUSY;
+	}
+	if(swissSettings.hasFlippyDrive) flippy_bypass(true);
 	if(!deviceHandler_WKF_test()) return ENODEV;
+	
 	wkfReinit();	// TODO extended error status
 	if(wkffs != NULL) {
 		f_unmount("wkf:/");
 		free(wkffs);
 		wkffs = NULL;
-		disk_shutdown(DEV_WKF);
 	}
 	wkffs = (FATFS*)malloc(sizeof(FATFS));
 	file->status = f_mount(wkffs, "wkf:/", 1);
@@ -191,7 +180,6 @@ s32 deviceHandler_WKF_deinit(file_handle* file) {
 		f_unmount(file->name);
 		free(wkffs);
 		wkffs = NULL;
-		disk_shutdown(DEV_WKF);
 	}
 	return 0;
 }
@@ -206,8 +194,10 @@ u32 deviceHandler_WKF_emulated() {
 		else
 			return EMU_READ | EMU_BUS_ARBITER;
 	} else {
-		if ((swissSettings.emulateAudioStream == 1 && swissSettings.audioStreaming) ||
-			swissSettings.emulateAudioStream > 1)
+		if (swissSettings.disableHypervisor)
+			return EMU_NONE;
+		else if ((swissSettings.emulateAudioStream == 1 && swissSettings.audioStreaming) ||
+				swissSettings.emulateAudioStream > 1)
 			return EMU_READ | EMU_AUDIO_STREAMING;
 		else
 			return EMU_READ;
@@ -229,12 +219,14 @@ DEVICEHANDLER_INTERFACE __device_wkf = {
 	.init = deviceHandler_WKF_init,
 	.makeDir = deviceHandler_FAT_makeDir,
 	.readDir = deviceHandler_FAT_readDir,
+	.statFile = deviceHandler_FAT_statFile,
 	.seekFile = deviceHandler_FAT_seekFile,
 	.readFile = deviceHandler_FAT_readFile,
 	.writeFile = deviceHandler_FAT_writeFile,
 	.closeFile = deviceHandler_FAT_closeFile,
 	.deleteFile = deviceHandler_FAT_deleteFile,
 	.renameFile = deviceHandler_FAT_renameFile,
+	.hideFile = deviceHandler_FAT_hideFile,
 	.setupFile = deviceHandler_WKF_setupFile,
 	.deinit = deviceHandler_WKF_deinit,
 	.emulated = deviceHandler_WKF_emulated,

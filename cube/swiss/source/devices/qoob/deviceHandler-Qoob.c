@@ -21,13 +21,14 @@ typedef struct qoobEntryHeader qoobEntryHeader;
 
 struct qoobEntryHeader {
 	u32 entry_type;
-	char entry_name[0xF8];
-	u16 num_blocks;
-	u16 unk;
+	char entry_name[0xF4];
+	u32 _reserved;
+	u32 size;
 };
 #define QOOB_BLOCK_SIZE (65536)
-#define QOOB_FILE_APPL (0x4170706C)	//Appl
-#define QOOB_FILE_BIOS (0x42494F53)	//BIOS
+#define QOOB_FILE_APPL (0x4170706C)	//Appl (likely never used)
+#define QOOB_FILE_BIOS_WRONG (0x42494F53)	//BIOS
+#define QOOB_FILE_BIOS (0x28432920)	//"(C) "
 #define QOOB_FILE_QPIC (0x51504943)	//QPIC
 #define QOOB_FILE_QCFG (0x51434647)	//QCFG
 #define QOOB_FILE_QCHT (0x51434854)	//QCHT
@@ -39,21 +40,18 @@ struct qoobEntryHeader {
 
 char iplBlock[256] __attribute__((aligned(32)));
 
-file_handle initial_Qoob =
-	{ "qoob:/",       // directory
-	  0ULL,     // fileBase (u64)
-	  0,        // offset
-	  0,        // size
-	  IS_DIR,
-	  0
-	};
-	
-device_info initial_Qoob_info = {
-	0x200000,
-	0x200000,
-	false
+file_handle initial_Qoob = {
+	.name     = "qoob:/",
+	.fileType = IS_DIR,
+	.device   = &__device_qoob,
 };
-	
+
+device_info initial_Qoob_info = {
+	.freeSpace  = 0x200000,
+	.totalSpace = 0x200000,
+	.metric     = false
+};
+
 device_info* deviceHandler_Qoob_info(file_handle* file) {
 	return &initial_Qoob_info;
 }
@@ -64,6 +62,7 @@ char *getQoobExtension(qoobEntryHeader* entryHeader) {
 			return "elf";
 		case QOOB_FILE_APPL:
 			return "appl";
+		case QOOB_FILE_BIOS_WRONG:
 		case QOOB_FILE_BIOS:
 			return "gcb";
 		case QOOB_FILE_QPIC:
@@ -82,15 +81,21 @@ char *getQoobExtension(qoobEntryHeader* entryHeader) {
 			return NULL;
 	}
 }
+
+u32 sizeToBlocks(u32 size) {
+	return (size + QOOB_BLOCK_SIZE - 1) / QOOB_BLOCK_SIZE;
+}
 	
 s32 deviceHandler_Qoob_readDir(file_handle* ffile, file_handle** dir, u32 type) {	
-  
+	if(type != -1) return -1;
+
 	uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Reading Qoob"));
 	// Set everything up to read
 	int num_entries = 1, i = 1, block = 0;
 	*dir = calloc(num_entries, sizeof(file_handle));
 	concat_path((*dir)[0].name, ffile->name, "..");
-	(*dir)[0].fileAttrib = IS_SPECIAL;
+	(*dir)[0].fileType = IS_SPECIAL;
+	(*dir)[0].device   = ffile->device;
 	
 	u32 usedSpace = 0;
 	
@@ -103,6 +108,7 @@ s32 deviceHandler_Qoob_readDir(file_handle* ffile, file_handle** dir, u32 type) 
 		switch(entryHeader.entry_type) {
 			case QOOB_FILE_ELF:
 			case QOOB_FILE_APPL:
+			case QOOB_FILE_BIOS_WRONG:
 			case QOOB_FILE_BIOS:
 			case QOOB_FILE_QPIC:
 			case QOOB_FILE_QCFG:
@@ -148,18 +154,19 @@ s32 deviceHandler_Qoob_readDir(file_handle* ffile, file_handle** dir, u32 type) 
 					}
 				}
 				concat_path((*dir)[i].name, ffile->name, entryName);
-				(*dir)[i].fileBase   = block;
-				(*dir)[i].size       = entryHeader.num_blocks * QOOB_BLOCK_SIZE;
-				(*dir)[i].fileAttrib = IS_FILE;
+				(*dir)[i].fileBase = block;
+				(*dir)[i].size     = sizeToBlocks(entryHeader.size) * QOOB_BLOCK_SIZE;
+				(*dir)[i].fileType = IS_FILE;
+				(*dir)[i].device   = ffile->device;
 				usedSpace += (*dir)[i].size;
 				++i;
 				
-				print_gecko("Found [%08X] entry, %08X in size\r\n", entryHeader.entry_type, entryHeader.num_blocks);
-				block += (entryHeader.num_blocks * QOOB_BLOCK_SIZE);
+				print_debug("Found [%08X] entry, %08X in size\n", entryHeader.entry_type, entryHeader.size);
+				block += sizeToBlocks(entryHeader.size) * QOOB_BLOCK_SIZE;
 				break;
 			}
 			default:
-				print_gecko("unknown/empty block found at %08X [%08X]\r\n", block, entryHeader.entry_type);
+				print_debug("unknown/empty block found at %08X [%08X]\n", block, entryHeader.entry_type);
 				block += QOOB_BLOCK_SIZE;
 				break;
 		}
@@ -195,7 +202,7 @@ int erase_sector(int addr)
 	rom_write(0xAAA, 0xAA);
 	rom_write(0x555, 0x55);
 	rom_write(addr, 0x30);
-	printf("\r%08x erase..\n", addr);
+	print_debug("\r%08x erase..\n", addr);
 	while (rom_read(addr) != rom_read(addr));
 	return 0;
 }
@@ -211,10 +218,10 @@ int erase_qoob_rom(u32 dest, int len)
 {
 	rom_write(0xAAA, 0xAA); rom_write(0x555, 0x55); rom_write(0xAAA, 0x20);
 	int addr;
-	print_gecko("erasing...\r\n");
+	print_debug("erasing...\n");
 	for (addr = dest; addr < (dest + len); ++addr) {
 		if (is_eraseblock(addr)) {
-			print_gecko("erase_sector(%08X)\r\n", addr);
+			print_debug("erase_sector(%08X)\n", addr);
 			erase_sector(addr);
 		}
 	}
@@ -223,39 +230,39 @@ int erase_qoob_rom(u32 dest, int len)
 
 int write_qoob_rom(unsigned char *src, u32 dest, int len)
 {
-	print_gecko("Writing %08X to dest %08X with length %i\r\n", src, dest, len);
+	print_debug("Writing %08X to dest %08X with length %i\n", src, dest, len);
 	// CFI query
 	rom_write(0xAA, 0x98);
 
-	print_gecko("CFI data:\r\n");
+	print_debug("CFI data:\n");
 	int addr;
 	for (addr = 0; addr < 0x100; addr += 0x10)
 	{
 		int i;
 		for (i=0; i<0x10; i += 2)
-			print_gecko("%02x ", rom_read(addr + i));
+			print_debug("%02x ", rom_read(addr + i));
 
 		for (i=0; i<0x10; i += 2)
 		{
 			int v = rom_read(addr + i);
-			print_gecko("%c", v >= 0x20 ? v : '.');
+			print_debug("%c", v >= 0x20 ? v : '.');
 		}
-		print_gecko("\r\n");
+		print_debug("\n");
 	}
 	
-	print_gecko("man id:\r\n");
+	print_debug("man id:\n");
 	int i;
 	for (i=0; i<10; ++i)
 	{
 		rom_write(0, 0xF0);
 		rom_write(0xAAA, 0xAA); rom_write(0x555, 0x55); rom_write(0xAAA, 0x90);
-		print_gecko("%02x ", rom_read(i * 2));
+		print_debug("%02x ", rom_read(i * 2));
 	}
-	print_gecko("\r\n");
+	print_debug("\n");
 	
 	erase_qoob_rom(dest, len);
 	
-	print_gecko("flashing...\r\n");
+	print_debug("flashing...\n");
 	while (len)
 	{
 		rom_write(dest, 0xA0);
@@ -265,7 +272,7 @@ int write_qoob_rom(unsigned char *src, u32 dest, int len)
 		++dest;
 		--len;
 	}
-	print_gecko("done!\r\n");
+	print_debug("done!\n");
 	return 0;
 }
 
@@ -287,9 +294,10 @@ s32 deviceHandler_Qoob_writeFile(file_handle* file, const void* buffer, u32 leng
 			__SYS_ReadROM(iplBlock,sizeof(qoobEntryHeader),block);
 			qoobEntryHeader entryHeader;
 			memcpy(&entryHeader, &iplBlock, sizeof(qoobEntryHeader));
-			print_gecko("Checking block at %08X\r\n", block);
+			print_debug("Checking block at %08X\n", block);
 			switch(entryHeader.entry_type) {
 				case QOOB_FILE_APPL:
+				case QOOB_FILE_BIOS_WRONG:
 				case QOOB_FILE_BIOS:
 				case QOOB_FILE_QPIC:
 				case QOOB_FILE_QCFG:
@@ -303,16 +311,16 @@ s32 deviceHandler_Qoob_writeFile(file_handle* file, const void* buffer, u32 leng
 						if(emptyBlockSize > largestEmptyBlockSize) {
 							largestEmptyBlock = emptyBlock;
 							largestEmptyBlockSize = emptyBlockSize;
-							print_gecko("Largest empty block so far is %08X with size %08X\r\n", largestEmptyBlock, largestEmptyBlockSize);
+							print_debug("Largest empty block so far is %08X with size %08X\n", largestEmptyBlock, largestEmptyBlockSize);
 						}
 						emptyBlock = 0;
 						emptyBlockSize = 0;
 					}
-					print_gecko("Found [%08X] entry, %08X in size\r\n", entryHeader.entry_type, entryHeader.num_blocks);
-					block += (entryHeader.num_blocks * QOOB_BLOCK_SIZE);
+					print_debug("Found [%08X] entry, %08X in size\n", entryHeader.entry_type, entryHeader.size);
+					block += sizeToBlocks(entryHeader.size) * QOOB_BLOCK_SIZE;
 					break;
 				case 0xFFFFFFFF:
-					print_gecko("empty block found at %08X [%08X]\r\n", block, entryHeader.entry_type);
+					print_debug("empty block found at %08X [%08X]\n", block, entryHeader.entry_type);
 					if(!emptyBlock) {
 						emptyBlock = block;
 					}
@@ -320,12 +328,12 @@ s32 deviceHandler_Qoob_writeFile(file_handle* file, const void* buffer, u32 leng
 					block += QOOB_BLOCK_SIZE;
 					break;
 				default:
-					print_gecko("unknown block found at %08X [%08X]\r\n", block, entryHeader.entry_type);
+					print_debug("unknown block found at %08X [%08X]\n", block, entryHeader.entry_type);
 					if(emptyBlock) {
 						if(emptyBlockSize > largestEmptyBlockSize) {
 							largestEmptyBlock = emptyBlock;
 							largestEmptyBlockSize = emptyBlockSize;
-							print_gecko("Largest empty block so far is %08X with size %08X\r\n", largestEmptyBlock, largestEmptyBlockSize);
+							print_debug("Largest empty block so far is %08X with size %08X\n", largestEmptyBlock, largestEmptyBlockSize);
 						}
 						emptyBlock = 0;
 						emptyBlockSize = 0;
@@ -339,14 +347,14 @@ s32 deviceHandler_Qoob_writeFile(file_handle* file, const void* buffer, u32 leng
 			if(emptyBlockSize > largestEmptyBlockSize) {
 				largestEmptyBlock = emptyBlock;
 				largestEmptyBlockSize = emptyBlockSize;
-				print_gecko("Largest empty block so far is %08X with size %08X\r\n", largestEmptyBlock, largestEmptyBlockSize);
+				print_debug("Largest empty block so far is %08X with size %08X\n", largestEmptyBlock, largestEmptyBlockSize);
 			}
 		}
 		if(largestEmptyBlock) {
-			print_gecko("Largest empty block found at %08X with size %08X\r\n", largestEmptyBlock, largestEmptyBlockSize);
+			print_debug("Largest empty block found at %08X with size %08X\n", largestEmptyBlock, largestEmptyBlockSize);
 		}
 		else {
-			print_gecko("No empty blocks found\r\n");
+			print_debug("No empty blocks found\n");
 		}
 		
 		// No space.
@@ -359,7 +367,7 @@ s32 deviceHandler_Qoob_writeFile(file_handle* file, const void* buffer, u32 leng
 		qoobEntryHeader entryHeader;
 		memset(&entryHeader, 0, sizeof(qoobEntryHeader));
 		entryHeader.entry_type = endsWith(file->name,".dol") ? QOOB_FILE_ELF /*yes, these go in as "ELF" */ : QOOB_FILE_SWIS;
-		entryHeader.num_blocks = (length >> 16) + (length % (QOOB_BLOCK_SIZE-1) > 0 ? 1 : 0);
+		entryHeader.size = sizeToBlocks(length) * QOOB_BLOCK_SIZE;
 		snprintf(&entryHeader.entry_name[0], 64, "%s", getRelativeName(file->name));
 		write_qoob_rom((unsigned char*)&entryHeader, file->fileBase, sizeof(qoobEntryHeader));
 	}	
@@ -377,30 +385,21 @@ s32 deviceHandler_Qoob_deleteFile(file_handle* file) {
 }
 
 bool deviceHandler_Qoob_test() {
-	// Read 1024 bytes from certain sections of the IPL Mask ROM and compare with Qoob enabled/disabled
-	char *qoobData = (char*)memalign(32, 0x400);
-	char *iplData = (char*)memalign(32, 0x400);
-	
-	memset(qoobData, 0, 0x400);
-	memset(iplData, 0, 0x400);
-	
+	char buf[8];
+	memset(buf, 0, sizeof(buf));
+
 	ipl_set_config(0);
-	__SYS_ReadROM(qoobData,0x100,0);
-	__SYS_ReadROM(qoobData+0x100,0x100,0x80000);
-	__SYS_ReadROM(qoobData+0x200,0x100,0x1FCF00);
-	__SYS_ReadROM(qoobData+0x300,0x100,0x1FFF00);
-	
-	
+	// Read device ID
+	for (int i = 0; i < sizeof(buf) / sizeof(buf[0]); i++) {
+		u32 val = -1;
+		__SYS_ReadROM(&val, 4, 0x1000001 + i);
+		buf[i] = val;
+	}
 	ipl_set_config(6);
-	__SYS_ReadROM(iplData,0x100,0);
-	__SYS_ReadROM(iplData+0x100,0x100,0x80000);
-	__SYS_ReadROM(iplData+0x200,0x100,0x1FCF00);
-	__SYS_ReadROM(iplData+0x300,0x100,0x1FFF00);
 	
-	bool qoobFound = memcmp(qoobData, iplData, 0x400) != 0;
-	
-	free(qoobData);
-	free(iplData);
+	// Qoob Pro is QOOB, Qoob SX is QBSX
+	// We're not interested in the latter
+	bool qoobFound = memcmp(buf, "QOOB", 4) == 0;
 	return qoobFound;
 }
 

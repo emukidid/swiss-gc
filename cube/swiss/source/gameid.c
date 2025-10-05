@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2022-2023, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2022-2025, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -25,7 +25,7 @@
 #include "mcp.h"
 #include "swiss.h"
 
-static u8 command[1 + 10] = {0x1D};
+static char gameID[1 + 10] = {0x1D};
 
 static void callback(s32 chan, u32 type)
 {
@@ -37,7 +37,7 @@ static s32 onreset(s32 final)
 
 	if (!final) {
 		if (chan < SI_MAX_CHAN) {
-			if (SI_Transfer(chan, &command, sizeof(command), NULL, 0, callback, 0))
+			if (SI_Transfer(chan, &gameID, sizeof(gameID), NULL, 0, callback, 0))
 				chan++;
 			return FALSE;
 		} else if (SI_Busy())
@@ -48,7 +48,7 @@ static s32 onreset(s32 final)
 }
 
 static sys_resetinfo resetinfo = {
-	{NULL, NULL}, onreset, 0
+	{NULL, NULL}, onreset, ~0
 };
 
 __attribute((constructor))
@@ -57,7 +57,7 @@ static void gameID_init(void)
 	s32 chan = SI_CHAN0;
 
 	while (chan < SI_MAX_CHAN)
-		if (SI_Transfer(chan, &command, sizeof(command), NULL, 0, callback, 0))
+		if (SI_Transfer(chan, &gameID, sizeof(gameID), NULL, 0, callback, 0))
 			chan++;
 	while (SI_Busy());
 
@@ -80,29 +80,29 @@ void gameID_early_set(const DiskHeader *header)
 			continue;
 		while ((ret = MCP_ProbeEx(chan)) == MCP_RESULT_BUSY);
 		if (ret < 0) continue;
-		while ((ret = MCP_GetDeviceID(chan, &id)) == MCP_RESULT_BUSY);
+		ret = MCP_GetDeviceID(chan, &id);
 		if (ret < 0) continue;
-		while ((ret = MCP_SetDiskID(chan, (dvddiskid *)header)) == MCP_RESULT_BUSY);
+		ret = MCP_SetDiskID(chan, (dvddiskid *)header);
 		if (ret < 0) continue;
-		while ((ret = MCP_SetDiskInfo(chan, header->GameName)) == MCP_RESULT_BUSY);
+		ret = MCP_SetDiskInfo(chan, header->GameName);
 		if (ret < 0) continue;
 	}
 }
 
 void gameID_set(const DiskHeader *header, u64 hash)
 {
-	memcpy(&command[1], &hash, 8);
+	memcpy(&gameID[1], &hash, 8);
 
 	if (header) {
-		command[ 9] = header->ConsoleID;
-		command[10] = header->CountryCode;
+		gameID[9]  = header->ConsoleID;
+		gameID[10] = header->CountryCode;
 	} else {
-		command[ 9] = 
-		command[10] = '\0';
+		gameID[9]  = 
+		gameID[10] = '\0';
 	}
 }
 
 void gameID_unset(void)
 {
-	memset(&command[1], 0, 10);
+	memset(&gameID[1], 0x00, 10);
 }

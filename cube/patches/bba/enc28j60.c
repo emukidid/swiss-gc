@@ -29,21 +29,31 @@
 #include "enc28j60.h"
 #include "interrupt.h"
 
-#define exi_regs (*(volatile uint32_t **)VAR_EXI2_REGS)
+#define exi_cpr       (*VAR_EXI2_CPR)
+#define exi_channel   ((*VAR_EXI_SLOT & 0x30) >> 4)
+#define exi_device    ((*VAR_EXI_SLOT & 0xC0) >> 6)
+#define exi_interrupt ((*VAR_EXI2_CPR & 0xC0) >> 6)
+#define exi_regs      (*(volatile uint32_t **)VAR_EXI2_REGS)
 
 static struct {
 	uint8_t bank;
+	bool interrupt;
 	bba_page_t (*page)[8];
-} _bba;
+	struct {
+		void *data;
+		size_t size;
+		bba_callback callback;
+	} output;
+} enc28j60;
 
-static void exi_clear_interrupts(bool exi, bool tc, bool ext)
+static void exi_clear_interrupts(int32_t chan, bool exi, bool tc, bool ext)
 {
-	exi_regs[0] = (exi_regs[0] & (0x3FFF & ~0x80A)) | (ext << 11) | (tc << 3) | (exi << 1);
+	EXI[chan][0] = (EXI[chan][0] & (0x3FFF & ~0x80A)) | (ext << 11) | (tc << 3) | (exi << 1);
 }
 
 static void exi_select(void)
 {
-	exi_regs[0] = (exi_regs[0] & 0x405) | ((1 << EXI_DEVICE_0) << 7) | (EXI_SPEED_32MHZ << 4);
+	exi_regs[0] = (exi_regs[0] & 0x405) | ((exi_cpr << 4) & 0x3F0);
 }
 
 static void exi_deselect(void)
@@ -114,11 +124,11 @@ static void enc28j60_select_bank(uint8_t addr)
 {
 	uint8_t bank = addr >> 5;
 
-	if (_bba.bank != bank && bank < 4) {
-		enc28j60_clear_bits(ENC28J60_ECON1, ENC28J60_ECON1_BSEL(_bba.bank));
+	if (enc28j60.bank != bank && bank < 4) {
+		enc28j60_clear_bits(ENC28J60_ECON1, ENC28J60_ECON1_BSEL(enc28j60.bank));
 		enc28j60_set_bits(ENC28J60_ECON1, ENC28J60_ECON1_BSEL(bank));
 
-		_bba.bank = bank;
+		enc28j60.bank = bank;
 	}
 }
 
@@ -138,17 +148,9 @@ static void enc28j60_write_reg16(ENC28J60Reg16 addr, uint16_t data)
 static void enc28j60_interrupt(void)
 {
 	enc28j60_clear_bits(ENC28J60_EIE, ENC28J60_EIE_INTIE);
-	uint8_t eie = enc28j60_read_reg8(ENC28J60_EIE);
-	uint8_t eir = enc28j60_read_reg8(ENC28J60_EIR);
+	uint8_t epktcnt = enc28j60_read_reg8(ENC28J60_EPKTCNT);
 
-	if (eir == 0) {
-		uint8_t epktcnt = enc28j60_read_reg8(ENC28J60_EPKTCNT);
-		if (epktcnt > 0) eir |= ENC28J60_EIR_PKTIF;
-	}
-
-	eir &= eie;
-
-	if (eir & ENC28J60_EIR_PKTIF) {
+	if (epktcnt > 0) {
 		exi_select();
 		exi_imm_read_write(ENC28J60_CMD_RBM, 1);
 
@@ -159,11 +161,11 @@ static void enc28j60_interrupt(void)
 		uint16_t byte_count = rsv[1];
 		//uint16_t status = rsv[2];
 
-		DCInvalidateRange(__builtin_assume_aligned(_bba.page, 32), byte_count);
-		exi_dma_read(_bba.page, byte_count, true);
+		DCInvalidateRange(__builtin_assume_aligned(enc28j60.page, 32), byte_count);
+		exi_dma_read(enc28j60.page, byte_count, true);
 		exi_deselect();
 
-		eth_mac_receive(_bba.page, byte_count - 4);
+		eth_mac_receive(enc28j60.page, byte_count - 4);
 
 		enc28j60_write_reg16(ENC28J60_ERDPT, next_packet);
 		enc28j60_write_reg16(ENC28J60_ERXRDPT, next_packet == ENC28J60_INIT_ERXST ? ENC28J60_INIT_ERXND : next_packet - 1);
@@ -171,32 +173,43 @@ static void enc28j60_interrupt(void)
 		enc28j60_set_bits(ENC28J60_ECON2, ENC28J60_ECON2_PKTDEC);
 	}
 
-	enc28j60_clear_bits(ENC28J60_EIR, eir);
 	enc28j60_set_bits(ENC28J60_EIE, ENC28J60_EIE_INTIE);
 }
 
-static void exi_callback(int32_t chan, OSContext *context)
+static void exi_callback()
 {
-	if (EXILock(chan, EXI_DEVICE_0, exi_callback)) {
-		enc28j60_interrupt();
-		EXIUnlock(chan);
+	if (EXILock(exi_channel, exi_device, exi_callback)) {
+		if (enc28j60.interrupt) {
+			enc28j60_interrupt();
+			enc28j60.interrupt = false;
+		}
+
+		if (enc28j60.output.callback) {
+			bba_output(enc28j60.output.data, enc28j60.output.size);
+			enc28j60.output.callback();
+			enc28j60.output.callback = NULL;
+		}
+
+		EXIUnlock(exi_channel);
 	}
 }
 
 static void exi_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 {
 	int32_t chan = (interrupt - OS_INTERRUPT_EXI_0_EXI) / 3;
-	exi_clear_interrupts(true, false, false);
-	exi_callback(chan, context);
+	exi_clear_interrupts(chan, true, false, false);
+	enc28j60.interrupt = true;
+	exi_callback();
 }
 
 static void debug_interrupt_handler(OSInterrupt interrupt, OSContext *context)
 {
 	PI[0] = 1 << 12;
-	exi_callback(EXI_CHANNEL_2, context);
+	enc28j60.interrupt = true;
+	exi_callback();
 }
 
-void bba_transmit_fifo(const void *data, size_t size)
+void bba_output(const void *data, size_t size)
 {
 	enc28j60_set_bits(ENC28J60_ECON1, ENC28J60_ECON1_TXRST);
 	enc28j60_clear_bits(ENC28J60_ECON1, ENC28J60_ECON1_TXRST);
@@ -214,16 +227,26 @@ void bba_transmit_fifo(const void *data, size_t size)
 	enc28j60_set_bits(ENC28J60_ECON1, ENC28J60_ECON1_TXRTS);
 }
 
+void bba_output_async(const void *data, size_t size, bba_callback callback)
+{
+	enc28j60.output.data = (void *)data;
+	enc28j60.output.size = size;
+	enc28j60.output.callback = callback;
+
+	exi_callback();
+}
+
 void bba_init(void **arenaLo, void **arenaHi)
 {
-	*arenaHi -= sizeof(*_bba.page);  _bba.page  = *arenaHi;
+	enc28j60_clear_bits(ENC28J60_EIE, 0xFF);
+	enc28j60_set_bits(ENC28J60_EIE, ENC28J60_EIE_INTIE | ENC28J60_EIE_PKTIE);
 
-	int32_t chan = ((uintptr_t)exi_regs & 0x3C) / 0x14;
+	*arenaHi -= sizeof(*enc28j60.page); enc28j60.page = *arenaHi;
 
-	if (chan < EXI_CHANNEL_2) {
-		OSInterrupt interrupt = OS_INTERRUPT_EXI_0_EXI + (3 * chan);
+	if (exi_interrupt < EXI_CHANNEL_MAX) {
+		OSInterrupt interrupt = OS_INTERRUPT_EXI_0_EXI + (3 * exi_interrupt);
 		set_interrupt_handler(interrupt, exi_interrupt_handler);
-		unmask_interrupts(OS_INTERRUPTMASK(interrupt) & (OS_INTERRUPTMASK_EXI_0_EXI | OS_INTERRUPTMASK_EXI_1_EXI));
+		unmask_interrupts(OS_INTERRUPTMASK(interrupt) & (OS_INTERRUPTMASK_EXI_0_EXI | OS_INTERRUPTMASK_EXI_1_EXI | OS_INTERRUPTMASK_EXI_2_EXI));
 	} else {
 		set_interrupt_handler(OS_INTERRUPT_PI_DEBUG, debug_interrupt_handler);
 		unmask_interrupts(OS_INTERRUPTMASK_PI_DEBUG);

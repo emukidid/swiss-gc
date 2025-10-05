@@ -28,6 +28,8 @@ s32 read_rom_aram(file_handle* file, void* buffer, u32 length);
 s32 write_rom_aram(file_handle* file, const void* buffer, u32 length);
 s32 read_rom_aram_expansion(file_handle* file, void* buffer, u32 length);
 s32 write_rom_aram_expansion(file_handle* file, const void* buffer, u32 length);
+s32 read_rom_mram(file_handle* file, void* buffer, u32 length);
+s32 read_rom_mram_cached(file_handle* file, void* buffer, u32 length);
 s32 read_rom_void(file_handle* file, void* buffer, u32 length);
 s32 write_rom_void(file_handle* file, const void* buffer, u32 length);
 
@@ -48,6 +50,8 @@ enum rom_types
 	ROM_ARAM,
 	ROM_ARAM_INTERNAL,
 	ROM_ARAM_EXPANSION,
+	ROM_MRAM,
+	ROM_MRAM_CACHED,
 	NUM_ROMS
 };
 
@@ -67,7 +71,9 @@ static char* rom_names[] =
 	"/sram.bin",
 	"/aram.bin",
 	"/aram_internal.bin",
-	"/aram_expansion.bin"
+	"/aram_expansion.bin",
+	"/mram.bin",
+	"/mram_cached.bin"
 };
 
 static int rom_sizes[] =
@@ -86,7 +92,9 @@ static int rom_sizes[] =
 	64,
 	16 * 1024 * 1024,
 	16 * 1024 * 1024,
-	0
+	0,
+	24 * 1024 * 1024,
+	24 * 1024 * 1024
 };
 
 static s32 (*read_rom[])(file_handle* file, void* buffer, u32 length) =
@@ -105,7 +113,9 @@ static s32 (*read_rom[])(file_handle* file, void* buffer, u32 length) =
 	read_rom_sram,
 	read_rom_aram,
 	read_rom_aram,
-	read_rom_aram_expansion
+	read_rom_aram_expansion,
+	read_rom_mram,
+	read_rom_mram_cached
 };
 
 static s32 (*write_rom[])(file_handle* file, const void* buffer, u32 length) =
@@ -124,30 +134,19 @@ static s32 (*write_rom[])(file_handle* file, const void* buffer, u32 length) =
 	write_rom_sram,
 	write_rom_aram,
 	write_rom_aram,
-	write_rom_aram_expansion
+	write_rom_aram_expansion,
+	write_rom_void,
+	write_rom_void
 };
 
-file_handle initial_SYS =
-{
-	"sys:/",
-	0ULL,
-	0,
-	0,
-	IS_DIR,
-	0,
-	0,
-	NULL
-};
-
-device_info initial_SYS_info =
-{
-	0LL,
-	0LL,
-	false
+file_handle initial_SYS = {
+	.name     = "sys:/",
+	.fileType = IS_DIR,
+	.device   = &__device_sys,
 };
 
 device_info* deviceHandler_SYS_info(file_handle* file) {
-	return &initial_SYS_info;
+	return NULL;
 }
 
 static void descrambler(unsigned int offset, void* buffer, unsigned int length) {
@@ -210,6 +209,7 @@ static void descrambler(unsigned int offset, void* buffer, unsigned int length) 
 bool load_rom_ipl(DEVICEHANDLER_INTERFACE* device, void** buffer, u32* length) {
 	file_handle* file = calloc(1, sizeof(file_handle));
 	concat_path(file->name, device->initial->name, "swiss/patches/ipl.bin");
+	file->device = device;
 
 	BS2Header bs2Header;
 	device->seekFile(file, 0x800, DEVICE_HANDLER_SEEK_SET);
@@ -357,6 +357,16 @@ s32 write_rom_aram_expansion(file_handle* file, const void* buffer, u32 length) 
 	return length;
 }
 
+s32 read_rom_mram(file_handle* file, void* buffer, u32 length) {
+	memcpy(buffer, MEM_PHYSICAL_TO_K1(file->offset), length);
+	return length;
+}
+
+s32 read_rom_mram_cached(file_handle* file, void* buffer, u32 length) {
+	memcpy(buffer, MEM_PHYSICAL_TO_K0(file->offset), length);
+	return length;
+}
+
 s32 read_rom_void(file_handle* file, void* buffer, u32 length) {
 	DCZeroRange(buffer, length);
 	return 0;
@@ -377,42 +387,50 @@ bool is_rom_name(char* filename) {
 }
 
 s32 deviceHandler_SYS_init(file_handle* file) {
-	s32 i;
+	if(swissSettings.hasDVDDrive > 1) dvd_reset();
 
-	if(!AR_CheckInit()) {
-		AR_Init(NULL, 0);
-		AR_Reset();
-	}
-	if(!ARQ_CheckInit()) {
-		ARQ_Init();
-		ARQ_Reset();
-	}
+	AR_Init(NULL, 0);
+	ARQ_Init();
 
 	rom_sizes[ROM_ARAM]           = AR_GetSize();
 	rom_sizes[ROM_ARAM_INTERNAL]  = AR_GetInternalSize();
 	rom_sizes[ROM_ARAM_EXPANSION] = rom_sizes[ROM_ARAM] - rom_sizes[ROM_ARAM_INTERNAL];
-
-	for(i = ROM_IPL; i < NUM_ROMS; i++) {
-		initial_SYS_info.totalSpace += rom_sizes[i];
-	}
-
+	rom_sizes[ROM_MRAM]           = SYS_GetPhysicalMemSize();
+	rom_sizes[ROM_MRAM_CACHED]    = SYS_GetSimulatedMemSize();
 	return 0;
 }
 
 s32 deviceHandler_SYS_readDir(file_handle* ffile, file_handle** dir, u32 type) {
+	if(type != -1) return -1;
+
 	int num_entries = NUM_ROMS, i = ROM_VOID;
 	*dir = calloc(num_entries, sizeof(file_handle));
 	concat_path((*dir)[i].name, ffile->name, "..");
-	(*dir)[i].fileAttrib = IS_SPECIAL;
+	(*dir)[i].fileType = IS_SPECIAL;
+	(*dir)[i].device   = ffile->device;
 
 	for(i = ROM_IPL; i < NUM_ROMS; i++) {
 		concat_path((*dir)[i].name, ffile->name, rom_names[i]);
-		(*dir)[i].fileBase   = i;
-		(*dir)[i].size       = rom_sizes[i];
-		(*dir)[i].fileAttrib = IS_FILE;
+		(*dir)[i].fileBase = i;
+		(*dir)[i].size     = rom_sizes[i];
+		(*dir)[i].fileType = IS_FILE;
+		(*dir)[i].device   = ffile->device;
 	}
 
 	return num_entries;
+}
+
+s32 deviceHandler_SYS_statFile(file_handle* file) {
+	int i;
+	for(i = ROM_IPL; i < NUM_ROMS; i++) {
+		if(endsWith(file->name, rom_names[i])) {
+			file->fileBase = i;
+			file->size     = rom_sizes[i];
+			file->fileType = IS_FILE;
+			return 0;
+		}
+	}
+	return -1;
 }
 
 s64 deviceHandler_SYS_seekFile(file_handle* file, s64 where, u32 type) {
@@ -423,38 +441,26 @@ s64 deviceHandler_SYS_seekFile(file_handle* file, s64 where, u32 type) {
 }
 
 s32 deviceHandler_SYS_readFile(file_handle* file, void* buffer, u32 length) {
-	s32 i;
-
-	if(file->fileBase == ROM_VOID) {
-		for(i = ROM_IPL; i < NUM_ROMS; i++) {
-			if(endsWith(file->name, rom_names[i])) {
-				file->fileBase = i;
-				break;
-			}
+	if(file->fileType != IS_FILE) {
+		if(deviceHandler_SYS_statFile(file)) {
+			return -1;
 		}
 	}
 
 	s32 ret = read_rom[file->fileBase](file, buffer, length);
 	file->offset += ret;
-	file->size = rom_sizes[file->fileBase];
 	return ret;
 }
 
 s32 deviceHandler_SYS_writeFile(file_handle* file, const void* buffer, u32 length) {
-	s32 i;
-
-	if(file->fileBase == ROM_VOID) {
-		for(i = ROM_IPL; i < NUM_ROMS; i++) {
-			if(endsWith(file->name, rom_names[i])) {
-				file->fileBase = i;
-				break;
-			}
+	if(file->fileType != IS_FILE) {
+		if(deviceHandler_SYS_statFile(file)) {
+			return -1;
 		}
 	}
 
 	s32 ret = write_rom[file->fileBase](file, buffer, length);
 	file->offset += ret;
-	file->size = rom_sizes[file->fileBase];
 	return ret;
 }
 
@@ -462,8 +468,7 @@ s32 deviceHandler_SYS_closeFile(file_handle* file) {
 	return 0;
 }
 
-s32 deviceHandler_SYS_deinit() {
-	initial_SYS_info.totalSpace = 0LL;
+s32 deviceHandler_SYS_deinit(file_handle* file) {
 	return 0;
 }
 
@@ -488,6 +493,7 @@ DEVICEHANDLER_INTERFACE __device_sys = {
 	.info = deviceHandler_SYS_info,
 	.init = deviceHandler_SYS_init,
 	.readDir = deviceHandler_SYS_readDir,
+	.statFile = deviceHandler_SYS_statFile,
 	.seekFile = deviceHandler_SYS_seekFile,
 	.readFile = deviceHandler_SYS_readFile,
 	.writeFile = deviceHandler_SYS_writeFile,

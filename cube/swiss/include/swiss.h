@@ -17,6 +17,7 @@
 #include "video.h"
 #include "input.h"
 #include <sdcard/card_cmn.h>
+#include "config.h"
 #include "deviceHandler.h"
 #include "gui/FrameBufferMagic.h"
 
@@ -38,41 +39,48 @@ extern char* _menu_array[];
 extern file_handle curFile;
 extern file_handle curDir;
 extern char IPLInfo[256] __attribute__((aligned(32)));
-extern dvdcmdblk commandBlock;
-extern dvddrvinfo driveInfo;
+extern dvdcmdblk DVDCommandBlock;
+extern dvdcmdblk DVDInquiryBlock;
+extern dvdcmdblk DVDStopMotorBlock;
+extern dvddrvinfo DVDDriveInfo[2];
+extern u16* const DVDDeviceCode;
+extern dvddiskid* DVDDiskID;
 extern DiskHeader GCMDisk;
 
-extern void udelay(int s);
-extern void __SYS_ReadROM(void *buf,u32 len,u32 offset);
-extern s32 DVD_LowGetCoverStatus(void);
 extern u32 sdgecko_getAddressingType(s32 drv_no);
+extern u32 sdgecko_getTransferMode(s32 drv_no);
+extern u32 sdgecko_getDevice(s32 drv_no);
+extern void sdgecko_setDevice(s32 drv_no, u32 dev);
 extern u32 sdgecko_getSpeed(s32 drv_no);
 extern void sdgecko_setSpeed(s32 drv_no, u32 freq);
 extern u32 sdgecko_getPageSize(s32 drv_no);
 extern s32 sdgecko_setPageSize(s32 drv_no, u32 size);
+extern s32 sdgecko_enableCRC(s32 drv_no, bool enable);
 extern s32 sdgecko_readCID(s32 drv_no);
 extern s32 sdgecko_readCSD(s32 drv_no);
 extern s32 sdgecko_readStatus(s32 drv_no);
-extern s32 sdgecko_setHS(s32 drv_no);
 
-extern syssram* __SYS_LockSram();
+extern syssram* __SYS_LockSram(void);
+extern syssramex* __SYS_LockSramEx(void);
 extern u32 __SYS_UnlockSram(u32 write);
-extern syssramex* __SYS_LockSramEx();
 extern u32 __SYS_UnlockSramEx(u32 write);
+extern u32 __SYS_SyncSram(void);
+extern u32 __SYS_CheckSram(void);
+extern void __SYS_ReadROM(void *buf,u32 len,u32 offset);
 
-extern uiDrawObj_t * renderFileBrowser(file_handle** directory, int num_files, uiDrawObj_t *container);
+extern uiDrawObj_t* renderFileBrowser(file_handle** directory, int num_files, uiDrawObj_t* filePanel);
 
 extern void menu_loop();
-extern void boot_dol();
+extern void boot_dol(file_handle* file, int argc, char *argv[]);
 extern bool manage_file();
 extern void load_file();
-extern int check_game();
+extern int check_game(file_handle *file, file_handle *file2, ExecutableFile *filesToPatch);
 extern int cheats_game();
 extern void install_game();
-extern int info_game();
+extern int info_game(ConfigEntry *config);
 extern void settings();
 extern void credits();
-extern void drawFiles(file_handle** directory, int num_files, uiDrawObj_t *container);
+extern void drawFiles(file_handle** directory, int num_files, uiDrawObj_t *containerPanel);
 
 extern void select_speed();
 extern int select_slot();
@@ -80,15 +88,21 @@ extern void select_device(int type);
 extern bool select_dest_dir(file_handle* initial, file_handle* selection);
 
 typedef struct {
-	int debugUSB; // Debug prints over USBGecko
+	int cubebootInvoked;
+	int enableUSBGecko; // Debug prints over USBGecko
+	int waitForUSBGecko;
 	int hasDVDDrive;	// 0 if none, 1 if something
+	int hasFlippyDrive;
 	int exiSpeed;
 	int uiVMode;	// What mode to force Swiss into
 	int gameVMode;	// What mode to force a Game into
+	int gameVModeNtsc;
+	int gameVModePal;
 	int forceHScale;
 	short forceVOffset;
 	int forceVFilter;
 	int forceVJitter;
+	int fixPixelCenter;
 	int disableDithering;
 	int forceAnisotropy;
 	int forceWidescreen;
@@ -104,21 +118,30 @@ typedef struct {
 	int sram60Hz;
 	int sramProgressive;
 	int sramStereo;
+	int initDVDDriveAtStart;
 	int stopMotor;
+	int configAudioBuffer;
 	int enableFileManagement;
 	int disableMCPGameID;
 	int disableVideoPatches;
 	int forceVideoActive;
 	int forceDTVStatus;
+	int lastDTVStatus;
 	int pauseAVOutput;
 	int emulateAudioStream;
 	int emulateReadSpeed;
-	int emulateMemoryCard;
 	int emulateEthernet;
+	int emulateMemoryCard;
+	int disableMemoryCard;
+	int disableHypervisor;
 	int preferCleanBoot;
 	s8 sramHOffset;
+	u8 sramBoot;
 	u8 sramLanguage;
 	u8 sramVideo;
+	char rt4kHostIp[16];
+	u16 rt4kPort;
+	bool rt4kOptim;
 	char smbUser[32];		//20
 	char smbPassword[32];	//16
 	char smbShare[128];		//80
@@ -141,7 +164,7 @@ typedef struct {
 	int igrType;
 	int initNetworkAtStart;
 	int aveCompat;
-	int rt4kOptim;
+	int rt4kProfile;
 	u8 configDeviceId;	// see deviceHandler.h
 	int fileBrowserType;
 	int bs2Boot;
@@ -155,12 +178,33 @@ typedef struct {
 } SwissSettings;
 extern SwissSettings swissSettings;
 
+enum enableUSBGecko
+{
+	USBGECKO_OFF=0,
+	USBGECKO_MEMCARD_SLOT_A,
+	USBGECKO_MEMCARD_SLOT_B,
+	USBGECKO_SERIAL_PORT_2,
+	USBGECKO_MAX
+};
+
+enum aveCompat
+{
+	AVE_N_DOL_COMPAT=0,
+	AVE_P_DOL_COMPAT,
+	CMPV_DOL_COMPAT,
+	GCDIGITAL_COMPAT,
+	GCVIDEO_COMPAT,
+	AVE_RVL_COMPAT,
+	AVE_COMPAT_MAX
+};
+
 enum fileOptions
 {
 	COPY_OPTION=0,
 	MOVE_OPTION,
 	DELETE_OPTION,
-	RENAME_OPTION
+	RENAME_OPTION,
+	HIDE_OPTION
 };
 
 enum fileBrowserTypes

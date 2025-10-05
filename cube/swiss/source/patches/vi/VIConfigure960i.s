@@ -55,6 +55,6 @@ VIConfigure960i:
 	stb			%r8, 24 (%r3)
 	stw			%r0, 0 (%r3)
 
-.globl VIConfigure960i_length
-VIConfigure960i_length:
-.long (VIConfigure960i_length - VIConfigure960i)
+.globl VIConfigure960i_size
+VIConfigure960i_size:
+.long (. - VIConfigure960i)

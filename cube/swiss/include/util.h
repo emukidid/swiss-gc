@@ -9,17 +9,17 @@
 #define RECENT_ERR_ENT_MISSING 1
 #define RECENT_ERR_DEV_MISSING 2
 
-int endsWith(char *str, char *end);
-bool canLoadFileType(char *filename);
-bool checkExtension(char *filename);
+char *endsWith(char *str, char *end);
+bool canLoadFileType(char *filename, char **extraExtensions);
+bool checkExtension(char *filename, char **extraExtensions);
 char *getRelativeName(char *path);
 char *getRelativePath(char *path, char *parentPath);
 bool getParentPath(char *path, char *parentPath);
 char *getDevicePath(char *path);
 char *getExternalPath(char *path);
 char *stripInvalidChars(char *str);
-void load_auto_dol();
-void print_gecko(const char* fmt, ...);
+void load_auto_dol(int argc, char *argv[]);
+void print_debug(const char *fmt, ...);
 bool update_recent();
 int find_existing_entry(char *entry, bool load);
 bool deleteFileOrDir(file_handle* entry);

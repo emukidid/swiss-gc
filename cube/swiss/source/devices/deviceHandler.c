@@ -11,13 +11,38 @@
 #include <sys/types.h>
 #include <sys/time.h>
 #include <time.h>
+#include <malloc.h>
 #include "util.h"
 #include "swiss.h"
 #include "patcher.h"
 #include "deviceHandler.h"
+#include "flippy.h"
 
 DEVICEHANDLER_INTERFACE* allDevices[MAX_DEVICES];	// All devices registered in Swiss
 DEVICEHANDLER_INTERFACE* devices[MAX_DEVICE_SLOTS];	// Currently used devices
+
+
+static s32 onreset(s32 final)
+{
+	if (!final) {
+		for (int i = 0; i < MAX_DEVICE_SLOTS; i++) {
+			if (devices[i] && !(devices[i]->quirks & QUIRK_NO_DEINIT)) {
+				devices[i]->deinit(devices[i]->initial);
+				devices[i] = NULL;
+			}
+		}
+	}
+	return TRUE;
+}
+
+static sys_resetinfo resetinfo = {
+	{NULL, NULL}, onreset, 0
+};
+
+__attribute((constructor))
+static void registerResetFunc() {
+	SYS_RegisterResetFunc(&resetinfo);
+}
 
 
 // Device stat global disable status
@@ -125,6 +150,33 @@ bool getExiDeviceByLocation(u32 location, s32 *chan, s32 *dev) {
 	return false;
 }
 
+bool getExiInterruptByLocation(u32 location, s32 *chan) {
+	switch(location) {
+		case LOC_MEMCARD_SLOT_A:
+			if(chan) *chan = EXI_CHANNEL_0;
+			return true;
+		case LOC_MEMCARD_SLOT_B:
+			if(chan) *chan = EXI_CHANNEL_1;
+			return true;
+		case LOC_SERIAL_PORT_1:
+			if(chan) *chan = EXI_CHANNEL_2;
+			return true;
+		case LOC_SERIAL_PORT_2:
+		case LOC_SYSTEM:
+			if(chan) *chan = EXI_CHANNEL_MAX;
+			return true;
+	}
+	return false;
+}
+
+bool getExiIdByLocation(u32 location, u32 *id) {
+	s32 chan, dev;
+	if(getExiDeviceByLocation(location, &chan, &dev)) {
+		return EXI_GetID(chan, dev, id);
+	}
+	return false;
+}
+
 vu32* getExiRegsByLocation(u32 location) {
 	s32 chan;
 	if(getExiDeviceByLocation(location, &chan, NULL)) {
@@ -143,6 +195,12 @@ const char* getHwNameByLocation(u32 location) {
 		u32 type;
 		if(EXI_GetType(chan, dev, &type) && ~type) {
 			return EXI_GetTypeString(type);
+		}
+		if(chan < EXI_CHANNEL_2 && dev == EXI_DEVICE_0) {
+			switch(EXI_ProbeEx(chan)) {
+				case 0: return "Probing";
+				case 1: return "Unknown";
+			}
 		}
 	}
 	return "Empty";
@@ -171,7 +229,7 @@ bool getFragments(int deviceSlot, file_handle *file, file_frag **fragList, u32 *
 		}
 		file->ffsFp->cltbl = NULL;
 		
-		print_gecko("getFragments [%s] - found %i fragments [%i arr]\r\n", file->name, (clmt[0]/2)-1, clmt[0]);
+		print_debug("getFragments [%s] - found %i fragments [%i arr]\n", file->name, (clmt[0]/2)-1, clmt[0]);
 		
 		frags = reallocarray(frags, numFrags + (clmt[0]/2), sizeof(file_frag));
 		if(frags == NULL) {
@@ -192,6 +250,19 @@ bool getFragments(int deviceSlot, file_handle *file, file_frag **fragList, u32 *
 			numFrags++;
 		}
 		file->status = STATUS_HAS_MAPPING;
+	}
+	else if(devices[deviceSlot] == &__device_flippy || devices[deviceSlot] == &__device_flippyflash) {
+		frags = reallocarray(frags, numFrags + 2, sizeof(file_frag));
+		if(frags == NULL) {
+			return false;
+		}
+		flippyfileinfo* info = file->fp;
+		frags[numFrags].offset = forceBaseOffset;
+		frags[numFrags].size = forceSize;
+		frags[numFrags].fileNum = fileNum;
+		frags[numFrags].devNum = deviceSlot == DEVICE_PATCHES;
+		frags[numFrags].fileBase = ((u64)info->file.handle << 32);
+		numFrags++;
 	}
 	else if(devices[deviceSlot] == &__device_fsp) {
 		frags = reallocarray(frags, numFrags + 2, sizeof(file_frag));
@@ -238,23 +309,51 @@ bool getFragments(int deviceSlot, file_handle *file, file_frag **fragList, u32 *
 	return true;
 }
 
-void print_frag_list(file_frag *fragList, u32 totFrags) {
-	print_gecko("== Fragments List ==\r\n");
+void printFragments(file_frag *fragList, u32 totFrags) {
+	print_debug("== Fragments List ==\n");
 	for(int i = 0; i < totFrags; i++) {
-		print_gecko("Frag %i: ofs in file: [0x%08X] len [0x%08X] LBA on disk [0x%012llX]\r\n",
-					i, fragList[i].offset, fragList[i].size, fragList[i].fileBase);
+		print_debug("Frag %i: ofs in file: [0x%08X] len [0x%08X] LBA on disk [0x%012llX]\n",
+			i, fragList[i].offset, fragList[i].size, fragList[i].fileBase);
 	}
-	print_gecko("== Fragments End ==\r\n");
+	print_debug("== Fragments End ==\n");
 }
 
-FILE* openFileStream(int deviceSlot, file_handle *file)
-{
-	if(devices[deviceSlot]->readFile(file, NULL, 0) != 0 || !file->size) {
+FILE* openFileStream(file_handle *file) {
+	if(file->device->readFile(file, NULL, 0) != 0 || !file->size) {
 		return NULL;
 	}
 	return funopen((const void *)file,
-		(int (*)(void *, char *, int))devices[deviceSlot]->readFile,
+		(int (*)(void *, char *, int))file->device->readFile,
 		(int (*)(void *, const char *, int))NULL,
-		(fpos_t (*)(void *, fpos_t, int))devices[deviceSlot]->seekFile,
-		(int (*)(void *))devices[deviceSlot]->closeFile);
+		(fpos_t (*)(void *, fpos_t, int))file->device->seekFile,
+		(int (*)(void *))file->device->closeFile);
+}
+
+void* readFileBlockAligned(file_handle *file, u32 offset, u32 length) {
+	if(file->blockSize) {
+		u32 blockOffset = offset & (file->blockSize - 1);
+		u32 alignedOffset = offset & ~(file->blockSize - 1);
+		u32 sizeToRead = blockOffset + length;
+		u32 alignedLength = (sizeToRead + file->blockSize - 1) & ~(file->blockSize - 1);
+
+		void *buffer = memalign(32, alignedLength);
+		if(!buffer) return NULL;
+
+		file->device->seekFile(file, alignedOffset, DEVICE_HANDLER_SEEK_SET);
+		if(file->device->readFile(file, buffer, alignedLength) < sizeToRead) {
+			free(buffer);
+			return NULL;
+		}
+		return memmove(buffer, buffer + blockOffset, length);
+	}
+
+	void *buffer = memalign(32, length);
+	if(!buffer) return NULL;
+
+	file->device->seekFile(file, offset, DEVICE_HANDLER_SEEK_SET);
+	if(file->device->readFile(file, buffer, length) < length) {
+		free(buffer);
+		return NULL;
+	}
+	return buffer;
 }

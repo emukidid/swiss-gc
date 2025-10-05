@@ -28,6 +28,6 @@ VIConfigure576i:
 	stb			%r7, VAR_VFILTER_ON (%r4)
 	stw			%r0, 0 (%r3)
 
-.globl VIConfigure576i_length
-VIConfigure576i_length:
-.long (VIConfigure576i_length - VIConfigure576i)
+.globl VIConfigure576i_size
+VIConfigure576i_size:
+.long (. - VIConfigure576i)

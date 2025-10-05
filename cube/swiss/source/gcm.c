@@ -10,6 +10,7 @@
 #include <xxhash.h>
 #include "dvd.h"
 #include "elf.h"
+#include "eltorito.h"
 #include "gcm.h"
 #include "main.h"
 #include "nkit.h"
@@ -29,21 +30,18 @@ DiskHeader *get_gcm_header(file_handle *file) {
 	DiskHeader *diskHeader;
 	
 	// Grab disc header
-	diskHeader=(DiskHeader*)memalign(32,sizeof(DiskHeader));
-	if(!diskHeader) return NULL;
-	
-	if(devices[DEVICE_CUR] == &__device_dvd && file->fileAttrib == IS_DIR) {
+	if(file->device == &__device_dvd && file->fileType == IS_DIR) {
+		diskHeader = (DiskHeader*)memalign(32, sizeof(DiskHeader));
+		if(!diskHeader) return NULL;
+		
 		if(DVD_Read(diskHeader, 0, sizeof(DiskHeader)) != sizeof(DiskHeader)) {
 			free(diskHeader);
 			return NULL;
 		}
 	}
 	else {
-		devices[DEVICE_CUR]->seekFile(file,0,DEVICE_HANDLER_SEEK_SET);
-		if(devices[DEVICE_CUR]->readFile(file,diskHeader,sizeof(DiskHeader)) != sizeof(DiskHeader)) {
-			free(diskHeader);
-			return NULL;
-		}
+		diskHeader = (DiskHeader*)readFileBlockAligned(file, 0, sizeof(DiskHeader));
+		if(!diskHeader) return NULL;
 	}
 	
 	if(!valid_gcm_magic(diskHeader)) {
@@ -57,21 +55,18 @@ char *get_fst(file_handle *file, u32 file_offset, u32 file_size) {
 	char *FST;
 	
 	// Alloc and read FST
-	FST=(char*)memalign(32,file_size);
-	if(!FST) return NULL;
-	
-	if(devices[DEVICE_CUR] == &__device_dvd && file->fileAttrib == IS_DIR) {
+	if(file->device == &__device_dvd && file->fileType == IS_DIR) {
+		FST = (char*)memalign(32, file_size);
+		if(!FST) return NULL;
+		
 		if(DVD_Read(FST, file_offset, file_size) != file_size) {
 			free(FST);
 			return NULL;
 		}
 	}
- 	else {
-		devices[DEVICE_CUR]->seekFile(file,file_offset,DEVICE_HANDLER_SEEK_SET);
-		if(devices[DEVICE_CUR]->readFile(file,FST,file_size) != file_size) {
-			free(FST);
-			return NULL;
-		}
+	else {
+		FST = (char*)readFileBlockAligned(file, file_offset, file_size);
+		if(!FST) return NULL;
 	}
 	return FST;
 }
@@ -146,8 +141,8 @@ bool valid_dol_file(file_handle *file, u32 file_offset, u32 file_size) {
 		return false;
 	}
 	DOLHEADER dolhdr;
-	devices[DEVICE_CUR]->seekFile(file, file_offset, DEVICE_HANDLER_SEEK_SET);
-	devices[DEVICE_CUR]->readFile(file, &dolhdr, DOLHDRLENGTH);
+	file->device->seekFile(file, file_offset, DEVICE_HANDLER_SEEK_SET);
+	file->device->readFile(file, &dolhdr, DOLHDRLENGTH);
 	
 	int i;
 	for(i = 0; i < MAXTEXTSECTION; i++) {
@@ -185,16 +180,16 @@ u32 calc_elf_segments_size(file_handle *file, u32 file_offset, u32 *file_size) {
 	u32 size = 0;
 	
 	Elf32_Ehdr *ehdr = calloc(1, sizeof(Elf32_Ehdr));
-	devices[DEVICE_CUR]->seekFile(file, file_offset, DEVICE_HANDLER_SEEK_SET);
-	devices[DEVICE_CUR]->readFile(file, ehdr, sizeof(Elf32_Ehdr));
+	file->device->seekFile(file, file_offset, DEVICE_HANDLER_SEEK_SET);
+	file->device->readFile(file, ehdr, sizeof(Elf32_Ehdr));
 	if(!valid_elf_image(ehdr)) {
 		free(ehdr);
 		return size;
 	}
 	
 	Elf32_Phdr *phdr = calloc(ehdr->e_phnum, sizeof(Elf32_Phdr));
-	devices[DEVICE_CUR]->seekFile(file, file_offset + ehdr->e_phoff, DEVICE_HANDLER_SEEK_SET);
-	devices[DEVICE_CUR]->readFile(file, phdr, ehdr->e_phnum * sizeof(Elf32_Phdr));
+	file->device->seekFile(file, file_offset + ehdr->e_phoff, DEVICE_HANDLER_SEEK_SET);
+	file->device->readFile(file, phdr, ehdr->e_phnum * sizeof(Elf32_Phdr));
 	
 	*file_size = ehdr->e_phoff + ehdr->e_phnum * sizeof(Elf32_Phdr);
 	
@@ -213,6 +208,30 @@ u32 calc_elf_segments_size(file_handle *file, u32 file_offset, u32 *file_size) {
 	return size;
 }
 
+u32 get_iso_boot_record(file_handle *file) {
+	u32 file_offset = 17 * DI_SECTOR_SIZE;
+	
+	struct di_boot_record boot_record;
+	file->device->seekFile(file, file_offset, DEVICE_HANDLER_SEEK_SET);
+	if(file->device->readFile(file, &boot_record, sizeof(boot_record)) != sizeof(boot_record)) return 0;
+	if(memcmp(boot_record.boot_system_id, "EL TORITO SPECIFICATION", 23)) return 0;
+	file_offset = boot_record.boot_catalog_offset * DI_SECTOR_SIZE;
+	
+	struct di_validation_entry validation_entry;
+	file->device->seekFile(file, file_offset, DEVICE_HANDLER_SEEK_SET);
+	if(file->device->readFile(file, &validation_entry, sizeof(validation_entry)) != sizeof(validation_entry)) return 0;
+	if(validation_entry.header_id != 1 || validation_entry.key_55 != 0x55 || validation_entry.key_AA != 0xAA) return 0;
+	file_offset += sizeof(validation_entry);
+	
+	struct di_default_entry default_entry;
+	file->device->seekFile(file, file_offset, DEVICE_HANDLER_SEEK_SET);
+	if(file->device->readFile(file, &default_entry, sizeof(default_entry)) != sizeof(default_entry)) return 0;
+	if(default_entry.boot_indicator != 0x88) return 0;
+	file_offset = default_entry.load_rba * DI_SECTOR_SIZE;
+	
+	return file_offset;
+}
+
 // Returns the number of filesToPatch and fills out the filesToPatch array passed in (pre-allocated)
 int parse_gcm(file_handle *file, file_handle *file2, ExecutableFile *filesToPatch) {
 	char	filename[256];
@@ -227,8 +246,8 @@ int parse_gcm(file_handle *file, file_handle *file2, ExecutableFile *filesToPatc
 	// Patch the apploader too!
 	// Calc Apploader size
 	ApploaderHeader apploaderHeader;
-	devices[DEVICE_CUR]->seekFile(file,0x2440,DEVICE_HANDLER_SEEK_SET);
-	if(devices[DEVICE_CUR]->readFile(file,&apploaderHeader,sizeof(ApploaderHeader)) != sizeof(ApploaderHeader)) {
+	file->device->seekFile(file,0x2440,DEVICE_HANDLER_SEEK_SET);
+	if(file->device->readFile(file,&apploaderHeader,sizeof(ApploaderHeader)) != sizeof(ApploaderHeader)) {
 		DrawPublish(DrawMessageBox(D_FAIL, "Failed to read Apploader Header"));
 		while(1);
 	}
@@ -239,10 +258,17 @@ int parse_gcm(file_handle *file, file_handle *file2, ExecutableFile *filesToPatc
 	sprintf(filesToPatch[numFiles].name, "apploader.img");
 	numFiles++;
 
-	if(diskHeader->DOLOffset != 0) {
+	dolOffset = diskHeader->DOLOffset;
+	if(dolOffset == 0 && diskHeader->FSTOffset + diskHeader->FSTSize <= 0x8000) {
+		dolOffset = get_iso_boot_record(file);
+		if(GCMDisk.DOLOffset == 0) {
+			GCMDisk.DOLOffset = dolOffset;
+		}
+	}
+	if(dolOffset != 0) {
 		if(is_datel_disc(diskHeader)) {
 			filesToPatch[numFiles].file = file;
-			filesToPatch[numFiles].offset = diskHeader->DOLOffset;
+			filesToPatch[numFiles].offset = dolOffset;
 			filesToPatch[numFiles].size = 0x400000;
 			filesToPatch[numFiles].hash = get_gcm_boot_hash(diskHeader, file->meta);
 			filesToPatch[numFiles].type = PATCH_BIN;
@@ -255,14 +281,15 @@ int parse_gcm(file_handle *file, file_handle *file2, ExecutableFile *filesToPatc
 			// Multi-DOL games may re-load the main DOL, so make sure we patch it too.
 			// Calc size
 			DOLHEADER dolhdr;
-			devices[DEVICE_CUR]->seekFile(file,diskHeader->DOLOffset,DEVICE_HANDLER_SEEK_SET);
-			if(devices[DEVICE_CUR]->readFile(file,&dolhdr,DOLHDRLENGTH) != DOLHDRLENGTH) {
+			file->device->seekFile(file,dolOffset,DEVICE_HANDLER_SEEK_SET);
+			if(file->device->readFile(file,&dolhdr,DOLHDRLENGTH) != DOLHDRLENGTH) {
 				DrawPublish(DrawMessageBox(D_FAIL, "Failed to read Main DOL Header"));
 				while(1);
 			}
+			dolSize = DOLSize(&dolhdr);
 			filesToPatch[numFiles].file = file;
-			filesToPatch[numFiles].offset = dolOffset = diskHeader->DOLOffset;
-			filesToPatch[numFiles].size = dolSize = DOLSize(&dolhdr);
+			filesToPatch[numFiles].offset = dolOffset;
+			filesToPatch[numFiles].size = DOLSizeFix(&dolhdr);
 			filesToPatch[numFiles].hash = get_gcm_boot_hash(diskHeader, file->meta);
 			filesToPatch[numFiles].type = PATCH_DOL;
 			filesToPatch[numFiles].fstOffset = diskHeader->FSTOffset;
@@ -394,8 +421,8 @@ int parse_tgc(file_handle *file, ExecutableFile *filesToPatch, u32 tgc_base, cha
 	int		numFiles = 0;
 	
 	TGCHeader tgcHeader;
-	devices[DEVICE_CUR]->seekFile(file,tgc_base,DEVICE_HANDLER_SEEK_SET);
-	devices[DEVICE_CUR]->readFile(file,&tgcHeader,sizeof(TGCHeader));
+	file->device->seekFile(file,tgc_base,DEVICE_HANDLER_SEEK_SET);
+	file->device->readFile(file,&tgcHeader,sizeof(TGCHeader));
 	
 	if(tgcHeader.magic != TGC_MAGIC) return 0;
 	if(tgcHeader.fstMaxLength > GCMDisk.MaxFSTSize) {
@@ -404,8 +431,8 @@ int parse_tgc(file_handle *file, ExecutableFile *filesToPatch, u32 tgc_base, cha
 	
 	if(tgcHeader.apploaderOffset != 0) {
 		ApploaderHeader apploaderHeader;
-		devices[DEVICE_CUR]->seekFile(file,tgc_base+tgcHeader.apploaderOffset,DEVICE_HANDLER_SEEK_SET);
-		devices[DEVICE_CUR]->readFile(file,&apploaderHeader,sizeof(ApploaderHeader));
+		file->device->seekFile(file,tgc_base+tgcHeader.apploaderOffset,DEVICE_HANDLER_SEEK_SET);
+		file->device->readFile(file,&apploaderHeader,sizeof(ApploaderHeader));
 		
 		filesToPatch[numFiles].file = file;
 		filesToPatch[numFiles].offset = tgc_base+tgcHeader.apploaderOffset;
@@ -513,7 +540,7 @@ int patch_gcm(ExecutableFile *filesToPatch, int numToPatch) {
 			devices[DEVICE_PATCHES] = devices[DEVICE_CUR];
 			u32 emulated = devices[DEVICE_CUR]->emulated();
 			devices[DEVICE_PATCHES] = devices[DEVICE_CONFIG];
-			if((emulated ^ devices[DEVICE_CUR]->emulated()) & ~EMU_BUS_ARBITER) {
+			if(emulated > devices[DEVICE_CUR]->emulated()) {
 				devices[DEVICE_PATCHES] = devices[DEVICE_CUR];
 				patchDeviceReady = true;
 			}
@@ -523,22 +550,23 @@ int patch_gcm(ExecutableFile *filesToPatch, int numToPatch) {
 			patchDeviceReady = true;
 		}
 	}
+	else if(devices[DEVICE_CUR] == &__device_flippyflash) {
+		devices[DEVICE_PATCHES] = &__device_flippy;
+	}
+	else if(devices[DEVICE_CONFIG] == &__device_sd_a || devices[DEVICE_CONFIG] == &__device_sd_b || devices[DEVICE_CONFIG] == &__device_sd_c) {
+		devices[DEVICE_PATCHES] = devices[DEVICE_CONFIG];
+	}
+	else if(deviceHandler_getDeviceAvailable(&__device_sd_c)) {
+		devices[DEVICE_PATCHES] = &__device_sd_c;
+	}
+	else if(deviceHandler_getDeviceAvailable(&__device_sd_b)) {
+		devices[DEVICE_PATCHES] = &__device_sd_b;
+	}
+	else if(deviceHandler_getDeviceAvailable(&__device_sd_a)) {
+		devices[DEVICE_PATCHES] = &__device_sd_a;
+	}
 	else {
-		if(devices[DEVICE_CONFIG] == &__device_sd_a || devices[DEVICE_CONFIG] == &__device_sd_b || devices[DEVICE_CONFIG] == &__device_sd_c) {
-			devices[DEVICE_PATCHES] = devices[DEVICE_CONFIG];
-		}
-		else if(deviceHandler_getDeviceAvailable(&__device_sd_c)) {
-			devices[DEVICE_PATCHES] = &__device_sd_c;
-		}
-		else if(deviceHandler_getDeviceAvailable(&__device_sd_b)) {
-			devices[DEVICE_PATCHES] = &__device_sd_b;
-		}
-		else if(deviceHandler_getDeviceAvailable(&__device_sd_a)) {
-			devices[DEVICE_PATCHES] = &__device_sd_a;
-		}
-		else {
-			devices[DEVICE_PATCHES] = NULL;
-		}
+		devices[DEVICE_PATCHES] = NULL;
 	}
 
 	if(devices[DEVICE_PATCHES] == NULL) {
@@ -558,10 +586,10 @@ int patch_gcm(ExecutableFile *filesToPatch, int numToPatch) {
 		sprintf(txtbuffer, "Patching File %i/%i\n%s [%iKB]",i+1,numToPatch,fileToPatch->name,fileToPatch->size/1024);
 		
 		if(fileToPatch->size > 8*1024*1024) {
-			print_gecko("Skipping %s %iKB too large\r\n", fileToPatch->name, fileToPatch->size/1024);
+			print_debug("Skipping %s %iKB too large\n", fileToPatch->name, fileToPatch->size/1024);
 			continue;
 		}
-		print_gecko("Checking %s %iKb\r\n", fileToPatch->name, fileToPatch->size/1024);
+		print_debug("Checking %s %iKB\n", fileToPatch->name, fileToPatch->size/1024);
 		
 		if(!strcasecmp(fileToPatch->name, "iwanagaD.dol") || !strcasecmp(fileToPatch->name, "switcherD.dol")) {
 			continue;	// skip unused PSO files
@@ -574,7 +602,7 @@ int patch_gcm(ExecutableFile *filesToPatch, int numToPatch) {
 		
 		devices[DEVICE_CUR]->seekFile(fileToPatch->file,fileToPatch->offset,DEVICE_HANDLER_SEEK_SET);
 		int ret = devices[DEVICE_CUR]->readFile(fileToPatch->file,buffer,sizeToRead);
-		print_gecko("Read from %08X Size %08X - Result: %08X\r\n", fileToPatch->offset, sizeToRead, ret);
+		print_debug("Read from %08X Size %08X - Result: %08X\n", fileToPatch->offset, sizeToRead, ret);
 		if(ret != sizeToRead) {
 			message = "Failed to read file!";
 			goto fail;
@@ -584,6 +612,17 @@ int patch_gcm(ExecutableFile *filesToPatch, int numToPatch) {
 		if(!valid_file_xxh3(&GCMDisk, fileToPatch)) {
 			message = "Failed integrity check!";
 			goto fail;
+		}
+		int j;
+		for(j = 0; j < i; j++) {
+			if(filesToPatch[i].hash == filesToPatch[j].hash) {
+				filesToPatch[i].size = filesToPatch[j].size;
+				if(filesToPatch[j].patchFile) {
+					filesToPatch[i].patchFile = calloc(1, sizeof(file_handle));
+					strcpy(filesToPatch[i].patchFile->name, filesToPatch[j].patchFile->name);
+				}
+				goto fail;
+			}
 		}
 		
 		u8 *oldBuffer = buffer, *newBuffer = NULL;
@@ -642,11 +681,11 @@ int patch_gcm(ExecutableFile *filesToPatch, int numToPatch) {
 			}
 			
 			// Make /swiss/, it'll likely exist already anyway.
-			ensure_path(DEVICE_PATCHES, "swiss", NULL);
+			ensure_path(DEVICE_PATCHES, "swiss", NULL, true);
 			
 			// If the old directory exists, lets move it to the new location (swiss_patches is now just patches under /swiss/)
-			ensure_path(DEVICE_PATCHES, "swiss/patches", "swiss_patches");	// TODO kill this off in our next major release.
-			ensure_path(DEVICE_PATCHES, "swiss/patches/game", NULL);
+			ensure_path(DEVICE_PATCHES, "swiss/patches", "swiss_patches", false);	// TODO kill this off in our next major release.
+			ensure_path(DEVICE_PATCHES, "swiss/patches/game", NULL, false);
 			
 			// File handle for a patch we might need to write
 			fileToPatch->patchFile = calloc(1, sizeof(file_handle));
@@ -657,11 +696,11 @@ int patch_gcm(ExecutableFile *filesToPatch, int numToPatch) {
 				concatf_path(fileToPatch->patchFile->name, devices[DEVICE_PATCHES]->initial->name, "swiss/patches/game/%08x.bin", (u32)fileToPatch->hash);
 			
 			// See if this file already exists, if it does, match hash
-			if(!devices[DEVICE_PATCHES]->readFile(fileToPatch->patchFile, NULL, 0)) {
+			if(!devices[DEVICE_PATCHES]->statFile(fileToPatch->patchFile)) {
 				if(devices[DEVICE_PATCHES]->seekFile(fileToPatch->patchFile, -sizeof(old_hash), DEVICE_HANDLER_SEEK_END) == sizeToRead &&
 					devices[DEVICE_PATCHES]->readFile(fileToPatch->patchFile, &old_hash, sizeof(old_hash)) == sizeof(old_hash) &&
 					XXH128_isEqual(old_hash, new_hash)) {
-					print_gecko("Hash matched, no need to patch again\r\n");
+					print_debug("Hash matched, no need to patch again\n");
 					num_patched++;
 					free(buffer);
 					DrawDispose(progBox);
@@ -669,11 +708,11 @@ int patch_gcm(ExecutableFile *filesToPatch, int numToPatch) {
 				}
 				else {
 					devices[DEVICE_PATCHES]->deleteFile(fileToPatch->patchFile);
-					print_gecko("Hash mismatch, writing patch again\r\n");
+					print_debug("Hash mismatch, writing patch again\n");
 				}
 			}
 			// Otherwise, write a file out for this game with the patched buffer inside.
-			print_gecko("Writing patch file: %s %i bytes (disc offset %08X)\r\n", fileToPatch->patchFile->name, fileToPatch->size, fileToPatch->offset);
+			print_debug("Writing patch file: %s %i bytes (disc offset %08X)\n", fileToPatch->patchFile->name, fileToPatch->size, fileToPatch->offset);
 			devices[DEVICE_PATCHES]->seekFile(fileToPatch->patchFile, 0, DEVICE_HANDLER_SEEK_SET);
 			if(devices[DEVICE_PATCHES]->writeFile(fileToPatch->patchFile, buffer, sizeToRead) == sizeToRead &&
 				devices[DEVICE_PATCHES]->writeFile(fileToPatch->patchFile, &new_hash, sizeof(new_hash)) == sizeof(new_hash) &&
@@ -716,7 +755,7 @@ u64 calc_fst_entries_size(char *FST) {
 // Returns the number of filesToPatch and fills out the filesToPatch array passed in (pre-allocated)
 int read_fst(file_handle *file, file_handle** dir, u64 *usedSpace) {
 
-	print_gecko("Read dir for directory: %s\r\n",file->name);
+	print_debug("Read dir for directory: %s\n",file->name);
 	char	filename[PATHNAME_MAX];
 	int		numFiles = 1, idx = 0;
 	int		isRoot = file->fileBase == 0;
@@ -733,12 +772,13 @@ int read_fst(file_handle *file, file_handle** dir, u64 *usedSpace) {
 	if(isRoot) {
 		// Add the disc itself as a "file"
 		*dir = calloc(numFiles, sizeof(file_handle));
-		concatf_path((*dir)[idx].name, file->name, "%.64s.gcm", diskHeader->GameName);
+		concatf_path((*dir)[idx].name, file->name, "%.64s [%.6s].gcm", stripInvalidChars(diskHeader->GameName), diskHeader);
 		(*dir)[idx].fileBase = 0;
 		(*dir)[idx].offset = 0;
 		(*dir)[idx].size = DISC_SIZE;
-		(*dir)[idx].fileAttrib = IS_FILE;
+		(*dir)[idx].fileType = IS_FILE;
 		(*dir)[idx].meta = 0;
+		(*dir)[idx].device = file->device;
 		idx++;
 	}
 	
@@ -761,11 +801,12 @@ int read_fst(file_handle *file, file_handle** dir, u64 *usedSpace) {
 		(*dir)[idx].fileBase = *(u32*)&FST[(parent_dir_offset*0x0C)+4];
 		(*dir)[idx].offset = 0;
 		(*dir)[idx].size = 0;
-		(*dir)[idx].fileAttrib = IS_SPECIAL;
+		(*dir)[idx].fileType = IS_SPECIAL;
 		(*dir)[idx].meta = 0;
+		(*dir)[idx].device = file->device;
 		idx++;
 	}
-	//print_gecko("Found DIR [%03i]:%s\r\n",parent_dir_offset,isRoot ? "ROOT":filename);
+	//print_debug("Found DIR [%03i]:%s\n",parent_dir_offset,isRoot ? "ROOT":filename);
 	
 	// Traverse the FST now adding all the files which come under our DIR
 	for (i=parent_dir_offset;i<dir_end_offset;i++) {
@@ -781,7 +822,7 @@ int read_fst(file_handle *file, file_handle** dir, u64 *usedSpace) {
 		// Is this a sub dir of our dir?
 		if(FST[offset]) {
 			if(file_offset == parent_dir_offset) {
-				//print_gecko("Adding: [%03i]%s:%s offset %08X length %08X\r\n",i,!FST[offset] ? "File" : "Dir",filename,file_offset,size);
+				//print_debug("Adding: [%03i]%s:%s offset %08X length %08X\n",i,!FST[offset] ? "File" : "Dir",filename,file_offset,size);
 				if(idx == numFiles){
 					++numFiles;
 					*dir = reallocarray(*dir, numFiles, sizeof(file_handle));
@@ -791,8 +832,9 @@ int read_fst(file_handle *file, file_handle** dir, u64 *usedSpace) {
 				(*dir)[idx].fileBase = i;
 				(*dir)[idx].offset = 0;
 				(*dir)[idx].size = size;
-				(*dir)[idx].fileAttrib = IS_DIR;
+				(*dir)[idx].fileType = IS_DIR;
 				(*dir)[idx].meta = 0;
+				(*dir)[idx].device = file->device;
 				idx++;
 				// Skip the entries that sit in this dir
 				i = size-1;
@@ -800,7 +842,7 @@ int read_fst(file_handle *file, file_handle** dir, u64 *usedSpace) {
 		}
 		else {
 			// File, add it.
-			//print_gecko("Adding: [%03i]%s:%s offset %08X length %08X\r\n",i,!FST[offset] ? "File" : "Dir",filename,file_offset,size);
+			//print_debug("Adding: [%03i]%s:%s offset %08X length %08X\n",i,!FST[offset] ? "File" : "Dir",filename,file_offset,size);
 			if(idx == numFiles){
 				++numFiles;
 				*dir = reallocarray(*dir, numFiles, sizeof(file_handle));
@@ -810,8 +852,9 @@ int read_fst(file_handle *file, file_handle** dir, u64 *usedSpace) {
 			(*dir)[idx].fileBase = file_offset;
 			(*dir)[idx].offset = 0;
 			(*dir)[idx].size = size;
-			(*dir)[idx].fileAttrib = IS_FILE;
+			(*dir)[idx].fileType = IS_FILE;
 			(*dir)[idx].meta = 0;
+			(*dir)[idx].device = file->device;
 			idx++;
 		}
 	}

@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2017-2023, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2017-2024, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -225,7 +225,7 @@ static void fsp_get_file(uint32_t offset, uint32_t length, const char *path, uin
 	eth->dst_addr = env->router_mac;
 	eth->src_addr = env->client_mac;
 	eth->type = ETH_TYPE_IPV4;
-	bba_transmit_fifo(eth, sizeof(*eth) + ipv4->length);
+	bba_output(eth, sizeof(*eth) + ipv4->length);
 }
 
 static void fsp_read_queued(void)
@@ -233,7 +233,7 @@ static void fsp_read_queued(void)
 	if (!_bba.locked) {
 		if (!_bba.callback) {
 			_bba.callback = fsp_read_queued;
-			exi_callback();
+			exi_lock();
 		}
 		return;
 	}
@@ -338,7 +338,7 @@ static bool fsp_input(bba_page_t *page, eth_header_t *eth, ipv4_header_t *ipv4, 
 				if (_fsp.queued->offset != _fsp.queued->length)
 					fsp_pop_queue();
 
-				bba_receive_dma(data, data_size, fsp->data - page[0]);
+				bba_input(data, data_size, fsp->data - page[0]);
 
 				if (_fsp.queued->offset == _fsp.queued->length)
 					fsp_done_queued();
@@ -413,7 +413,7 @@ static void arp_reply(arp_packet_t *request)
 	eth->dst_addr = arp->dst_mac;
 	eth->src_addr = arp->src_mac;
 	eth->type = ETH_TYPE_ARP;
-	bba_transmit_fifo(eth, MIN_FRAME_SIZE);
+	bba_output(eth, MIN_FRAME_SIZE);
 }
 
 static bool arp_input(bba_page_t *page, eth_header_t *eth, arp_packet_t *arp, size_t size)

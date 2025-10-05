@@ -65,14 +65,14 @@ char *gcloaderGetVersion(u8 hwVersion) {
 int gcloaderWriteFrags(u32 discNum, file_frag *fragList, u32 totFrags) {
 	int ret, i;
 
-	print_gecko("GCLoader setting up disc %i with %i fragments\r\n", discNum, totFrags);
+	print_debug("GCLoader setting up disc %i with %i fragments\n", discNum, totFrags);
 	ret = __gcloaderCmdImm(0xB3000001, discNum, totFrags);
 	if(ret != 0) {
 		return ret;
 	}
 	for(i = 0; i < totFrags; i++) {
-		print_gecko("Frag %i: ofs in file: [0x%08X] len [0x%08X] LBA on SD [0x%08llX]\r\n",
-					i, fragList[i].offset, fragList[i].size, fragList[i].fileBase);
+		print_debug("Frag %i: ofs in file: [0x%08X] len [0x%08X] LBA on SD [0x%08llX]\n",
+			i, fragList[i].offset, fragList[i].size, fragList[i].fileBase);
 		ret = __gcloaderCmdImm(fragList[i].offset, fragList[i].size, fragList[i].fileBase);
 		if(ret == 0) {
 			break;

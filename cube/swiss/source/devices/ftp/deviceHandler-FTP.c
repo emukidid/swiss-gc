@@ -42,22 +42,14 @@
 extern int net_initialized;
 int ftp_initialized = 0;
 
-file_handle initial_FTP =
-	{ "ftp:/", // file name
-	  0ULL,      // discoffset (u64)
-	  0,         // offset
-	  0,         // size
-	  IS_DIR,
-	  0,
-	  0
-	};
-
-device_info initial_FTP_info = {
-	0LL,
-	0LL,
-	true
+file_handle initial_FTP = {
+	.name     = "ftp:/",
+	.fileType = IS_DIR,
+	.device   = &__device_ftp,
 };
-	
+
+device_info initial_FTP_info;
+
 device_info* deviceHandler_FTP_info(file_handle* file) {
 	return &initial_FTP_info;
 }
@@ -69,9 +61,10 @@ void readDeviceInfoFTP() {
 	int res = statvfs("ftp:/", &buf);
 	initial_FTP_info.freeSpace = !res ? (u64)((u64)buf.f_bfree*(u64)buf.f_bsize):0LL;
 	initial_FTP_info.totalSpace = !res ? (u64)((u64)buf.f_blocks*(u64)buf.f_bsize):0LL;
+	initial_FTP_info.metric = true;
 	DrawDispose(msgBox);
 }
-	
+
 // Connect to the ftp specified in swiss.ini
 void init_ftp() {
   	int res = 0;
@@ -79,7 +72,7 @@ void init_ftp() {
 		return;
 	}
 	res = ftpInitDevice("ftp", swissSettings.ftpUserName, swissSettings.ftpPassword, "/", swissSettings.ftpHostIp, swissSettings.ftpPort, swissSettings.ftpUsePasv);
-	print_gecko("ftpInitDevice %i \r\n",res);
+	print_debug("ftpInitDevice %i\n",res);
 	if(res) {
 		ftp_initialized = 1;
 	}
@@ -93,13 +86,18 @@ s32 deviceHandler_FTP_readDir(file_handle* ffile, file_handle** dir, u32 type){
 	DIR* dp = opendir( ffile->name );
 	if(!dp) return -1;
 	struct dirent *entry;
+	#ifdef _DIRENT_HAVE_D_STAT
+	#define fstat entry->d_stat
+	#else
 	struct stat fstat;
+	#endif
 	
 	// Set everything up to read
 	int num_entries = 1, i = 1;
 	*dir = calloc(num_entries, sizeof(file_handle));
 	concat_path((*dir)[0].name, ffile->name, "..");
-	(*dir)[0].fileAttrib = IS_SPECIAL;
+	(*dir)[0].fileType = IS_SPECIAL;
+	(*dir)[0].device   = ffile->device;
 	
 	// Read each entry of the directory
 	do {
@@ -110,9 +108,6 @@ s32 deviceHandler_FTP_readDir(file_handle* ffile, file_handle** dir, u32 type){
 		}
 		// Do we want this one?
 		if((type == -1 || ((entry->d_type == DT_DIR) ? (type==IS_DIR) : (type==IS_FILE)))) {
-			if(entry->d_type == DT_REG) {
-				if(!checkExtension(entry->d_name)) continue;
-			}
 			// Make sure we have room for this one
 			if(i == num_entries){
 				++num_entries;
@@ -120,16 +115,33 @@ s32 deviceHandler_FTP_readDir(file_handle* ffile, file_handle** dir, u32 type){
 			}
 			memset(&(*dir)[i], 0, sizeof(file_handle));
 			if(concat_path((*dir)[i].name, ffile->name, entry->d_name) < PATHNAME_MAX
-				&& !stat((*dir)[i].name, &fstat) && fstat.st_size <= UINT32_MAX) {
-				(*dir)[i].size       = fstat.st_size;
-				(*dir)[i].fileAttrib = S_ISDIR(fstat.st_mode) ? IS_DIR : IS_FILE;
+				#ifndef _DIRENT_HAVE_D_STAT
+				&& !stat((*dir)[i].name, &fstat)
+				#endif
+				&& fstat.st_size <= UINT32_MAX) {
+				(*dir)[i].fileBase = fstat.st_ino;
+				(*dir)[i].size     = fstat.st_size;
+				(*dir)[i].fileType = S_ISDIR(fstat.st_mode) ? IS_DIR : IS_FILE;
+				(*dir)[i].device   = ffile->device;
 				++i;
 			}
 		}
 	} while(entry || errno == EOVERFLOW);
 	
+	#undef fstat
 	closedir(dp);
 	return i;
+}
+
+s32 deviceHandler_FTP_statFile(file_handle* file) {
+	struct stat fstat;
+	int ret = stat(file->name, &fstat);
+	if(ret == 0) {
+		file->fileBase = fstat.st_ino;
+		file->size     = fstat.st_size;
+		file->fileType = S_ISDIR(fstat.st_mode) ? IS_DIR : IS_FILE;
+	}
+	return ret;
 }
 
 s64 deviceHandler_FTP_seekFile(file_handle* file, s64 where, u32 type){
@@ -144,10 +156,9 @@ s32 deviceHandler_FTP_readFile(file_handle* file, void* buffer, u32 length){
 		file->fp = fopen(file->name, "rb");
 		if(!file->fp) return -1;
 		setbuf(file->fp, NULL);
-	}
-	if(file->size <= 0) {
 		fseek(file->fp, 0, SEEK_END);
 		file->size = ftell(file->fp);
+		file->fileType = IS_FILE;
 	}
 	
 	fseek(file->fp, file->offset, SEEK_SET);
@@ -161,6 +172,8 @@ s32 deviceHandler_FTP_writeFile(file_handle* file, const void* buffer, u32 lengt
 		file->fp = fopen(file->name, "wb");
 		if(!file->fp) return -1;
 		setbuf(file->fp, NULL);
+		file->size = 0;
+		file->fileType = IS_FILE;
 	}
 	
 	fseek(file->fp, file->offset, SEEK_SET);
@@ -170,14 +183,13 @@ s32 deviceHandler_FTP_writeFile(file_handle* file, const void* buffer, u32 lengt
 }
 
 s32 deviceHandler_FTP_init(file_handle* file){
-	init_network();
 	// We need at least a share name and ip addr in the settings filled out
 	if(!strlen(&swissSettings.ftpHostIp[0])) {
 		file->status = E_CHECKCONFIG;
 		return EFAULT;
 	}
 
-	if(!net_initialized) {       //Init if we have to
+	if(!init_network()) {        //Init if we have to
 		file->status = E_NONET;
 		return EFAULT;
 	} 
@@ -215,7 +227,7 @@ s32 deviceHandler_FTP_deinit(file_handle* file) {
 
 s32 deviceHandler_FTP_deleteFile(file_handle* file) {
 	deviceHandler_FTP_closeFile(file);
-	if(file->fileAttrib == IS_DIR)
+	if(file->fileType == IS_DIR)
 		return rmdir(file->name);
 	else
 		return unlink(file->name);
@@ -224,7 +236,8 @@ s32 deviceHandler_FTP_deleteFile(file_handle* file) {
 s32 deviceHandler_FTP_renameFile(file_handle* file, char* name) {
 	deviceHandler_FTP_closeFile(file);
 	int ret = rename(file->name, name);
-	strcpy(file->name, name);
+	if(ret == 0)
+		strcpy(file->name, name);
 	return ret;
 }
 
@@ -233,15 +246,27 @@ s32 deviceHandler_FTP_makeDir(file_handle* dir) {
 }
 
 bool deviceHandler_FTP_test() {
-	char ifname[4];
-	if(if_indextoname(1, ifname)) {
-		if(ifname[0] == 'E') {
-			__device_ftp.hwName = "ENC28J60";
+	__device_ftp.hwName = bba_device_str;
+	__device_ftp.location = bba_location;
+
+	switch (bba_exists(LOC_ANY)) {
+		case LOC_MEMCARD_SLOT_A:
+			__device_ftp.deviceTexture = (textureImage){TEX_GCNET, 65, 84, 72, 88};
+			return true;
+		case LOC_MEMCARD_SLOT_B:
+			if (sdgecko_getDevice(1) == EXI_DEVICE_0)
+				__device_ftp.deviceTexture = (textureImage){TEX_GCNET, 65, 84, 72, 88};
+			else
+				__device_ftp.deviceTexture = (textureImage){TEX_ETH2GC, 64, 80, 64, 80};
+			return true;
+		case LOC_SERIAL_PORT_1:
+			__device_ftp.deviceTexture = (textureImage){TEX_BBA, 140, 64, 140, 64};
+			return true;
+		case LOC_SERIAL_PORT_2:
 			__device_ftp.deviceTexture = (textureImage){TEX_ETH2GC, 64, 80, 64, 80};
-		}
-		__device_ftp.location = bba_location;
+			return true;
 	}
-	return net_initialized || bba_exists(LOC_ANY);
+	return net_initialized;
 }
 
 char* deviceHandler_FTP_status(file_handle* file) {
@@ -269,6 +294,7 @@ DEVICEHANDLER_INTERFACE __device_ftp = {
 	.init = deviceHandler_FTP_init,
 	.makeDir = deviceHandler_FTP_makeDir,
 	.readDir = deviceHandler_FTP_readDir,
+	.statFile = deviceHandler_FTP_statFile,
 	.seekFile = deviceHandler_FTP_seekFile,
 	.readFile = deviceHandler_FTP_readFile,
 	.writeFile = deviceHandler_FTP_writeFile,

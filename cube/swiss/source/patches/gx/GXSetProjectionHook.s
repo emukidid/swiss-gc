@@ -9,6 +9,6 @@ GXSetProjectionHook:
 	fmuls		%f0, %f0, %f1
 1:	trap
 
-.globl GXSetProjectionHook_length
-GXSetProjectionHook_length:
-.long (GXSetProjectionHook_length - GXSetProjectionHook)
+.globl GXSetProjectionHook_size
+GXSetProjectionHook_size:
+.long (. - GXSetProjectionHook)

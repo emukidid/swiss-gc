@@ -6,34 +6,43 @@
 #include "main.h"
 #include "util.h"
 #include "dvd.h"
+#include "aram/sidestep.h"
 #include "devices/filemeta.h"
 
 
 /* File name helper functions */
-char *knownExtensions[] = {".bin", ".dol", ".dol+cli", ".elf", ".fzn", ".gcm", ".gcz", ".iso", ".mp3", ".rvz", ".tgc"};
+char *knownExtensions[] = {".bin", ".dol", ".dol+cli", ".elf", ".fpkg", ".fzn", ".gcm", ".gcz", ".iso", ".mp3", ".rvz", ".tgc", NULL};
 
-int endsWith(char *str, char *end) {
+char *endsWith(char *str, char *end) {
 	size_t len_str = strlen(str);
 	size_t len_end = strlen(end);
 	if(len_str < len_end)
-		return 0;
-	return !strcasecmp(str + len_str - len_end, end);
+		return NULL;
+	str += len_str - len_end;
+	return !strcasecmp(str, end) ? str : NULL;
 }
 
-bool canLoadFileType(char *filename) {
-	int i;
-	for(i = 0; i < sizeof(knownExtensions)/sizeof(char*); i++) {
-		if(endsWith(filename, knownExtensions[i])) {
+bool canLoadFileType(char *filename, char **extraExtensions) {
+	char **ext;
+	if(extraExtensions) {
+		for(ext = extraExtensions; *ext; ext++) {
+			if(endsWith(filename, *ext)) {
+				return !is_rom_name(filename);
+			}
+		}
+	}
+	for(ext = knownExtensions; *ext; ext++) {
+		if(endsWith(filename, *ext)) {
 			return !is_rom_name(filename);
 		}
 	}
 	return false;
 }
 
-bool checkExtension(char *filename) {
+bool checkExtension(char *filename, char **extraExtensions) {
 	if(!swissSettings.hideUnknownFileTypes)
 		return true;
-	return canLoadFileType(filename);
+	return canLoadFileType(filename, extraExtensions);
 }
 
 char *getRelativeName(char *path)
@@ -88,6 +97,8 @@ char *getExternalPath(char *path)
 		{ "ataa:/",  "carda:" },
 		{ "atab:/",  "cardb:" },
 		{ "atac:/",  "fat:"   },
+		{ "fdffs:/", "flash:" },
+		{ "fldrv:/", "dvd:"   },
 		{ "gcldr:/", "dvd:"   },
 		{ "sda:/",   "carda:" },
 		{ "sdb:/",   "cardb:" },
@@ -112,42 +123,90 @@ char *getExternalPath(char *path)
 }
 
 char stripbuffer[PATHNAME_MAX];
-char *stripInvalidChars(char *str) {
-	strcpy(stripbuffer, str);
-	int i = 0;
-	for(i = 0; i < strlen(stripbuffer); i++) {
-		if(str[i] == '\\' || str[i] == '/' || str[i] == ':'|| str[i] == '*'
-		|| str[i] == '?'|| str[i] == '"'|| str[i] == '<'|| str[i] == '>'|| str[i] == '|') {
-			stripbuffer[i] = '_';
+char *stripInvalidChars(char *str)
+{
+	char *dst = stripbuffer;
+
+	for (char *src = str; *src; src++) {
+		switch (*src) {
+			case 0x00 ... 0x1F:
+			case 0x7F:
+				*dst++ = ' ';
+				break;
+			case '"':
+			case '*':
+			case '<':
+			case '>':
+				*dst++ = '\'';
+				break;
+			case '/':
+			case ':':
+			case '\\':
+			case '|':
+				if (src > str) {
+					if (src[-1] != ' ' && src[1] == ' ')
+						*dst++ = ' ';
+					*dst++ = '-';
+					if (src[-1] == ' ' && src[1] != ' ')
+						*dst++ = ' ';
+				}
+				break;
+			case '?':
+				break;
+			default:
+				*dst++ = *src;
+				break;
 		}
 	}
-	return &stripbuffer[0];
+
+	*dst++ = '\0';
+	return stripbuffer;
 }
 
+static const char git_tags[][sizeof(GIT_COMMIT)] = {
+#include "tags.h"
+};
 /* Autoboot DOL from the current device, from the current autoboot_dols list */
-char *autoboot_dols[] = { "/boot.dol", "/boot2.dol" }; // Keep this list sorted
-void load_auto_dol() {
-	u8 rev_buf[sizeof(GITREVISION) - 1]; // Don't include the NUL termination in the comparison
+static const char *autoboot_dols[] = {
+	"*/swiss_r[1-9]*.dol",
+	"atac:/[abxyz].dol",
+	"atac:/start.dol",
+	"atac:/ipl.dol",
+	"sd[abc]:/[abxyz].dol",
+	"sd[abc]:/start.dol",
+	"sd[abc]:/ipl.dol",
+	"sd[ab]:/AUTOEXEC.DOL",
+	"*/boot.dol",
+	"*/boot2.dol"
+};
+void load_auto_dol(int argc, char *argv[]) {
+	char trailer[sizeof(GIT_COMMIT) - 1]; // Don't include the NUL termination in the comparison
+	int trailer_size;
 
 	memcpy(&curDir, devices[DEVICE_CUR]->initial, sizeof(file_handle));
 	scanFiles();
-	file_handle** dirEntries = getSortedDirEntries();
-	int dirEntryCount = getSortedDirEntryCount();
-	for (int i = 0; i < dirEntryCount; i++) {
-		for (int f = 0; f < (sizeof(autoboot_dols) / sizeof(char *)); f++) {
-			if (endsWith(dirEntries[i]->name, autoboot_dols[f])) {
-				// Official Swiss releases have the short commit hash appended to
-				// the end of the DOL, compare it to our own to make sure we don't
-				// bootloop the same version
-				devices[DEVICE_CUR]->seekFile(dirEntries[i], -sizeof(rev_buf), DEVICE_HANDLER_SEEK_END);
-				devices[DEVICE_CUR]->readFile(dirEntries[i], rev_buf, sizeof(rev_buf));
-				if (memcmp(GITREVISION, rev_buf, sizeof(rev_buf)) != 0) {
-					// Emulate some of the menu's behavior to satisfy boot_dol
-					curSelection = i;
-					memcpy(&curFile, dirEntries[i], sizeof(file_handle));
-					boot_dol();
-					memcpy(dirEntries[i], &curFile, sizeof(file_handle));
+	file_handle *dirEntries = getCurrentDirEntries();
+	int dirEntryCount = getCurrentDirEntryCount();
+	for (int f = 0; f < sizeof(autoboot_dols) / sizeof(*autoboot_dols); f++) {
+		for (int i = 0; i < dirEntryCount; i++) {
+			if (!fnmatch(autoboot_dols[f], dirEntries[i].name, FNM_PATHNAME | FNM_CASEFOLD)) {
+				DOLHEADER dolhdr;
+				devices[DEVICE_CUR]->seekFile(&dirEntries[i], 0, DEVICE_HANDLER_SEEK_SET);
+				if (devices[DEVICE_CUR]->readFile(&dirEntries[i], &dolhdr, DOLHDRLENGTH) == DOLHDRLENGTH) {
+					// Official Swiss releases have the short commit hash appended to
+					// the end of the DOL, compare it to our own to make sure we don't
+					// bootloop the same version
+					devices[DEVICE_CUR]->seekFile(&dirEntries[i], DOLSize(&dolhdr), DEVICE_HANDLER_SEEK_SET);
+					trailer_size = devices[DEVICE_CUR]->readFile(&dirEntries[i], trailer, sizeof(trailer));
+				} else {
+					trailer_size = 0;
 				}
+				if ((*autoboot_dols[f] == '*' && trailer_size < 7) || (trailer_size >= 7 &&
+					memcmp(GIT_COMMIT, trailer, trailer_size) != 0 &&
+					memmem(git_tags, sizeof(git_tags), trailer, trailer_size) == NULL)) {
+					boot_dol(&dirEntries[i], argc, argv);
+				}
+				devices[DEVICE_CUR]->closeFile(&dirEntries[i]);
 
 				// If we've made it this far, we've already found an autoboot DOL,
 				// the first one (boot.dol) is not cancellable, but the rest of the
@@ -157,21 +216,20 @@ void load_auto_dol() {
 				}
 			}
 		}
+		if (swissSettings.cubebootInvoked) {
+			return;
+		}
 	}
 }
 
 /* Print over USB Gecko if enabled */
-void print_gecko(const char* fmt, ...)
+void print_debug(const char *fmt, ...)
 {
-	if(swissSettings.debugUSB && usb_isgeckoalive(1)) {
-		char tempstr[2048];
-		va_list arglist;
-		va_start(arglist, fmt);
-		vsprintf(tempstr, fmt, arglist);
-		va_end(arglist);
-		// write out over usb gecko ;)
-		usb_sendbuffer_safe(1,tempstr,strlen(tempstr));
-	}
+	va_list arglist;
+	va_start(arglist, fmt);
+	SYS_EnableGecko(swissSettings.enableUSBGecko - USBGECKO_MEMCARD_SLOT_A, swissSettings.waitForUSBGecko);
+	SYS_Reportv(fmt, arglist);
+	va_end(arglist);
 }
 
 /* Update recent list with a new entry. */
@@ -212,7 +270,7 @@ int find_existing_entry(char *entry, bool load) {
 	// get the device handler for it
 	DEVICEHANDLER_INTERFACE *entryDevice = getDeviceFromPath(entry);
 	if(entryDevice) {
-		print_gecko("Device required for entry [%s]\r\n", entryDevice->deviceName);
+		print_debug("Device required for entry [%s]\n", entryDevice->deviceName);
 		
 		// Init the device if it isn't one we were about to browse anyway
 		if(devices[DEVICE_CUR] == entryDevice || !entryDevice->init(entryDevice->initial)) {
@@ -237,20 +295,20 @@ int find_existing_entry(char *entry, bool load) {
 			needsRefresh = 0;
 			
 			// Finally, read the actual file
-			file_handle **dirEntries = getSortedDirEntries();
-			int dirEntryCount = getSortedDirEntryCount();
+			file_handle *dirEntries = getCurrentDirEntries();
+			int dirEntryCount = getCurrentDirEntryCount();
 			for(int i = 0; i < dirEntryCount; i++) {
-				if(!strcmp(entry, dirEntries[i]->name)
-				|| !fnmatch(entry, dirEntries[i]->name, FNM_PATHNAME)) {
-					curSelection = i;
-					if(dirEntries[i]->fileAttrib == IS_FILE && load) {
-						populate_meta(dirEntries[i]);
-						memcpy(&curFile, dirEntries[i], sizeof(file_handle));
+				if(!strcmp(entry, dirEntries[i].name)
+				|| !fnmatch(entry, dirEntries[i].name, FNM_PATHNAME)) {
+					curSelection = getSortedDirEntryIndex(&dirEntries[i]);
+					if(dirEntries[i].fileType == IS_FILE && load) {
+						populate_meta(&dirEntries[i]);
+						memcpy(&curFile, &dirEntries[i], sizeof(file_handle));
 						load_file();
-						memcpy(dirEntries[i], &curFile, sizeof(file_handle));
+						memcpy(&dirEntries[i], &curFile, sizeof(file_handle));
 					}
-					else if(dirEntries[i]->fileAttrib == IS_DIR) {
-						memcpy(&curDir, dirEntries[i], sizeof(file_handle));
+					else if(dirEntries[i].fileType == IS_DIR) {
+						memcpy(&curDir, &dirEntries[i], sizeof(file_handle));
 						needsRefresh = 1;
 					}
 					return 0;
@@ -259,15 +317,15 @@ int find_existing_entry(char *entry, bool load) {
 			return RECENT_ERR_ENT_MISSING;
 		}
 	}
-	print_gecko("Device was not found\r\n");
+	print_debug("Device was not found\n");
 	return RECENT_ERR_DEV_MISSING;
 }
 
 bool deleteFileOrDir(file_handle* entry) {
-	if(entry->fileAttrib == IS_DIR) {
-		print_gecko("Entering dir for deletion: %s\r\n", entry);
+	if(entry->fileType == IS_DIR) {
+		print_debug("Entering dir for deletion: %s\n", entry);
 		file_handle* dirEntries = NULL;
-		int dirEntryCount = devices[DEVICE_CUR]->readDir(entry, &dirEntries, -1);
+		int dirEntryCount = entry->device->readDir(entry, &dirEntries, -1);
 		int i;
 		for(i = 0; i < dirEntryCount; i++) {
 			if(!deleteFileOrDir(&dirEntries[i])) {
@@ -275,12 +333,12 @@ bool deleteFileOrDir(file_handle* entry) {
 			}
 		}
 		if(dirEntries) free(dirEntries);
-		print_gecko("Finally, deleting empty directory: %s\r\n", entry);
-		return !devices[DEVICE_CUR]->deleteFile(entry);
+		print_debug("Finally, deleting empty directory: %s\n", entry);
+		return !entry->device->deleteFile(entry);
 	}
-	if(entry->fileAttrib == IS_FILE) {
-		print_gecko("Deleting file: %s\r\n", entry);
-		return !devices[DEVICE_CUR]->deleteFile(entry);
+	if(entry->fileType == IS_FILE) {
+		print_debug("Deleting file: %s\n", entry);
+		return !entry->device->deleteFile(entry);
 	}
 	return true;	// IS_SPECIAL can be ignored.
 }

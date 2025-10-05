@@ -15,6 +15,7 @@
 #include "gui/IPLFontWrite.h"
 #include "swiss.h"
 #include "main.h"
+#include "flippy.h"
 #include "gcloader.h"
 #include "patcher.h"
 #include "dvd.h"
@@ -23,15 +24,11 @@ int gcloaderHwVersion;
 char *gcloaderVersionStr;
 static FATFS *gcloaderfs = NULL;
 
-file_handle initial_GCLoader =
-	{ "gcldr:/",       // directory
-	  0ULL,     // fileBase (u64)
-	  0,        // offset
-	  0,        // size
-	  IS_DIR,
-	  0,
-	  0
-	};
+file_handle initial_GCLoader = {
+	.name     = "gcldr:/",
+	.fileType = IS_DIR,
+	.device   = &__device_gcloader,
+};
 
 s32 deviceHandler_GCLoader_readFile(file_handle* file, void* buffer, u32 length) {
 	if(file->status == STATUS_MAPPED) {
@@ -44,7 +41,20 @@ s32 deviceHandler_GCLoader_readFile(file_handle* file, void* buffer, u32 length)
 
 static char *bootFile_names[] = {"boot.iso", "boot.iso.iso", "boot.gcm", "boot.gcm.gcm"};
 
-static s32 setupFile(file_handle* file, file_handle* file2, ExecutableFile* filesToPatch, int numToPatch) {
+bool gcloaderGetBootFile(file_handle* file) {
+	int i;
+	for(i = 0; i < sizeof(bootFile_names)/sizeof(char*); i++) {
+		memset(file, 0, sizeof(file_handle));
+		concat_path(file->name, initial_GCLoader.name, bootFile_names[i]);
+		
+		if(!deviceHandler_FAT_statFile(file)) {
+			return true;
+		}
+	}
+	return false;
+}
+
+static s32 gcloaderSetupFile(file_handle* file, file_handle* file2, ExecutableFile* filesToPatch, int numToPatch) {
 	// GCLoader disc/file fragment setup
 	file_frag *disc1FragList = NULL, *disc2FragList = NULL;
 	u32 disc1Frags = 0, disc2Frags = 0;
@@ -62,8 +72,10 @@ static s32 setupFile(file_handle* file, file_handle* file2, ExecutableFile* file
 			GCMDisk.RegionCode = getFontEncode() ? 0:1;
 		
 		if(devices[DEVICE_CUR]->writeFile(&bootFile, &GCMDisk, sizeof(DiskHeader)) == sizeof(DiskHeader) &&
-			!devices[DEVICE_CUR]->closeFile(&bootFile))
+			!devices[DEVICE_CUR]->closeFile(&bootFile)) {
+			devices[DEVICE_CUR]->hideFile(&bootFile, true);
 			getFragments(DEVICE_CUR, &bootFile, &disc1FragList, &disc1Frags, 0, 0, sizeof(DiskHeader));
+		}
 		devices[DEVICE_CUR]->closeFile(&bootFile);
 	}
 	
@@ -109,19 +121,19 @@ fail:
 }
 
 s32 deviceHandler_GCLoader_setupFile(file_handle* file, file_handle* file2, ExecutableFile* filesToPatch, int numToPatch) {
-	if(!setupFile(file, file2, filesToPatch, numToPatch)) {
+	int i;
+	file_frag *fragList = NULL;
+	u32 numFrags = 0;
+	
+	if(!gcloaderSetupFile(file, file2, filesToPatch, numToPatch)) {
 		return 0;
 	}
-	if(numToPatch < 0) {
+	if(numToPatch < 0 || !devices[DEVICE_CUR]->emulated()) {
 		return 1;
 	}
 	// Check if there are any fragments in our patch location for this game
 	if(devices[DEVICE_PATCHES] != NULL) {
-		int i;
-		file_frag *fragList = NULL;
-		u32 numFrags = 0;
-		
-		print_gecko("Save Patch device found\r\n");
+		print_debug("Save Patch device found\n");
 		
 		// Look for patch files, if we find some, open them and add them as fragments
 		file_handle patchFile;
@@ -145,33 +157,14 @@ s32 deviceHandler_GCLoader_setupFile(file_handle* file, file_handle* file2, Exec
 			}
 		}
 		
-		for(i = 0; i < sizeof(bootFile_names)/sizeof(char*); i++) {
-			file_handle bootFile;
-			memset(&bootFile, 0, sizeof(file_handle));
-			concat_path(bootFile.name, initial_GCLoader.name, bootFile_names[i]);
-			
-			if(getFragments(DEVICE_CUR, &bootFile, &fragList, &numFrags, FRAGS_BOOT_GCM, 0, UINT32_MAX)) {
-				devices[DEVICE_CUR]->closeFile(&bootFile);
-				break;
-			}
+		if(gcloaderGetBootFile(&patchFile)) {
+			getFragments(DEVICE_CUR, &patchFile, &fragList, &numFrags, FRAGS_BOOT_GCM, 0, UINT32_MAX);
+			devices[DEVICE_CUR]->closeFile(&patchFile);
 		}
 		
-		if(swissSettings.igrType == IGR_BOOTBIN || endsWith(file->name,".tgc")) {
+		if(swissSettings.igrType == IGR_APPLOADER || endsWith(file->name,".tgc")) {
 			memset(&patchFile, 0, sizeof(file_handle));
 			concat_path(patchFile.name, devices[DEVICE_PATCHES]->initial->name, "swiss/patches/apploader.img");
-			
-			ApploaderHeader apploaderHeader;
-			if(devices[DEVICE_PATCHES]->readFile(&patchFile, &apploaderHeader, sizeof(ApploaderHeader)) != sizeof(ApploaderHeader) || apploaderHeader.rebootSize != reboot_bin_size) {
-				devices[DEVICE_PATCHES]->deleteFile(&patchFile);
-				
-				memset(&apploaderHeader, 0, sizeof(ApploaderHeader));
-				apploaderHeader.rebootSize = reboot_bin_size;
-				
-				devices[DEVICE_PATCHES]->seekFile(&patchFile, 0, DEVICE_HANDLER_SEEK_SET);
-				devices[DEVICE_PATCHES]->writeFile(&patchFile, &apploaderHeader, sizeof(ApploaderHeader));
-				devices[DEVICE_PATCHES]->writeFile(&patchFile, reboot_bin, reboot_bin_size);
-				devices[DEVICE_PATCHES]->closeFile(&patchFile);
-			}
 			
 			getFragments(DEVICE_PATCHES, &patchFile, &fragList, &numFrags, FRAGS_APPLOADER, 0x2440, 0);
 			devices[DEVICE_PATCHES]->closeFile(&patchFile);
@@ -182,17 +175,17 @@ s32 deviceHandler_GCLoader_setupFile(file_handle* file, file_handle* file2, Exec
 				memset(&patchFile, 0, sizeof(file_handle));
 				concatf_path(patchFile.name, devices[DEVICE_PATCHES]->initial->name, "swiss/patches/MemoryCardA.%s.raw", wodeRegionToString(GCMDisk.RegionCode));
 				concatf_path(txtbuffer, devices[DEVICE_PATCHES]->initial->name, "swiss/saves/MemoryCardA.%s.raw", wodeRegionToString(GCMDisk.RegionCode));
-				ensure_path(DEVICE_PATCHES, "swiss/saves", NULL);
+				ensure_path(DEVICE_PATCHES, "swiss/saves", NULL, false);
 				devices[DEVICE_PATCHES]->renameFile(&patchFile, txtbuffer);	// TODO remove this in our next major release
 				
-				if(devices[DEVICE_PATCHES]->readFile(&patchFile, NULL, 0) != 0) {
+				if(devices[DEVICE_PATCHES]->statFile(&patchFile)) {
 					devices[DEVICE_PATCHES]->seekFile(&patchFile, 16*1024*1024, DEVICE_HANDLER_SEEK_SET);
 					devices[DEVICE_PATCHES]->writeFile(&patchFile, NULL, 0);
 					devices[DEVICE_PATCHES]->closeFile(&patchFile);
 				}
 				
 				if(getFragments(DEVICE_PATCHES, &patchFile, &fragList, &numFrags, FRAGS_CARD_A, 0, 31.5*1024*1024))
-					*(vu8*)VAR_CARD_A_ID = (patchFile.size * 8/1024/1024) & 0xFC;
+					*(vu8*)VAR_CARD_A_ID = (patchFile.size << 3 >> 20) & 0xFC;
 				devices[DEVICE_PATCHES]->closeFile(&patchFile);
 			}
 			
@@ -200,23 +193,23 @@ s32 deviceHandler_GCLoader_setupFile(file_handle* file, file_handle* file2, Exec
 				memset(&patchFile, 0, sizeof(file_handle));
 				concatf_path(patchFile.name, devices[DEVICE_PATCHES]->initial->name, "swiss/patches/MemoryCardB.%s.raw", wodeRegionToString(GCMDisk.RegionCode));
 				concatf_path(txtbuffer, devices[DEVICE_PATCHES]->initial->name, "swiss/saves/MemoryCardB.%s.raw", wodeRegionToString(GCMDisk.RegionCode));
-				ensure_path(DEVICE_PATCHES, "swiss/saves", NULL);
+				ensure_path(DEVICE_PATCHES, "swiss/saves", NULL, false);
 				devices[DEVICE_PATCHES]->renameFile(&patchFile, txtbuffer);	// TODO remove this in our next major release
 				
-				if(devices[DEVICE_PATCHES]->readFile(&patchFile, NULL, 0) != 0) {
+				if(devices[DEVICE_PATCHES]->statFile(&patchFile)) {
 					devices[DEVICE_PATCHES]->seekFile(&patchFile, 16*1024*1024, DEVICE_HANDLER_SEEK_SET);
 					devices[DEVICE_PATCHES]->writeFile(&patchFile, NULL, 0);
 					devices[DEVICE_PATCHES]->closeFile(&patchFile);
 				}
 				
 				if(getFragments(DEVICE_PATCHES, &patchFile, &fragList, &numFrags, FRAGS_CARD_B, 0, 31.5*1024*1024))
-					*(vu8*)VAR_CARD_B_ID = (patchFile.size * 8/1024/1024) & 0xFC;
+					*(vu8*)VAR_CARD_B_ID = (patchFile.size << 3 >> 20) & 0xFC;
 				devices[DEVICE_PATCHES]->closeFile(&patchFile);
 			}
 		}
 		
 		if(fragList) {
-			print_frag_list(fragList, numFrags);
+			printFragments(fragList, numFrags);
 			*(vu32**)VAR_FRAG_LIST = installPatch2(fragList, (numFrags + 1) * sizeof(file_frag));
 			free(fragList);
 			fragList = NULL;
@@ -225,12 +218,13 @@ s32 deviceHandler_GCLoader_setupFile(file_handle* file, file_handle* file2, Exec
 		if(devices[DEVICE_PATCHES] != devices[DEVICE_CUR]) {
 			s32 exi_channel, exi_device;
 			if(getExiDeviceByLocation(devices[DEVICE_PATCHES]->location, &exi_channel, &exi_device)) {
+				exi_device = sdgecko_getDevice(exi_channel);
 				// Card Type
 				*(vu8*)VAR_SD_SHIFT = sdgecko_getAddressingType(exi_channel) ? 0:9;
 				// Copy the actual freq
 				*(vu8*)VAR_EXI_CPR = (exi_channel << 6) | ((1 << exi_device) << 3) | sdgecko_getSpeed(exi_channel);
 				// Device slot (0, 1 or 2)
-				*(vu8*)VAR_EXI_SLOT = exi_channel;
+				*(vu8*)VAR_EXI_SLOT = (*(vu8*)VAR_EXI_SLOT & 0xF0) | (((exi_device << 2) | exi_channel) & 0x0F);
 				*(vu32**)VAR_EXI_REGS = ((vu32(*)[5])0xCC006800)[exi_channel];
 			}
 		}
@@ -242,12 +236,17 @@ s32 deviceHandler_GCLoader_setupFile(file_handle* file, file_handle* file2, Exec
 	return 1;
 }
 
-s32 deviceHandler_GCLoader_init(file_handle* file){
+s32 deviceHandler_GCLoader_init(file_handle* file) {
+	if(devices[DEVICE_CUR] == &__device_flippy || devices[DEVICE_CUR] == &__device_flippyflash) {
+		return EBUSY;
+	}
+	if(swissSettings.hasFlippyDrive) flippy_bypass(true);
+	if(!swissSettings.hasDVDDrive) return ENODEV;
+	
 	if(gcloaderfs != NULL) {
 		f_unmount("gcldr:/");
 		free(gcloaderfs);
 		gcloaderfs = NULL;
-		disk_shutdown(DEV_GCLDR);
 	}
 	gcloaderfs = (FATFS*)malloc(sizeof(FATFS));
 	file->status = f_mount(gcloaderfs, "gcldr:/", 1);
@@ -256,16 +255,10 @@ s32 deviceHandler_GCLoader_init(file_handle* file){
 
 s32 deviceHandler_GCLoader_closeFile(file_handle* file) {
 	if(file && file->status == STATUS_MAPPED) {
-		int i;
-		for(i = 0; i < sizeof(bootFile_names)/sizeof(char*); i++) {
-			file_handle bootFile;
-			memset(&bootFile, 0, sizeof(file_handle));
-			concat_path(bootFile.name, initial_GCLoader.name, bootFile_names[i]);
-			
-			if(setupFile(&bootFile, NULL, NULL, -1)) {
-				deviceHandler_FAT_closeFile(&bootFile);
-				break;
-			}
+		file_handle bootFile;
+		if(gcloaderGetBootFile(&bootFile)) {
+			gcloaderSetupFile(&bootFile, NULL, NULL, -1);
+			deviceHandler_FAT_closeFile(&bootFile);
 		}
 		file->status = STATUS_NOT_MAPPED;
 	}
@@ -278,7 +271,6 @@ s32 deviceHandler_GCLoader_deinit(file_handle* file) {
 		f_unmount(file->name);
 		free(gcloaderfs);
 		gcloaderfs = NULL;
-		disk_shutdown(DEV_GCLDR);
 	}
 	return 0;
 }
@@ -288,8 +280,8 @@ bool deviceHandler_GCLoader_test() {
 	gcloaderVersionStr = NULL;
 	gcloaderHwVersion = 0;
 	
-	if (swissSettings.hasDVDDrive && driveInfo.rel_date == 0x20196c64) {
-		if (driveInfo.pad[1] == 'w')
+	if (swissSettings.hasDVDDrive == 1 && DVDDriveInfo->rel_date == 0x20196c64) {
+		if (DVDDriveInfo->pad[1] == 'w')
 			__device_gcloader.features |=  (FEAT_WRITE | FEAT_CONFIG_DEVICE | FEAT_PATCHES);
 		else
 			__device_gcloader.features &= ~(FEAT_WRITE | FEAT_CONFIG_DEVICE | FEAT_PATCHES);
@@ -297,8 +289,8 @@ bool deviceHandler_GCLoader_test() {
 		__device_gcloader.quirks = QUIRK_NONE;
 		
 		if (gcloaderReadId() == 0xAAAAAAAA) {
-			gcloaderHwVersion = driveInfo.pad[2] + 1;
-			gcloaderVersionStr = gcloaderGetVersion(driveInfo.pad[2]);
+			gcloaderHwVersion = DVDDriveInfo->pad[2] + 1;
+			gcloaderVersionStr = gcloaderGetVersion(DVDDriveInfo->pad[2]);
 			
 			if (gcloaderVersionStr) {
 				switch (gcloaderHwVersion) {
@@ -316,21 +308,22 @@ bool deviceHandler_GCLoader_test() {
 				}
 			}
 			__device_gcloader.hwName = "GC Loader";
+			__device_gcloader.deviceTexture = (textureImage){TEX_GCLOADER, 115, 72, 120, 76};
 			__device_gcloader.features |= FEAT_AUDIO_STREAMING;
 		} else {
 			__device_gcloader.hwName = "GC Loader compatible";
+			__device_gcloader.deviceTexture = (textureImage){TEX_GCODE, 115, 98, 120, 100};
 			
-			if (DVD_PrepareStreamAbs(&commandBlock, 32*1024, 0) == DVD_ERROR_OK &&
-				(u8)DVD_GetStreamErrorStatus(&commandBlock) == TRUE &&
-				DVD_CancelStream(&commandBlock) == DVD_ERROR_OK &&
-				(u8)DVD_GetStreamErrorStatus(&commandBlock) == FALSE)
+			if (DVD_PrepareStreamAbs(&DVDCommandBlock, 32*1024, 0) == DVD_ERROR_OK &&
+				(u8)DVD_GetStreamErrorStatus(&DVDCommandBlock) == TRUE &&
+				DVD_CancelStream(&DVDCommandBlock) == DVD_ERROR_OK &&
+				(u8)DVD_GetStreamErrorStatus(&DVDCommandBlock) == FALSE)
 				__device_gcloader.features |=  FEAT_AUDIO_STREAMING;
 			else
 				__device_gcloader.features &= ~FEAT_AUDIO_STREAMING;
 		}
 		return true;
 	}
-	
 	return false;
 }
 
@@ -349,7 +342,7 @@ u32 deviceHandler_GCLoader_emulated() {
 			else if (swissSettings.emulateReadSpeed)
 				return EMU_READ | EMU_READ_SPEED;
 			else if (swissSettings.emulateEthernet && (devices[DEVICE_CUR]->emulable & EMU_ETHERNET))
-				return EMU_READ | EMU_ETHERNET | EMU_BUS_ARBITER;
+				return EMU_READ | EMU_ETHERNET | EMU_BUS_ARBITER | EMU_NO_PAUSING;
 			else if (swissSettings.emulateMemoryCard &&
 					!(swissSettings.audioStreaming && (devices[DEVICE_CUR]->quirks & QUIRK_GCLOADER_WRITE_CONFLICT)))
 				return EMU_READ | EMU_MEMCARD;
@@ -357,7 +350,9 @@ u32 deviceHandler_GCLoader_emulated() {
 				return EMU_READ;
 		}
 	} else {
-		if (swissSettings.emulateReadSpeed)
+		if (swissSettings.disableHypervisor)
+			return EMU_NONE;
+		else if (swissSettings.emulateReadSpeed)
 			return EMU_READ | EMU_READ_SPEED;
 		else
 			return EMU_READ;
@@ -369,7 +364,7 @@ DEVICEHANDLER_INTERFACE __device_gcloader = {
 	.hwName = "GC Loader",
 	.deviceName = "GC Loader",
 	.deviceDescription = "Supported File System(s): FAT16, FAT32, exFAT",
-	.deviceTexture = {TEX_GCLOADER, 115, 72, 120, 80},
+	.deviceTexture = {TEX_GCLOADER, 115, 72, 120, 76},
 	.features = FEAT_READ|FEAT_WRITE|FEAT_BOOT_GCM|FEAT_BOOT_DEVICE|FEAT_CONFIG_DEVICE|FEAT_AUTOLOAD_DOL|FEAT_THREAD_SAFE|FEAT_HYPERVISOR|FEAT_PATCHES|FEAT_AUDIO_STREAMING,
 	.emulable = EMU_READ|EMU_READ_SPEED|EMU_AUDIO_STREAMING|EMU_MEMCARD,
 	.location = LOC_DVD_CONNECTOR,
@@ -379,12 +374,14 @@ DEVICEHANDLER_INTERFACE __device_gcloader = {
 	.init = deviceHandler_GCLoader_init,
 	.makeDir = deviceHandler_FAT_makeDir,
 	.readDir = deviceHandler_FAT_readDir,
+	.statFile = deviceHandler_FAT_statFile,
 	.seekFile = deviceHandler_FAT_seekFile,
 	.readFile = deviceHandler_GCLoader_readFile,
 	.writeFile = deviceHandler_FAT_writeFile,
 	.closeFile = deviceHandler_GCLoader_closeFile,
 	.deleteFile = deviceHandler_FAT_deleteFile,
 	.renameFile = deviceHandler_FAT_renameFile,
+	.hideFile = deviceHandler_FAT_hideFile,
 	.setupFile = deviceHandler_GCLoader_setupFile,
 	.deinit = deviceHandler_GCLoader_deinit,
 	.emulated = deviceHandler_GCLoader_emulated,

@@ -3,43 +3,49 @@
 #include <malloc.h>
 #include "swiss.h"
 
+#define DEFAULT_FIFO_SIZE (256*1024)//(64*1024) minimum
+static u8 gp_fifo[DEFAULT_FIFO_SIZE] ATTRIBUTE_ALIGN (32);
+
 static GXRModeObj *vmode;		//Graphics Mode Object
-void *gp_fifo = NULL;
 u32 *xfb[2] = { NULL, NULL };	//Framebuffers
 int whichfb = 0;				//Frame buffer toggle
 
-#define DEFAULT_FIFO_SIZE    (256*1024)//(64*1024) minimum
 //Video Modes (strings)
-#define NtscIntStr     "NTSC 480i"
-#define NtscDsStr      "NTSC 240p"
-#define NtscProgStr    "NTSC 480p"
-#define PalIntStr      "PAL 576i"
-#define PalDsStr       "PAL 288p"
-#define PalProgStr     "PAL 576p"
-#define MpalIntStr     "PAL-M 480i"
-#define MpalDsStr      "PAL-M 240p"
-#define MpalProgStr    "PAL-M 480p"
-#define DebugPalIntStr "NTSC 576i"
-#define DebugPalDsStr  "NTSC 288p"
-#define Eurgb60IntStr  "PAL 480i"
-#define Eurgb60DsStr   "PAL 240p"
-#define Eurgb60ProgStr "PAL 480p"
-#define UnknownVideo   "Unknown"
+#define NtscIntStr       "NTSC 480sf"
+#define NtscIntDfStr     "NTSC 480i"
+#define NtscDsStr        "NTSC 240p"
+#define NtscProgStr      "NTSC 480p"
+#define PalIntStr        "PAL 576sf"
+#define PalIntDfStr      "PAL 576i"
+#define PalDsStr         "PAL 288p"
+#define PalProgStr       "PAL 576p"
+#define MpalIntStr       "PAL-M 480sf"
+#define MpalIntDfStr     "PAL-M 480i"
+#define MpalDsStr        "PAL-M 240p"
+#define MpalProgStr      "PAL-M 480p"
+#define DebugPalIntStr   "NTSC 576sf"
+#define DebugPalIntDfStr "NTSC 576i"
+#define DebugPalDsStr    "NTSC 288p"
+#define Eurgb60IntStr    "PAL 480sf"
+#define Eurgb60IntDfStr  "PAL 480i"
+#define Eurgb60DsStr     "PAL 240p"
+#define Eurgb60ProgStr   "PAL 480p"
+#define UnknownVideo     "Unknown"
 
-char *getVideoModeString() {
-	switch(getVideoMode()->viTVMode) {
-		case VI_TVMODE_NTSC_INT:      return NtscIntStr;
+char *getVideoModeString(GXRModeObj *m) {
+	switch(m->viTVMode) {
+		case VI_TVMODE_NTSC_INT:      return m->xfbMode == VI_XFBMODE_DF ? NtscIntDfStr : NtscIntStr;
 		case VI_TVMODE_NTSC_DS:       return NtscDsStr;
 		case VI_TVMODE_NTSC_PROG:     return NtscProgStr;
-		case VI_TVMODE_PAL_INT:       return PalIntStr;
+		case VI_TVMODE_PAL_INT:       return m->xfbMode == VI_XFBMODE_DF ? PalIntDfStr : PalIntStr;
 		case VI_TVMODE_PAL_DS:        return PalDsStr;
 		case VI_TVMODE_PAL_PROG:      return PalProgStr;
-		case VI_TVMODE_MPAL_INT:      return MpalIntStr;
+		case VI_TVMODE_MPAL_INT:      return m->xfbMode == VI_XFBMODE_DF ? MpalIntDfStr : MpalIntStr;
 		case VI_TVMODE_MPAL_DS:       return MpalDsStr;
 		case VI_TVMODE_MPAL_PROG:     return MpalProgStr;
-		case VI_TVMODE_DEBUG_PAL_INT: return DebugPalIntStr;
+		case VI_TVMODE_DEBUG_PAL_INT: return m->xfbMode == VI_XFBMODE_DF ? DebugPalIntDfStr : DebugPalIntStr;
 		case VI_TVMODE_DEBUG_PAL_DS:  return DebugPalDsStr;
-		case VI_TVMODE_EURGB60_INT:   return Eurgb60IntStr;
+		case VI_TVMODE_EURGB60_INT:   return m->xfbMode == VI_XFBMODE_DF ? Eurgb60IntDfStr : Eurgb60IntStr;
 		case VI_TVMODE_EURGB60_DS:    return Eurgb60DsStr;
 		case VI_TVMODE_EURGB60_PROG:  return Eurgb60ProgStr;
 		default:                      return UnknownVideo;
@@ -50,15 +56,23 @@ int getTVFormat() {
 	if(vmode == NULL) {
 		volatile unsigned short* vireg = (volatile unsigned short*)0xCC002000;
 		int format = (vireg[1] >> 8) & 3;
-		switch(format) {
-			case VI_NTSC:
-				return swissSettings.sramVideo == SYS_VIDEO_PAL ? VI_EURGB60 : VI_NTSC;
-			case VI_DEBUG:
-				switch(swissSettings.sramVideo) {
-					case SYS_VIDEO_PAL:  return swissSettings.sram60Hz ? VI_EURGB60 : VI_PAL;
-					case SYS_VIDEO_MPAL: return VI_MPAL;
-					default:             return VI_NTSC;
-				}
+		if(vireg[1] & 1) {
+			switch(format) {
+				case VI_NTSC:
+					return swissSettings.sramVideo == SYS_VIDEO_PAL ? VI_EURGB60 : VI_NTSC;
+				case VI_DEBUG:
+					switch(swissSettings.sramVideo) {
+						case SYS_VIDEO_PAL:  return swissSettings.sram60Hz ? VI_EURGB60 : VI_PAL;
+						case SYS_VIDEO_MPAL: return vireg[55] & 1 ? VI_NTSC : VI_MPAL;
+						default:             return VI_NTSC;
+					}
+			}
+		} else {
+			switch(swissSettings.sramVideo) {
+				case SYS_VIDEO_PAL:  return swissSettings.sram60Hz ? VI_EURGB60 : VI_PAL;
+				case SYS_VIDEO_MPAL: return vireg[55] & 1 ? VI_NTSC : VI_MPAL;
+				default:             return VI_NTSC;
+			}
 		}
 		return format;
 	}
@@ -74,29 +88,41 @@ int getTVFormat() {
 int getScanMode() {
 	if(vmode == NULL) {
 		volatile unsigned short* vireg = (volatile unsigned short*)0xCC002000;
-		if(vireg[54] & 1)
+		if(vireg[1] & 1) {
+			if(vireg[54] & 1)
+				return VI_PROGRESSIVE;
+			else if((vireg[1] >> 2) & 1)
+				return VI_NON_INTERLACE;
+		} else if((vireg[55] & 1) && swissSettings.sramProgressive)
 			return VI_PROGRESSIVE;
-		else if((vireg[1] >> 2) & 1)
-			return VI_NON_INTERLACE;
-		else
-			return VI_INTERLACE;
+		
+		return VI_INTERLACE;
 	}
 	return vmode->viTVMode & 3;
 }
 
+int getRawDTVStatus() {
+	volatile unsigned short* vireg = (volatile unsigned short*)0xCC002000;
+	return vireg[55] & 1;
+}
+
 int getDTVStatus() {
-	if(swissSettings.aveCompat == 1 && swissSettings.rt4kOptim) {
+	if(in_range(swissSettings.aveCompat, AVE_N_DOL_COMPAT, AVE_P_DOL_COMPAT))
+		return 0;
+	else if(in_range(swissSettings.aveCompat, GCDIGITAL_COMPAT, GCVIDEO_COMPAT) && swissSettings.rt4kOptim)
 		return 1;
-	} else if(!in_range(swissSettings.aveCompat , 3, 4)) {
-		volatile unsigned short* vireg = (volatile unsigned short*)0xCC002000;
-		return (vireg[55] & 1) || swissSettings.forceDTVStatus;
-	}
-	return 0;
+	return getRawDTVStatus() || swissSettings.forceDTVStatus;
 }
 
 int getFontEncode() {
 	volatile unsigned short* vireg = (volatile unsigned short*)0xCC002000;
-	return (vireg[55] >> 1) & 1;
+	return (vireg[55] >> 1) & 1 ? SYS_FONTENC_SJIS : SYS_FONTENC_ANSI;
+}
+
+f32 getYScaleFactor(u16 efbHeight, u16 xfbHeight) {
+	if(in_range(swissSettings.aveCompat, GCDIGITAL_COMPAT, GCVIDEO_COMPAT) && swissSettings.rt4kOptim)
+		return 1.0f;
+	return GX_GetYScaleFactor(efbHeight, xfbHeight);
 }
 
 GXRModeObj *getVideoModeFromSwissSetting(int uiVMode) {
@@ -112,16 +138,18 @@ GXRModeObj *getVideoModeFromSwissSetting(int uiVMode) {
 				}
 			}
 		case 1:
-			if(getDTVStatus()) {
-				return swissSettings.sramVideo == SYS_VIDEO_PAL ? &TVEurgb60Hz480IntDf : &TVNtsc480IntDf;
-			} else {
-				switch(swissSettings.sramVideo) {
-					case SYS_VIDEO_PAL:  return &TVEurgb60Hz480IntDf;
-					case SYS_VIDEO_MPAL: return &TVMpal480IntDf;
-					default:             return &TVNtsc480IntDf;
-				}
+			switch(swissSettings.sramVideo) {
+				case SYS_VIDEO_PAL:  return &TVEurgb60Hz480IntDf;
+				case SYS_VIDEO_MPAL: return getDTVStatus() ? &TVNtsc480IntDf : &TVMpal480IntDf;
+				default:             return &TVNtsc480IntDf;
 			}
 		case 2:
+			switch(swissSettings.sramVideo) {
+				case SYS_VIDEO_PAL:  return &TVEurgb60Hz480Int;
+				case SYS_VIDEO_MPAL: return getDTVStatus() ? &TVNtsc480Int : &TVMpal480Int;
+				default:             return &TVNtsc480Int;
+			}
+		case 3:
 			if(getDTVStatus()) {
 				return swissSettings.sramVideo == SYS_VIDEO_PAL ? &TVEurgb60Hz480Prog : &TVNtsc480Prog;
 			} else {
@@ -131,19 +159,21 @@ GXRModeObj *getVideoModeFromSwissSetting(int uiVMode) {
 					default:             return &TVNtsc480IntDf;
 				}
 			}
-		case 3:
-			return &TVPal576IntDfScale;
 		case 4:
+			return &TVPal576IntDfScale;
+		case 5:
+			return &TVPal576IntScale;
+		case 6:
 			return getDTVStatus() ? &TVPal576ProgScale : &TVPal576IntDfScale;
 	}
 	return getVideoMode();
 }
 
-static void ProperScanPADS() {
-	PAD_ScanPads(); 
+static void ProperScanPADS(u32 retrace) {
+	PAD_ScanPads();
 }
 
-GXRModeObj* getVideoMode() {
+GXRModeObj *getVideoMode() {
 	if(vmode == NULL) {
 		if(getScanMode() == VI_PROGRESSIVE) {
 			switch(getTVFormat()) {
@@ -167,7 +197,7 @@ GXRModeObj* getVideoMode() {
 }
 
 void updateVideoMode(GXRModeObj *m) {
-	if(swissSettings.aveCompat == 3) {
+	if(swissSettings.aveCompat == AVE_N_DOL_COMPAT) {
 		switch(m->viTVMode) {
 			case VI_TVMODE_PAL_INT: m->viTVMode = VI_TVMODE_DEBUG_PAL_INT; break;
 			case VI_TVMODE_PAL_DS:  m->viTVMode = VI_TVMODE_DEBUG_PAL_DS;  break;
@@ -178,28 +208,25 @@ void updateVideoMode(GXRModeObj *m) {
 			case VI_TVMODE_DEBUG_PAL_DS:  m->viTVMode = VI_TVMODE_PAL_DS;  break;
 		}
 	}
-	if(swissSettings.aveCompat == 1 && swissSettings.rt4kOptim) {
-		m->xfbHeight = m->efbHeight;
+	if(in_range(swissSettings.aveCompat, GCDIGITAL_COMPAT, GCVIDEO_COMPAT) && swissSettings.rt4kOptim) {
 		m->viWidth = m->fbWidth;
 		m->viXOrigin = 40;
 	} else {
 		m->viWidth = 704;
 		m->viXOrigin = 8;
 	}
+	VIDEO_Init ();
 	VIDEO_Configure (m);
 	VIDEO_Flush ();
 }
 
 void setVideoMode(GXRModeObj *m) {
 	updateVideoMode(m);
-	if(xfb[0]) free(MEM_K1_TO_K0(xfb[0]));
-	if(xfb[1]) free(MEM_K1_TO_K0(xfb[1]));
+	GX_AbortFrame ();
+	free(xfb[0]);
+	free(xfb[1]);
 	xfb[0] = (u32 *) SYS_AllocateFramebuffer (m);
 	xfb[1] = (u32 *) SYS_AllocateFramebuffer (m);
-	DCInvalidateRange(xfb[0], VIDEO_GetFrameBufferSize(m));
-	DCInvalidateRange(xfb[1], VIDEO_GetFrameBufferSize(m));
-	xfb[0] = (u32 *) MEM_K0_TO_K1 (xfb[0]);
-	xfb[1] = (u32 *) MEM_K0_TO_K1 (xfb[1]);
 	VIDEO_ClearFrameBuffer (m, xfb[0], COLOR_BLACK);
 	VIDEO_ClearFrameBuffer (m, xfb[1], COLOR_BLACK);
 	VIDEO_SetNextFramebuffer (xfb[0]);
@@ -207,21 +234,16 @@ void setVideoMode(GXRModeObj *m) {
 	VIDEO_SetBlack (false);
 	VIDEO_Flush ();
 	VIDEO_WaitVSync ();
-	if (m->viTVMode & VI_NON_INTERLACE) VIDEO_WaitVSync();
-	else while (VIDEO_GetNextField())   VIDEO_WaitVSync();
+	VIDEO_WaitVSync ();
 	
-	// setup the fifo and then init GX
-	if(gp_fifo == NULL) {
-		gp_fifo = MEM_K0_TO_K1 (memalign (32, DEFAULT_FIFO_SIZE));
-		memset (gp_fifo, 0, DEFAULT_FIFO_SIZE);
-		GX_Init (gp_fifo, DEFAULT_FIFO_SIZE);
-	}
+	// init GX
+	GX_Init (gp_fifo, DEFAULT_FIFO_SIZE);
 	// clears the bg to color and clears the z buffer
 	GX_SetCopyClear ((GXColor) {0, 0, 0, 0xFF}, GX_MAX_Z24);
 	// init viewport
-	GX_SetViewport (1.0f/24.0f, 1.0f/24.0f, m->fbWidth, m->efbHeight, 0.0f, 1.0f);
+	GX_SetViewport (0.0f, 0.0f, m->fbWidth, m->efbHeight, 0.0f, 1.0f);
 	// Set the correct y scaling for efb->xfb copy operation
-	GX_SetDispCopyYScale ((f32) m->xfbHeight / (f32) m->efbHeight);
+	GX_SetDispCopyYScale (GX_GetYScaleFactor (m->efbHeight, m->xfbHeight));
 	GX_SetDispCopySrc (0, 0, m->fbWidth, m->efbHeight);
 	GX_SetDispCopyDst (m->fbWidth, m->xfbHeight);
 	GX_SetCopyFilter (m->aa, m->sample_pattern, GX_TRUE, m->vfilter);
@@ -235,4 +257,13 @@ void setVideoMode(GXRModeObj *m) {
 	GX_CopyDisp (xfb[0], GX_TRUE); // This clears the xfb
 	
 	vmode = m;
+}
+
+void unsetVideoMode() {
+	VIDEO_SetPostRetraceCallback (NULL);
+	VIDEO_SetBlack (!swissSettings.forceVideoActive);
+	VIDEO_Flush ();
+	VIDEO_WaitVSync ();
+	
+	vmode = NULL;
 }

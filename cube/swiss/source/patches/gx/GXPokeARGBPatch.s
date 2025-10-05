@@ -8,6 +8,6 @@ GXPokeARGBPatch:
 	stw		%r5, 0 (%r6)
 	blr
 
-.globl GXPokeARGBPatch_length
-GXPokeARGBPatch_length:
-.long (GXPokeARGBPatch_length - GXPokeARGBPatch)
+.globl GXPokeARGBPatchLength
+GXPokeARGBPatchLength:
+.long (. - GXPokeARGBPatch) / 4

@@ -22,6 +22,6 @@ VIConfigureAutop:
 	stb			%r6, VAR_VFILTER_ON (%r4)
 	stw			%r0, 0 (%r3)
 
-.globl VIConfigureAutop_length
-VIConfigureAutop_length:
-.long (VIConfigureAutop_length - VIConfigureAutop)
+.globl VIConfigureAutop_size
+VIConfigureAutop_size:
+.long (. - VIConfigureAutop)

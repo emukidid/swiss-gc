@@ -12,7 +12,7 @@
 extern DEVICEHANDLER_INTERFACE __device_dvd;
 
 int gettype_disc();
-int initialize_disc(u32 streaming);
+int initialize_disc(int streaming);
 char *dvd_error_str();
 
 #endif

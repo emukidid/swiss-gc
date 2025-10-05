@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2023-2024, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2023-2025, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -22,6 +22,8 @@
 
 #include "dolphin/exi.h"
 
+#define ENC28J60_CID (0xFA050000)
+
 #define ENC28J60_CMD_RCR(x) ((0x00 | ((x) & 0x1F)) << 24) // Read Control Register
 #define ENC28J60_CMD_RBM    ((0x3A) << 24)                // Read Buffer Memory
 #define ENC28J60_CMD_WCR(x) ((0x40 | ((x) & 0x1F)) << 24) // Write Control Register
@@ -30,7 +32,7 @@
 #define ENC28J60_CMD_BFC(x) ((0xA0 | ((x) & 0x1F)) << 24) // Bit Field Clear
 #define ENC28J60_CMD_SRC    ((0xFF) << 24)                // System Reset Command
 
-#define ENC28J60_EXI_SPEED(cmd) (((cmd) == ENC28J60_CMD_SRC) ? EXI_SPEED1MHZ : EXI_SPEED32MHZ)
+#define ENC28J60_EXI_SPEED(cmd) (((cmd) == ENC28J60_CMD_SRC) ? EXI_SPEED1MHZ : EXI_SPEED16MHZ)
 #define ENC28J60_EXI_DUMMY(cmd) ((((cmd) >> 24) & 0x1F) < 0x1A)
 
 #define ENC28J60_INIT_ERXST (0)

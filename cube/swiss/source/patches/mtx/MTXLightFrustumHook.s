@@ -11,6 +11,6 @@ MTXLightFrustumHook:
 	fsubs		%f10, %f4, %f3
 	trap
 
-.globl MTXLightFrustumHook_length
-MTXLightFrustumHook_length:
-.long (MTXLightFrustumHook_length - MTXLightFrustumHook)
+.globl MTXLightFrustumHook_size
+MTXLightFrustumHook_size:
+.long (. - MTXLightFrustumHook)

@@ -13,7 +13,7 @@
 void populate_meta(file_handle *f);
 void repopulate_meta(file_handle *f);
 file_handle* meta_find_disc2(file_handle *f);
-void meta_thread_start();
+void meta_thread_start(void *loadingBox);
 void meta_thread_stop();
 void meta_free(file_meta* meta);
 #endif

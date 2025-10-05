@@ -10,6 +10,7 @@
 
 static file_handle** sortedDirEntries;
 static file_handle* curDirEntries;  // all the files in the current dir
+static int sortedDirEntryCount;
 static int curDirEntryCount;		// count of files in the current dir
 
 int fileComparator(const void *a1, const void *b1)
@@ -25,27 +26,39 @@ int fileComparator(const void *a1, const void *b1)
 			return 1;
 	}
 	
-	if(a->fileAttrib != b->fileAttrib)
-		return b->fileAttrib - a->fileAttrib;
+	if(a->fileType != b->fileType)
+		return b->fileType - a->fileType;
 
 	return strcasecmp(a->name, b->name);
 }
 
-file_handle** sortFiles(file_handle* dir, int num_files)
+int sortFiles(file_handle* dir, int numFiles, file_handle*** sortedDir)
 {
-	file_handle** sortedDir = calloc(num_files, sizeof(file_handle*));
-	if(sortedDir) {
-		for(int i = 0; i < num_files; i++) {
-			sortedDir[i] = &dir[i];
+	int i = 0;
+	*sortedDir = calloc(numFiles, sizeof(file_handle*));
+	if(*sortedDir) {
+		for(int j = 0; j < numFiles; j++) {
+			switch(dir[j].fileType) {
+				case IS_FILE:
+					if(!checkExtension(dir[j].name, devices[DEVICE_CUR]->extraExtensions))
+						continue;
+				case IS_DIR:
+					if(!swissSettings.showHiddenFiles && ((dir[j].fileAttrib & ATTRIB_HIDDEN) || *getRelativeName(dir[j].name) == '.'))
+						continue;
+				default:
+					break;
+			}
+			(*sortedDir)[i++] = &dir[j];
 		}
-		qsort(sortedDir, num_files, sizeof(file_handle*), fileComparator);
+		qsort(*sortedDir, i, sizeof(file_handle*), fileComparator);
 	}
-	return sortedDir;
+	return i;
 }
 
 void freeFiles() {
 	free(sortedDirEntries);
 	sortedDirEntries = NULL;
+	sortedDirEntryCount = 0;
 	if(curDirEntries) {
 		for(int i = 0; i < curDirEntryCount; i++) {
 			if(curDirEntries[i].meta) {
@@ -63,11 +76,11 @@ void freeFiles() {
 void scanFiles() {
 	freeFiles();
 	// Read the directory/device TOC
-	print_gecko("Reading directory: %s\r\n",curDir.name);
+	print_debug("Reading directory: %s\n",curDir.name);
 	curDirEntryCount = devices[DEVICE_CUR]->readDir(&curDir, &curDirEntries, -1);
 	if(!fnmatch(swissSettings.flattenDir, curDir.name, FNM_PATHNAME | FNM_CASEFOLD)) {
 		for(int i = 0; i < curDirEntryCount; i++) {
-			if(curDirEntries[i].fileAttrib == IS_DIR) {
+			if(curDirEntries[i].fileType == IS_DIR) {
 				file_handle* dirEntries = NULL;
 				int dirEntryCount = devices[DEVICE_CUR]->readDir(&curDirEntries[i], &dirEntries, -1);
 				if(dirEntryCount > 1) {
@@ -81,9 +94,9 @@ void scanFiles() {
 			}
 		}
 	}
-	print_gecko("Found %i entries\r\n",curDirEntryCount);
-	sortedDirEntries = sortFiles(curDirEntries, curDirEntryCount);
-	for(int i = 0; i < curDirEntryCount; i++) {
+	print_debug("Found %i entries\n",curDirEntryCount);
+	sortedDirEntryCount = sortFiles(curDirEntries, curDirEntryCount, &sortedDirEntries);
+	for(int i = 0; i < sortedDirEntryCount; i++) {
 		if(!strcmp(sortedDirEntries[i]->name, curFile.name)) {
 			curSelection = i;
 			break;
@@ -100,8 +113,29 @@ file_handle* getCurrentDirEntries() {
 	return curDirEntries;
 }
 
+int getSortedDirEntryCount() {
+	return sortedDirEntryCount;
+}
+
 int getCurrentDirEntryCount() {
 	return curDirEntryCount;
+}
+
+int getSortedDirEntryIndex(file_handle* file) {
+	for(int i = 0; i < sortedDirEntryCount; i++) {
+		if(file == sortedDirEntries[i]) {
+			return i;
+		}
+	}
+	return 0;
+}
+
+u64 getCurrentDirSize() {
+	u64 curDirSize = 0LL;
+	for(int i = 0; i < curDirEntryCount; i++) {
+		curDirSize += curDirEntries[i].size;
+	}
+	return curDirSize;
 }
 
 size_t concat_path(char *pathName, const char *dirName, const char *baseName)
@@ -166,11 +200,11 @@ size_t concatf_path(char *pathName, const char *dirName, const char *baseName, .
 }
 
 // Either renames a path to a new one, or creates one.
-void ensure_path(int deviceSlot, char *path, char *oldPath) {
-	file_handle fhFullPath = { .fileAttrib = IS_DIR };
+void ensure_path(int deviceSlot, char *path, char *oldPath, bool hidden) {
+	file_handle fhFullPath = { .fileType = IS_DIR };
 	concat_path(fhFullPath.name, devices[deviceSlot]->initial->name, path);
 	if(oldPath) {
-		file_handle fhOldFullPath = { .fileAttrib = IS_DIR };
+		file_handle fhOldFullPath = { .fileType = IS_DIR };
 		concat_path(fhOldFullPath.name, devices[deviceSlot]->initial->name, oldPath);
 		if(devices[deviceSlot]->renameFile) {
 			if(devices[deviceSlot]->renameFile(&fhOldFullPath, fhFullPath.name)) {
@@ -185,5 +219,8 @@ void ensure_path(int deviceSlot, char *path, char *oldPath) {
 	}
 	else if(devices[deviceSlot]->makeDir) {
 		devices[deviceSlot]->makeDir(&fhFullPath);
+	}
+	if(devices[deviceSlot]->hideFile) {
+		devices[deviceSlot]->hideFile(&fhFullPath, hidden);
 	}
 }

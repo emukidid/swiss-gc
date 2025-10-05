@@ -25,6 +25,8 @@
 #define CMD24				(0x58)
 //CMD25 - Write multiple block command
 #define CMD25				(0x59)
+//CMD59 - CRC option command
+#define CMD59				(0x7B)
 
 #ifndef QUEUE_SIZE
 #define QUEUE_SIZE			2
@@ -38,13 +40,16 @@
 #endif
 
 #define exi_cpr				(*(u8*)VAR_EXI_CPR)
-#define exi_channel			({ if (*VAR_EXI_SLOT >= EXI_CHANNEL_MAX) __builtin_trap(); *VAR_EXI_SLOT; })
+#define exi_channel			(*(u8*)VAR_EXI_SLOT & 0x3)
+#define exi_device			((*(u8*)VAR_EXI_SLOT & 0xC) >> 2)
 #define exi_regs			(*(vu32**)VAR_EXI_REGS)
 
 #if ISR_READ
 extern struct {
 	int32_t transferred;
+	#if !DMA_READ
 	uint32_t data;
+	#endif
 	intptr_t buffer;
 	intptr_t registers;
 } _mmc;
@@ -91,6 +96,15 @@ static void exi_select()
 {
 	exi_regs[0] = (exi_regs[0] & 0x405) | ((exi_cpr << 4) & 0x3F0);
 }
+
+#if DMA_READ
+static void exi_selectsd()
+{
+	exi_regs[0] = (exi_regs[0] & 0x405) | ((exi_cpr << 4) & 0x070);
+}
+#else
+#define exi_selectsd exi_select
+#endif
 
 static void exi_deselect()
 {
@@ -163,7 +177,7 @@ static void exi_read_to_buffer(void *dest, u32 len) {
 
 static void rcvr_datablock(void *dest, u32 start_byte, u32 bytes_to_read, bool sync) {
 	if(sync) {
-		exi_select();
+		exi_selectsd();
 
 		while(rcvr_spi() != 0xFE);
 
@@ -185,7 +199,7 @@ static void rcvr_datablock(void *dest, u32 start_byte, u32 bytes_to_read, bool s
 		_mmc.buffer = (intptr_t)dest & ~OS_BASE_UNCACHED;
 		_mmc.transferred = -1;
 
-		exi_select();
+		exi_selectsd();
 		exi_clear_interrupts(false, true, false);
 		exi_imm_read(1, false);
 
@@ -219,7 +233,9 @@ static bool xmit_datablock(void *src, u32 token) {
 static void mmc_done_queued(void);
 static void mmc_read_queued(void)
 {
-	if (!EXILock(exi_channel, EXI_DEVICE_0, (EXICallback)mmc_read_queued))
+	if (exi_channel >= EXI_CHANNEL_MAX)
+		__builtin_trap();
+	if (!EXILock(exi_channel, exi_device, (EXICallback)mmc_read_queued))
 		return;
 
 	void *buffer = mmc.queued->buffer;
@@ -253,7 +269,7 @@ static void mmc_read_queued(void)
 		return;
 	}
 
-	if (length < SECTOR_SIZE) {
+	if (length < SECTOR_SIZE || ((uintptr_t)buffer % 32 && DMA_READ)) {
 		mmc.last_sector = sector;
 		buffer = mmc.buffer;
 		DCInvalidateRange(__builtin_assume_aligned(buffer, 32), SECTOR_SIZE);
@@ -424,6 +440,7 @@ void reset_device() {
 	if(exi_regs != NULL) {
 		end_read();
 		send_cmd(CMD0, 0);
+		send_cmd(CMD59, 1);
 	}
 }
 

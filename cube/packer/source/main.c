@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2012-2023, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2012-2025, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -28,6 +28,7 @@
 #define EXECUTABLE_ADDR ((void *)0x00003100)
 void (*entrypoint)(void) = EXECUTABLE_ADDR;
 extern struct __argv __argv __attribute((section(".init")));
+extern struct __argv __envp __attribute((section(".init")));
 
 static struct xz_dec_bcj xz_dec_bcj;
 static struct xz_dec_lzma2 xz_dec_lzma2;
@@ -99,7 +100,8 @@ void main(void)
 	if (xz_dec_run(&xz_dec, &xz_buf) != XZ_STREAM_END)
 		return;
 
-	memmove(entrypoint + 8, &__argv, sizeof(__argv));
+	memmove(entrypoint +  8, &__argv, sizeof(__argv));
+	memmove(entrypoint + 40, &__envp, sizeof(__envp));
 	memsync(xz_buf.out, xz_buf.out_pos);
 
 	_sync();

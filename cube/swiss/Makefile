@@ -26,6 +26,7 @@ SOURCES		:=  source \
 			  source/devices/aram \
               source/devices/dvd \
               source/devices/fat \
+			  source/devices/flippydrive \
 			  source/devices/fsp \
 			  source/devices/ftp \
 			  source/devices/gcloader \
@@ -54,7 +55,7 @@ INCLUDES	:=	include $(SOURCES) ..
 # options for code generation
 #---------------------------------------------------------------------------------
 
-CFLAGS		= -g -O2 -Wall -Wno-format-truncation -fno-strict-aliasing -D_GNU_SOURCE $(MACHDEP) $(INCLUDE) -D'GITREVISION="$(shell git rev-parse --short HEAD)"' -D'GITVERSION="$(shell git rev-list HEAD | wc -l)"'
+CFLAGS		= -g -O2 -Wall -Wno-format-truncation -Wno-scalar-storage-order -fno-strict-aliasing -D_GNU_SOURCE $(MACHDEP) $(INCLUDE) -D'GIT_COMMIT="$(shell git rev-parse --short HEAD)"' -D'GIT_REVISION="$(shell git rev-list HEAD | wc -l)"'
 CXXFLAGS	= $(CFLAGS)
 
 ASFLAGS		= $(MACHDEP) -mregnames -D_LANGUAGE_ASSEMBLY $(INCLUDE)
@@ -63,7 +64,7 @@ LDFLAGS		= $(CFLAGS) -Wl,-Map,$(notdir $@).map -T ../../linker-script/ogc.ld -T 
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project
 #---------------------------------------------------------------------------------
-LIBS	:=	-ltinysmb -lbba -laesnd -lmad -ldb -logc -lpsoarchive -lxxhash -lz
+LIBS	:=	-ldvm -ltinysmb -lbba -laesnd -lmad -ldb -logc -ldeflate -lpsoarchive -lxxhash -lz -lm
 
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing
@@ -110,7 +111,7 @@ export OFILES_BIN	:=	$(addsuffix .o,$(BINFILES)) $(addsuffix .o,$(TPLFILES))
 export OFILES_SOURCES := $(CPPFILES:.cpp=.o) $(CFILES:.c=.o) $(sFILES:.s=.o) $(SFILES:.S=.o)
 export OFILES := $(OFILES_BIN) $(OFILES_SOURCES)
 
-export HFILES := $(addsuffix .h,$(subst .,_,$(BINFILES))) $(addsuffix .h,$(subst .,_,$(TPLFILES)))
+export HFILES := $(addsuffix .h,$(subst .,_,$(BINFILES))) $(addsuffix .h,$(subst .,_,$(TPLFILES))) tags.h
 
 #---------------------------------------------------------------------------------
 # build a list of include paths
@@ -164,6 +165,12 @@ $(OFILES_SOURCES) : $(HFILES)
 #---------------------------------------------------------------------------------
 	$(SILENTMSG) $(notdir $<)
 	$(bin2o)
+
+#---------------------------------------------------------------------------------
+tags.h :
+#---------------------------------------------------------------------------------
+	$(SILENTMSG) $(notdir $@)
+	$(SILENTCMD)git for-each-ref --format='"%(objectname:short)",' refs/tags > $@
 
 -include $(DEPENDS)
 

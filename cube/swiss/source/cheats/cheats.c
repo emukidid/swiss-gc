@@ -22,17 +22,19 @@
 #include "patcher.h"
 #include "deviceHandler.h"
 #include "FrameBufferMagic.h"
+#include "IPLFontWrite.h"
+#include <xxhash.h>
 
 static CheatEntries _cheats;
 
 void printCheats(void) {
 	int i = 0, j = 0;
-	print_gecko("There are %i cheats\r\n", _cheats.num_cheats);
+	print_debug("There are %i cheats\n", _cheats.num_cheats);
 	for(i = 0; i < _cheats.num_cheats; i++) {
 		CheatEntry *cheat = &_cheats.cheat[i];
-		print_gecko("Cheat: (%i codes) %s\r\n", cheat->num_codes, cheat->name);
+		print_debug("Cheat: (%i codes) %s\n", cheat->num_codes, cheat->name);
 		for(j = 0; j < cheat->num_codes; j++) {
-			print_gecko("%08X %08X\r\n", cheat->codes[j][0], cheat->codes[j][1]);
+			print_debug("%08X %08X\n", cheat->codes[j][0], cheat->codes[j][1]);
 		}
 	}
 }
@@ -45,7 +47,7 @@ int getEnabledCheatsSize(void) {
 			size += ((cheat->num_codes*2)*4);
 		}
 	}
-	//print_gecko("Size of cheats: %i\r\n", size);
+	//print_debug("Size of cheats: %i\n", size);
 	return size;
 }
 
@@ -57,7 +59,7 @@ int getEnabledCheatsCount(void) {
 			enabled++;
 		}
 	}
-	//print_gecko("Size of cheats: %i\r\n", size);
+	//print_debug("Size of cheats: %i\n", size);
 	return enabled;
 }
 
@@ -96,7 +98,7 @@ void parseCheats(char *filecontents) {
 	
 	CheatEntry *curCheat = NULL;	// The current one we're parsing
 	while( line != NULL ) {
-		//print_gecko("Line [%s]\r\n", line);
+		//print_debug("Line [%s]\n", line);
 		if(isCheatCode(line)) {		// The line looks like a valid code
 			_cheats.cheat = reallocarray(_cheats.cheat, numCheats+1, sizeof(CheatEntry));
 			curCheat = &_cheats.cheat[numCheats];
@@ -104,7 +106,7 @@ void parseCheats(char *filecontents) {
 			
 			if(prevLine != NULL) {
 				curCheat->name = strdup(prevLine);
-				//print_gecko("Cheat Name: [%s]\r\n", prevLine);
+				//print_debug("Cheat Name: [%s]\n", prevLine);
 			}
 			int numCodes = 0, unsupported = 0;
 			if(isValidCode(line)) {
@@ -169,7 +171,7 @@ void kenobi_install_engine() {
 	const u8 *ptr = isDebug ? kenobigc_dbg_bin : kenobigc_bin;
 	u32 size = isDebug ? kenobigc_dbg_bin_size : kenobigc_bin_size;
 	
-	print_gecko("Copying kenobi%s to %08X\r\n", (isDebug?"_dbg":""),(u32)CHEATS_ENGINE);
+	print_debug("Copying kenobi%s to %08X\n", (isDebug?"_dbg":""),(u32)CHEATS_ENGINE);
 	memcpy(CHEATS_ENGINE, ptr, size);
 	memcpy(CHEATS_GAMEID, VAR_AREA, CHEATS_GAMEID_LEN);
 	if(!isDebug) {
@@ -177,7 +179,7 @@ void kenobi_install_engine() {
 	}
 	CHEATS_START_PAUSED = isDebug ? CHEATS_TRUE : CHEATS_FALSE;
 	memset(CHEATS_LOCATION(size), 0, kenobi_get_maxsize());
-	print_gecko("Copying %i bytes of cheats to %08X\r\n", getEnabledCheatsSize(),(u32)CHEATS_LOCATION(size));
+	print_debug("Copying %i bytes of cheats to %08X\n", getEnabledCheatsSize(),(u32)CHEATS_LOCATION(size));
 	u32 *cheatsLocation = (u32*)CHEATS_LOCATION(size);
 	cheatsLocation[0] = 0x00D0C0DE;
 	cheatsLocation[1] = 0x00D0C0DE;
@@ -191,7 +193,7 @@ void kenobi_install_engine() {
 				// Copy & fix cheats that want to jump to the old cheat engine location 0x800018A8 -> CHEATS_ENGINE+0xA8
 				cheatsLocation[0] = cheat->codes[j][0];
 				cheatsLocation[1] = cheat->codes[j][1] == 0x800018A8 ? (u32)(CHEATS_ENGINE+0xA8) : cheat->codes[j][1];
-				print_gecko("Copied cheat [%08X %08X] to [%08X %08X]\r\n", cheatsLocation[0], cheatsLocation[1], (u32)cheatsLocation, (u32)cheatsLocation+4);
+				print_debug("Copied cheat [%08X %08X] to [%08X %08X]\n", cheatsLocation[0], cheatsLocation[1], (u32)cheatsLocation, (u32)cheatsLocation+4);
 				cheatsLocation+=2;
 			}
 		}
@@ -211,13 +213,13 @@ int findCheats(bool silent) {
 	memcpy(trimmedGameId, (char*)&GCMDisk, 6);
 	file_handle *cheatsFile = calloc(1, sizeof(file_handle));
 	concatf_path(cheatsFile->name, devices[DEVICE_CUR]->initial->name, "swiss/cheats/%.6s.txt", trimmedGameId);
-	print_gecko("Looking for cheats file @ [%s]\r\n", cheatsFile->name);
+	print_debug("Looking for cheats file @ [%s]\n", cheatsFile->name);
 
 	devices[DEVICE_CHEATS] = devices[DEVICE_CUR];
 
 	// Check SD in all slots if we're not already running from SD, or if we fail from current device
-	ensure_path(DEVICE_CHEATS, "swiss", NULL);
-	ensure_path(DEVICE_CHEATS, "swiss/cheats", "cheats");	// TODO kill this off in our next major release.
+	ensure_path(DEVICE_CHEATS, "swiss", NULL, true);
+	ensure_path(DEVICE_CHEATS, "swiss/cheats", "cheats", false);	// TODO kill this off in our next major release.
 	if(devices[DEVICE_CHEATS]->readFile(cheatsFile, &testBuffer, 8) != 8) {
 		// Try SD slots now
 		if(devices[DEVICE_CUR] != &__device_sd_a) {
@@ -228,12 +230,12 @@ int findCheats(bool silent) {
 		}
 		memset(cheatsFile, 0, sizeof(file_handle));
 		concatf_path(cheatsFile->name, devices[DEVICE_CHEATS]->initial->name, "swiss/cheats/%.6s.txt", trimmedGameId);
-		print_gecko("Looking for cheats file @ [%s]\r\n", cheatsFile->name);
+		print_debug("Looking for cheats file @ [%s]\n", cheatsFile->name);
 
 		deviceHandler_setStatEnabled(0);
 		devices[DEVICE_CHEATS]->init(cheatsFile);
-		ensure_path(DEVICE_CHEATS, "swiss", NULL);
-		ensure_path(DEVICE_CHEATS, "swiss/cheats", "cheats");	// TODO kill this off in our next major release.
+		ensure_path(DEVICE_CHEATS, "swiss", NULL, true);
+		ensure_path(DEVICE_CHEATS, "swiss/cheats", "cheats", false);	// TODO kill this off in our next major release.
 		if(devices[DEVICE_CHEATS]->readFile(cheatsFile, &testBuffer, 8) != 8) {
 			if(devices[DEVICE_CHEATS] == &__device_sd_b) {
 				devices[DEVICE_CHEATS] = &__device_sd_c;	// We already tried A & failed, so last thing to try is SP2 slot.
@@ -242,11 +244,11 @@ int findCheats(bool silent) {
 				devices[DEVICE_CHEATS] = &__device_sd_b;
 				memset(cheatsFile, 0, sizeof(file_handle));
 				concatf_path(cheatsFile->name, devices[DEVICE_CHEATS]->initial->name, "swiss/cheats/%.6s.txt", trimmedGameId);
-				print_gecko("Looking for cheats file @[%s]\r\n", cheatsFile->name);
+				print_debug("Looking for cheats file @[%s]\n", cheatsFile->name);
 
 				devices[DEVICE_CHEATS]->init(cheatsFile);
-				ensure_path(DEVICE_CHEATS, "swiss", NULL);
-				ensure_path(DEVICE_CHEATS, "swiss/cheats", "cheats");	// TODO kill this off in our next major release.
+				ensure_path(DEVICE_CHEATS, "swiss", NULL, true);
+				ensure_path(DEVICE_CHEATS, "swiss/cheats", "cheats", false);	// TODO kill this off in our next major release.
 				if(devices[DEVICE_CHEATS]->readFile(cheatsFile, &testBuffer, 8) != 8) {
 					devices[DEVICE_CHEATS] = &__device_sd_c; // Last thing to try is SP2 slot.
 				}
@@ -254,11 +256,11 @@ int findCheats(bool silent) {
 			if (devices[DEVICE_CHEATS] == &__device_sd_c && devices[DEVICE_CUR] != &__device_sd_c) {
 				memset(cheatsFile, 0, sizeof(file_handle));
 				concatf_path(cheatsFile->name, devices[DEVICE_CHEATS]->initial->name, "swiss/cheats/%.6s.txt", trimmedGameId);
-				print_gecko("Looking for cheats file @[%s]\r\n", cheatsFile->name);
+				print_debug("Looking for cheats file @[%s]\n", cheatsFile->name);
 
 				devices[DEVICE_CHEATS]->init(cheatsFile);
-				ensure_path(DEVICE_CHEATS, "swiss", NULL);
-				ensure_path(DEVICE_CHEATS, "swiss/cheats", "cheats");	// TODO kill this off in our next major release.
+				ensure_path(DEVICE_CHEATS, "swiss", NULL, true);
+				ensure_path(DEVICE_CHEATS, "swiss/cheats", "cheats", false);	// TODO kill this off in our next major release.
 				if(devices[DEVICE_CHEATS]->readFile(cheatsFile, &testBuffer, 8) != 8) {
 					devices[DEVICE_CHEATS] = NULL; // All three have failed.
 				}
@@ -269,17 +271,15 @@ int findCheats(bool silent) {
 	// Still fail?
 	if(devices[DEVICE_CHEATS] == NULL || cheatsFile->size == 0) {
 		if(!silent) {
-			while(padsButtonsHeld() & PAD_BUTTON_Y);
 			uiDrawObj_t *msgBox = DrawMessageBox(D_INFO,"No cheats file found.\nPress A to continue.");
 			DrawPublish(msgBox);
-			while(!(padsButtonsHeld() & PAD_BUTTON_A));
-			while(padsButtonsHeld() & PAD_BUTTON_A);
+			wait_press_A();
 			DrawDispose(msgBox);
 		}
 		free(cheatsFile);
 		return 0;
 	}
-	print_gecko("Cheats file found with size %i\r\n", cheatsFile->size);
+	print_debug("Cheats file found with size %i\n", cheatsFile->size);
 	char *cheats_buffer = calloc(1, cheatsFile->size + 1);
 	if(cheats_buffer) {
 		devices[DEVICE_CHEATS]->seekFile(cheatsFile, 0, DEVICE_HANDLER_SEEK_SET);
@@ -291,24 +291,94 @@ int findCheats(bool silent) {
 	free(cheatsFile);
 
 	if(!silent && _cheats.num_cheats == 0) {
-		while(padsButtonsHeld() & PAD_BUTTON_Y);
 		uiDrawObj_t *msgBox = DrawMessageBox(D_INFO,"Empty or unreadable cheats file found.\nPress A to continue.");
 		DrawPublish(msgBox);
-		while(!(padsButtonsHeld() & PAD_BUTTON_A));
-		while(padsButtonsHeld() & PAD_BUTTON_A);
+		wait_press_A();
 		DrawDispose(msgBox);
 	}
 	return _cheats.num_cheats;
 }
 
-int applyAllCheats() {
+XXH64_hash_t calcCheatsHash() {
+	XXH64_state_t* const state = XXH64_createState();
+	XXH64_hash_t const seed = 0;
+	XXH64_reset(state, seed);
+	
 	int i = 0, j = 0;
 	for(i = 0; i < _cheats.num_cheats; i++) {
 		CheatEntry *cheat = &_cheats.cheat[i];
-		cheat->enabled = 1;
-		if(getEnabledCheatsSize() > kenobi_get_maxsize())
-			cheat->enabled = 0;
-		j++;
+		for(j = 0; j < cheat->num_codes; j++) {
+			XXH64_update(state, &cheat->codes[j][0], 8);
+		}
 	}
-	return j;
+	XXH64_hash_t const hash = XXH64_digest(state);
+	XXH64_freeState(state);
+	print_debug("Cheats file hash is: [%08X], %i cheats.\n", (u32)(hash&0xFFFFFFFF), _cheats.num_cheats);
+	return hash;
+}
+
+void loadCheatsSelection() {
+	XXH64_hash_t old_hash = 0;
+	file_handle *cheatsSelFile = calloc(1, sizeof(file_handle));
+	char *trimmedGameId = calloc(1, 8);
+	memcpy(trimmedGameId, (char*)&GCMDisk, 6);
+	concatf_path(cheatsSelFile->name, devices[DEVICE_CHEATS]->initial->name, "swiss/cheats/%.6s.chtsel", trimmedGameId);
+	print_debug("Looking for previous cheat selection file [%s].\n", cheatsSelFile->name);
+	// See if we've saved cheat selections for this game before.
+	if(!devices[DEVICE_CHEATS]->statFile(cheatsSelFile)) {
+		XXH64_hash_t curCheatsHash = calcCheatsHash();
+		// We have, but was the cheats file the same as it is now?
+		devices[DEVICE_CHEATS]->seekFile(cheatsSelFile, -sizeof(old_hash), DEVICE_HANDLER_SEEK_END);
+		if (devices[DEVICE_CHEATS]->readFile(cheatsSelFile, &old_hash, sizeof(XXH64_hash_t)) == sizeof(XXH64_hash_t) && (old_hash == curCheatsHash)) {
+			print_debug("Hash matched, loading cheat selections.\n");
+			devices[DEVICE_CHEATS]->seekFile(cheatsSelFile, 0, DEVICE_HANDLER_SEEK_SET);
+			int i = 0;
+			for(i = 0; i < _cheats.num_cheats; i++) {
+				CheatEntry *cheat = &_cheats.cheat[i];
+				u8 enabled = 0;
+				devices[DEVICE_CHEATS]->readFile(cheatsSelFile, &enabled, 1);
+				cheat->enabled = enabled;
+			}
+		}
+		else {
+			// Mismatch, the cheats.txt file changed, delete the selections as they'd no longer be valid.
+			devices[DEVICE_CHEATS]->deleteFile(cheatsSelFile);
+			print_debug("Hash mismatch, deleting cheat selection file.\n");
+		}
+	}
+	devices[DEVICE_CHEATS]->closeFile(cheatsSelFile);
+	free(cheatsSelFile);
+	free(trimmedGameId);
+}
+
+void saveCheatsSelection() {
+	// Save hash of the cheats file.
+	XXH64_hash_t cheatsHash = calcCheatsHash();
+	
+	file_handle *cheatsSelFile = calloc(1, sizeof(file_handle));
+	char *trimmedGameId = calloc(1, 8);
+	memcpy(trimmedGameId, (char*)&GCMDisk, 6);
+	concatf_path(cheatsSelFile->name, devices[DEVICE_CHEATS]->initial->name, "swiss/cheats/%.6s.chtsel", trimmedGameId);
+	print_debug("Looking to update cheat selection file [%s].\n", cheatsSelFile->name);
+	
+	int i = 0;
+	int anyEnabled = 0;
+	for(i = 0; i < _cheats.num_cheats; i++) {
+		CheatEntry *cheat = &_cheats.cheat[i];
+		u8 enabled = cheat->enabled;
+		devices[DEVICE_CHEATS]->writeFile(cheatsSelFile, &enabled, 1);
+		anyEnabled |= cheat->enabled;
+	}
+	if(!anyEnabled) {
+		devices[DEVICE_CHEATS]->deleteFile(cheatsSelFile);
+		print_debug("Removed empty cheats file\n");
+	} 
+	else {
+		devices[DEVICE_CHEATS]->writeFile(cheatsSelFile, &cheatsHash, sizeof(XXH64_hash_t));
+		print_debug("Finished writing cheat selection file, hash is: [%08X].\n", (u32)(cheatsHash&0xFFFFFFFF));
+	}
+	devices[DEVICE_CHEATS]->closeFile(cheatsSelFile);
+	free(cheatsSelFile);
+	free(trimmedGameId);
+	
 }

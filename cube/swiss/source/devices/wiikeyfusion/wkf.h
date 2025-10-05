@@ -12,7 +12,7 @@
 
 #define DEVICE_TYPE_GC_WKF	(('W'<<24)|('K'<<16)|('F'<<8)|'!')
 
-extern const DISC_INTERFACE __io_wkf;
+extern DISC_INTERFACE __io_wkf;
 void wkfWriteRam(int offset, int data);
 void wkfWriteOffset(u32 offset);
 int wkfSpiRead(unsigned char *buf, unsigned int addr, int len);

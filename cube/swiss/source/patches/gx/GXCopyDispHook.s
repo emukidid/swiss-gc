@@ -7,6 +7,6 @@ GXCopyDispHook:
 	stb		%r3, VAR_CURRENT_FIELD (%r4)
 	blr
 
-.globl GXCopyDispHook_length
-GXCopyDispHook_length:
-.long (GXCopyDispHook_length - GXCopyDispHook)
+.globl GXCopyDispHook_size
+GXCopyDispHook_size:
+.long (. - GXCopyDispHook)

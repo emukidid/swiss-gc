@@ -18,24 +18,14 @@
 
 #define NO_PC (-1)
 
-file_handle initial_USBGecko =
-	{ "./",     // directory
-	  0ULL,     // fileBase (u64)
-	  0,        // offset
-	  0,        // size
-	  IS_DIR,
-	  0,
-	  0
-	};
-
-device_info initial_USBGecko_info = {
-	0LL,
-	0LL,
-	true
+file_handle initial_USBGecko = {
+	.name     = "./",
+	.fileType = IS_DIR,
+	.device   = &__device_usbgecko,
 };
 
 device_info* deviceHandler_USBGecko_info(file_handle* file) {
-	return &initial_USBGecko_info;
+	return NULL;
 }
 	
 s32 deviceHandler_USBGecko_readDir(file_handle* ffile, file_handle** dir, u32 type){	
@@ -45,17 +35,14 @@ s32 deviceHandler_USBGecko_readDir(file_handle* ffile, file_handle** dir, u32 ty
 	file_handle *entry = NULL;
 	*dir = calloc(num_entries, sizeof(file_handle));
 	concat_path((*dir)[0].name, ffile->name, "..");
-	(*dir)[0].fileAttrib = IS_SPECIAL;
+	(*dir)[0].fileType = IS_SPECIAL;
+	(*dir)[0].device   = ffile->device;
 	
 	uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Reading directory"));
 	// Read each entry of the directory
 	s32 res = usbgecko_open_dir(ffile->name);
 	if(!res) return -1;
-	u64 usedSpace = 0LL;
 	while( (entry = usbgecko_get_entry()) != NULL ){
-		if(entry->fileAttrib == IS_FILE) {
-			if(!checkExtension(entry->name)) continue;
-		}		
 		// Make sure we have room for this one
 		if(i == num_entries) {
 			++num_entries;
@@ -63,13 +50,12 @@ s32 deviceHandler_USBGecko_readDir(file_handle* ffile, file_handle** dir, u32 ty
 		}
 		memset(&(*dir)[i], 0, sizeof(file_handle));
 		if(strlcpy((*dir)[i].name, entry->name, PATHNAME_MAX) < PATHNAME_MAX) {
-			(*dir)[i].size       = entry->size;
-			(*dir)[i].fileAttrib = entry->fileAttrib;
-			usedSpace += (*dir)[i].size;
+			(*dir)[i].size     = entry->size;
+			(*dir)[i].fileType = entry->fileType + IS_FILE;
+			(*dir)[i].device   = ffile->device;
 			++i;
 		}
 	}
-	initial_USBGecko_info.totalSpace = usedSpace;
 	DrawDispose(msgBox);
 	return i;
 }
@@ -107,9 +93,12 @@ s32 deviceHandler_USBGecko_setupFile(file_handle* file, file_handle* file2, Exec
 	file_frag *fragList = NULL;
 	u32 numFrags = 0;
 	
+	if(numToPatch < 0) {
+		return 0;
+	}
 	// Check if there are any fragments in our patch location for this game
 	if(devices[DEVICE_PATCHES] != NULL) {
-		print_gecko("Save Patch device found\r\n");
+		print_debug("Save Patch device found\n");
 		
 		// Look for patch files, if we find some, open them and add them as fragments
 		file_handle patchFile;
@@ -121,22 +110,9 @@ s32 deviceHandler_USBGecko_setupFile(file_handle* file, file_handle* file2, Exec
 			}
 		}
 		
-		if(swissSettings.igrType == IGR_BOOTBIN || endsWith(file->name,".tgc")) {
+		if(swissSettings.igrType == IGR_APPLOADER || endsWith(file->name,".tgc")) {
 			memset(&patchFile, 0, sizeof(file_handle));
 			concat_path(patchFile.name, devices[DEVICE_PATCHES]->initial->name, "swiss/patches/apploader.img");
-			
-			ApploaderHeader apploaderHeader;
-			if(devices[DEVICE_PATCHES]->readFile(&patchFile, &apploaderHeader, sizeof(ApploaderHeader)) != sizeof(ApploaderHeader) || apploaderHeader.rebootSize != reboot_bin_size) {
-				devices[DEVICE_PATCHES]->deleteFile(&patchFile);
-				
-				memset(&apploaderHeader, 0, sizeof(ApploaderHeader));
-				apploaderHeader.rebootSize = reboot_bin_size;
-				
-				devices[DEVICE_PATCHES]->seekFile(&patchFile, 0, DEVICE_HANDLER_SEEK_SET);
-				devices[DEVICE_PATCHES]->writeFile(&patchFile, &apploaderHeader, sizeof(ApploaderHeader));
-				devices[DEVICE_PATCHES]->writeFile(&patchFile, reboot_bin, reboot_bin_size);
-				devices[DEVICE_PATCHES]->closeFile(&patchFile);
-			}
 			
 			getFragments(DEVICE_PATCHES, &patchFile, &fragList, &numFrags, FRAGS_APPLOADER, 0x2440, 0);
 			devices[DEVICE_PATCHES]->closeFile(&patchFile);
@@ -144,12 +120,13 @@ s32 deviceHandler_USBGecko_setupFile(file_handle* file, file_handle* file2, Exec
 		
 		s32 exi_channel, exi_device;
 		if(getExiDeviceByLocation(devices[DEVICE_PATCHES]->location, &exi_channel, &exi_device)) {
+			exi_device = sdgecko_getDevice(exi_channel);
 			// Card Type
 			*(vu8*)VAR_SD_SHIFT = sdgecko_getAddressingType(exi_channel) ? 0:9;
 			// Copy the actual freq
 			*(vu8*)VAR_EXI_CPR = (exi_channel << 6) | ((1 << exi_device) << 3) | sdgecko_getSpeed(exi_channel);
 			// Device slot (0, 1 or 2)
-			*(vu8*)VAR_EXI_SLOT = exi_channel;
+			*(vu8*)VAR_EXI_SLOT = (*(vu8*)VAR_EXI_SLOT & 0xF0) | (((exi_device << 2) | exi_channel) & 0x0F);
 			*(vu32**)VAR_EXI_REGS = ((vu32(*)[5])0xCC006800)[exi_channel];
 		}
 	}
@@ -167,7 +144,7 @@ s32 deviceHandler_USBGecko_setupFile(file_handle* file, file_handle* file2, Exec
 	}
 	
 	if(fragList) {
-		print_frag_list(fragList, numFrags);
+		printFragments(fragList, numFrags);
 		*(vu32**)VAR_FRAG_LIST = installPatch2(fragList, (numFrags + 1) * sizeof(file_frag));
 		free(fragList);
 		fragList = NULL;
@@ -200,7 +177,6 @@ s32 deviceHandler_USBGecko_init(file_handle* file) {
 }
 
 s32 deviceHandler_USBGecko_deinit(file_handle* file) {
-	initial_USBGecko_info.totalSpace = 0LL;
 	return 0;
 }
 

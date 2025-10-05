@@ -11,6 +11,7 @@ jobs:
     steps:
     - name: Install packages
       run: |
+        sudo rm /etc/apt/sources.list.d/devkitpro.list
         sudo apt-get update
         sudo apt-get install -y --no-install-recommends gcc gcc-mingw-w64-i686 libc6-dev libc6-i386 p7zip-full xorriso
         sudo dkp-pacman-key --recv-keys C8A2759C315CFBC3429CC2E422B803BA8AA3D7CE --keyserver keyserver.ubuntu.com
@@ -18,7 +19,7 @@ jobs:
         sudo sed -i '/^\[dkp-libs\]$/,$d' /opt/devkitpro/pacman/etc/pacman.conf
         sudo echo -e '[extremscorner-devkitpro]\nServer = https://packages.extremscorner.org/devkitpro/linux/$arch' >> /opt/devkitpro/pacman/etc/pacman.conf
         sudo dkp-pacman -Sy
-        sudo dkp-pacman -S --noconfirm --ask 4 gamecube-tools-git libogc2-git ppc-libmad ppc-libpsoarchive ppc-libxxhash ppc-zlib-ng-compat
+        sudo dkp-pacman -S --noconfirm --ask 4 devkitppc-licenses gamecube-tools-git libogc2-git libogc2-libdvm-git ppc-libdeflate ppc-libmad ppc-libpsoarchive ppc-libxxhash ppc-zlib-ng-compat
 
     - name: Checkout Swiss
       uses: actions/checkout@main

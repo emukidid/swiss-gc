@@ -22,6 +22,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include "deviceHandler.h"
+#include "filelock.h"
 
 static lwpq_t queue = LWP_TQUEUE_NULL;
 

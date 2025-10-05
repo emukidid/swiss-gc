@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2019-2023, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2019-2024, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -64,6 +64,8 @@ bool dtk_fill_buffer(void);
 #define DI_CMD_REQUEST_AUDIO_STATUS 0xE2
 #define DI_CMD_STOP_MOTOR           0xE3
 #define DI_CMD_AUDIO_BUFFER_CONFIG  0xE4
+
+#define DI_CMD_FLIPPY_IPC           0xB5
 
 #define DI_CMD_GCODE_READ           0xB2
 #define DI_CMD_GCODE_SET_DISC_FRAGS 0xB3

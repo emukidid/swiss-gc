@@ -73,18 +73,24 @@ enum TextureId
 	TEX_GCLOADER,
 	TEX_M2LOADER,
 	TEX_ETH2GC,
+	TEX_FLIPPY,
+	TEX_GCNET,
+	TEX_GCODE
 	TEX_KUNAIGC
 };
 
 extern GXTexObj ntscjTexObj;
 extern GXTexObj ntscuTexObj;
 extern GXTexObj palTexObj;
-extern GXTexObj mp3imgTexObj;
+extern GXTexObj dirimgTexObj;
 extern GXTexObj dolimgTexObj;
 extern GXTexObj dolcliimgTexObj;
 extern GXTexObj elfimgTexObj;
 extern GXTexObj fileimgTexObj;
-extern GXTexObj dirimgTexObj;
+extern GXTexObj fpkgimgTexObj;
+extern GXTexObj gcmimgTexObj;
+extern GXTexObj mp3imgTexObj;
+extern GXTexObj tgcimgTexObj;
 
 typedef struct kbBtn_ {
     int supportedEntryMode;
@@ -116,6 +122,7 @@ uiDrawObj_t* DrawTooltip(const char *tooltip);
 uiDrawObj_t* DrawTitleBar();
 void DrawUpdateProgressBar(uiDrawObj_t *evt, int percent);
 void DrawUpdateProgressBarDetail(uiDrawObj_t *evt, int percent, int speed, int timestart, int timeremain);
+void DrawUpdateProgressLoading(uiDrawObj_t *evt, int increment);
 void DrawUpdateMenuButtons(int selection);
 void DrawUpdateFileBrowserButton(uiDrawObj_t *evt, int mode);
 void DrawAddChild(uiDrawObj_t *parent, uiDrawObj_t *child);
@@ -128,8 +135,8 @@ uiDrawObj_t* DrawVertScrollBar(int x, int y, int width, int height, float scroll
 void DrawArgsSelector(const char *fileName);
 void DrawCheatsSelector(const char *fileName);
 void DrawGetTextEntry(int entryMode, const char *label, void *src, int size);
-void DrawInit();
-void DrawLoadBackdrop();
+void DrawInit(GXRModeObj *videoMode, bool black);
+void DrawLoadBackdrop(DEVICEHANDLER_INTERFACE *device);
 void DrawShutdown();
 void DrawVideoMode(GXRModeObj *videoMode);
 

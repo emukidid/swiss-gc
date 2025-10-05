@@ -171,7 +171,7 @@ static void exi_read(unsigned index, uint32_t *value)
 			break;
 		#ifndef USB
 		case 5:
-			if (!dev && chan != *VAR_EXI_SLOT) {
+			if (!dev && chan != (*VAR_EXI_SLOT & 0xF)) {
 				if (exi.reg[chan].cpr & 0b01000000000000) {
 					if (EXI[chan][0] & 0b01000000000000)
 						exi_remove_device(chan);
@@ -228,7 +228,7 @@ static void exi_write(unsigned index, uint32_t value)
 
 			if (chan == EXI_CHANNEL_0) {
 				if ((dev | dev2) & ~(1 << EXI_DEVICE_0)) {
-					if (*VAR_EXI_SLOT == EXI_CHANNEL_0)
+					if (chan == (*VAR_EXI_SLOT & 0x3))
 						end_read();
 
 					EXI[chan][0] = (value & 0b10001111111100) | (EXI[chan][0] & 0b00010000000001);
@@ -353,7 +353,8 @@ static void exi_read(unsigned index, uint32_t *value)
 				mask |= 0b00000000000011;
 			if (chan == EXI_CHANNEL_0 && (dev & (1 << EXI_DEVICE_2)))
 				mask |= 0b00001111111100;
-			if (chan == *VAR_EXI_SLOT)
+			if (chan == (*VAR_EXI_SLOT & 0x0F) ||
+				chan == (*VAR_EXI_SLOT & 0xF0) >> 4)
 				mask |= 0b01000000000000;
 
 			*value = exi.reg[chan].cpr | (EXI[chan][0] & ~mask);
@@ -459,7 +460,8 @@ static void exi_read(unsigned index, uint32_t *value)
 
 	switch (index % 5) {
 		case 0:
-			if (chan == *VAR_EXI_SLOT)
+			if (chan == (*VAR_EXI_SLOT & 0x0F) ||
+				chan == (*VAR_EXI_SLOT & 0xF0) >> 4)
 				mask |= 0b01000000000000;
 			#ifdef USB
 			if (chan == EXI_CHANNEL_1)
@@ -664,7 +666,9 @@ OSAlarm cover_alarm;
 OSAlarm read_alarm;
 
 #ifndef DI_PASSTHROUGH
-#ifdef GCODE
+#ifdef FLIPPY
+bool flippy_push_queue(void *buffer, uint32_t length, uint32_t offset, uint32_t command, frag_callback callback);
+#elifdef GCODE
 bool gcode_push_queue(void *buffer, uint32_t length, uint32_t offset, uint64_t sector, uint32_t command, frag_callback callback);
 #endif
 
@@ -703,7 +707,14 @@ static void di_execute_command()
 			di.error = 0;
 			break;
 		}
-		#if defined GCODE && !defined DTK
+		#if defined FLIPPY && !defined DTK
+		case DI_CMD_AUDIO_STREAM:
+		case DI_CMD_REQUEST_AUDIO_STATUS:
+		{
+			flippy_push_queue(&di.reg.immbuf, di.reg.cmdbuf2, di.reg.cmdbuf1, di.reg.cmdbuf0, di_complete_transfer);
+			return;
+		}
+		#elif defined GCODE && !defined DTK
 		case DI_CMD_AUDIO_STREAM:
 		case DI_CMD_REQUEST_AUDIO_STATUS:
 		{
@@ -772,7 +783,7 @@ static void di_execute_command()
 		{
 			if (di.status == 0 && change_disc()) {
 				di_open_cover();
-				#ifndef GCODE
+				#if !defined FLIPPY && !defined GCODE
 				OSSetAlarm(&cover_alarm, OSSecondsToTicks(1.5), di_close_cover);
 				#endif
 			}
@@ -1102,7 +1113,7 @@ static void pi_write(unsigned index, uint32_t value)
 			PI[index] = ((value << 2) & 0b100) | (value & ~0b100);
 			break;
 			#else
-			if (*VAR_DRIVE_PATCHED) {
+			if (*VAR_DRIVE_FLAGS & 0b0100) {
 				PI[index] = ((value << 2) & 0b100) | (value & ~0b100);
 
 				if (!di.reset && !(value & 0b100))

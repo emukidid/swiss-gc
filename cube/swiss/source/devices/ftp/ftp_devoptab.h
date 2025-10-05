@@ -8,7 +8,7 @@ extern "C" {
 #define MAX_FTP_MOUNTED 5
 
 #ifdef FTP_DEBUG
-#define NET_PRINTF(fmt, args...)  print_gecko(fmt, args)
+#define NET_PRINTF(fmt, args...)  print_debug(fmt, args)
 #define NET_ASSERT(x) assert(x)
 #else
 #define NET_PRINTF(fmt, args...)  do{}while(0)

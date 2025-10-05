@@ -43,10 +43,13 @@ typedef struct {
 	uint64_t fileBase;   // Raw sector on device
 	uint32_t offset;    			// Offset in the file
 	uint32_t size;      			// size of the file
-	int32_t fileAttrib;        // IS_FILE or IS_DIR
-	int32_t status;            // is the device ok
-	FILE *fp;				// file pointer
-	int32_t metaptr; // not used in usbgecko server side
+	uint8_t fileType;			// IS_FILE or IS_DIR
+	uint8_t fileAttrib;
+	uint16_t blockSize;
+	int32_t status;            	// is the device ok
+	uint32_t fp;				// file pointer
+	uint32_t ffsFp;				// file pointer (FATFS)
+	uint32_t meta; // not used in usbgecko server side
 	uint8_t other[128]; // not used in usbgecko server side
 	uint32_t uiObj;	// not used
 } file_handle;
@@ -140,7 +143,7 @@ void cache_path() {
 			memset(&cached_files[cached_files_num],0,sizeof(file_handle));
 			sprintf(&cached_files[cached_files_num].name[0],"%s",path);
 			cached_files[cached_files_num].size = fstat.st_size;
-			cached_files[cached_files_num].fileAttrib = S_ISDIR(fstat.st_mode) ? IS_DIR:IS_FILE;
+			cached_files[cached_files_num].fileType = S_ISDIR(fstat.st_mode) ? IS_DIR:IS_FILE;
 			cached_files_num++;
 			free(path);
 		}

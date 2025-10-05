@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2021-2022, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2021-2024, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -328,9 +328,9 @@ void schedule_read(OSTick ticks)
 
 void perform_read(uint32_t address, uint32_t length, uint32_t offset)
 {
-	if ((*VAR_IGR_TYPE & 0x80) && offset == 0x2440) {
+	if ((*VAR_DRIVE_FLAGS & 0b0010) && offset == 0x2440) {
+		*VAR_DRIVE_FLAGS &= ~0b0011;
 		*VAR_CURRENT_DISC = FRAGS_APPLOADER;
-		*VAR_SECOND_DISC = 0;
 	}
 
 	dvd.buffer = OSPhysicalToUncached(address);
@@ -360,7 +360,7 @@ bool change_disc(void)
 		OSSetAlarm(&cover_alarm, OSSecondsToTicks(1.5), di_close_cover);
 	}
 
-	if (*VAR_SECOND_DISC) {
+	if (*VAR_DRIVE_FLAGS & 0b0001) {
 		const frag_t *frag = NULL;
 		int fragnum = frag_get_list(*VAR_CURRENT_DISC ^ 1, &frag);
 
@@ -397,6 +397,10 @@ void reset_devices(void)
 	while (EXI[EXI_CHANNEL_1][3] & 0b000001);
 	while (EXI[EXI_CHANNEL_2][3] & 0b000001);
 
+	EXI[EXI_CHANNEL_0][0] = 0;
+	EXI[EXI_CHANNEL_1][0] = 0;
+	EXI[EXI_CHANNEL_2][0] = 0;
+
 	reset_device();
-	ipl_set_config(0);
+	ipl_set_config(1);
 }

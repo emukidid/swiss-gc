@@ -31,6 +31,6 @@ VIConfigure288p:
 	stb			%r7, VAR_VFILTER_ON (%r4)
 	stw			%r0, 0 (%r3)
 
-.globl VIConfigure288p_length
-VIConfigure288p_length:
-.long (VIConfigure288p_length - VIConfigure288p)
+.globl VIConfigure288p_size
+VIConfigure288p_size:
+.long (. - VIConfigure288p)

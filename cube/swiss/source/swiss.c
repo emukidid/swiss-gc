@@ -39,10 +39,12 @@
 #include "patcher.h"
 #include "dvd.h"
 #include "elf.h"
+#include "flippy.h"
 #include "gameid.h"
 #include "gcm.h"
 #include "mp3.h"
 #include "nkit.h"
+#include "rt4k.h"
 #include "wkf.h"
 #include "cheats.h"
 #include "settings.h"
@@ -72,60 +74,9 @@ int needsRefresh = 0;
 int current_view_start = 0;
 int current_view_end = 0;
 
-char *DiscIDNoNTSC[] = {"DLSP64", "G3FD69", "G3FF69", "G3FP69", "G3FS69", "GLRD64", "GLRF64", "GLRP64", "GM8P01", "GSWD64", "GSWF64", "GSWI64", "GSWP64", "GSWS64"};
-
 /* re-init video for a given game */
 void ogc_video__reset()
 {
-	char* gameID = (char*)&GCMDisk;
-	char region = wodeRegionToChar(GCMDisk.RegionCode);
-	int i;
-	
-	swissSettings.fontEncode = region == 'J';
-	
-	if(region == 'P')
-		swissSettings.sramVideo = SYS_VIDEO_PAL;
-	else if(swissSettings.sramVideo == SYS_VIDEO_PAL)
-		swissSettings.sramVideo = SYS_VIDEO_NTSC;
-	
-	if(swissSettings.gameVMode > 0 && swissSettings.disableVideoPatches < 2) {
-		swissSettings.sram60Hz = in_range(swissSettings.gameVMode, 1, 7);
-		swissSettings.sramProgressive = in_range(swissSettings.gameVMode, 4, 7) || in_range(swissSettings.gameVMode, 11, 14);
-		
-		if(swissSettings.sram60Hz) {
-			for(i = 0; i < sizeof(DiscIDNoNTSC)/sizeof(char*); i++) {
-				if(!strncmp(gameID, DiscIDNoNTSC[i], 6)) {
-					swissSettings.gameVMode += 7;
-					break;
-				}
-			}
-		}
-		if(swissSettings.sramProgressive && !getDTVStatus())
-			swissSettings.gameVMode = 0;
-	} else {
-		swissSettings.sram60Hz = getTVFormat() != VI_PAL;
-		swissSettings.sramProgressive = getScanMode() == VI_PROGRESSIVE;
-		
-		if(swissSettings.sramProgressive) {
-			if(swissSettings.sramVideo == SYS_VIDEO_PAL)
-				swissSettings.gameVMode = -2;
-			else
-				swissSettings.gameVMode = -1;
-		} else
-			swissSettings.gameVMode = 0;
-	}
-	
-	if(!strncmp(gameID, "GB3E51", 6)
-		|| (!strncmp(gameID, "G2OE41", 6) && swissSettings.sramLanguage == SYS_LANG_SPANISH)
-		|| !strncmp(gameID, "GMXP70", 6))
-		swissSettings.sramProgressive = 0;
-	
-	syssram* sram = __SYS_LockSram();
-	sram->ntd = swissSettings.sram60Hz ? (sram->ntd|0x40):(sram->ntd&~0x40);
-	sram->flags = swissSettings.sramProgressive ? (sram->flags|0x80):(sram->flags&~0x80);
-	__SYS_UnlockSram(1);
-	while(!__SYS_SyncSram());
-	
 	/* set TV mode for current game */
 	switch(swissSettings.gameVMode) {
 		case -2:
@@ -137,17 +88,19 @@ void ogc_video__reset()
 			newmode = &TVNtsc480Prog;
 			break;
 		case 0:
-			if(swissSettings.sramVideo == SYS_VIDEO_MPAL && !getDTVStatus()) {
-				sprintf(txtbuffer, "Video Mode: %s", "PAL-M 480i");
-				newmode = &TVMpal480IntDf;
-			}
-			else if(swissSettings.sramVideo == SYS_VIDEO_PAL) {
-				sprintf(txtbuffer, "Video Mode: %s", "PAL 576i");
-				newmode = &TVPal576IntDfScale;
-			}
-			else {
-				sprintf(txtbuffer, "Video Mode: %s", "NTSC 480i");
-				newmode = &TVNtsc480IntDf;
+			switch(swissSettings.sramVideo) {
+				case SYS_VIDEO_PAL:
+					sprintf(txtbuffer, "Video Mode: %s", "PAL 576i");
+					newmode = &TVPal576IntDfScale;
+					break;
+				case SYS_VIDEO_MPAL:
+					sprintf(txtbuffer, "Video Mode: %s", "PAL-M 480i");
+					newmode = &TVMpal480IntDf;
+					break;
+				default:
+					sprintf(txtbuffer, "Video Mode: %s", "NTSC 480i");
+					newmode = &TVNtsc480IntDf;
+					break;
 			}
 			break;
 		case 1 ... 3:
@@ -165,6 +118,9 @@ void ogc_video__reset()
 		case 11 ... 14:
 			sprintf(txtbuffer, "Video Mode: %s %s\n%s Mode selected.", "PAL", gameVModeStr[swissSettings.gameVMode], swissSettings.sram60Hz ? "60Hz":"50Hz");
 			newmode = &TVPal576ProgScale;
+			break;
+		default:
+			newmode = NULL;
 			break;
 	}
 	if((newmode != NULL) && (newmode != getVideoMode())) {
@@ -193,7 +149,9 @@ void drawCurrentDevice(uiDrawObj_t *containerPanel) {
 				, scaledWidth, scaledHeight, // scaled image
 				0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
 	DrawAddChild(containerPanel, devImageLabel);
-	if(devices[DEVICE_CUR]->location == LOC_MEMCARD_SLOT_A)
+	if(devices[DEVICE_CUR]->location & LOC_SYSTEM)
+		sprintf(txtbuffer, "%s", "System");
+	else if(devices[DEVICE_CUR]->location == LOC_MEMCARD_SLOT_A)
 		sprintf(txtbuffer, "%s", "Slot A");
 	else if(devices[DEVICE_CUR]->location == LOC_MEMCARD_SLOT_B)
 		sprintf(txtbuffer, "%s", "Slot B");
@@ -205,39 +163,47 @@ void drawCurrentDevice(uiDrawObj_t *containerPanel) {
 		sprintf(txtbuffer, "%s", "Serial Port 2");
 	else if(devices[DEVICE_CUR]->location == LOC_HSP)
 		sprintf(txtbuffer, "%s", "Hi Speed Port");
-	else if(devices[DEVICE_CUR]->location == LOC_SYSTEM)
-		sprintf(txtbuffer, "%s", "System");
 	else
 		sprintf(txtbuffer, "%s", "Unknown");
 	uiDrawObj_t *devLocationLabel = DrawStyledLabel(30 + ((135-30) / 2), 195, txtbuffer, 0.65f, true, defaultColor);
 	DrawAddChild(containerPanel, devLocationLabel);
 	
 	device_info *info = devices[DEVICE_CUR]->info(devices[DEVICE_CUR]->initial);
-	if(info == NULL) return;
-	
-	uiDrawObj_t *devInfoBox = DrawTransparentBox(30, 225, 135, 330);	// Device size/extra info box
-	DrawAddChild(containerPanel, devInfoBox);
-	
-	// Total space
-	uiDrawObj_t *devTotalLabel = DrawStyledLabel(83, 233, "Total:", 0.6f, true, defaultColor);
-	DrawAddChild(containerPanel, devTotalLabel);
-	formatBytes(txtbuffer, info->totalSpace, 0, info->metric);
-	uiDrawObj_t *devTotalSizeLabel = DrawStyledLabel(83, 248, txtbuffer, 0.6f, true, defaultColor);
-	DrawAddChild(containerPanel, devTotalSizeLabel);
-	
-	// Free space
-	uiDrawObj_t *devFreeLabel = DrawStyledLabel(83, 268, "Free:", 0.6f, true, defaultColor);
-	DrawAddChild(containerPanel, devFreeLabel);
-	formatBytes(txtbuffer, info->freeSpace, 0, info->metric);
-	uiDrawObj_t *devFreeSizeLabel = DrawStyledLabel(83, 283, txtbuffer, 0.6f, true, defaultColor);
-	DrawAddChild(containerPanel, devFreeSizeLabel);
-	
-	// Used space
-	uiDrawObj_t *devUsedLabel = DrawStyledLabel(83, 303, "Used:", 0.6f, true, defaultColor);
-	DrawAddChild(containerPanel, devUsedLabel);
-	formatBytes(txtbuffer, info->totalSpace - info->freeSpace, 0, info->metric);
-	uiDrawObj_t *devUsedSizeLabel = DrawStyledLabel(83, 318, txtbuffer, 0.6f, true, defaultColor);
-	DrawAddChild(containerPanel, devUsedSizeLabel);
+	if (info == NULL) {
+		uiDrawObj_t *devInfoBox = DrawTransparentBox(30, 225, 135, 260);	// Device size/extra info box
+		DrawAddChild(containerPanel, devInfoBox);
+		
+		// Used space
+		uiDrawObj_t *devUsedLabel = DrawStyledLabel(83, 233, "Used:", 0.6f, true, defaultColor);
+		DrawAddChild(containerPanel, devUsedLabel);
+		formatBytes(txtbuffer, getCurrentDirSize(), 0, !(devices[DEVICE_CUR]->location & LOC_SYSTEM));
+		uiDrawObj_t *devUsedSizeLabel = DrawStyledLabel(83, 248, txtbuffer, 0.6f, true, defaultColor);
+		DrawAddChild(containerPanel, devUsedSizeLabel);
+	} else {
+		uiDrawObj_t *devInfoBox = DrawTransparentBox(30, 225, 135, 330);	// Device size/extra info box
+		DrawAddChild(containerPanel, devInfoBox);
+		
+		// Total space
+		uiDrawObj_t *devTotalLabel = DrawStyledLabel(83, 233, "Total:", 0.6f, true, defaultColor);
+		DrawAddChild(containerPanel, devTotalLabel);
+		formatBytes(txtbuffer, info->totalSpace, 0, info->metric);
+		uiDrawObj_t *devTotalSizeLabel = DrawStyledLabel(83, 248, txtbuffer, 0.6f, true, defaultColor);
+		DrawAddChild(containerPanel, devTotalSizeLabel);
+		
+		// Free space
+		uiDrawObj_t *devFreeLabel = DrawStyledLabel(83, 268, "Free:", 0.6f, true, defaultColor);
+		DrawAddChild(containerPanel, devFreeLabel);
+		formatBytes(txtbuffer, info->freeSpace, 0, info->metric);
+		uiDrawObj_t *devFreeSizeLabel = DrawStyledLabel(83, 283, txtbuffer, 0.6f, true, defaultColor);
+		DrawAddChild(containerPanel, devFreeSizeLabel);
+		
+		// Used space
+		uiDrawObj_t *devUsedLabel = DrawStyledLabel(83, 303, "Used:", 0.6f, true, defaultColor);
+		DrawAddChild(containerPanel, devUsedLabel);
+		formatBytes(txtbuffer, info->totalSpace - info->freeSpace, 0, info->metric);
+		uiDrawObj_t *devUsedSizeLabel = DrawStyledLabel(83, 318, txtbuffer, 0.6f, true, defaultColor);
+		DrawAddChild(containerPanel, devUsedSizeLabel);
+	}
 }
 
 void select_recent_entry() {
@@ -328,14 +294,13 @@ void drawFiles(file_handle** directory, int num_files, uiDrawObj_t *containerPan
 bool upToParent(file_handle* entry)
 {
 	// If we're a file, go up to the parent of the file
-	if(entry->fileAttrib == IS_FILE)
+	if(entry->fileType == IS_FILE)
 		getParentPath(entry->name, entry->name);
 	
 	// Go up a folder
 	return getParentPath(entry->name, entry->name);
 }
 
-uiDrawObj_t* loadingBox = NULL;
 uiDrawObj_t* renderFileBrowser(file_handle** directory, int num_files, uiDrawObj_t* filePanel)
 {
 	memset(txtbuffer,0,sizeof(txtbuffer));
@@ -344,10 +309,12 @@ uiDrawObj_t* renderFileBrowser(file_handle** directory, int num_files, uiDrawObj
 		needsRefresh=1;
 		return filePanel;
 	}
-	meta_thread_start();
+	uiDrawObj_t *loadingBox = DrawProgressLoading(PROGRESS_BOX_BOTTOMLEFT);
+	DrawPublish(loadingBox);
+	meta_thread_start(loadingBox);
 	while(1) {
-		loadingBox = DrawProgressLoading(PROGRESS_BOX_BOTTOMLEFT);
-		DrawPublish(loadingBox);
+		u32 retraceStart = VIDEO_GetRetraceCount();
+		DrawUpdateProgressLoading(loadingBox, +1);
 		uiDrawObj_t *newPanel = DrawContainer();
 		drawFiles(directory, num_files, newPanel);
 		if(filePanel != NULL) {
@@ -355,7 +322,7 @@ uiDrawObj_t* renderFileBrowser(file_handle** directory, int num_files, uiDrawObj
 		}
 		filePanel = newPanel;
 		DrawPublish(filePanel);
-		DrawDispose(loadingBox);
+		DrawUpdateProgressLoading(loadingBox, -1);
 		
 		u32 waitButtons = PAD_BUTTON_X|PAD_BUTTON_START|PAD_BUTTON_B|PAD_BUTTON_A|PAD_BUTTON_UP|PAD_BUTTON_DOWN|PAD_BUTTON_LEFT|PAD_BUTTON_RIGHT|PAD_TRIGGER_L|PAD_TRIGGER_R|PAD_TRIGGER_Z;
 		while ((padsStickY() > -16 && padsStickY() < 16) && !(padsButtonsHeld() & waitButtons))
@@ -382,19 +349,19 @@ uiDrawObj_t* renderFileBrowser(file_handle** directory, int num_files, uiDrawObj
 		if(padsButtonsHeld() & PAD_BUTTON_A) {
 			lockFile(directory[curSelection]);
 			//go into a folder or select a file
-			if(directory[curSelection]->fileAttrib==IS_DIR) {
+			if(directory[curSelection]->fileType==IS_DIR) {
 				memcpy(&curDir, directory[curSelection], sizeof(file_handle));
 				needsRefresh=1;
 			}
-			else if(directory[curSelection]->fileAttrib==IS_SPECIAL) {
+			else if(directory[curSelection]->fileType==IS_SPECIAL) {
 				memcpy(&curFile, &curDir, sizeof(file_handle));
 				curDir.fileBase = directory[curSelection]->fileBase;
 				needsDeviceChange = upToParent(&curDir);
 				needsRefresh=1;
 			}
-			else if(directory[curSelection]->fileAttrib==IS_FILE) {
+			else if(directory[curSelection]->fileType==IS_FILE) {
 				memcpy(&curFile, directory[curSelection], sizeof(file_handle));
-				if(canLoadFileType(&curFile.name[0])) {
+				if(canLoadFileType(curFile.name, devices[DEVICE_CUR]->extraExtensions)) {
 					meta_thread_stop();
 					load_file();
 				}
@@ -417,7 +384,7 @@ uiDrawObj_t* renderFileBrowser(file_handle** directory, int num_files, uiDrawObj
 		}
 		if((padsButtonsHeld() & PAD_TRIGGER_Z) && swissSettings.enableFileManagement) {
 			lockFile(directory[curSelection]);
-			if(directory[curSelection]->fileAttrib == IS_FILE || directory[curSelection]->fileAttrib == IS_DIR) {
+			if(directory[curSelection]->fileType == IS_FILE || directory[curSelection]->fileType == IS_DIR) {
 				memcpy(&curFile, directory[curSelection], sizeof(file_handle));
 				meta_thread_stop();
 				needsRefresh = manage_file() ? 1:0;
@@ -429,7 +396,7 @@ uiDrawObj_t* renderFileBrowser(file_handle** directory, int num_files, uiDrawObj
 					break;
 				}
 			}
-			else if(directory[curSelection]->fileAttrib == IS_SPECIAL) {
+			else if(directory[curSelection]->fileType == IS_SPECIAL) {
 				// Toggle autoload
 				if(!strcmp(&swissSettings.autoload[0], &curDir.name[0])
 				|| !fnmatch(&swissSettings.autoload[0], &curDir.name[0], FNM_PATHNAME)) {
@@ -457,7 +424,9 @@ uiDrawObj_t* renderFileBrowser(file_handle** directory, int num_files, uiDrawObj
 			break;
 		}
 		if(padsStickY() <= -16 || padsStickY() >= 16) {
-			usleep((abs(padsStickY()) > 64 ? 50000:100000) - abs(padsStickY()*64));
+			u32 retraceCount = lrintf((abs(padsStickY()) > 64 ? 0.045f : 0.1f) * VIDEO_GetRetraceRate());
+			while (VIDEO_GetRetraceCount() - retraceStart < retraceCount)
+				{ VIDEO_WaitVSync (); }
 		}
 		else {
 			while (padsButtonsHeld() & waitButtons)
@@ -465,6 +434,7 @@ uiDrawObj_t* renderFileBrowser(file_handle** directory, int num_files, uiDrawObj
 		}
 	}
 	meta_thread_stop();
+	DrawDispose(loadingBox);
 	return filePanel;
 }
 
@@ -476,16 +446,20 @@ void drawCurrentDeviceCarousel(uiDrawObj_t *containerPanel) {
 	DrawAddChild(containerPanel, devNameLabel);
 	
 	device_info *info = devices[DEVICE_CUR]->info(devices[DEVICE_CUR]->initial);
-	if(info == NULL) return;
-	
-	// Info labels
-	char *textPtr = txtbuffer;
-	textPtr = stpcpy(textPtr, "Total: ");
-	textPtr += formatBytes(textPtr, info->totalSpace, 0, info->metric);
-	textPtr = stpcpy(textPtr, " | Free: ");
-	textPtr += formatBytes(textPtr, info->freeSpace, 0, info->metric);
-	textPtr = stpcpy(textPtr, " | Used: ");
-	textPtr += formatBytes(textPtr, info->totalSpace - info->freeSpace, 0, info->metric);
+	if (info == NULL) {
+		char *textPtr = txtbuffer;
+		textPtr = stpcpy(textPtr, "Used: ");
+		textPtr += formatBytes(textPtr, getCurrentDirSize(), 0, !(devices[DEVICE_CUR]->location & LOC_SYSTEM));
+	} else {
+		// Info labels
+		char *textPtr = txtbuffer;
+		textPtr = stpcpy(textPtr, "Total: ");
+		textPtr += formatBytes(textPtr, info->totalSpace, 0, info->metric);
+		textPtr = stpcpy(textPtr, " | Free: ");
+		textPtr += formatBytes(textPtr, info->freeSpace, 0, info->metric);
+		textPtr = stpcpy(textPtr, " | Used: ");
+		textPtr += formatBytes(textPtr, info->totalSpace - info->freeSpace, 0, info->metric);
+	}
 	
 	int starting_pos = getVideoMode()->fbWidth-50-GetTextSizeInPixels(txtbuffer)*0.5;
 	uiDrawObj_t *devInfoLabel = DrawStyledLabel(starting_pos, 400, txtbuffer, 0.5f, false, defaultColor);
@@ -509,10 +483,10 @@ void drawFilesCarousel(file_handle** directory, int num_files, uiDrawObj_t *cont
 		}
 		//int left_num = curSelection - current_view_start; // Number of entries to the left
 		//int right_num = (current_view_end - curSelection)-1;
-		//print_gecko("%i entries to the left, %i to the right in this view\r\n", left_num, right_num);
-		//print_gecko("%i cur sel, %i start, %i end\r\n", curSelection, current_view_start, current_view_end);
+		//print_debug("%i entries to the left, %i to the right in this view\n", left_num, right_num);
+		//print_debug("%i cur sel, %i start, %i end\n", curSelection, current_view_start, current_view_end);
 		
-		bool parentLink = (directory[curSelection]->fileAttrib==IS_SPECIAL);
+		bool parentLink = (directory[curSelection]->fileType==IS_SPECIAL);
 		int y_base = 105; // top most point
 		int sub_entry_width = 40;
 		int sub_entry_height = 270;
@@ -571,13 +545,15 @@ uiDrawObj_t* renderFileCarousel(file_handle** directory, int num_files, uiDrawOb
 		needsRefresh=1;
 		return filePanel;
 	}
-	if(curSelection == 0 && num_files > 1 && directory[0]->fileAttrib==IS_SPECIAL) {
+	if(curSelection == 0 && num_files > 1 && directory[0]->fileType==IS_SPECIAL) {
 		curSelection = 1; // skip the ".." by default
 	}
-	meta_thread_start();
+	uiDrawObj_t *loadingBox = DrawProgressLoading(PROGRESS_BOX_TOPRIGHT);
+	DrawPublish(loadingBox);
+	meta_thread_start(loadingBox);
 	while(1) {
-		loadingBox = DrawProgressLoading(PROGRESS_BOX_TOPRIGHT);
-		DrawPublish(loadingBox);
+		u32 retraceStart = VIDEO_GetRetraceCount();
+		DrawUpdateProgressLoading(loadingBox, +1);
 		uiDrawObj_t *newPanel = DrawContainer();
 		drawFilesCarousel(directory, num_files, newPanel);
 		if(filePanel != NULL) {
@@ -585,7 +561,7 @@ uiDrawObj_t* renderFileCarousel(file_handle** directory, int num_files, uiDrawOb
 		}
 		filePanel = newPanel;
 		DrawPublish(filePanel);
-		DrawDispose(loadingBox);
+		DrawUpdateProgressLoading(loadingBox, -1);
 		
 		u32 waitButtons = PAD_BUTTON_X|PAD_BUTTON_START|PAD_BUTTON_B|PAD_BUTTON_A|PAD_BUTTON_UP|PAD_BUTTON_DOWN|PAD_BUTTON_LEFT|PAD_BUTTON_RIGHT|PAD_TRIGGER_L|PAD_TRIGGER_R|PAD_TRIGGER_Z;
 		while ((padsStickX() > -16 && padsStickX() < 16) && !(padsButtonsHeld() & waitButtons))
@@ -612,19 +588,19 @@ uiDrawObj_t* renderFileCarousel(file_handle** directory, int num_files, uiDrawOb
 		if((padsButtonsHeld() & PAD_BUTTON_A)) {
 			lockFile(directory[curSelection]);
 			//go into a folder or select a file
-			if(directory[curSelection]->fileAttrib==IS_DIR) {
+			if(directory[curSelection]->fileType==IS_DIR) {
 				memcpy(&curDir, directory[curSelection], sizeof(file_handle));
 				needsRefresh=1;
 			}
-			else if(directory[curSelection]->fileAttrib==IS_SPECIAL){
+			else if(directory[curSelection]->fileType==IS_SPECIAL){
 				memcpy(&curFile, &curDir, sizeof(file_handle));
 				curDir.fileBase = directory[curSelection]->fileBase;
 				needsDeviceChange = upToParent(&curDir);
 				needsRefresh=1;
 			}
-			else if(directory[curSelection]->fileAttrib==IS_FILE){
+			else if(directory[curSelection]->fileType==IS_FILE){
 				memcpy(&curFile, directory[curSelection], sizeof(file_handle));
-				if(canLoadFileType(&curFile.name[0])) {
+				if(canLoadFileType(curFile.name, devices[DEVICE_CUR]->extraExtensions)) {
 					meta_thread_stop();
 					load_file();
 				}
@@ -647,7 +623,7 @@ uiDrawObj_t* renderFileCarousel(file_handle** directory, int num_files, uiDrawOb
 		}
 		if((padsButtonsHeld() & PAD_TRIGGER_Z) && swissSettings.enableFileManagement) {
 			lockFile(directory[curSelection]);
-			if(directory[curSelection]->fileAttrib == IS_FILE || directory[curSelection]->fileAttrib == IS_DIR) {
+			if(directory[curSelection]->fileType == IS_FILE || directory[curSelection]->fileType == IS_DIR) {
 				memcpy(&curFile, directory[curSelection], sizeof(file_handle));
 				meta_thread_stop();
 				needsRefresh = manage_file() ? 1:0;
@@ -659,7 +635,7 @@ uiDrawObj_t* renderFileCarousel(file_handle** directory, int num_files, uiDrawOb
 					break;
 				}
 			}
-			else if(directory[curSelection]->fileAttrib == IS_SPECIAL) {
+			else if(directory[curSelection]->fileType == IS_SPECIAL) {
 				// Toggle autoload
 				if(!strcmp(&swissSettings.autoload[0], &curDir.name[0])
 				|| !fnmatch(&swissSettings.autoload[0], &curDir.name[0], FNM_PATHNAME)) {
@@ -687,7 +663,9 @@ uiDrawObj_t* renderFileCarousel(file_handle** directory, int num_files, uiDrawOb
 			break;
 		}
 		if(padsStickX() <= -16 || padsStickX() >= 16) {
-			usleep((abs(padsStickX()) > 64 ? 50000:100000) - abs(padsStickX()*64));
+			u32 retraceCount = lrintf((abs(padsStickX()) > 64 ? 0.045f : 0.1f) * VIDEO_GetRetraceRate());
+			while (VIDEO_GetRetraceCount() - retraceStart < retraceCount)
+				{ VIDEO_WaitVSync (); }
 		}
 		else {
 			while (padsButtonsHeld() & waitButtons)
@@ -695,6 +673,7 @@ uiDrawObj_t* renderFileCarousel(file_handle** directory, int num_files, uiDrawOb
 		}
 	}
 	meta_thread_stop();
+	DrawDispose(loadingBox);
 	return filePanel;
 }
 
@@ -743,13 +722,15 @@ uiDrawObj_t* renderFileFullwidth(file_handle** directory, int num_files, uiDrawO
 		needsRefresh=1;
 		return filePanel;
 	}
-	if(curSelection == 0 && num_files > 1 && directory[0]->fileAttrib==IS_SPECIAL) {
+	if(curSelection == 0 && num_files > 1 && directory[0]->fileType==IS_SPECIAL) {
 		curSelection = 1; // skip the ".." by default
 	}
-	meta_thread_start();
+	uiDrawObj_t *loadingBox = DrawProgressLoading(PROGRESS_BOX_TOPRIGHT);
+	DrawPublish(loadingBox);
+	meta_thread_start(loadingBox);
 	while(1) {
-		loadingBox = DrawProgressLoading(PROGRESS_BOX_TOPRIGHT);
-		DrawPublish(loadingBox);
+		u32 retraceStart = VIDEO_GetRetraceCount();
+		DrawUpdateProgressLoading(loadingBox, +1);
 		uiDrawObj_t *newPanel = DrawContainer();
 		drawFilesFullwidth(directory, num_files, newPanel);
 		if(filePanel != NULL) {
@@ -757,7 +738,7 @@ uiDrawObj_t* renderFileFullwidth(file_handle** directory, int num_files, uiDrawO
 		}
 		filePanel = newPanel;
 		DrawPublish(filePanel);
-		DrawDispose(loadingBox);
+		DrawUpdateProgressLoading(loadingBox, -1);
 		
 		u32 waitButtons = PAD_BUTTON_X|PAD_BUTTON_START|PAD_BUTTON_B|PAD_BUTTON_A|PAD_BUTTON_UP|PAD_BUTTON_DOWN|PAD_BUTTON_LEFT|PAD_BUTTON_RIGHT|PAD_TRIGGER_L|PAD_TRIGGER_R|PAD_TRIGGER_Z;
 		while ((padsStickY() > -16 && padsStickY() < 16) && !(padsButtonsHeld() & waitButtons))
@@ -784,19 +765,19 @@ uiDrawObj_t* renderFileFullwidth(file_handle** directory, int num_files, uiDrawO
 		if(padsButtonsHeld() & PAD_BUTTON_A) {
 			lockFile(directory[curSelection]);
 			//go into a folder or select a file
-			if(directory[curSelection]->fileAttrib==IS_DIR) {
+			if(directory[curSelection]->fileType==IS_DIR) {
 				memcpy(&curDir, directory[curSelection], sizeof(file_handle));
 				needsRefresh=1;
 			}
-			else if(directory[curSelection]->fileAttrib==IS_SPECIAL) {
+			else if(directory[curSelection]->fileType==IS_SPECIAL) {
 				memcpy(&curFile, &curDir, sizeof(file_handle));
 				curDir.fileBase = directory[curSelection]->fileBase;
 				needsDeviceChange = upToParent(&curDir);
 				needsRefresh=1;
 			}
-			else if(directory[curSelection]->fileAttrib==IS_FILE) {
+			else if(directory[curSelection]->fileType==IS_FILE) {
 				memcpy(&curFile, directory[curSelection], sizeof(file_handle));
-				if(canLoadFileType(&curFile.name[0])) {
+				if(canLoadFileType(curFile.name, devices[DEVICE_CUR]->extraExtensions)) {
 					meta_thread_stop();
 					load_file();
 				}
@@ -819,7 +800,7 @@ uiDrawObj_t* renderFileFullwidth(file_handle** directory, int num_files, uiDrawO
 		}
 		if((padsButtonsHeld() & PAD_TRIGGER_Z) && swissSettings.enableFileManagement) {
 			lockFile(directory[curSelection]);
-			if(directory[curSelection]->fileAttrib == IS_FILE || directory[curSelection]->fileAttrib == IS_DIR) {
+			if(directory[curSelection]->fileType == IS_FILE || directory[curSelection]->fileType == IS_DIR) {
 				memcpy(&curFile, directory[curSelection], sizeof(file_handle));
 				meta_thread_stop();
 				needsRefresh = manage_file() ? 1:0;
@@ -831,7 +812,7 @@ uiDrawObj_t* renderFileFullwidth(file_handle** directory, int num_files, uiDrawO
 					break;
 				}
 			}
-			else if(directory[curSelection]->fileAttrib == IS_SPECIAL) {
+			else if(directory[curSelection]->fileType == IS_SPECIAL) {
 				// Toggle autoload
 				if(!strcmp(&swissSettings.autoload[0], &curDir.name[0])
 				|| !fnmatch(&swissSettings.autoload[0], &curDir.name[0], FNM_PATHNAME)) {
@@ -859,7 +840,9 @@ uiDrawObj_t* renderFileFullwidth(file_handle** directory, int num_files, uiDrawO
 			break;
 		}
 		if(padsStickY() <= -16 || padsStickY() >= 16) {
-			usleep((abs(padsStickY()) > 64 ? 50000:100000) - abs(padsStickY()*64));
+			u32 retraceCount = lrintf((abs(padsStickY()) > 64 ? 0.045f : 0.1f) * VIDEO_GetRetraceRate());
+			while (VIDEO_GetRetraceCount() - retraceStart < retraceCount)
+				{ VIDEO_WaitVSync (); }
 		}
 		else {
 			while (padsButtonsHeld() & waitButtons)
@@ -867,6 +850,7 @@ uiDrawObj_t* renderFileFullwidth(file_handle** directory, int num_files, uiDrawO
 		}
 	}
 	meta_thread_stop();
+	DrawDispose(loadingBox);
 	return filePanel;
 }
 
@@ -888,8 +872,13 @@ bool select_dest_dir(file_handle* initial, file_handle* selection)
 		if(refresh) {
 			free(directory);
 			free(curDirEntries);
+			curDirEntries = NULL;
 			num_files = devices[DEVICE_DEST]->readDir(&curDir, &curDirEntries, IS_DIR);
-			directory = sortFiles(curDirEntries, num_files);
+			num_files = sortFiles(curDirEntries, num_files, &directory);
+			if(num_files <= 1 && destDirBox == NULL) {
+				memcpy(selection, &curDir, sizeof(file_handle));
+				break;
+			}
 			refresh = idx = 0;
 			scrollBarTabHeight = (int)((float)scrollBarHeight/(float)num_files);
 		}
@@ -902,7 +891,7 @@ bool select_dest_dir(file_handle* initial, file_handle* selection)
 		for(j = 0; i<max; ++i,++j) {
 			DrawAddChild(tempBox, DrawSelectableButton(50,fileListBase+(j*40), getVideoMode()->fbWidth-35, fileListBase+(j*40)+40, getRelativeName(directory[i]->name), (i == idx) ? B_SELECTED:B_NOSELECT));
 		}
-		if(destDirBox) {
+		if(destDirBox != NULL) {
 			DrawDispose(destDirBox);
 		}
 		destDirBox = tempBox;
@@ -913,11 +902,11 @@ bool select_dest_dir(file_handle* initial, file_handle* selection)
 		if((padsButtonsHeld() & PAD_BUTTON_DOWN) || padsStickY() < -16) {idx = (idx + 1) % num_files;	}
 		if((padsButtonsHeld() & PAD_BUTTON_A))	{
 			//go into a folder or select a file
-			if(directory[idx]->fileAttrib==IS_DIR) {
+			if(directory[idx]->fileType==IS_DIR) {
 				memcpy(&curDir, directory[idx], sizeof(file_handle));
 				refresh=1;
 			}
-			else if(directory[idx]->fileAttrib==IS_SPECIAL){
+			else if(directory[idx]->fileType==IS_SPECIAL){
 				curDir.fileBase = directory[idx]->fileBase;
 				upToParent(&curDir);
 				refresh=1;
@@ -937,7 +926,9 @@ bool select_dest_dir(file_handle* initial, file_handle* selection)
 		while (!(!(padsButtonsHeld() & PAD_BUTTON_X) && !(padsButtonsHeld() & (PAD_BUTTON_X|PAD_BUTTON_A|PAD_BUTTON_B|PAD_BUTTON_UP|PAD_BUTTON_DOWN))))
 			{ VIDEO_WaitVSync (); }
 	}
-	DrawDispose(destDirBox);
+	if(destDirBox != NULL) {
+		DrawDispose(destDirBox);
+	}
 	free(curDirEntries);
 	free(directory);
 	return cancelled;
@@ -1030,28 +1021,34 @@ void load_app(ExecutableFile *fileToPatch)
 	void* buffer;
 	u32 sizeToRead;
 	int type;
+	char* argz = NULL;
+	size_t argz_len = 0;
 	
 	// Get top of memory
 	u32 topAddr = getTopAddr();
 	if (topAddr < 0x81700000) {
 		topAddr = 0x81800000;
 	}
-	print_gecko("Top of RAM simulated as: 0x%08X\r\n", topAddr);
+	print_debug("Top of RAM simulated as: 0x%08X\n", topAddr);
 	
 	*(vu32*)(VAR_AREA+0x0028) = 0x01800000;
-	*(vu32*)(VAR_AREA+0x002C) = (swissSettings.debugUSB ? 0x10000004:0x00000001) + (*(vu32*)0xCC00302C >> 28);
+	*(vu32*)(VAR_AREA+0x002C) = swissSettings.enableUSBGecko ? SYS_CONSOLE_DEVELOPMENT_HW1 : SYS_CONSOLE_RETAIL_HW1;
+	*(vu32*)(VAR_AREA+0x002C) += SYS_GetFlipperRevision();
 	*(vu32*)(VAR_AREA+0x00CC) = swissSettings.sramVideo;
 	*(vu32*)(VAR_AREA+0x00D0) = 0x01000000;
 	*(vu32*)(VAR_AREA+0x00E8) = 0x81800000 - topAddr;
 	*(vu32*)(VAR_AREA+0x00EC) = topAddr;
 	*(vu32*)(VAR_AREA+0x00F0) = 0x01800000;
-	*(vu32*)(VAR_AREA+0x00F8) = TB_BUS_CLOCK;
-	*(vu32*)(VAR_AREA+0x00FC) = TB_CORE_CLOCK;
+	*(vu32*)(VAR_AREA+0x00F8) = SYS_GetBusFrequency();
+	*(vu32*)(VAR_AREA+0x00FC) = SYS_GetCoreFrequency();
 	
 	// Copy the game header to 0x80000000
 	memcpy(VAR_AREA,(void*)&GCMDisk,0x20);
 	
 	if(fileToPatch != NULL && fileToPatch->file != NULL) {
+		argz = getExternalPath(fileToPatch->file->name);
+		argz_len = strlen(argz) + 1;
+		
 		// For a DOL from a TGC, redirect the FST to the TGC FST.
 		if(fileToPatch->tgcBase + fileToPatch->tgcFileStartArea != 0) {
 			// Read FST to top of Main Memory (round to 32 byte boundary)
@@ -1112,13 +1109,13 @@ void load_app(ExecutableFile *fileToPatch)
 			progBox = DrawPublish(DrawProgressBar(true, 0, "Loading DOL"));
 		}
 		
-		print_gecko("DOL Lives at %08X\r\n", fileToPatch->offset);
+		print_debug("DOL Lives at %08X\n", fileToPatch->offset);
 		sizeToRead = (fileToPatch->size + 31) & ~31;
 		type = fileToPatch->type;
-		print_gecko("DOL size %i\r\n", sizeToRead);
+		print_debug("DOL size %i\n", sizeToRead);
 		
 		buffer = memalign(32, sizeToRead);
-		print_gecko("DOL buffer %08X\r\n", (u32)buffer);
+		print_debug("DOL buffer %08X\n", (u32)buffer);
 		if(buffer == NULL) goto fail;
 		
 		if(fileToPatch->patchFile != NULL) {
@@ -1132,7 +1129,8 @@ void load_app(ExecutableFile *fileToPatch)
 			if(devices[DEVICE_PATCHES]->readFile(fileToPatch->patchFile, &old_hash, sizeof(old_hash)) != sizeof(old_hash) ||
 				!XXH128_isEqual(old_hash, new_hash)) {
 				devices[DEVICE_PATCHES]->deleteFile(fileToPatch->patchFile);
-				message = "Failed integrity check!";
+				sprintf(txtbuffer, "Failed integrity check in patched file!\nPlease test %s for defects.", devices[DEVICE_PATCHES]->deviceName);
+				message = txtbuffer;
 				goto fail;
 			}
 		}
@@ -1221,36 +1219,40 @@ void load_app(ExecutableFile *fileToPatch)
 		kenobi_install_engine();
 	}
 	
+	if(devices[DEVICE_PATCHES] && !(devices[DEVICE_PATCHES]->quirks & QUIRK_NO_DEINIT)) {
+		devices[DEVICE_PATCHES]->deinit(devices[DEVICE_PATCHES]->initial);
+	}
 	// Don't spin down the drive when running something from it...
-	if(devices[DEVICE_CUR] != &__device_dvd) {
+	if(!(devices[DEVICE_CUR]->quirks & QUIRK_NO_DEINIT)) {
 		devices[DEVICE_CUR]->deinit(devices[DEVICE_CUR]->initial);
 	}
-	if(devices[DEVICE_CUR]->location == LOC_DVD_CONNECTOR) {
+	if(devices[DEVICE_CUR]->location & LOC_DVD_CONNECTOR) {
 		// Check DVD Status, make sure it's error code 0
-		print_gecko("DVD: %08X\r\n",dvd_get_error());
+		print_debug("DVD: %08X\n",dvd_get_error());
+	}
+	else if(swissSettings.hasFlippyDrive) {
+		flippy_bypass(false);
+		flippy_reset();
 	}
 	
 	DrawDispose(progBox);
 	DrawShutdown();
 	
-	VIDEO_SetPostRetraceCallback(NULL);
-	VIDEO_SetBlack(true);
-	VIDEO_Flush();
-	VIDEO_WaitVSync();
-	
-	print_gecko("libogc shutdown and boot game!\r\n");
+	print_debug("libogc shutdown and boot game!\n");
 	if(devices[DEVICE_CUR] == &__device_sd_a || devices[DEVICE_CUR] == &__device_sd_b || devices[DEVICE_CUR] == &__device_sd_c) {
 		s32 exi_channel;
 		if(getExiDeviceByLocation(devices[DEVICE_CUR]->location, &exi_channel, NULL)) {
 			sdgecko_setPageSize(exi_channel, 512);
-			print_gecko("set size\r\n");
+			sdgecko_enableCRC(exi_channel, false);
+			print_debug("set size\n");
 		}
 	}
 	else if(devices[DEVICE_PATCHES] == &__device_sd_a || devices[DEVICE_PATCHES] == &__device_sd_b || devices[DEVICE_PATCHES] == &__device_sd_c) {
 		s32 exi_channel;
 		if(getExiDeviceByLocation(devices[DEVICE_PATCHES]->location, &exi_channel, NULL)) {
 			sdgecko_setPageSize(exi_channel, 512);
-			print_gecko("set size\r\n");
+			sdgecko_enableCRC(exi_channel, false);
+			print_debug("set size\n");
 		}
 	}
 	if(type == PATCH_BS2) {
@@ -1260,18 +1262,19 @@ void load_app(ExecutableFile *fileToPatch)
 		BINtoARAM(buffer, sizeToRead, 0x80003100, 0x80003100);
 	}
 	else if(type == PATCH_DOL || type == PATCH_DOL_PRS) {
-		DOLtoARAM(buffer, NULL, 0);
+		DOLtoARAM(buffer, argz, argz_len);
 	}
 	else if(type == PATCH_ELF) {
-		ELFtoARAM(buffer, NULL, 0);
+		ELFtoARAM(buffer, argz, argz_len);
 	}
 	SYS_ResetSystem(SYS_HOTRESET, 0, FALSE);
 	__builtin_unreachable();
 
 fail:
-	free(buffer);
 	DrawDispose(progBox);
+	free(buffer);
 fail_early:
+	free(argz);
 	if(message) {
 		uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_FAIL, message));
 		wait_press_A();
@@ -1279,13 +1282,10 @@ fail_early:
 	}
 }
 
-void boot_dol()
-{ 
-	void *dol_buffer;
-	void *ptr;
-  
-	dol_buffer = memalign(32, curFile.size);
-	if(!dol_buffer) {
+void boot_dol(file_handle* file, int argc, char *argv[])
+{
+	void *buffer = memalign(32, file->size);
+	if(!buffer) {
 		uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL,"DOL is too big. Press A.");
 		DrawPublish(msgBox);
 		wait_press_A();
@@ -1294,17 +1294,18 @@ void boot_dol()
 	}
 		
 	int i=0;
-	ptr = dol_buffer;
+	void *ptr = buffer;
 	uiDrawObj_t* progBar = DrawProgressBar(false, 0, "Loading DOL");
 	DrawPublish(progBar);
-	for(i = 0; i < curFile.size; i+= 131072) {
-		DrawUpdateProgressBar(progBar, (int)((float)((float)i/(float)curFile.size)*100));
+	for(i = 0; i < file->size; i+= 131072) {
+		DrawUpdateProgressBar(progBar, (int)((float)((float)i/(float)file->size)*100));
 		
-		devices[DEVICE_CUR]->seekFile(&curFile,i,DEVICE_HANDLER_SEEK_SET);
-		int size = i+131072 > curFile.size ? curFile.size-i : 131072; 
-		if(devices[DEVICE_CUR]->readFile(&curFile,ptr,size)!=size) {
+		file->device->seekFile(file,i,DEVICE_HANDLER_SEEK_SET);
+		int size = i+131072 > file->size ? file->size-i : 131072; 
+		if(file->device->readFile(file,ptr,size)!=size) {
 			DrawDispose(progBar);
-			free(dol_buffer);
+			free(buffer);
+			file->device->closeFile(file);
 			uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL,"Failed to read DOL. Press A.");
 			DrawPublish(msgBox);
 			wait_press_A();
@@ -1314,10 +1315,11 @@ void boot_dol()
   		ptr+=size;
 	}
 	
-	XXH64_hash_t hash = XXH3_64bits(dol_buffer, curFile.size);
-	if(!valid_dol_xxh3(&curFile, hash)) {
+	XXH64_hash_t hash = XXH3_64bits(buffer, file->size);
+	if(!valid_dol_xxh3(file, hash)) {
 		DrawDispose(progBar);
-		free(dol_buffer);
+		free(buffer);
+		file->device->closeFile(file);
 		uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL,"DOL is corrupted. Press A.");
 		DrawPublish(msgBox);
 		wait_press_A();
@@ -1335,23 +1337,45 @@ void boot_dol()
 			DrawDispose(msgBox);
 		}
 	}
-	
-	// Build a command line to pass to the DOL
-	char *argz = getExternalPath(&curFile.name[0]);
-	size_t argz_len = strlen(argz) + 1;
 
 	char fileName[PATHNAME_MAX];
-	memset(&fileName[0], 0, PATHNAME_MAX);
-	strncpy(&fileName[0], &curFile.name[0], strrchr(&curFile.name[0], '.') - &curFile.name[0]);
-	print_gecko("DOL file name without extension [%s]\r\n", fileName);
-	
+	memset(fileName, 0, PATHNAME_MAX);
+	strncpy(fileName, file->name, strrchr(file->name, '.') - file->name);
+	print_debug("DOL file name without extension [%s]\n", fileName);
+
+	// .iso disc image file
+	file_handle *imageFile = calloc(1, sizeof(file_handle));
+	snprintf(imageFile->name, PATHNAME_MAX, "%s.iso", fileName);
+
+	if(!fnmatch("*/apps/*/*", file->name, FNM_PATHNAME | FNM_CASEFOLD | FNM_LEADING_DIR)) {
+		getParentPath(imageFile->name, imageFile->name);
+		concat_path(imageFile->name, imageFile->name, "data.iso");
+	}
+	if(devices[DEVICE_CUR]->statFile) {
+		devices[DEVICE_CUR]->statFile(imageFile);
+	}
+
+	file_handle *bootFile = NULL;
+	if(devices[DEVICE_CUR] == &__device_gcloader) {
+		bootFile = calloc(1, sizeof(file_handle));
+
+		if(!gcloaderGetBootFile(bootFile)) {
+			free(bootFile);
+			bootFile = NULL;
+		}
+	}
+
+	// Build a command line to pass to the DOL
+	char *argz = getExternalPath(imageFile->fileType == IS_FILE ? imageFile->name : file->name);
+	size_t argz_len = strlen(argz) + 1;
+
 	// .cli argument file
 	file_handle *cliArgFile = calloc(1, sizeof(file_handle));
 	snprintf(cliArgFile->name, PATHNAME_MAX, "%s.cli", fileName);
 	
 	// we found something, use parameters (.cli)
 	if(devices[DEVICE_CUR]->readFile(cliArgFile, NULL, 0) == 0 && cliArgFile->size) {
-		print_gecko("Argument file found [%s]\r\n", cliArgFile->name);
+		print_debug("Argument file found [%s]\n", cliArgFile->name);
 		char *cli_buffer = calloc(1, cliArgFile->size + 1);
 		if(cli_buffer) {
 			devices[DEVICE_CUR]->seekFile(cliArgFile, 0, DEVICE_HANDLER_SEEK_SET);
@@ -1377,7 +1401,7 @@ void boot_dol()
 	
 	// we found something, parse and display parameters for selection (.dcp)
 	if(devices[DEVICE_CUR]->readFile(dcpArgFile, NULL, 0) == 0 && dcpArgFile->size) {
-		print_gecko("Argument file found [%s]\r\n", dcpArgFile->name);
+		print_debug("Argument file found [%s]\n", dcpArgFile->name);
 		char *dcp_buffer = calloc(1, dcpArgFile->size + 1);
 		if(dcp_buffer) {
 			devices[DEVICE_CUR]->seekFile(dcpArgFile, 0, DEVICE_HANDLER_SEEK_SET);
@@ -1389,41 +1413,58 @@ void boot_dol()
 
 			Parameters *params = (Parameters*)getParameters();
 			if(params->num_params > 0) {
-				DrawArgsSelector(getRelativeName(&curFile.name[0]));
+				DrawArgsSelector(getRelativeName(file->name));
 				// Get an argv back or none.
-				populateArgv(&argz, &argz_len, &curFile.name[0]);
+				populateArgz(&argz, &argz_len);
 			}
 		}
 	}
 	devices[DEVICE_CUR]->closeFile(dcpArgFile);
 	free(dcpArgFile);
 
-	if(devices[DEVICE_CUR] != NULL) devices[DEVICE_CUR]->deinit( devices[DEVICE_CUR]->initial );
-	// Boot
-	if(!memcmp(dol_buffer, ELFMAG, SELFMAG)) {
-		ELFtoARAM(dol_buffer, argz, argz_len);
-	}
-	else if(endsWith(curFile.name, "/SDLOADER.BIN")) {
-		BINtoARAM(dol_buffer, curFile.size, 0x81700000, 0x81700000);
-	}
-	else if(branchResolve(dol_buffer, PATCH_BIN, 0)) {
-		BINtoARAM(dol_buffer, curFile.size, 0x80003100, 0x80003100);
-	}
-	else {
-		DOLtoARAM(dol_buffer, argz, argz_len);
+	for(i = 1; i < argc; i++) {
+		argz_add(&argz, &argz_len, argv[i]);
 	}
 
-	free(dol_buffer);
+	// Boot
+	if(devices[DEVICE_CUR]->location == LOC_DVD_CONNECTOR) {
+		devices[DEVICE_CUR]->setupFile(imageFile, bootFile, NULL, -1);
+	}
+	if(swissSettings.hasFlippyDrive && needs_flippy_bypass(file, hash)) {
+		flippy_bypass(true);
+	}
+
+	if(!memcmp(buffer, ELFMAG, SELFMAG)) {
+		ELFtoARAM(buffer, argz, argz_len);
+	}
+	else if(endsWith(file->name, "/SDLOADER.BIN")) {
+		BINtoARAM(buffer, file->size, 0x81700000, 0x81700000);
+	}
+	else if(branchResolve(buffer, PATCH_BIN, 0)) {
+		BINtoARAM(buffer, file->size, 0x80003100, 0x80003100);
+	}
+	else {
+		DOLtoARAM(buffer, argz, argz_len);
+	}
+	free(argz);
+	free(buffer);
+
+	devices[DEVICE_CUR]->closeFile(bootFile);
+	devices[DEVICE_CUR]->closeFile(imageFile);
+	free(bootFile);
+	free(imageFile);
 }
 
 /* Manage file  - The user will be asked what they want to do with the currently selected file - copy/move/delete*/
 bool manage_file() {
-	bool isFile = curFile.fileAttrib == IS_FILE;
+	bool isFile = curFile.fileType == IS_FILE;
+	bool isHidden = curFile.fileAttrib & ATTRIB_HIDDEN;
 	bool canWrite = devices[DEVICE_CUR]->features & FEAT_WRITE;
 	bool canMove = canWrite && isFile;
 	bool canCopy = isFile;
 	bool canDelete = canWrite && devices[DEVICE_CUR]->deleteFile;
 	bool canRename = canWrite && devices[DEVICE_CUR]->renameFile;
+	bool canHide = canWrite && devices[DEVICE_CUR]->hideFile;
 	
 	// Ask the user what they want to do with the selected entry
 	uiDrawObj_t* manageFileBox = DrawEmptyBox(10,150, getVideoMode()->fbWidth-10, 320);
@@ -1431,15 +1472,16 @@ bool manage_file() {
 	DrawAddChild(manageFileBox, DrawStyledLabel(640/2, 160, txtbuffer, 1.0f, true, defaultColor));
 	float scale = GetTextScaleToFitInWidth(getRelativeName(curFile.name), getVideoMode()->fbWidth-10-10);
 	DrawAddChild(manageFileBox, DrawStyledLabel(640/2, 190, getRelativeName(curFile.name), scale, true, defaultColor));
-	sprintf(txtbuffer, "%s%s%s%s", 
+	sprintf(txtbuffer, "%s%s%s%s%s",
 					canCopy ? " (X) Copy " : "",
 					canMove ? " (Y) Move " : "",
 					canDelete ? " (Z) Delete " : "",
-					canRename ? " (R) Rename" : "");
-	DrawAddChild(manageFileBox, DrawStyledLabel(640/2, 250, txtbuffer, 1.0f, true, defaultColor));
+					canRename ? " (R) Rename " : "",
+					canHide ? isHidden ? " (L) Unhide " : " (L) Hide " : "");
+	DrawAddChild(manageFileBox, DrawStyledLabel(640/2, 250, txtbuffer, GetTextScaleToFitInWidth(txtbuffer, getVideoMode()->fbWidth-10-10), true, defaultColor));
 	DrawAddChild(manageFileBox, DrawStyledLabel(640/2, 310, "Press an option to continue, or B to return", 1.0f, true, defaultColor));
 	DrawPublish(manageFileBox);
-	u32 waitButtons = PAD_BUTTON_X|PAD_BUTTON_Y|PAD_BUTTON_B|PAD_TRIGGER_Z|PAD_TRIGGER_R;
+	u32 waitButtons = PAD_BUTTON_X|PAD_BUTTON_Y|PAD_BUTTON_B|PAD_TRIGGER_Z|PAD_TRIGGER_R|PAD_TRIGGER_L;
 	do {VIDEO_WaitVSync();} while (padsButtonsHeld() & waitButtons);
 	int option = 0;
 	while(1) {
@@ -1462,6 +1504,11 @@ bool manage_file() {
 		if(canRename && (buttons & PAD_TRIGGER_R)) {
 			option = RENAME_OPTION;
 			while(padsButtonsHeld() & PAD_TRIGGER_R){ VIDEO_WaitVSync (); }
+			break;
+		}
+		if(canRename && (buttons & PAD_TRIGGER_L)) {
+			option = HIDE_OPTION;
+			while(padsButtonsHeld() & PAD_TRIGGER_L){ VIDEO_WaitVSync (); }
 			break;
 		}
 		if(buttons & PAD_BUTTON_B) {
@@ -1495,8 +1542,12 @@ bool manage_file() {
 		}
 	}
 
+	// Handles (un)hiding directories or files on FAT FS devices.
+	if (canHide && option == HIDE_OPTION) {
+		devices[DEVICE_CUR]->hideFile(&curFile, !isHidden);
+	}
 	// Handles renaming directories or files on FAT FS devices.
-	if(canRename && option == RENAME_OPTION) {
+	else if(canRename && option == RENAME_OPTION) {
 		char *nameBuffer = calloc(1, sizeof(curFile.name));
 		char *parentPath = calloc(1, sizeof(curFile.name));
 		getParentPath(&curFile.name[0], parentPath);
@@ -1505,7 +1556,7 @@ bool manage_file() {
 		concat_path(txtbuffer, parentPath, nameBuffer);
 		bool modified = (strcmp(&curFile.name[0], txtbuffer) != 0) && strlen(nameBuffer) > 0;
 		if(modified) {
-			print_gecko("Renaming %s to %s\r\n", &curFile.name[0], txtbuffer);
+			print_debug("Renaming %s to %s\n", &curFile.name[0], txtbuffer);
 			u32 ret = devices[DEVICE_CUR]->renameFile(&curFile, txtbuffer);
 			sprintf(txtbuffer, "%s renamed!\nPress A to continue.", isFile ? "File" : "Directory");
 			uiDrawObj_t *msgBox = DrawMessageBox(D_INFO, ret ? "Move Failed! Press A to continue" : txtbuffer);
@@ -1573,7 +1624,7 @@ bool manage_file() {
 		destFile->fileBase = 0;
 		destFile->offset = 0;
 		destFile->size = 0;
-		destFile->fileAttrib = IS_FILE;
+		destFile->fileType = IS_FILE;
 		// Create a GCI if something is coming out from CARD to another device
 		if(isSrcCard && !isDestCard) {
 			strlcat(destFile->name, ".gci", PATHNAME_MAX);
@@ -1581,6 +1632,7 @@ bool manage_file() {
 
 		// If the destination file already exists, ask the user what to do
 		if(devices[DEVICE_DEST]->readFile(destFile, NULL, 0) == 0) {
+			devices[DEVICE_DEST]->closeFile(destFile);
 			uiDrawObj_t* dupeBox = DrawEmptyBox(10,150, getVideoMode()->fbWidth-10, 350);
 			DrawAddChild(dupeBox, DrawStyledLabel(640/2, 160, "File exists:", 1.0f, true, defaultColor));
 			float scale = GetTextScaleToFitInWidth(getRelativeName(curFile.name), getVideoMode()->fbWidth-10-10);
@@ -1732,7 +1784,7 @@ bool manage_file() {
 			u32 lastOffset = 0;
 			int speed = 0;
 			int timeremain = 0;
-			print_gecko("Copying %i byte file from %s to %s\r\n", curFile.size, &curFile.name[0], destFile->name);
+			print_debug("Copying %i byte file from %s to %s\n", curFile.size, &curFile.name[0], destFile->name);
 			while(curOffset < curFile.size) {
 				u32 buttons = padsButtonsHeld();
 				if(buttons & PAD_BUTTON_B) {
@@ -1834,7 +1886,7 @@ bool manage_file() {
 void verify_game()
 {
 	u32 crc = 0;
-	u32 curOffset = 0, cancelled = 0, chunkSize = (32*1024);
+	u32 curOffset = 0, cancelled = 0, chunkSize = (512*1024);
 	
 	if(devices[DEVICE_CUR]->location == LOC_DVD_CONNECTOR) {
 		devices[DEVICE_CUR]->setupFile(&curFile, NULL, NULL, -1);
@@ -1842,10 +1894,9 @@ void verify_game()
 			AUDIO_SetStreamVolLeft(0);
 			AUDIO_SetStreamVolRight(0);
 			AUDIO_SetStreamPlayState(AI_STREAM_START);
-			DVD_PrepareStreamAbs(&commandBlock, curFile.size & ~(32*1024-1), 0);
-			DVD_StopStreamAtEnd(&commandBlock);
+			DVD_PrepareStreamAbs(&DVDCommandBlock, curFile.size & ~(32*1024-1), 0);
+			DVD_StopStreamAtEnd(&DVDCommandBlock);
 		}
-		chunkSize = (512*1024);
 	}
 	
 	unsigned char *readBuffer = (unsigned char*)memalign(32,chunkSize);
@@ -1906,7 +1957,7 @@ void verify_game()
 fail:
 	if(devices[DEVICE_CUR]->location == LOC_DVD_CONNECTOR) {
 		if(swissSettings.audioStreaming) {
-			DVD_CancelStream(&commandBlock);
+			DVD_CancelStream(&DVDCommandBlock);
 			AUDIO_SetStreamPlayState(AI_STREAM_STOP);
 		}
 		devices[DEVICE_CUR]->closeFile(&curFile);
@@ -1933,7 +1984,7 @@ void load_game() {
 			msgBox = DrawPublish(DrawMessageBox(D_WARN, "Invalid or Corrupt File!"));
 			sleep(2);
 			DrawDispose(msgBox);
-			return;
+			goto exit;
 		}
 		
 		devices[DEVICE_CUR]->seekFile(&curFile,tgcFile.headerStart,DEVICE_HANDLER_SEEK_SET);
@@ -1942,7 +1993,7 @@ void load_game() {
 			msgBox = DrawPublish(DrawMessageBox(D_WARN, "Invalid or Corrupt File!"));
 			sleep(2);
 			DrawDispose(msgBox);
-			return;
+			goto exit;
 		}
 		
 		swissSettings.audioStreaming = is_streaming_disc(&GCMDisk);
@@ -1958,14 +2009,14 @@ void load_game() {
 					msgBox = DrawPublish(DrawMessageBox(D_WARN, "Invalid or Corrupt File! (Fake SD Card?)"));
 					sleep(2);
 					DrawDispose(msgBox);
-					return;
+					goto exit;
 				}
 			}
 			DrawDispose(msgBox);
 			msgBox = DrawPublish(DrawMessageBox(D_WARN, "Invalid or Corrupt File!"));
 			sleep(2);
 			DrawDispose(msgBox);
-			return;
+			goto exit;
 		}
 		
 		swissSettings.audioStreaming = is_streaming_disc(&GCMDisk);
@@ -1975,14 +2026,14 @@ void load_game() {
 			msgBox = DrawPublish(DrawMessageBox(D_WARN, "Please reconvert to NKit.iso using\nNKit bundled with this Swiss release."));
 			sleep(5);
 			DrawDispose(msgBox);
-			return;
+			goto exit;
 		}
 		else if(is_nkit_format(&GCMDisk) && !valid_gcm_boot(&GCMDisk)) {
 			DrawDispose(msgBox);
 			msgBox = DrawPublish(DrawMessageBox(D_WARN, "File is not playable in NKit.iso format.\nPlease convert back to ISO using NKit."));
 			sleep(5);
 			DrawDispose(msgBox);
-			return;
+			goto exit;
 		}
 		else if(is_redump_disc(curFile.meta) && !valid_gcm_size(&GCMDisk, curFile.size)) {
 			if(swissSettings.audioStreaming && !valid_gcm_size2(&GCMDisk, curFile.size)) {
@@ -1990,7 +2041,7 @@ void load_game() {
 				msgBox = DrawPublish(DrawMessageBox(D_WARN, "File is a bad dump and is not playable.\nPlease attempt recovery using NKit."));
 				sleep(5);
 				DrawDispose(msgBox);
-				return;
+				goto exit;
 			}
 			else {
 				DrawDispose(msgBox);
@@ -2004,19 +2055,26 @@ void load_game() {
 		msgBox = DrawPublish(DrawMessageBox(D_WARN, "Device does not support audio streaming.\nThis may impact playability."));
 		sleep(5);
 	}
+	if(swissSettings.exiSpeed && (devices[DEVICE_CUR]->quirks & QUIRK_EXI_SPEED)) {
+		DrawDispose(msgBox);
+		msgBox = DrawPublish(DrawMessageBox(D_WARN, "Device is operating in a degraded state.\nThis may impact playability."));
+		sleep(5);
+	}
+	gameID_early_set(&GCMDisk);
 	DrawDispose(msgBox);
 	
 	// Find the config for this game, or default if we don't know about it
 	ConfigEntry *config = calloc(1, sizeof(ConfigEntry));
 	memcpy(config->game_id, &GCMDisk.ConsoleID, 4);
 	memcpy(config->game_name, GCMDisk.GameName, 64);
+	config->region = wodeRegionToChar(GCMDisk.RegionCode);
 	config->forceCleanBoot = is_diag_disc(&GCMDisk);
 	config_find(config);
 	
 	// Show game info or return to the menu
 	if(!info_game(config)) {
 		free(config);
-		return;
+		goto exit;
 	}
 	
 	if(devices[DEVICE_CONFIG] != NULL) {
@@ -2030,12 +2088,12 @@ void load_game() {
 	
 	// Load config for this game into our current settings
 	config_load_current(config);
-	gameID_early_set(&GCMDisk);
+	rt4k_load_profile(config->rt4kProfile);
 	
-	if(config->forceCleanBoot || (config->preferCleanBoot && devices[DEVICE_CUR]->location == LOC_DVD_CONNECTOR)) {
+	if(config->forceCleanBoot || (config->preferCleanBoot && (devices[DEVICE_CUR]->location & LOC_DVD_CONNECTOR))) {
 		gameID_set(&GCMDisk, get_gcm_boot_hash(&GCMDisk, curFile.meta));
 		
-		if(devices[DEVICE_CUR]->location != LOC_DVD_CONNECTOR) {
+		if(!(devices[DEVICE_CUR]->location & LOC_DVD_CONNECTOR)) {
 			msgBox = DrawPublish(DrawMessageBox(D_WARN, "Device does not support clean boot."));
 			sleep(2);
 			DrawDispose(msgBox);
@@ -2047,7 +2105,7 @@ void load_game() {
 			DrawDispose(msgBox);
 			goto fail;
 		}
-		if(devices[DEVICE_CUR] != &__device_dvd) {
+		if(!(devices[DEVICE_CUR]->quirks & QUIRK_NO_DEINIT)) {
 			devices[DEVICE_CUR]->deinit(devices[DEVICE_CUR]->initial);
 		}
 		
@@ -2062,7 +2120,8 @@ void load_game() {
 	// Auto load cheats if the set to auto load and if any are found
 	if(swissSettings.autoCheats) {
 		if(findCheats(true) > 0) {
-			int appliedCount = applyAllCheats();
+			loadCheatsSelection();
+			int appliedCount = getEnabledCheatsCount();
 			sprintf(txtbuffer, "Applied %i cheats", appliedCount);
 			msgBox = DrawPublish(DrawMessageBox(D_INFO, txtbuffer));
 			sleep(1);
@@ -2094,7 +2153,7 @@ void load_game() {
 		fileToPatch = select_alt_dol(filesToPatch, numToPatch);
 	}
 	if(fileToPatch != NULL) {
-		print_gecko("Alt DOL selected: %s\r\n", fileToPatch->name);
+		print_debug("Alt DOL selected: %s\n", fileToPatch->name);
 		gameID_set(&GCMDisk, fileToPatch->hash);
 	}
 	else if(tgcFile.magic == TGC_MAGIC) {
@@ -2128,18 +2187,36 @@ void load_game() {
 		fileToPatch->type = PATCH_BS2;
 	}
 	
+	s32 exi_channel = EXI_CHANNEL_MAX;
+	s32 exi_device = EXI_DEVICE_MAX;
+	switch(swissSettings.disableMemoryCard) {
+		case 1:
+			if(EXI_Probe(EXI_CHANNEL_0)) {
+				exi_channel = EXI_CHANNEL_0;
+				exi_device = EXI_DEVICE_0;
+			}
+			break;
+		case 2:
+			if(EXI_Probe(EXI_CHANNEL_1)) {
+				exi_channel = EXI_CHANNEL_1;
+				exi_device = EXI_DEVICE_0;
+			}
+			break;
+	}
+	
 	*(vu8*)VAR_CURRENT_DISC = disc2File && disc2File == fileToPatch->file;
-	*(vu8*)VAR_SECOND_DISC = !!disc2File;
-	*(vu8*)VAR_DRIVE_PATCHED = drive_status == DEBUG_MODE;
+	*(vu8*)VAR_DRIVE_FLAGS = (!!swissSettings.hasFlippyDrive << 3) | ((drive_status == DEBUG_MODE) << 2) | ((tgcFile.magic == TGC_MAGIC) << 1) | !!disc2File;
 	*(vu8*)VAR_EMU_READ_SPEED = swissSettings.emulateReadSpeed;
-	*(vu32**)VAR_EXI_REGS = NULL;
-	*(vu8*)VAR_EXI_SLOT = EXI_CHANNEL_MAX;
-	*(vu8*)VAR_EXI_CPR = (EXI_CHANNEL_MAX << 6) | EXI_SPEED1MHZ;
-	*(vu8*)VAR_SD_SHIFT = 0;
-	*(vu8*)VAR_IGR_TYPE = swissSettings.igrType | (tgcFile.magic == TGC_MAGIC ? 0x80:0x00);
+	*(vu8*)VAR_IGR_TYPE = swissSettings.igrType;
 	*(vu32**)VAR_FRAG_LIST = NULL;
-	net_get_mac_address(VAR_CLIENT_MAC);
-	*(vu32**)VAR_EXI2_REGS = getExiRegsByLocation(bba_location);
+	*(vu8*)VAR_SD_SHIFT = 0;
+	*(vu8*)VAR_EXI_SLOT = (exi_device << 6) | (exi_channel << 4) | (exi_device << 2) | exi_channel;
+	*(vu8*)VAR_EXI_CPR = (EXI_CHANNEL_MAX << 6) | EXI_SPEED1MHZ;
+	*(vu8*)VAR_EXI2_CPR = (EXI_CHANNEL_MAX << 6) | EXI_SPEED1MHZ;
+	*(vu32**)VAR_EXI_REGS = NULL;
+	net_get_mac_address((u8*)VAR_CLIENT_MAC);
+	*(vu32**)VAR_EXI2_REGS = NULL;
+	*(vu8*)VAR_CURRENT_FIELD = VI_FRAME;
 	*(vu8*)VAR_TRIGGER_LEVEL = swissSettings.triggerLevel;
 	*(vu8*)VAR_CARD_A_ID = 0x00;
 	*(vu8*)VAR_CARD_B_ID = 0x00;
@@ -2154,6 +2231,16 @@ void load_game() {
 		wait_press_A();
 		DrawDispose(msgBox);
 		goto fail_patched;
+	}
+
+	if(devices[DEVICE_CUR]->emulated() & EMU_ETHERNET) {
+		s32 exi_channel, exi_device, exi_interrupt;
+		if(getExiDeviceByLocation(bba_location, &exi_channel, &exi_device) &&
+			getExiInterruptByLocation(bba_location, &exi_interrupt)) {
+			*(vu8*)VAR_EXI_SLOT = (*(vu8*)VAR_EXI_SLOT & 0x0F) | (((exi_device << 6) | (exi_channel << 4)) & 0xF0);
+			*(vu8*)VAR_EXI2_CPR = (exi_interrupt << 6) | ((1 << exi_device) << 3) | (exi_device == EXI_DEVICE_0 ? EXI_SPEED32MHZ : EXI_SPEED16MHZ);
+			*(vu32**)VAR_EXI2_REGS = ((vu32(*)[5])0xCC006800)[exi_channel];
+		}
 	}
 
 	load_app(fileToPatch);
@@ -2174,9 +2261,10 @@ fail_patched:
 	setTopAddr(0);
 fail:
 	gameID_unset();
+	rt4k_load_profile(swissSettings.rt4kProfile);
 	config_unload_current();
 	free(config);
-
+exit:
 	devices[DEVICE_CUR]->closeFile(&curFile);
 	devices[DEVICE_CUR]->closeFile(disc2File);
 }
@@ -2189,11 +2277,38 @@ void load_file()
 	//if it's a DOL, boot it
 	if(strlen(fileName)>4) {
 		if(endsWith(fileName,".bin") || endsWith(fileName,".dol") || endsWith(fileName,".dol+cli") || endsWith(fileName,".elf")) {
-			boot_dol();
+			boot_dol(&curFile, 0, NULL);
 			// if it was invalid (overlaps sections, too large, etc..) it'll return
 			uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_WARN, "Invalid DOL"));
 			sleep(2);
 			DrawDispose(msgBox);
+			return;
+		}
+		else if(endsWith(fileName,".fpkg")) {
+			if(devices[DEVICE_CUR] == &__device_flippy || devices[DEVICE_CUR] == &__device_flippyflash) {
+				uiDrawObj_t *progBar = DrawPublish(DrawProgressBar(true, 0, "Resetting RP2040"));
+				flippy_closefrom(1);
+				flippy_reset();
+				refreshDeviceCode(false);
+				flippy_boot(FLIPPY_MODE_UPDATE);
+				flippybootstatus *status;
+				while((status = flippy_getbootstatus()) && status->current_progress != 0xFFFF) {
+					sprintf(txtbuffer, "%.64s\n%.64s", status->text, status->subtext);
+					uiDrawObj_t *newBar = DrawProgressBar(!status->show_progress_bar, (int)(((float)status->current_progress/(float)1000)*100), txtbuffer);
+					if(progBar != NULL) {
+						DrawDispose(progBar);
+					}
+					progBar = newBar;
+					DrawPublish(progBar);
+				}
+				DrawDispose(progBar);
+				deviceHandler_setDeviceAvailable(&__device_flippy, deviceHandler_Flippy_test());
+				deviceHandler_setDeviceAvailable(&__device_flippyflash, deviceHandler_FlippyFlash_test());
+				needsDeviceChange = !deviceHandler_getDeviceAvailable(devices[DEVICE_CUR]);
+				needsRefresh = 1;
+				return;
+			}
+			needsRefresh = manage_file() ? 1:0;
 			return;
 		}
 		else if(endsWith(fileName,".fzn")) {
@@ -2228,19 +2343,13 @@ void load_file()
 			DrawDispose(msgBox);
 			return;
 		}
-		else if(endsWith(fileName,".gcm") || endsWith(fileName,".iso") || endsWith(fileName,".tgc")) {
+		else if(endsWith(fileName,".fdi") || endsWith(fileName,".gcm") || endsWith(fileName,".iso") || endsWith(fileName,".tgc")) {
 			if(devices[DEVICE_CUR]->features & FEAT_BOOT_GCM) {
 				load_game();
 				memset(&GCMDisk, 0, sizeof(DiskHeader));
 			}
 			else {
-				uiDrawObj_t *msgBox = NULL;
-				if(devices[DEVICE_CUR] == &__device_sd_a || devices[DEVICE_CUR] == &__device_sd_b || devices[DEVICE_CUR] == &__device_sd_c) {
-					msgBox = DrawPublish(DrawMessageBox(D_WARN, "Device does not support disc images.\nSet EXI Speed to 16 MHz to bypass."));
-				}
-				else {
-					msgBox = DrawPublish(DrawMessageBox(D_WARN, "Device does not support disc images."));
-				}
+				uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_WARN, "Device does not support disc images."));
 				sleep(5);
 				DrawDispose(msgBox);
 			}
@@ -2354,7 +2463,7 @@ int check_game(file_handle *file, file_handle *file2, ExecutableFile *filesToPat
 	}
 	DrawDispose(msgBox);
 	
-	if(devices[DEVICE_CUR]->features & FEAT_HYPERVISOR) {
+	if(devices[DEVICE_CUR]->emulated()) {
 		patch_gcm(filesToPatch, numToPatch);
 	}
 	return numToPatch;
@@ -2413,7 +2522,7 @@ uiDrawObj_t* draw_game_info() {
 		if(is_verifiable_disc(&GCMDisk)) {
 			DrawAddChild(container, DrawStyledLabel(640/2, 180, "(R) Verify", 0.6f, true, defaultColor));
 		}
-		sprintf(txtbuffer, "Game ID: [%.6s] Audio Streaming: [%s]", (char*)&GCMDisk, (swissSettings.audioStreaming ? "Yes":"No"));
+		sprintf(txtbuffer, "Game ID: [%.6s] Audio Streaming: [%s]", (char*)&GCMDisk, GCMDisk.AudioStreaming ? swissSettings.audioStreaming ? "Enabled" : "Unused" : "Disabled");
 		DrawAddChild(container, DrawStyledLabel(640/2, 200, txtbuffer, 0.8f, true, defaultColor));
 
 		if(GCMDisk.TotalDisc > 1) {
@@ -2443,7 +2552,7 @@ uiDrawObj_t* draw_game_info() {
 		bool isAutoLoadEntry = !strcmp(swissSettings.autoload, curFile.name) || !fnmatch(swissSettings.autoload, curFile.name, FNM_PATHNAME);
 		textPtr += sprintf(textPtr, "(Z) Load at startup [Current: %s]", isAutoLoadEntry ? "Yes":"No");
 	}
-	if(devices[DEVICE_CUR]->location == LOC_DVD_CONNECTOR) {
+	if(devices[DEVICE_CUR]->location & LOC_DVD_CONNECTOR) {
 		textPtr = stpcpy(textPtr, textPtr == txtbuffer ? "(L+A) Clean Boot":" \267 (L+A) Clean Boot");
 	}
 	if(textPtr != txtbuffer) {
@@ -2461,6 +2570,17 @@ uiDrawObj_t* draw_game_info() {
 /* Show info about the game - and also load the config for it */
 int info_game(ConfigEntry *config)
 {
+	if(swissSettings.cubebootInvoked) {
+		u32 buttons = padsButtonsHeld();
+		if(buttons & PAD_BUTTON_Y) {
+			if(findCheats(false) > 0) {
+				loadCheatsSelection();
+				DrawCheatsSelector(getRelativeName(curFile.name));
+				saveCheatsSelection();
+			}
+		}
+		return swissSettings.cubebootInvoked;
+	}
 	if(swissSettings.autoBoot) {
 		if(padsButtonsHeld() & PAD_BUTTON_B) {
 			swissSettings.autoBoot = 0;
@@ -2518,7 +2638,9 @@ int info_game(ConfigEntry *config)
 				num_cheats = findCheats(false);
 			}
 			if(num_cheats != 0) {
+				loadCheatsSelection();
 				DrawCheatsSelector(getRelativeName(&curFile.name[0]));
+				saveCheatsSelection();
 			}
 		}
 		while(padsButtonsHeld() & PAD_BUTTON_A){ VIDEO_WaitVSync (); }
@@ -2596,7 +2718,7 @@ void select_device(int type)
 			DrawAddChild(deviceSelectBox, gameBootLabel);
 		}
 		// Memory card port devices, allow for speed selection
-		if(allDevices[curDevice]->location & (LOC_MEMCARD_SLOT_A | LOC_MEMCARD_SLOT_B | LOC_SERIAL_PORT_2)) {
+		if(allDevices[curDevice]->features & FEAT_EXI_SPEED) {
 			uiDrawObj_t *exiOptionsLabel = DrawStyledLabel(getVideoMode()->fbWidth-190, 400, "(X) EXI Options", 0.65f, false, inAdvanced ? defaultColor:deSelectedColor);
 			DrawAddChild(deviceSelectBox, exiOptionsLabel);
 			if(inAdvanced) {
@@ -2605,12 +2727,26 @@ void select_device(int type)
 				DrawAddChild(deviceSelectBox, exiSpeedLabel);
 			}
 		}
-		DrawPublish(deviceSelectBox);	
+		if(allDevices[curDevice]->details) {
+			uiDrawObj_t *deviceDetailLabel = DrawStyledLabel(20, 385, "(Y) Show device details", 0.65f, false, deSelectedColor);
+			DrawAddChild(deviceSelectBox, deviceDetailLabel);
+		}
+		DrawPublish(deviceSelectBox);
 		while (!(padsButtonsHeld() & 
-			(PAD_BUTTON_RIGHT|PAD_BUTTON_LEFT|PAD_BUTTON_B|PAD_BUTTON_A|PAD_BUTTON_X|PAD_TRIGGER_L|PAD_TRIGGER_R|PAD_TRIGGER_Z) ))
+			(PAD_BUTTON_RIGHT|PAD_BUTTON_LEFT|PAD_BUTTON_B|PAD_BUTTON_A|PAD_BUTTON_X|PAD_BUTTON_Y|PAD_TRIGGER_L|PAD_TRIGGER_R|PAD_TRIGGER_Z) ))
 			{ VIDEO_WaitVSync (); }
 		u16 btns = padsButtonsHeld();
-		if((btns & PAD_BUTTON_X) && (allDevices[curDevice]->location & (LOC_MEMCARD_SLOT_A | LOC_MEMCARD_SLOT_B | LOC_SERIAL_PORT_2)))
+		if((btns & PAD_BUTTON_Y) && allDevices[curDevice]->details) {
+			char *deviceDetails = allDevices[curDevice]->details(allDevices[curDevice]->initial);
+			if(deviceDetails) {
+				uiDrawObj_t *deviceDetailBox = DrawPublish(DrawTooltip(deviceDetails));
+				while (padsButtonsHeld() & PAD_BUTTON_Y){ VIDEO_WaitVSync (); }
+				while (!((padsButtonsHeld() & PAD_BUTTON_Y) || (padsButtonsHeld() & PAD_BUTTON_B))){ VIDEO_WaitVSync (); }
+				DrawDispose(deviceDetailBox);
+				free(deviceDetails);
+			}
+		}
+		if((btns & PAD_BUTTON_X) && (allDevices[curDevice]->features & FEAT_EXI_SPEED))
 			inAdvanced ^= 1;
 		if(btns & PAD_TRIGGER_Z) {
 			showAllDevices ^= 1;
@@ -2656,7 +2792,7 @@ void select_device(int type)
 		}
 		while ((padsButtonsHeld() & 
 			(PAD_BUTTON_RIGHT|PAD_BUTTON_LEFT|PAD_BUTTON_B|PAD_BUTTON_A
-			|PAD_BUTTON_X|PAD_TRIGGER_L|PAD_TRIGGER_R|PAD_TRIGGER_Z) ))
+			|PAD_BUTTON_X|PAD_BUTTON_Y|PAD_TRIGGER_L|PAD_TRIGGER_R|PAD_TRIGGER_Z) ))
 			{ VIDEO_WaitVSync (); }
 		DrawDispose(deviceSelectBox);
 	}
@@ -2667,6 +2803,9 @@ void select_device(int type)
 		if(!(type == DEVICE_DEST && devices[type] == devices[DEVICE_CUR])) {
 			devices[type]->deinit( devices[type]->initial );
 		}
+	}
+	if(showAllDevices && (allDevices[curDevice]->location & (LOC_MEMCARD_SLOT_A | LOC_MEMCARD_SLOT_B | LOC_SERIAL_PORT_2))) {
+		EXI_ProbeReset();
 	}
 	devices[type] = allDevices[curDevice];
 	DrawDispose(deviceSelectBox);
@@ -2735,7 +2874,7 @@ void menu_loop()
 			else {
 				filePanel = renderFileBrowser(getSortedDirEntries(), getSortedDirEntryCount(), filePanel);
 			}
-			while(padsButtonsHeld() & (PAD_BUTTON_B | PAD_BUTTON_A | PAD_BUTTON_RIGHT | PAD_BUTTON_LEFT)) {
+			while(padsButtonsHeld() & (PAD_BUTTON_B | PAD_BUTTON_A | PAD_BUTTON_RIGHT | PAD_BUTTON_LEFT | PAD_BUTTON_START)) {
 				VIDEO_WaitVSync (); 
 			}
 		}
@@ -2770,8 +2909,15 @@ void menu_loop()
 						needsRefresh=1;
 						break;
 					case MENU_EXIT:
+						if(devices[DEVICE_CUR] != NULL) {
+							devices[DEVICE_CUR]->deinit(devices[DEVICE_CUR]->initial);
+						}
+						if(swissSettings.hasFlippyDrive) {
+							flippy_bypass(false);
+							flippy_reset();
+						}
 						DrawShutdown();
-						SYS_ResetSystem(SYS_HOTRESET, 0, TRUE);
+						SYS_ResetSystem(SYS_HOTRESET, 0, !swissSettings.hasFlippyDrive);
 						__builtin_unreachable();
 						break;
 				}

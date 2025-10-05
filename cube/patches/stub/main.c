@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2020-2024, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2020-2025, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -21,12 +21,14 @@
 #include <stddef.h>
 #include <stdbool.h>
 #include "dolphin/dolformat.h"
+#include "dolphin/dvd.h"
 #include "dolphin/exi.h"
 #include "dolphin/os.h"
 #include "eltorito.h"
 #include "pff.h"
 
 volatile uint32_t(*EXIRegs)[5] = EXI;
+uint16_t EXICsb = 010141;
 
 void run(void (*entry)(void));
 
@@ -49,7 +51,12 @@ static bool memeq(const void *a, const void *b, size_t size)
 	return true;
 }
 
+void dvd_reset(void);
+uint32_t dvd_inquiry(DVDDriveInfo *info);
+uint32_t dvd_read_id(DVDDiskID *id);
 uint32_t dvd_read(void *address, uint32_t length, uint32_t offset);
+void dvd_stop_motor(void);
+void flippy_reset(void);
 
 static void dvd_load(uint32_t offset)
 {
@@ -67,13 +74,13 @@ static void dvd_load(uint32_t offset)
 
 	for (int i = 0; i < DOL_MAX_TEXT; i++) {
 		if (dvd_read(image.text[i], image.textLen[i],
-			offset + image.textData[i]) != image.textLen[i]) return;
+			offset + image.textData[i]) < image.textLen[i]) return;
 		ICInvalidateRange(image.text[i], image.textLen[i]);
 	}
 
 	for (int i = 0; i < DOL_MAX_DATA; i++) {
 		if (dvd_read(image.data[i], image.dataLen[i],
-			offset + image.dataData[i]) != image.dataLen[i]) return;
+			offset + image.dataData[i]) < image.dataLen[i]) return;
 	}
 
 	run(image.entry);
@@ -81,6 +88,30 @@ static void dvd_load(uint32_t offset)
 
 void dvd_main(void)
 {
+	DVDDriveInfo info __attribute((aligned(32)));
+	if (!dvd_inquiry(&info)) return;
+
+	switch (info.releaseDate) {
+		case 0x20196C64:
+		{
+			dvd_stop_motor();
+			dvd_reset();
+			dly_us(1150 * 1000);
+			dvd_reset();
+			if (!dvd_read_id(NULL)) return;
+			break;
+		}
+		case 0x20220426:
+			flippy_reset();
+		case 0x20220420:
+		{
+			DVDBB2 BB2 __attribute((aligned(32)));
+			if (dvd_read(&BB2, sizeof(BB2), 0x420) != sizeof(BB2)) return;
+			if (BB2.bootFilePosition) dvd_load(BB2.bootFilePosition);
+			break;
+		}
+	}
+
 	uint32_t offset = 17 * DI_SECTOR_SIZE;
 
 	struct di_boot_record boot_record __attribute((aligned(32)));
@@ -143,14 +174,18 @@ void pf_main(void)
 {
 	FATFS fs;
 	EXIRegs = EXI;
+	EXICsb = 010141;
 
-	for (int chan = 0; chan < EXI_CHANNEL_MAX; chan++, EXIRegs++) {
+	for (int i = 0; i < 6; i++) {
 		if (pf_mount(&fs) == FR_OK) {
 			pf_load("/AUTOEXEC.DOL");
 			pf_load("/BOOT.DOL");
 			pf_load("/BOOT2.DOL");
-			pf_load("/IGR.DOL");
 			pf_load("/IPL.DOL");
 		}
+
+		EXICsb >>= 3;
+		if (EXICsb & (1 << EXI_DEVICE_0))
+			EXIRegs++;
 	}
 }

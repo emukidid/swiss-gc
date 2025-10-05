@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2020-2024, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2020-2025, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -31,7 +31,7 @@ static const struct {
 	const char *name;
 	uint32_t size;
 	uint64_t hash;
-} firm_dat[] = {
+} file_dat[] = {
 	{ "BS2.img", /* gc-npdp-gdev.bin       */ 1449848, 0xB5337A8BCA0E5FD8 },
 	{ "BS2.img", /* gc-npdp-ntsc.bin       */ 1448280, 0x4260AD4F5FDF0A5B },
 	{ "BS2.img", /* gc-npdp-pal.bin        */ 1760152, 0xEE52F211A2606E5F },
@@ -57,7 +57,133 @@ static const struct {
 	{ "GC_LOADER_HW2_UPDATER_1.0.0.dol",      1267200, 0x25AC594FF8F3C302 },
 	{ "GC_LOADER_HW2_UPDATER_1.0.1.dol",      1267200, 0x753F83C3E35CCBE0 },
 	{ "GC_LOADER_HW2_UPDATER_1.1.0.BETA.dol", 1267200, 0x153785DED813D3B1 },
-
+#define FIRM_COUNT (25)
+	{ "apploader.img", /* 2000/12/01       */    3168, 0xB6DAE698C73D1E37 },
+	{ "apploader.img", /* 2001/04/04       */   24992, 0xD326D00BD578B2F5 },
+	{ "apploader.img", /* 2001/05/31       */    4768, 0xE2F367E5D3FBCBAE },
+	{ "apploader.img", /* 2001/07/19       */   77760, 0x69E626516A32FF26 },
+	{ "apploader.img", /* 2001/07/30       */   81408, 0xE4D8BABE9A1BD5B0 },
+	{ "apploader.img", /* 2001/08/09       */   62720, 0x583966037BC75CDA },
+	{ "apploader.img", /* 2001/08/09       */   78144, 0x56A98615B115AE90 },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0x000D3B9B72C539A3 },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0x08A3413A6833FB2B },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0x0A3B000F6EE712AF },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0x117C23798AEFE21C },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0x1A25A025A07B8230 },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0x1B0D02775A7CF43E },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0x2BB9CDBBDFD93ED8 },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0x2F3492A6A93665D9 },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0x3586E84FB8FAAE1E },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0x379837963CA97794 },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0x3B1C01C680CBE447 },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0x3E3B955D606EE7AD },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0x3E8EEAED5324E75A },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0x43DD384C088B570E },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0x45A131550CF0F17E },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0x4A198F3BD5AFC3D0 },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0x4DA5E3E5226539ED },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0x502140286CC6729C },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0x517F6B89BD7C4583 },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0x524E722B86A01A7F },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0x5A9043BAF52938A7 },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0x6DA014EB2CA49D15 },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0x7587E8709A4DB278 },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0x79604763B7B15F67 },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0x84D44A713A1DA241 },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0x891DB26658BCB715 },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0x8B2A31F3ECF18554 },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0x8CDF62F012D89B9F },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0x90A1045992223826 },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0x98146E55C425C188 },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0x9BB4BB9D766EA8F1 },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0x9F885B402E2835A6 },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0xAA3BA09628F57D56 },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0xAC029A0FF502AEC1 },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0xACECB2374CD99AA7 },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0xB16EE4BA8E3712AD },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0xB8952E138095E24F },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0xBAB90DC440BCDE13 },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0xBAE5496367A633DA },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0xBF2F1F558906C65A },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0xBFE0063A6E75F243 },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0xC333735F763FE48E },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0xC4E49B81B74285DB },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0xC7DD859D93371EC5 },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0xCB8F06ACAF059685 },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0xCD2E8F6DDC62DA89 },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0xDB064F612BC1FB13 },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0xDE417771C00F8DD8 },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0xE2C0DE68F3841CD1 },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0xE4C6A079607D3126 },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0xE8A47985C8462948 },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0xEFFE3187484D5A67 },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0xF85E26EDCBD56532 },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0xFBAAB18472269433 },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0xFCAC1C8931A46F0B },
+	{ "apploader.img", /* 2001/09/08       */  106624, 0x33E2DEFC39B12631 },
+	{ "apploader.img", /* 2001/09/08       */  106624, 0x383E6B83504C990F },
+	{ "apploader.img", /* 2001/09/08       */  106624, 0x5E3AB428129E0DC6 },
+	{ "apploader.img", /* 2001/09/08       */  106624, 0x6D67F99B2EFD3E7E },
+	{ "apploader.img", /* 2001/09/08       */  106624, 0x89A96B9478AB6BE2 },
+	{ "apploader.img", /* 2001/09/08       */  106624, 0x8B8FB84C6A260CED },
+	{ "apploader.img", /* 2001/09/08       */  108544, 0x0F8C6C46B3C44150 },
+	{ "apploader.img", /* 2001/09/08       */  108544, 0x3967E55B5B9D7F25 },
+	{ "apploader.img", /* 2001/09/08       */  108544, 0x3DDD87752F8CE8BA },
+	{ "apploader.img", /* 2001/09/08       */  108544, 0x59AB007B4BB5165D },
+	{ "apploader.img", /* 2001/09/08       */  108544, 0x5E4B34B6C6A74809 },
+	{ "apploader.img", /* 2001/09/08       */  108544, 0x68362CDAF8230F6A },
+	{ "apploader.img", /* 2001/09/08       */  108544, 0x74A1F8C70C3D89F3 },
+	{ "apploader.img", /* 2001/09/08       */  108544, 0xD4942743AEBF6E7C },
+	{ "apploader.img", /* 2001/09/08       */  108544, 0xE2A2500D243E76BD },
+	{ "apploader.img", /* 2001/09/08       */  108544, 0xF408681F1858B65E },
+	{ "apploader.img", /* 2001/09/08       */  108544, 0xFCED7360E1E9D3AB },
+	{ "apploader.img", /* 2001/09/08       */  111680, 0xD695B89F9E6B8A73 },
+	{ "apploader.img", /* 2001/09/08       */  111744, 0x8E7740C88CC1B384 },
+	{ "apploader.img", /* 2001/09/08       */  111744, 0xA7EEA181613F6B8A },
+	{ "apploader.img", /* 2001/10/29       */  114176, 0xA60EFFCCCD25279E },
+	{ "apploader.img", /* 2001/11/14       */  115360, 0xB08ABB7A72D0D499 },
+	{ "apploader.img", /* 2001/11/14       */  115456, 0x17DA89030FC12D30 },
+	{ "apploader.img", /* 2001/11/16       */  115360, 0xF057E38BAA2A59B5 },
+	{ "apploader.img", /* 2001/12/17       */  111872, 0x08030634D94D4E2E },
+	{ "apploader.img", /* 2001/12/17       */  111872, 0x289AEB294C5E3905 },
+	{ "apploader.img", /* 2002/03/28       */  113536, 0x4F2A035FB852C7EB },
+	{ "apploader.img", /* 2002/03/28       */  113536, 0x5D2040FE89C64FBC },
+	{ "apploader.img", /* 2002/04/10       */  113536, 0xBBF3FF7C1A14AA59 },
+	{ "apploader.img", /* 2002/04/10       */  113536, 0xDC2A278D4F92A68C },
+	{ "apploader.img", /* 2002/09/05       */  116512, 0x42C07D59E1227D14 },
+	{ "apploader.img", /* 2002/09/05       */  116512, 0x6587E6A4F9663BB7 },
+	{ "apploader.img", /* 2002/09/05       */  116512, 0xA607D68783177BA3 },
+	{ "apploader.img", /* 2002/09/05       */  116512, 0xE0A70AC76B355E02 },
+	{ "apploader.img", /* 2003/04/17       */  119360, 0x0596C19514DD7D1A },
+	{ "apploader.img", /* 2003/04/17       */  119360, 0x7DB4525317DC0C10 },
+	{ "apploader.img", /* 2003/04/17       */  119360, 0x7EB7D190448B3B56 },
+	{ "apploader.img", /* 2003/08/20       */  119616, 0x1DA6DDCB6BD6CC84 },
+	{ "apploader.img", /* 2003/09/16       */  119808, 0xD452E42826EA69F7 },
+	{ "apploader.img", /* 2003/11/27       */  119936, 0xB8664DF0DA874A8C },
+	{ "apploader.img", /* 2004/02/23       */  121120, 0x31BED529F33BC28F },
+	{ "apploader.img", /* 2004/04/05       */  122784, 0x37456EE77DD55D50 },
+	{ "apploader.img", /* 2004/05/07       */  121792, 0x26818C411945F40A },
+	{ "apploader.img", /* 2004/05/20       */  121792, 0x03179AB1C9F42B82 },
+	{ "apploader.img", /* 2004/05/21       */  122432, 0x809EBA6AE3B4BD7D },
+	{ "apploader.img", /* 2004/05/21       */  122432, 0xA46FE6466747BFF5 },
+	{ "apploader.img", /* 2004/05/21       */  122432, 0xB86E28071C565F2B },
+	{ "apploader.img", /* 2004/11/10       */  122464, 0x435A348BFEF0E423 },
+	{ "apploader.img", /* 2006/01/06       */  139520, 0x109B245B3463E06C },
+	{ "apploader.img", /* 2006/01/06       */  139520, 0x24E9547A00CDF074 },
+	{ "apploader.img", /* 2006/01/06       */  139520, 0x469A62F5EAA7FC37 },
+	{ "apploader.img", /* 2006/01/06       */  139520, 0x4DC20C308CA47169 },
+	{ "apploader.img", /* 2006/01/06       */  139520, 0x6456FB25BC1C3C85 },
+	{ "apploader.img", /* 2006/01/06       */  139520, 0x8680418E760856CA },
+	{ "apploader.img", /* 2006/01/06       */  139520, 0x9CAE36C15BE61A63 },
+	{ "apploader.img", /* 2006/01/06       */  139520, 0xF01FA1F58FDF90EF },
+	{ "apploader.img", /* 2017/09/28       */  119360, 0xFA08F0DA6022973A },
+	{ "apploader.img", /* 2021/10/06       */    8416, 0x0C2EA9DF3E473E92 },
+	{ "apploader.img", /* 2024/08/26       */  113536, 0x4B7D6BB01FBDE643 },
+	{ "apploader.img", /* 2024/08/27       */  113536, 0xB4A43C8D09E516D9 },
+	{ "apploader.img", /* 2024/09/14       */  113536, 0xBECA9866ECE7A957 },
+	{ "apploader.img", /* 2024/09/17       */  113536, 0x623687789597750B },
+	{ "apploader.img", /* 2025/07/10       */  113536, 0xED22F838A52EABC5 },
+#define NKIT_FIRM_COUNT (FIRM_COUNT + 125)
 	{ "240p Test Suite (World) (v1.04) (Program) (Aftermarket) (Unl).dol",        2301384, 0x71BCDBA149B3AAAF },
 	{ "240p Test Suite (World) (v1.06) (Program) (Aftermarket) (Unl).dol",         930560, 0x7EB7DDDAF5105457 },
 	{ "240p Test Suite (World) (v1.07) (Program) (Aftermarket) (Unl).dol",         932032, 0x4DAB8540272CCBD5 },
@@ -65,7 +191,33 @@ static const struct {
 	{ "240p Test Suite (World) (v1.09) (Program) (Aftermarket) (Unl).dol",        1333536, 0xFCDAED5E9FF91F3F },
 	{ "240p Test Suite (World) (v1.10b) (Program) (Aftermarket) (Unl).dol",       1576640, 0xF2F18B3601364308 },
 	{ "240p Test Suite (World) (v1.17) (Program) (Aftermarket) (Unl).dol",        1906336, 0x65A1EF7519BE163F },
+	{ "240p Test Suite (World) (v1.19) (Program) (Aftermarket) (Unl).dol",        1894464, 0x287F839D82D7D3CB },
+	{ "Eye Dropped (2024-02-19)(Aionmagan).dol",                                  3017408, 0x8EA7EC4B21E0ABA3 },
+	{ "Mama Bear Puzzle (2015)(Mihai, Sebastian).dol",                            1161216, 0x5577A5CF49894D65 },
+	{ "Mama Bear Puzzle (2015)(Mihai, Sebastian).elf",                            1667136, 0x9FDBE50048C2BC9E },
+	{ "Mike Visor (2024-02-17)(Aionmagan).dol",                                   3588096, 0xA57EED735FB757BE },
 	{ "Xeno Crisis (World) (En,Ja,Fr,De,Es,It,Nl,Pt-BR) (Aftermarket) (Unl).dol", 5331008, 0x34BF21CA529D0E02 },
+#define VALID_DOL_COUNT (NKIT_FIRM_COUNT + 13)
+	{ "CleanRipGC-lz.dol",                     171136, 0x6C0308884F922929 },
+	{ "CleanRipGC.dol",                       1491392, 0x64E1342A4D52EC8A },
+	{ "cleanrip-gc.dol",                      1593248, 0x93B7BEAF5567F44B },
+	{ "cleanrip-gc.dol",                      1607200, 0x8256AB7AB7720687 },
+	{ "cleanrip-gc.dol",                      1607520, 0xCAE93CAD1AC448A8 },
+	{ "cleanrip-gc.dol",                      1619776, 0x54DA1F15C617F2A6 },
+	{ "cleanrip-gc.dol",                      1859168, 0xB27D4814753386EF },
+	{ "cleanrip-gc.dol",                      1901888, 0x690543D39FC7E9F1 },
+	{ "cleanrip-gc.dol",                      1929280, 0xE526065DAA036D2A },
+	{ "gcars.dol",                              69636, 0x080AEA94ED7A6252 },
+	{ "gcars.dol",                             224336, 0x57942F559BD5E065 },
+	{ "gcars.dol",                             225108, 0x1C8D121AB4A008FA },
+	{ "gcars.dol",                             226684, 0x123AC1AA15AC5402 },
+	{ "gcars.dol",                             226764, 0x8B5CC0E6BA2BE087 },
+	{ "gcars.dol",                             226804, 0xFDADA706017E4E1E },
+	{ "gcars.dol",                             226884, 0x77B98C85F6C871E1 },
+	{ "gcars.dol",                             231028, 0x7BC79D067E2E9B25 },
+	{ "gcars.dol",                             234836, 0x06607E83075D8B8E },
+	{ "gcars.dol",                             255308, 0x55D21F77483E5838 },
+#define TOTAL_DOL_COUNT (VALID_DOL_COUNT + 19)
 };
 
 static const dvddiskid NDDEMO = {
@@ -121,7 +273,8 @@ static const struct {
 	{{ "D29J01\x00\x00" }, true,  0xC8, 0x944D, 0x87E9B682, 0xBA59F1A3D46EC35C,  967475200,  +492503040, {  473567348,  +492492332, 6496, 0x91C4 }, "Gekkan Nintendo Tentou Demo 2002.5.1" },
 	{{ "D32J01\x00\x00" }, true,  0xD9, 0x264C, 0x8C63ED7D, 0x40112DE6CDA8F156, 1017810944,  +442167296, {  688658456,  +442125960, 6496, 0x6C95 }, "Gekkan Nintendo Tentou Demo 2002.6.1" },
 	{{ "D33J01\x00\x00" }, true,  0xD9, 0xED1C, 0x86DACAB6, 0x494DCCBEDC286160, 1442138112,   +17840128, {  920004864,   +17849108, 6496, 0x72C1 }, "Gekkan Nintendo Tentou Demo 2002.7.1" },
-	{{ "D34J01\x00\x00" }, true,  0x44, 0xB307, 0x878C6DEA, 0x93EF23D61BB6152D,  806060032,  +653918208, {  517512560,  +653936228, 6496, 0x72C1 }, "Gekkan Nintendo Tentou Demo 2002.7.10" },
+	{{ "D34J01\x00\x00" }, true,  0x44, 0xB307, 0x878C6DEA, 0x93EF23D61BB6152D,  806060032,  +653918208, {  517512560,  +653936228, 6496, 0x72C1 }, "Gekkan Nintendo Tentou Demo 2002.7.10 Zoukan-gou" },
+	{{ "D37J01\x00\x00" }, true,  0x4E, 0x2F6C, 0x06588854, 0x4C8B620B43129660, 1339762688,  +120215552, {  894216564,  +120207968, 6496, 0x69B9 }, "Gekkan Nintendo Tentou Demo 2002.8.1" },
 	{{ "D38J01\x00\x00" }, true,  0xA8, 0x5AEC, 0x56B9951A, 0xF8D6E4B3A92CD053, 1450278912,    +9699328, {  758758348,    +9711112, 6496, 0x2CAB }, "Gekkan Nintendo Tentou Demo 2002.9.1" },
 	{{ "D39J01\x00\x00" }, true,  0xAB, 0x6D39, 0x182F38EB, 0xB7B21D9ABA0778D4, 1236383744,  +223594496, {  791086332,  +223576984, 6496, 0x7CC6 }, "Gekkan Nintendo Tentou Demo 2002.10.1" },
 	{{ "D42J01\x00\x00" }, true,  0xA6, 0xDF4F, 0x343BACD7, 0x61587BFC1C1108D0, 1187545088,  +272433152, {  812426116,  +272459024, 6496, 0xC4FA }, "Gekkan Nintendo Tentou Demo 2002.11.1" },
@@ -240,9 +393,11 @@ static const struct {
 	{{ "DEZP8P\x00\x00" }, false, 0x36, 0x3FB2, 0x097DA801, 0xDC83BF86B6AB678A,  387362816, +1072615424, {  357034728, +1072617304, 8096, 0x9B40 }, "Billy Hatcher and the Giant Egg" },
 	{{ "DFIJ13\x00\x00" }, false, 0x32, 0x46CD, 0x7BDC7837, 0x564B21524D7D6551, 1311358976,  +148619264, { 1311351652,     +110200, 6496, 0x6371 }, "2002 FIFA World Cup" },
 	{{ "DGAJB2\x00\x00" }, true,  0x97, 0x5F59, 0x05458FAD, 0xEC3C56AA5A9CDE26,  716726272,  +743251968, {  716719748,  +743251996, 6496, 0x81D4 }, "Kidou Senshi Gundam: Senshi-tachi no Kiseki" },
+	{{ "DKNJ01\x00\x00" }, false, 0x50, 0xBAC0, 0x915156C6, 0xB5E976D396698FBF,  894486528,  +565491712, {  885347632,    +1125388, 6496, 0x53F0 }, "Kinnikuman Nisei: Shinsedai Choujin vs. Densetsu Choujin Event-you Disc" },
 	{{ "DLSE64\x00\x00" }, true,  0x31, 0x9B82, 0x1621D87A, 0x0EF434C4F59AA81D, 1007726592,  +452251648, {  369815476,  +451573484, 6496, 0xCC14 }, "Star Wars: Rogue Squadron III: Rebel Strike" },
 	{{ "DLSP64\x00\x00" }, true,  0x4A, 0xB5CA, 0x3657BA07, 0xDCEEF3970A1C9674,  687478784,  +772499456, {  404997056,  +772481952, 6496, 0xCC14 }, "Star Wars: Rogue Squadron III: Rebel Strike" },
 	{{ "DM2J8P\x00\x00" }, true,  0x96, 0x6274, 0xA589AF5A, 0x0D2CD0B64E89D021, 1004939264,  +455038976, {   79151836,  +455021220, 6496, 0x4FD6 }, "Super Monkey Ball 2" },
+	{{ "DMPJ01\x00\x00" }, false, 0x8D, 0x7F50, 0x4D3A81A8, 0x142AFDDC93390CCF,  149059584, +1310918656, {  100753916,      +44108, 6496, 0xE31B }, "Mario Party 4 Event-you Disc" },
 	{{ "DMTJ18\x00\x00" }, false, 0x23, 0xBD99, 0x9F17E51E, 0x6D3DED5E273755FA,  284680192, +1175298048, {    3779884,      +21204, 6496, 0x4C34 }, "Disney's Magical Park" },
 	{{ "DNUEDA\x00\x00" }, true,  0xAA, 0xFED7, 0xA58B7BF7, 0x8C37938D634E629B,  664645632,  +795332608, {  664638552,  +795333192, 6496, 0xD199 }, "Naruto: Clash of Ninja 2" },
 	{{ "DPIJ01\x00\x00" }, true,  0xEE, 0x2C29, 0xD38F1968, 0x86CC71E34F4D2E01, 1071476736,  +388501504, {  898007120,  +388516168, 6496, 0xB627 }, "Pikmin" },
@@ -254,10 +409,11 @@ static const struct {
 	{{ "DRSEAF\x00\x00" }, false, 0x57, 0xF2AF, 0x989E11D9, 0xA60F5B909DC1B199,  126695424, +1333282816, {   39425384, +1333283128, 6496, 0x8804 }, "Soulcalibur II" },
 	{{ "DSTJ13\x00\x00" }, false, 0xBB, 0x45BC, 0x190F43D4, 0x682095BA117EDC39, 1066573824,  +393404416, { 1066566848,     +102184, 6496, 0x7461 }, "SSX Tricky" },
 	{{ "DSWJ13\x00\x00" }, false, 0xAC, 0x74F1, 0x913AE6A5, 0x74A9B62FACA1FFD1, 1393250304,   +66727936, {    2562816,      +25856, 6496, 0xD5EA }, "Star Wars: Rogue Squadron II" },
-	{{ "DTLX01\x00\x00" }, false, 0x3D, 0x06A6, 0x1891D9AF, 0x2869303EC5A42690,    2775040, +1457203200, {      94248,       +4056, 6496, 0x6505 }, "Action Replay for GameCube" },
-	{{ "DTLX01\x00\x00" }, false, 0x51, 0x0BA7, 0x020106B3, 0x2869303EC5A42690,    2775040, +1457203200, {      94248,       +4056, 6496, 0x6505 }, "Action Replay for GameCube" },
+	{{ "DTLX01\x00\x00" }, false, 0x3D, 0x06A6, 0x1891D9AF, 0x2869303EC5A42690,    2775040, +1457203200, {      94248,       +4056, 6496, 0x6505 }, "Action Replay for GameCube / SD Media Launcher for GameCube/Wii" },
+	{{ "DTLX01\x00\x00" }, false, 0x51, 0x0BA7, 0x020106B3, 0x2869303EC5A42690,    2775040, +1457203200, {      94248,       +4056, 6496, 0x6505 }, "Action Replay for GameCube / SD Media Launcher for GameCube/Wii" },
 	{{ "DTLX01\x00\x00" }, false, 0x60, 0x2535, 0xCD1D9D4B, 0xD27E3365D4C00C0A,    1216512, +1458761728, {      94248,       +4056, 6496, 0x82CD }, "FreeLoader for GameCube" },
 	{{ "DVJP08\x00\x00" }, false, 0x62, 0xED77, 0xAFF83635, 0x30826E48078F043E,  190525440, +1269452800, {   30065764, +1269078236, 6496, 0x721F }, "Viewtiful Joe" },
+	{{ "DW3JG2\x00\x00" }, false, 0x91, 0xBFD1, 0xF676C652, 0xA436AB7293BC7D67, 1384224768,   +75753472, { 1375158684,    +2290552, 6496, 0x9BB7 }, "WWE WrestleMania X8" },
 	{{ "DYFJA4\x00\x00" }, false, 0xD8, 0xC126, 0x3D2EE92C, 0x965464D2265CB49C,  587479040,  +872499200, {  347630664,    +1443208, 6496, 0x0843 }, "Yu-Gi-Oh! Falsebound Kingdom: Kyokou ni Tozasareta Oukoku" },
 	{{ "E22J01\x00\x00" }, true,  0x0A, 0x91DA, 0x2F3E13A7, 0xFB921C89672B69FB, 1384288256,   +75689984, {   12125000,   +65299288, 6496, 0x84E3 }, "Gekkan Nintendo Tentou Demo 2005.8.1" },
 	{{ "E23J01\x00\x00" }, true,  0x35, 0x2F81, 0x6CF1CD61, 0x93CA29D08D59C5C4, 1428504576,   +31473664, {   12125000,   +20308824, 6496, 0x1AD2 }, "Gekkan Nintendo Tentou Demo 2005.9.1" },
@@ -346,7 +502,7 @@ static const struct {
 	{{ "G3SE41\x00\x00" }, false, 0x5D, 0xD1AC, 0xA612CB3C, 0x7B6D4160D9FD06E0,  163166208, +1296812032, {  128371152,       +6748, 6496, 0x7089 }, "Bust-A-Move 3000" },
 	{{ "G3SJC0\x00\x00" }, false, 0x52, 0x6ECC, 0x32D6F96A, 0xBF5EC46A360FFCFE,  165978112, +1294000128, {  128331576,      +17736, 6496, 0xB221 }, "Super Puzzle Bobble All Stars" },
 	{{ "G3SWC0\x00\x00" }, false, 0x76, 0xEDED, 0x11765D45, 0xFA715EEB39706C71,  165945344, +1294032896, {  128506264,      +12616, 6496, 0xE441 }, "Super Puzzle Bobble All Stars" },
-	{{ "G3TJ8P\x00\x00" }, false, 0x07, 0x8B99, 0x1FA08988, 0x87D0B5803321471A, 1388376064,   +71602176, { 1374443100,      +18232, 6496, 0x8BAE }, "Dabi Tsuku 3: Derby-ba o Tsukurou!" },
+	{{ "G3TJ8P\x00\x00" }, false, 0x07, 0x8B99, 0x1FA08988, 0x87D0B5803321471A, 1388376064,   +71602176, { 1374443100,      +18232, 6496, 0x8BAE }, "Dabitsuku 3: Derby-ba o Tsukurou!" },
 	{{ "G3VE69\x00\x00" }, false, 0x37, 0x9459, 0x8A0E96CB, 0xD3B23F22038EEBED, 1161383936,  +298594304, {  210921792,      +19268, 6496, 0x63AD }, "NBA Street V3" },
 	{{ "G3VJ13\x00\x00" }, false, 0x35, 0x5852, 0x9F4DCBDD, 0x8D4C4108C305C621, 1161660416,  +298317824, {  211197988,      +19268, 6496, 0x9321 }, "NBA Street V3: Mario de Dunk" },
 	{{ "G3VP69\x00\x00" }, false, 0x34, 0x8E64, 0x42BE441B, 0x2F3BA2F9F4B84AC5, 1139511296,  +320466944, {  210921536,      +19524, 8096, 0xCE9C }, "NBA Street V3" },
@@ -430,7 +586,7 @@ static const struct {
 	{{ "G8ME01\x00\x00" }, false, 0xED, 0x0AB8, 0x5A682160, 0x84929E4313030E46,  605339648,  +854638592, {  324412472,  +854638308, 6496, 0xC67E }, "Paper Mario: The Thousand-Year Door" },
 	{{ "G8MJ01\x00\x00" }, false, 0x81, 0xAEA3, 0x0F35E6ED, 0xEAC01EF15FA3EEE1,  602261504,  +857716736, {  321404000,  +857706492, 6496, 0x03D2 }, "Paper Mario RPG" },
 	{{ "G8MP01\x00\x00" }, false, 0xA9, 0xDE59, 0xA624277B, 0x14AAC6E147DF376F,  619018240,  +840960000, {  333512252,  +840929344, 8096, 0x6528 }, "Paper Mario: The Thousand-Year Door" },
-	{{ "G8OJ18\x00\x00" }, false, 0x02, 0xB0AD, 0xFE7AF832, 0x3058E8666DAA60FB,  723795968,  +736182272, {  581026176,  +736182308, 6496, 0x0562 }, "Boboboubo Boubobo: Dasshutsu!! Hajike Royale" },
+	{{ "G8OJ18\x00\x00" }, false, 0x02, 0xB0AD, 0xFE7AF832, 0x3058E8666DAA60FB,  723795968,  +736182272, {  581026176,  +736182308, 6496, 0x0562 }, "Bobobo-bo Bo-bobo: Dasshutsu!! Hajike Royale" },
 	{{ "G8SJAF\x00\x00" }, false, 0x63, 0xA6C8, 0xB86CBA75, 0x1B6FD9755B0ACF8F,  314036224, +1145942016, {  307015180, +1145943972, 6496, 0x5521 }, "Battle Stadium D.O.N" },
 	{{ "G8WE01\x00\x00" }, false, 0x85, 0xA3A5, 0xF697E65A, 0xA162E8099D65E16C,  992692224,  +467286016, {  992685432,  +467286312, 6496, 0x4A04 }, "Battalion Wars" },
 	{{ "G8WJ01\x00\x00" }, false, 0x4B, 0x0D7F, 0xED987629, 0x85AF8D76B5C869E6, 1071245312,  +388732928, { 1071237584,  +388734160, 6496, 0x39C3 }, "Totsugeki!! Famicom Wars" },
@@ -492,7 +648,10 @@ static const struct {
 	{{ "GALJ01\x00\x02" }, false, 0x74, 0x22C4, 0x85F37345, 0x004BE0EE55CC7EAA, 1429155840,   +30822400, {    4580124,   +16381240, 6496, 0xB1D6 }, "Dairantou Smash Brothers DX" },
 	{{ "GALP01\x00\x00" }, false, 0x7A, 0x879F, 0x0FD01424, 0x47516D8628E2CABC, 1108035584,  +351942656, {    4524296,  +337506952, 8096, 0x8CA2 }, "Super Smash Bros. Melee" },
 	{{ "GAME5H\x00\x00" }, false, 0x6C, 0xC2D3, 0x378153A0, 0xBF895C2645FC6FAD, 1365727232,   +94251008, {  717490412,      +30972, 6496, 0xD967 }, "Army Men: Sarge's War" },
+	{{ "GAMEA4\x00\x00" }, false, 0x4D, 0x55B4, 0x79D4A10D, 0x82A1EC2485F11953,  352952320, +1107025920, {         ~0,          +0,    0, 0xFFFF }, "Taz: Wanted" },
 	{{ "GAMEA4\x00\x00" }, false, 0x77, 0xBF92, 0x71C5DD95, 0x1AEA6E7D88B08911, 1182140416,  +277837824, {    6076380,  +277836068, 6496, 0x7580 }, "Batman: Dark Tomorrow" },
+	{{ "GAMEA4\x00\x01" }, false, 0x59, 0xD40C, 0x25E93A9A, 0xD9845ED96FAFFEA3,  287629312, +1172348928, {         ~0,          +0,    0, 0xFFFF }, "Taz: Wanted" },
+	{{ "GAMEA4\x00\x01" }, false, 0xD6, 0x7082, 0xBA197731, 0x8ECFD49B9BBB1386,  572571648,  +887406592, {         ~0,          +0,    0, 0xFFFF }, "Taz: Wanted" },
 	{{ "GANE7U\x00\x00" }, false, 0xB6, 0x3344, 0xEFA60854, 0x86B52B9ABB24D5F2, 1346058240,  +113920000, {  860345044,  +113921504, 6496, 0x6D01 }, "Animaniacs: The Great Edgar Hunt" },
 	{{ "GANP7U\x00\x00" }, false, 0xA3, 0x6750, 0xF3EB5044, 0x86B52B9ABB24D5F2, 1346060288,  +113917952, {  860345044,  +113919904, 8096, 0x608A }, "Animaniacs: The Great Edgar Hunt" },
 	{{ "GAPE52\x00\x00" }, false, 0x2B, 0x4351, 0x569086D0, 0xB8CC70CE09A3EC8E, 1147377664,  +312600576, {  203081440,        +752, 6496, 0xC9AB }, "American Chopper 2: Full Throttle" },
@@ -639,6 +798,7 @@ static const struct {
 	{{ "GCQE7D\x00\x00" }, false, 0x4C, 0x5344, 0xE81553BD, 0xA20F8EA53D150B2B, 1345501184,  +114477056, { 1345493340,       +4664, 6496, 0xE15F }, "Buffy the Vampire Slayer: Chaos Bleeds" },
 	{{ "GCQF7D\x00\x00" }, false, 0x23, 0xBF78, 0xBEDAAC80, 0x4D7C36B8F934A472, 1418211328,   +41766912, { 1418204032,      +30272, 6496, 0xEA05 }, "Buffy contre les Vampires: Chaos Bleeds" },
 	{{ "GCQP7D\x00\x00" }, false, 0xEC, 0xF384, 0x46E25097, 0x4D7C36B8F934A472, 1424568320,   +35409920, { 1424561124,      +30268, 6496, 0xA9D0 }, "Buffy the Vampire Slayer: Chaos Bleeds" },
+	{{ "GCRJBM\x00\x00" }, false, 0x6D, 0x80F9, 0x0C6D4075, 0x34BF21CA529D0E02,   10774528,  +105123840, {      17736,         +24, 6496, 0xFAC5 }, "Xeno Crisis" },
 	{{ "GCRPBM\x00\x00" }, false, 0xDC, 0xD202, 0x09EFF165, 0x34BF21CA529D0E02,   10774528,  +105123840, {      17736,         +24, 8096, 0xE5E6 }, "Xeno Crisis" },
 	{{ "GCSEAF\x00\x00" }, true,  0x05, 0xB9D8, 0x718F9112, 0xD8443682705DDCEA, 1366556672,   +93421568, {    3664676,   +93451356, 6496, 0x2E92 }, "SRS: Street Racing Syndicate" },
 	{{ "GCSPAF\x00\x00" }, true,  0x00, 0x098F, 0x0AEE62B4, 0x2F982E4215FB324A, 1403248640,   +56729600, {    3724548,   +56724860, 8096, 0xC7FC }, "SRS: Street Racing Syndicate" },
@@ -715,9 +875,9 @@ static const struct {
 	{{ "GE5EA4\x00\x00" }, false, 0xB3, 0x25F3, 0x2EB43A22, 0xA92CB5B1484AF842,  663863296,  +796114944, {  400839024,  +796116400, 6496, 0x6C97 }, "TMNT: Mutant Melee" },
 	{{ "GE6JA4\x00\x00" }, false, 0xA8, 0x7695, 0x2E9C1E53, 0xB512F81501114841,   41918464, +1418059776, {   10039288, +1418060668, 6496, 0xC101 }, "Eisei Meijin VI" },
 	{{ "GE9E5D\x00\x00" }, false, 0x9C, 0xFD46, 0xF0AF8DC3, 0x05047D3B2DD4FB12,  629995520,  +829982720, {  622205248,      +27460, 6496, 0xB446 }, "Ed, Edd n Eddy: The Mis-Edventures" },
-	{{ "GEAE8P\x00\x00" }, false, 0x75, 0x848B, 0x23E347B6, 0xEE3D9D60D95DC4D8, 1421471744,   +38506496, { 1206211504,    +7965296, 6496, 0x51AD }, "Skies of Arcadia Legends" },
+	{{ "GEAE8P\x00\x00" }, false, 0x75, 0x848B, 0x23E347B6, 0xEE3D9D60D95DC4D8, 1421471744,   +38506496, { 1206211504,    +7965296, 6496, 0x51AD }, "Skies of Arcadia: Legends" },
 	{{ "GEAJ8P\x00\x00" }, false, 0xB1, 0x5340, 0x3DA0E910, 0xCEB7382395ADF98A, 1438015488,   +21962752, { 1202778096,    +7958832, 6496, 0x3F35 }, "Eternal Arcadia Legends" },
-	{{ "GEAP8P\x00\x00" }, false, 0x44, 0x8651, 0xA8E18C76, 0xBCF792111F227773, 1445681152,   +14297088, { 1221718804,    +7969764, 8096, 0x1EBE }, "Skies of Arcadia Legends" },
+	{{ "GEAP8P\x00\x00" }, false, 0x44, 0x8651, 0xA8E18C76, 0xBCF792111F227773, 1445681152,   +14297088, { 1221718804,    +7969764, 8096, 0x1EBE }, "Skies of Arcadia: Legends" },
 	{{ "GEBEA4\x00\x00" }, false, 0xE3, 0xE2EB, 0xA18D2B49, 0xBF3C1B1BDD3F9257, 1376727040,   +83251200, {  890628692,     +786620, 6496, 0x094E }, "Evolution Snowboarding" },
 	{{ "GEBPA4\x00\x00" }, false, 0x6B, 0x9C05, 0xA8D158FF, 0x8511B068564859FD, 1290907648,  +169070592, {  804820708,    +1015148, 6496, 0x4FDB }, "Evolution Snowboarding" },
 	{{ "GEDE01\x00\x00" }, true,  0x8A, 0xBF56, 0x1987A637, 0x83B11C85F55A7AF6, 1453324288,    +6653952, { 1172649668,      +32768, 6496, 0x1014 }, "Eternal Darkness: Sanity's Requiem" },
@@ -743,6 +903,7 @@ static const struct {
 	{{ "GESPA4\x00\x00" }, false, 0x79, 0x3910, 0xB591A35F, 0x06BB39C380942CAD,  756324352,  +703653888, {  545286120,      +20204, 8096, 0xA1EE }, "Evolution Skateboarding" },
 	{{ "GEVJ0M\x00\x00" }, false, 0x53, 0x06ED, 0x8F6F5F3E, 0xAD8416CD80901E96, 1242880000,  +217098240, { 1212724116,      +13792, 6496, 0x253A }, "Shinki Sekai Evolutia" },
 	{{ "GEWE41\x00\x00" }, false, 0x96, 0x906D, 0xBFCB4D4F, 0x741A8FCE16F4B335, 1284227072,  +175751168, { 1256536768,      +22676, 6496, 0x4B71 }, "Evolution Worlds" },
+	{{ "GEWE41\x00\x00" }, false, 0xAA, 0x1C6B, 0x74E3FBEE, 0x6D5DC8CE5C7C3D54, 1284227072,  +175751168, { 1256536256,      +23188, 6496, 0x4B71 }, "Evolution Worlds" },
 	{{ "GEWP41\x00\x00" }, false, 0x7A, 0x3BD1, 0x7388F4F9, 0x514E09AB37F86624, 1374953472,   +85024768, { 1255137752,      +21596, 6496, 0x4B71 }, "Evolution Worlds" },
 	{{ "GEXE52\x00\x00" }, true,  0xAA, 0x7E76, 0x940C7C23, 0xAE5A9FAFDCFFCC32, 1335173120,  +124805120, { 1184956416,          +0, 6496, 0x8FBE }, "Disney's Extreme Skate Adventure" },
 	{{ "GEXP52\x00\x00" }, true,  0xD8, 0xA604, 0x119F3B75, 0xA8DB0D78395E66C2, 1441525760,   +18452480, { 1161363456,          +0, 6496, 0x8FBE }, "Disney's Extreme Skate Adventure" },
@@ -868,9 +1029,9 @@ static const struct {
 	{{ "GGTJ01\x00\x01" }, false, 0x40, 0x915D, 0xD3A3126F, 0xDA517FAFEEF00228,  395712512, +1064265728, {    2482192, +1064267672, 6496, 0x8DBE }, "Chibi-Robo!" },
 	{{ "GGTP01\x00\x00" }, false, 0xE7, 0x5273, 0x88080C8F, 0x5398147CF751B1AC,  611936256,  +848041984, {  177016756,  +848042612, 8096, 0x363D }, "Chibi-Robo!" },
 	{{ "GGVD78\x00\x00" }, false, 0xC9, 0x4365, 0x2E2565BB, 0xECB8BFCE925B00A5,  705005568,  +754972672, {  524112880,     +173072, 6496, 0xE237 }, "Nickelodeon SpongeBob Schwammkopf: Der Film" },
-	{{ "GGVE78\x00\x01" }, false, 0x30, 0xC940, 0x77BE3CC6, 0xE8844FD465C89A0E,  833777664,  +626200576, {  663582496,     +116960, 6496, 0x2DB3 }, "Nickelodeon SpongeBob SquarePants: The Movie" },
-	{{ "GGVP78\x00\x00" }, false, 0xB2, 0x37D0, 0x334AAC70, 0xE8844FD465C89A0E,  755748864,  +704229376, {  585553220,     +131772, 6496, 0x2DB3 }, "Nickelodeon SpongeBob SquarePants: The Movie" },
-	{{ "GGVX78\x00\x00" }, false, 0xEC, 0x58F0, 0x084EA086, 0xEA4CE83ED77D02B5,  887375872,  +572602368, {  649406444,     +206868, 8096, 0xE317 }, "Nickelodeon SpongeBob SquarePants: The Movie" },
+	{{ "GGVE78\x00\x01" }, false, 0x30, 0xC940, 0x77BE3CC6, 0xE8844FD465C89A0E,  833777664,  +626200576, {  663582496,     +116960, 6496, 0x2DB3 }, "Nickelodeon The SpongeBob SquarePants Movie" },
+	{{ "GGVP78\x00\x00" }, false, 0xB2, 0x37D0, 0x334AAC70, 0xE8844FD465C89A0E,  755748864,  +704229376, {  585553220,     +131772, 6496, 0x2DB3 }, "Nickelodeon The SpongeBob SquarePants Movie" },
+	{{ "GGVX78\x00\x00" }, false, 0xEC, 0x58F0, 0x084EA086, 0xEA4CE83ED77D02B5,  887375872,  +572602368, {  649406444,     +206868, 8096, 0xE317 }, "Nickelodeon The SpongeBob SquarePants Movie" },
 	{{ "GGYE41\x00\x00" }, false, 0x09, 0xB031, 0xEB315761, 0x71121EF405C85F5A, 1369171968,   +90806272, {   11524292,      +30916, 6496, 0x0ACA }, "Tom Clancy's Ghost Recon 2" },
 	{{ "GGYP41\x00\x00" }, false, 0xEE, 0xC2CA, 0xE719BBF8, 0xC118038D4979439E, 1369167872,   +90810368, {   11518148,       +4292, 8096, 0x3AB2 }, "Tom Clancy's Ghost Recon 2" },
 	{{ "GGZE52\x00\x01" }, false, 0xE3, 0xEB0B, 0xDEC444A2, 0x47F430DD6DB2A530,  644280320,  +815697920, {  218948608,  +815699576, 6496, 0x7B5F }, "DreamWorks Madagascar" },
@@ -970,7 +1131,7 @@ static const struct {
 	{{ "GIHE78\x00\x01" }, false, 0x19, 0xD189, 0xB29A2A47, 0x34A840A79C8A30BF, 1094070272,  +365907968, {  939299108,       +4020, 6496, 0x545F }, "Scooby-Doo! Night of 100 Frights" },
 	{{ "GIHF78\x00\x00" }, false, 0xAE, 0x08A5, 0xDE0ABF46, 0x6ED9DBC4E02C4A99, 1103308800,  +356669440, {  952739908,       +4228, 8096, 0x2373 }, "Scooby-Doo! La Nuit des 100 Frissons" },
 	{{ "GIHP78\x00\x00" }, false, 0x78, 0x6944, 0xAC9948A6, 0x29AA538EBB065EE7, 1044678656,  +415299584, {  891586272,      +32404, 8096, 0x5F8C }, "Scooby-Doo! Night of 100 Frights" },
-	{{ "GIIJ18\x00\x00" }, false, 0x2C, 0x977B, 0x11AAA0D2, 0xF04C6EA1A21C6183,  640131072,  +819847168, {  640124096,          +0, 6496, 0x5B29 }, "Momotarou Dentetsu 11: Black Bombee Shutsugen! no Maki" },
+	{{ "GIIJ18\x00\x00" }, false, 0x2C, 0x977B, 0x11AAA0D2, 0xF04C6EA1A21C6183,  640131072,  +819847168, {  640124096,          +0, 6496, 0x5B29 }, "Momotarou Dentetsu 11: Black Bonby Shutsugen! no Maki" },
 	{{ "GIJEFP\x00\x00" }, false, 0x1B, 0xB3B7, 0x834BDAF9, 0xC96080E6C914109A,  664311808,  +795666432, {  664304292,  +795667420, 6496, 0xBA35 }, "Space Raiders" },
 	{{ "GIJJC0\x00\x00" }, false, 0x90, 0xE404, 0xAAE6405B, 0x63F4D4210554B222,  647563264,  +812414976, {    1844312,      +23464, 6496, 0xA2F6 }, "Space Raiders" },
 	{{ "GIJKC0\x00\x00" }, false, 0x60, 0x9B2E, 0xC0C2035B, 0xD709C301F18ED0E2,  668135424,  +791842816, {  668128868,  +791842844, 6496, 0xBA35 }, "Space Raiders" },
@@ -994,7 +1155,7 @@ static const struct {
 	{{ "GITE01\x00\x00" }, true,  0x40, 0x1F66, 0x2B606740, 0x48FA7ED1B3778F45, 1350270976,  +109707264, {   36882352,  +109709904, 6496, 0xE03C }, "Geist" },
 	{{ "GITP01\x00\x00" }, true,  0x43, 0x3F6B, 0xB484B0B0, 0xFDD3013C6AEC03F2, 1433655296,   +26322944, {    5051400,   +26315768, 8096, 0x3C91 }, "Geist" },
 	{{ "GIVE4Z\x00\x00" }, false, 0x08, 0x3DB0, 0xA28BD52F, 0x8577B0BFC2F235C9,  844175360,  +615802880, {    2039396,  +615802940, 6496, 0x947D }, "Intellivision Lives!" },
-	{{ "GIZE52\x00\x00" }, false, 0x75, 0xAF07, 0x0580F689, 0xD40DDBA9F274AC5E, 1265168384,  +194809856, { 1086710932,      +22924, 6496, 0x1D8F }, "TY the Tasmanian Tiger: Night of the Quinkan" },
+	{{ "GIZE52\x00\x00" }, false, 0x75, 0xAF07, 0x0580F689, 0xD40DDBA9F274AC5E, 1265168384,  +194809856, { 1086710932,      +22924, 6496, 0x1D8F }, "Ty the Tasmanian Tiger: Night of the Quinkan" },
 	{{ "GJ2JCM\x00\x00" }, false, 0xA4, 0x85D8, 0x4229CFF9, 0x7228B7EAE1BA9D38,  553273344,  +906704896, {   77121764,      +18932, 6496, 0xE222 }, "Jikkyou World Soccer 2002" },
 	{{ "GJ2PA4\x00\x00" }, false, 0x68, 0xE7AA, 0x1D4A5F3E, 0x755FB0D1D04AE5CA,  953282560,  +506695680, {   81019644,      +25568, 8096, 0x0022 }, "International Superstar Soccer 2" },
 	{{ "GJ3PA4\x00\x00" }, false, 0x54, 0xFDA5, 0x9C44D6FF, 0xD4475AB6A4F38BEC, 1414266880,   +45711360, {  197558776,      +31940, 8096, 0x4017 }, "International Superstar Soccer 3" },
@@ -1296,6 +1457,7 @@ static const struct {
 	{{ "GNDF69\x00\x00" }, false, 0xAD, 0x8DBD, 0x1952782E, 0x32D8D8C67527B0F5, 1110857728,  +349120512, {  583217800,      +30852, 8096, 0x1D7C }, "Need for Speed: Underground" },
 	{{ "GNDJ13\x00\x00" }, false, 0xE0, 0xF152, 0x836CFEDA, 0x13A558EDB97775EE, 1128900608,  +331077632, {  587165492,      +32104, 6496, 0x89A0 }, "Need for Speed: Underground" },
 	{{ "GNDP69\x00\x00" }, false, 0x7B, 0x01AB, 0x4584DC3B, 0x6644F65D96920450, 1110884352,  +349093888, {  583244796,      +30880, 8096, 0x1D7C }, "Need for Speed: Underground" },
+	{{ "GNDP8P\x01\x01" }, false, 0x11, 0x6F6A, 0x81525825, 0x7B6CD8E32A668D95,  894347264,  +565630976, {         ~0,          +0,    0, 0xFFFF }, "Need for Speed: Underground" },
 	{{ "GNED78\x00\x00" }, true,  0xC7, 0xBA7B, 0x80C21A71, 0x16D33F3B707771F7,  914595840,  +545382400, {  911329992,   +77706552, 6496, 0xE7F2 }, "Disney/Pixar Findet Nemo" },
 	{{ "GNEE78\x00\x00" }, true,  0xA7, 0x2044, 0xA997457F, 0x0128E0D4BDB9645A, 1105072128,  +354906112, { 1101332816,      +32768, 6496, 0x81E7 }, "Disney/Pixar Finding Nemo" },
 	{{ "GNEE78\x00\x01" }, true,  0xB9, 0xADCD, 0xAE9836EC, 0x36CE4B5AE809213A, 1011677184,  +448301056, { 1008417884,   +26526628, 6496, 0x81E7 }, "Disney/Pixar Finding Nemo" },
@@ -1311,17 +1473,21 @@ static const struct {
 	{{ "GNHE5d\x00\x00" }, false, 0x14, 0xCCBB, 0x66F9C1EE, 0x4369FD335CCFDAAB,    2140160, +1457838080, {      94248,       +4056, 6496, 0xE4D9 }, "Action Replay Ultimate Codes for Use with Soul Calibur II" },
 	{{ "GNHE5d\x00\x00" }, false, 0x18, 0xCCBB, 0x094E050D, 0xE681BB50D4D0B25C,    2066432, +1457911808, {      94248,       +4056, 6496, 0x98DE }, "Cube CD 07 (26)" },
 	{{ "GNHE5d\x00\x00" }, false, 0x1B, 0xCCBB, 0x6611EBB9, 0x5542A9570DFCCA68,    1376256, +1458601984, {      94248,       +4056, 6496, 0x6EC8 }, "Ultimate Codes for Use with Animal Crossing" },
-	{{ "GNHE5d\x00\x00" }, false, 0x25, 0xCCBB, 0x105DDF80, 0x2860F18D229E6724,   11837440, +1448140800, {      94248,       +4056, 6496, 0x9217 }, "MaxPlay" },
+	{{ "GNHE5d\x00\x00" }, false, 0x25, 0xCCBB, 0x105DDF80, 0x2860F18D229E6724,   11837440, +1448140800, {      94248,       +4056, 6496, 0x9217 }, "Max Play" },
 	{{ "GNHE5d\x00\x00" }, false, 0x28, 0x3E90, 0x56FE3B5E, 0x6544CBF254A0C4CD,    2197504, +1457780736, {      94248,       +4056, 6496, 0xE312 }, "Advance Game Port" },
+	{{ "GNHE5d\x00\x00" }, false, 0x2C, 0x3E90, 0x0E8BB8D0, 0xCB5D5096FE9FD4E8,    2045952, +1457932288, {      94248,       +4056, 6496, 0xB20B }, "Advance Game Port" },
 	{{ "GNHE5d\x00\x00" }, false, 0x2C, 0xCCBB, 0x11A23CFC, 0x9D96DC5BD2CAB822,    3047424, +1456930816, {      94248,       +4056, 6496, 0x4C9F }, "Action Replay for GameCube" },
 	{{ "GNHE5d\x00\x00" }, false, 0x2D, 0xCCBB, 0x20410C84, 0xFD841AF194632025,     968704, +1459009536, {      94248,       +4056, 6496, 0xB8A4 }, "Action Replay Ultimate Codes for Use with Wario World" },
-	{{ "GNHE5d\x00\x00" }, false, 0x2E, 0xCCBB, 0x2E098A57, 0xED61A06E328BCADC,     929792, +1459048448, {      94248,       +4056, 6496, 0x71DF }, "CD avec les Codes Exclusifs et Inédits pour le Jeu Metroid Prime" },
+	{{ "GNHE5d\x00\x00" }, false, 0x2E, 0xCCBB, 0x2E098A57, 0xED61A06E328BCADC,     929792, +1459048448, {      94248,       +4056, 6496, 0x71DF }, "CD avec les Codes Exclusifs et inédits pour le Jeu Metroid Prime" },
+	{{ "GNHE5d\x00\x00" }, false, 0x30, 0xCCBB, 0x534963A9, 0x4C74370EF6241C47,     630784, +1459347456, {      94248,       +4056, 6496, 0x1F49 }, "SD Media Launcher for GameCube / Wii" },
 	{{ "GNHE5d\x00\x00" }, false, 0x32, 0xCCBB, 0xF788D099, 0x20C822BDDEB80BC7,    1245184, +1458733056, {      94248,       +4056, 6496, 0x08F2 }, "Ultimate Codes for Use with Tom Clancy's Splinter Cell" },
 	{{ "GNHE5d\x00\x00" }, false, 0x33, 0xCCBB, 0xC7E200F3, 0x2B7A18F78F0474B8,    2117632, +1457860608, {      94248,       +4056, 6496, 0x3A76 }, "Action Replay Ultimate Cheats für Enter the Matrix" },
+	{{ "GNHE5d\x00\x00" }, false, 0x36, 0xCCBB, 0x4021811B, 0x0BD3C7BA76983FB6,    2174976, +1457803264, {      94248,       +4056, 6496, 0xCD3A }, "Karat GC-you Pro Action Replay PAR GC-you" },
 	{{ "GNHE5d\x00\x00" }, false, 0x38, 0xCCBB, 0xF44D8921, 0x2634109EB130EDB7,    2183168, +1457795072, {      94248,       +4056, 6496, 0x3101 }, "Karat GC-you Pro Action Replay PAR GC-you" },
-	{{ "GNHE5d\x00\x00" }, false, 0x3A, 0xCCBB, 0xA1C6B7A4, 0xE00BE64FE685E811,    1107968, +1458870272, {      94248,       +4056, 6496, 0xA9C4 }, "CD Exclusif avec les Codes pour les Jeux Resident Evil et Resident Evil Zero" },
+	{{ "GNHE5d\x00\x00" }, false, 0x3A, 0xCCBB, 0xA1C6B7A4, 0xE00BE64FE685E811,    1107968, +1458870272, {      94248,       +4056, 6496, 0xA9C4 }, "CD exclusif avec les codes pour les jeux Resident Evil et Resident Evil Zero" },
 	{{ "GNHE5d\x00\x00" }, false, 0x3C, 0xCCBB, 0xB1B28589, 0xBA2B9164B083E0A3,    1714176, +1458264064, {      94248,       +4056, 6496, 0x3310 }, "Action Replay Ultimate Codes Greatest Hits: Best Buy Achievers Weekend 2004" },
 	{{ "GNHE5d\x00\x00" }, false, 0x3D, 0xCCBB, 0x1570E92E, 0x987DD6D6992B0FCD,     774144, +1459204096, {      94248,       +4056, 6496, 0x6923 }, "Cube CD 19 (38)" },
+	{{ "GNHE5d\x00\x00" }, false, 0x42, 0x685B, 0x7B642B57, 0x1BB6CC5F6B2F8B1A,     647168, +1459331072, {      94248,       +4056, 6496, 0x1F49 }, "SD Media Launcher for GameCube / Wii" },
 	{{ "GNHE5d\x00\x00" }, false, 0x42, 0xCCBB, 0xA7648498, 0x3C56B5D0829E5870,    2043904, +1457934336, {      94248,       +4056, 6496, 0x98DE }, "Cube CD 08 (27)" },
 	{{ "GNHE5d\x00\x00" }, false, 0x44, 0xCCBB, 0x9CB75B81, 0x775708DF885B4B68,    2471936, +1457506304, {      94248,       +4056, 6496, 0x329E }, "Action Replay for GameCube" },
 	{{ "GNHE5d\x00\x00" }, false, 0x46, 0x3E90, 0xF9FEDBF8, 0xD3397948AA37DA17,    1181696, +1458796544, {      94248,       +4056, 6496, 0x8508 }, "Action Replay Ultimate Cheats for Use with Pokémon Colosseum" },
@@ -1333,20 +1499,25 @@ static const struct {
 	{{ "GNHE5d\x00\x00" }, false, 0x55, 0xCCBB, 0x9E7DC646, 0xC835982AC91C6F64,     974848, +1459003392, {      94248,       +4056, 6496, 0x49CF }, "Cube CD 17 (36)" },
 	{{ "GNHE5d\x00\x00" }, false, 0x57, 0xCCBB, 0x2188E0BF, 0x188D9BA3FDAC7D1E,    1148928, +1458829312, {      94248,       +4056, 6496, 0x98DE }, "Cube CD 05 (24)" },
 	{{ "GNHE5d\x00\x00" }, false, 0x57, 0xCCBB, 0x4D3BC980, 0x7DBCBD513CC0E4EF,     849920, +1459128320, {      94248,       +4056, 6496, 0x98DE }, "Cube CD 03 (22)" },
+	{{ "GNHE5d\x00\x00" }, false, 0x58, 0xCCBB, 0xC80CA638, 0xA8D7793FAA07D360,    2555904, +1457422336, {      94248,       +4056, 6496, 0x329E }, "Action Replay for GameCube" },
 	{{ "GNHE5d\x00\x00" }, false, 0x5A, 0xCCBB, 0x1F756DAD, 0x18600C6BC8C6562B,    1417216, +1458561024, {      94248,       +4056, 6496, 0x6D95 }, "Action Replay Ultimative Cheatcodes für Final Fantasy: Crystal Chronicles" },
 	{{ "GNHE5d\x00\x00" }, false, 0x66, 0xCCBB, 0x55D7EDD1, 0x28A5FFBE9A173388,     989184, +1458989056, {      94248,       +4056, 6496, 0xE787 }, "Ultimate Cheats für Splinter Cell" },
 	{{ "GNHE5d\x00\x00" }, false, 0x68, 0xCCBB, 0xBF7B7C5A, 0x421F5299A43CCD74,    1189888, +1458788352, {      94248,       +4056, 6496, 0xD19A }, "Power Link Game Enhancer Disc" },
 	{{ "GNHE5d\x00\x00" }, false, 0x73, 0xCCBB, 0x4B9B91E6, 0xAEC6721D4E3AB041,     866304, +1459111936, {      94248,       +4056, 6496, 0x71CD }, "Cube CD 15 (34)" },
-	{{ "GNHE5d\x00\x00" }, false, 0x7B, 0xCCBB, 0xCC3182C3, 0x009AEBA340070CC2,   11837440, +1448140800, {      94248,       +4056, 6496, 0xCC3B }, "MaxPlay" },
+	{{ "GNHE5d\x00\x00" }, false, 0x7B, 0xCCBB, 0xCC3182C3, 0x009AEBA340070CC2,   11837440, +1448140800, {      94248,       +4056, 6496, 0xCC3B }, "Max Play" },
 	{{ "GNHE5d\x00\x00" }, false, 0x7C, 0xCCBB, 0x26649910, 0x76B7CDED51201288,    2185216, +1457793024, {      94248,       +4056, 6496, 0xCD3A }, "Karat GC-you Pro Action Replay PAR GC-you" },
+	{{ "GNHE5d\x00\x00" }, false, 0x7E, 0xCCBB, 0x23C778CB, 0xBFCC85C796AEB6C6,    3287040, +1456691200, {      94248,       +4056, 6496, 0x4C9F }, "Action Replay for GameCube" },
 	{{ "GNHE5d\x00\x00" }, false, 0x83, 0xCCBB, 0x564BDDF9, 0x91E9D9008467BF60,    1906688, +1458071552, {      94248,       +4056, 6496, 0x98DE }, "Cube CD 02 (21)" },
 	{{ "GNHE5d\x00\x00" }, false, 0x88, 0xCCBB, 0xF61CF908, 0xE369CEC46FA0233D,    3311616, +1456666624, {      94248,       +4056, 6496, 0x4C9F }, "Action Replay for GameCube" },
 	{{ "GNHE5d\x00\x00" }, false, 0x89, 0xCCBB, 0x31DAF617, 0x6EF3EBBCCC9774A4,    1284096, +1458694144, {      94248,       +4056, 6496, 0x400E }, "Action Replay Ultimate Codes for Use with The Legend of Zelda: Twilight Princess" },
 	{{ "GNHE5d\x00\x00" }, false, 0x8B, 0xCCBB, 0xB21FE659, 0x4F69F289DB473EBF,    1042432, +1458935808, {      94248,       +4056, 6496, 0x6BCB }, "Cube CD 14 (33)" },
+	{{ "GNHE5d\x00\x00" }, false, 0x92, 0x3E90, 0x93418D2A, 0x3B40D9C1767A0BD8,    1705984, +1458272256, {      94248,       +4056, 6496, 0xB20B }, "Advance Connector GC-you" },
 	{{ "GNHE5d\x00\x00" }, false, 0x92, 0x3E90, 0xF9450866, 0xD8E05FFDED31B676,   12331008, +1447647232, {      94248,       +4056, 6496, 0xB714 }, "Advance Game Port / Cheat Construction Kit" },
+	{{ "GNHE5d\x00\x00" }, false, 0x93, 0xD1BC, 0xBF68F726, 0x346BB2C6454940B1,   11843584, +1448134656, {      94248,       +4056, 6496, 0xCC3B }, "Max Play" },
 	{{ "GNHE5d\x00\x00" }, false, 0x98, 0x8464, 0x53F2137A, 0x1D6B58FD88349461,  855990272,  +603987968, {    7480672,      +30652, 6496, 0x8BDF }, "NHL Hitz 2002" },
 	{{ "GNHE5d\x00\x00" }, false, 0x98, 0xCCBB, 0xE5C0156E, 0x654DFB8F0F5E8495,     968704, +1459009536, {      94248,       +4056, 6496, 0x71CD }, "Cube CD 16 (35)" },
-	{{ "GNHE5d\x00\x00" }, false, 0x99, 0xCCBB, 0xE584A9F1, 0xCA715EDF4ECEBB48,    1355776, +1458622464, {      94248,       +4056, 6496, 0x9839 }, "CD avec les Codes Action Replay Exclusivement pour le Jeu The Legend of Zelda: The Wind Waker" },
+	{{ "GNHE5d\x00\x00" }, false, 0x99, 0xCCBB, 0x40647E85, 0x36903BDC45F9FF89,    1396736, +1458581504, {      94248,       +4056, 6496, 0xDD29 }, "FreeLoader for GameCube" },
+	{{ "GNHE5d\x00\x00" }, false, 0x99, 0xCCBB, 0xE584A9F1, 0xCA715EDF4ECEBB48,    1355776, +1458622464, {      94248,       +4056, 6496, 0x9839 }, "CD avec les codes Action Replay exclusivement pour le jeu The Legend of Zelda: The Wind Waker" },
 	{{ "GNHE5d\x00\x00" }, false, 0xA4, 0xCCBB, 0xA04B47B2, 0x0B1283EE258112F2,    1245184, +1458733056, {      94248,       +4056, 6496, 0xD5E2 }, "Action Replay Ultimate Codes for Use with Final Fantasy: Crystal Chronicles" },
 	{{ "GNHE5d\x00\x00" }, false, 0xA9, 0xCCBB, 0xEB7F7BC6, 0x1F6713160B2BAF7F,     800768, +1459177472, {      94248,       +4056, 6496, 0xF61C }, "Cube CD 20 (40)" },
 	{{ "GNHE5d\x00\x00" }, false, 0xAA, 0xCCBB, 0xA5292C47, 0x076715BBB1E14944,    1355776, +1458622464, {      94248,       +4056, 6496, 0x9839 }, "Ultimate Cheats für The Legend of Zelda: The Wind Waker" },
@@ -1381,6 +1552,7 @@ static const struct {
 	{{ "GNJEAF\x00\x00" }, false, 0xC7, 0x3137, 0x46D100B8, 0x9B193F7D1219D305,  902359040,  +557619200, {  902351532,  +557620212, 6496, 0x7488 }, "I-Ninja" },
 	{{ "GNKE8P\x00\x00" }, false, 0x74, 0xEEE8, 0x561D5E32, 0x9E4F9FDC80C48378, 1388003328,   +71974912, { 1387923264,      +17628, 6496, 0x75CA }, "NCAA College Basketball 2K3" },
 	{{ "GNLE69\x00\x00" }, false, 0x1C, 0x82AB, 0x901BAA7D, 0xBC228004ACE02411,  956958720,  +503019520, {    4300252,      +25124, 6496, 0x3195 }, "NBA Live 2003" },
+	{{ "GNLF69\x00\x00" }, false, 0x8B, 0x3D76, 0xCA606A11, 0xEBC67C60156D66AC,  781791232,  +678187008, {    4300972,      +24404, 6496, 0x3195 }, "NBA Live 2003" },
 	{{ "GNLP69\x00\x00" }, false, 0x95, 0xBDCB, 0x3BAE0BA4, 0xEBC67C60156D66AC,  943038464,  +516939776, {    4302832,      +22544, 6496, 0x3195 }, "NBA Live 2003" },
 	{{ "GNMEAF\x00\x00" }, true,  0x8A, 0xBD06, 0x316232A1, 0x4537061684D7C9D1,  660975616,  +799002624, {  484100140,          +0, 6496, 0x9E0C }, "Namco Museum" },
 	{{ "GNMEAF\x00\x01" }, true,  0x38, 0x25E4, 0x0BECBC5F, 0xBA5DB6E856CA7B9A,  662384640,  +797593600, {  485509164,          +0, 6496, 0x9E0C }, "Namco Museum" },
@@ -1454,8 +1626,8 @@ static const struct {
 	{{ "GOYD69\x11\x00" }, false, 0xE2, 0x5005, 0xF1E31557, 0x23D6CF621E8548AF, 1206607872,  +253370368, { 1206331732,  +253371628, 6496, 0x22DB }, "GoldenEye: Rogue Agent" },
 	{{ "GOYE69\x10\x00" }, false, 0x7B, 0x7821, 0xC9C97E97, 0x23D6CF621E8548AF, 1204037632,  +255940608, { 1203761420,  +255941940, 6496, 0x18CF }, "GoldenEye: Rogue Agent" },
 	{{ "GOYE69\x11\x00" }, false, 0xAC, 0x860D, 0x22E8D92B, 0x23D6CF621E8548AF, 1235333120,  +224645120, { 1235057704,  +224645656, 6496, 0x2AD1 }, "GoldenEye: Rogue Agent" },
-	{{ "GOYF69\x10\x00" }, false, 0x76, 0xA314, 0x4564BB01, 0x23D6CF621E8548AF, 1201731584,  +258246656, { 1201456392,  +258246968, 6496, 0xFEA8 }, "GoldenEye: Rogue Agent" },
-	{{ "GOYF69\x11\x00" }, false, 0x6D, 0x1307, 0xDBA8AA7F, 0x23D6CF621E8548AF, 1207652352,  +252325888, { 1207377148,  +252326212, 6496, 0x0D2B }, "GoldenEye: Rogue Agent" },
+	{{ "GOYF69\x10\x00" }, false, 0x76, 0xA314, 0x4564BB01, 0x23D6CF621E8548AF, 1201731584,  +258246656, { 1201456392,  +258246968, 6496, 0xFEA8 }, "GoldenEye: Au Service du Mal" },
+	{{ "GOYF69\x11\x00" }, false, 0x6D, 0x1307, 0xDBA8AA7F, 0x23D6CF621E8548AF, 1207652352,  +252325888, { 1207377148,  +252326212, 6496, 0x0D2B }, "GoldenEye: Au Service du Mal" },
 	{{ "GOYP69\x10\x00" }, false, 0x14, 0x2F2D, 0x6467EC57, 0x23D6CF621E8548AF, 1383215104,   +76763136, { 1382937336,   +76764424, 8096, 0xB226 }, "GoldenEye: Rogue Agent" },
 	{{ "GOYP69\x11\x00" }, false, 0x63, 0x3F10, 0x638836F2, 0x23D6CF621E8548AF, 1298546688,  +161431552, { 1298268656,  +161433104, 8096, 0xA4B2 }, "GoldenEye: Rogue Agent" },
 	{{ "GOYS69\x10\x00" }, false, 0x49, 0x9521, 0x8A1122D6, 0x23D6CF621E8548AF, 1209352192,  +250626048, { 1209077148,  +250626212, 6496, 0x074E }, "GoldenEye: Agente Corrupto" },
@@ -1564,7 +1736,7 @@ static const struct {
 	{{ "GQPP78\x00\x00" }, false, 0x72, 0x34F1, 0xDC6D2747, 0x05821722985DB963, 1258819584,  +201158656, { 1143972088,  +201160528, 8096, 0x46A5 }, "Nickelodeon SpongeBob SquarePants: Battle for Bikini Bottom" },
 	{{ "GQQD78\x00\x00" }, false, 0x09, 0x7175, 0x400DF3AF, 0x46608C101BF6213D, 1243418624,  +216559616, { 1243409676,  +216560468, 8096, 0xA256 }, "Nickelodeon SpongeBob Schwammkopf: Film ab!" },
 	{{ "GQQE78\x00\x00" }, false, 0x80, 0x9F4A, 0x135F55E4, 0x3123F20718B4E539, 1294913536,  +165064704, { 1294906588,  +165065156, 6496, 0x17A6 }, "Nickelodeon SpongeBob SquarePants: Lights, Camera, Pants!" },
-	{{ "GQQF78\x00\x00" }, false, 0xDA, 0xF976, 0x8B0E1254, 0xB95411A870F6C4D0, 1239074816,  +220903424, { 1239065484,  +220904660, 8096, 0xA256 }, "Nickelodeon Bob L'éponge: Silence on Tourne!" },
+	{{ "GQQF78\x00\x00" }, false, 0xDA, 0xF976, 0x8B0E1254, 0xB95411A870F6C4D0, 1239074816,  +220903424, { 1239065484,  +220904660, 8096, 0xA256 }, "Nickelodeon Bob L'éponge: Silence on Tourne !" },
 	{{ "GQQH78\x00\x00" }, false, 0xC8, 0xBC78, 0xC94DA0AA, 0xEFE773E52FEE23FD, 1237968896,  +222009344, { 1237959552,  +222010592, 8096, 0xA256 }, "Nickelodeon SpongeBob SquarePants: Licht uit, Camera aan!" },
 	{{ "GQQP78\x00\x00" }, false, 0x89, 0x7F76, 0xEBF5A0BB, 0x9E9946135FA9720A, 1234765824,  +225212416, { 1234756912,  +225213232, 8096, 0x3DDE }, "Nickelodeon SpongeBob SquarePants: Lights, Camera, Pants!" },
 	{{ "GQRJ18\x00\x00" }, false, 0x3B, 0x9B2C, 0xE887EF9B, 0x7120982B9E1B876D,  162488320, +1297489920, {  137114904, +1297490088, 6496, 0xDB4E }, "Hudson Selection Vol. 1: Cubic Lode Runner" },
@@ -1726,8 +1898,8 @@ static const struct {
 	{{ "GSXJ13\x00\x00" }, true,  0x4E, 0x9053, 0x24A75A9E, 0x334B20CD2BC5C26A, 1364707328,   +95270912, {  717026356,   +15721284, 6496, 0x8928 }, "Star Wars: The Clone Wars" },
 	{{ "GSXP64\x00\x00" }, true,  0x8D, 0xE85F, 0x5350B404, 0x86B56B9D6184430B, 1392834560,   +67143680, {  732639460,   +15562704, 6496, 0x9211 }, "Star Wars: The Clone Wars" },
 	{{ "GSXS64\x00\x00" }, true,  0xA3, 0x9D36, 0x7F6214A4, 0x2779F962534147BC, 1393418240,   +66560000, {  726797288,   +15430704, 6496, 0x04DB }, "Star Wars: Las Guerras Clon" },
-	{{ "GSYE6S\x00\x00" }, true,  0x66, 0x0711, 0x2C34401A, 0xDD8B3BD444212E82,  588488704,  +871489536, {  473008912,     +396456, 6496, 0xA89D }, "Shrek Super Party" },
-	{{ "GSYP6S\x00\x00" }, true,  0x73, 0x61E7, 0x7675F608, 0x60E42AF8F6A46140,  607197184,  +852781056, {  506408848,     +362800, 6496, 0xA89D }, "Shrek Super Party" },
+	{{ "GSYE6S\x00\x00" }, true,  0x26, 0x0711, 0x2C34401A, 0xDD8B3BD444212E82,  588881920,  +871096320, {  473405368,          +0, 6496, 0xA89D }, "Shrek Super Party" },
+	{{ "GSYP6S\x00\x00" }, true,  0x9E, 0x61E7, 0x7675F608, 0x60E42AF8F6A46140,  607590400,  +852387840, {  506771648,          +0, 6496, 0xA89D }, "Shrek Super Party" },
 	{{ "GSZP41\x00\x00" }, false, 0xE6, 0x407B, 0xE649640A, 0xF7D1C748F341BE08,  524728320,  +935249920, {  524703604,     +730224, 8096, 0x0881 }, "Speed Challenge: Jacques Villeneuve's Racing Vision" },
 	{{ "GT2J18\x00\x00" }, false, 0xD3, 0xB57F, 0xD9B37F9B, 0x9AD90A2883AE442A, 1454006272,    +5971968, { 1101011888,      +14324, 6496, 0x582D }, "Tengai Makyou II: Manji Maru" },
 	{{ "GT3D52\x00\x00" }, true,  0x65, 0x850F, 0xF33F9B32, 0xF8559FB90F7A7A1D, 1453072384,    +6905856, { 1302953984,          +0, 6496, 0x3EBF }, "Tony Hawk's Pro Skater 3" },
@@ -1791,9 +1963,12 @@ static const struct {
 	{{ "GTUE8G\x00\x00" }, true,  0x54, 0x81BA, 0x0D764212, 0x376E99298C93C8DB,  661299200,  +798679040, {    1726832,  +798461232, 6496, 0xAF82 }, "Tube Slider: The Championship of Future Formula" },
 	{{ "GTVE70\x00\x00" }, false, 0x35, 0x3139, 0x3CB7DDE8, 0x8B36843A61A972CE, 1414422528,   +45555712, { 1298827548,   +45505908, 6496, 0xCA4A }, "TransWorld Surf: Next Wave" },
 	{{ "GTWE70\x00\x00" }, false, 0x6E, 0xB648, 0xA6C9C6A1, 0x8E921AD339AF1DD6, 1295419392,  +164558848, {  653569568,  +164560892, 6496, 0x7A1B }, "Taz: Wanted" },
+	{{ "GTWEA4\x00\x00" }, false, 0x3D, 0x2AB3, 0xBAF5F815, 0x36E6D3F36DE31E6A,  633962496,  +826015744, {  243914648,  +826017128, 6496, 0x2E6C }, "Taz: Wanted" },
+	{{ "GTWEA4\x00\x00" }, false, 0x6A, 0x41FB, 0x9896FB23, 0x38731E3ABB0B631E,  646377472,  +813600768, {    3324948,  +813600928, 8096, 0x2486 }, "Taz: Wanted" },
 	{{ "GTWP70\x00\x00" }, false, 0x4C, 0x3626, 0xC160EF87, 0xD472A12C41E454EF,  645001216,  +814977024, {    3335680,  +814978364, 8096, 0x19F8 }, "Taz: Wanted" },
-	{{ "GTYE69\x00\x00" }, true,  0xB5, 0x5B40, 0xF4D308CC, 0xCC124374AA10DEE8, 1330989056,  +128989184, {  745406464,      +32768, 6496, 0x940C }, "TY the Tasmanian Tiger" },
-	{{ "GTYP69\x00\x00" }, true,  0x1B, 0x9EB4, 0xB30A2BAD, 0xD97DE7F5FEA39A5C, 1363314688,   +96663552, {  745340928,      +32768, 8096, 0x0F93 }, "TY the Tasmanian Tiger" },
+	{{ "GTWP70\x00\x00" }, false, 0xB3, 0xE313, 0xDA4DC356, 0x28C138CD895741CA,  644993024,  +814985216, {    3330816,  +814985916, 8096, 0x19F8 }, "Taz: Wanted" },
+	{{ "GTYE69\x00\x00" }, true,  0xB5, 0x5B40, 0xF4D308CC, 0xCC124374AA10DEE8, 1330989056,  +128989184, {  745406464,      +32768, 6496, 0x940C }, "Ty the Tasmanian Tiger" },
+	{{ "GTYP69\x00\x00" }, true,  0x1B, 0x9EB4, 0xB30A2BAD, 0xD97DE7F5FEA39A5C, 1363314688,   +96663552, {  745340928,      +32768, 8096, 0x0F93 }, "Ty the Tasmanian Tiger" },
 	{{ "GTZE41\x00\x00" }, false, 0xD2, 0x8DBC, 0xEF54571A, 0xAA93855B57BAE1E7,  763131904,  +696846336, {  763123940,       +4948, 6496, 0xDF3F }, "Disney's Tarzan: Untamed" },
 	{{ "GTZP41\x00\x00" }, false, 0xC2, 0x8E7B, 0x251AD1E8, 0x8862ADB380F52C6E, 1297475584,  +162502656, { 1297467196,       +8452, 6496, 0xDDB8 }, "Disney's Tarzan: Freeride" },
 	{{ "GU2D78\x10\x00" }, true,  0x74, 0x883C, 0x30127B72, 0x20EED6445E0E39F0, 1037131776,  +422846464, {  963112556,  +422848056, 6496, 0xE4FB }, "2 Games in 1: Disney/Pixar Die Unglaublichen" },
@@ -1870,7 +2045,7 @@ static const struct {
 	{{ "GVSE8P\x00\x00" }, true,  0x99, 0x164C, 0xC5E3DE37, 0x0DF255EEC8206422,  685672448,  +774305792, {    3984248,  +774306920, 6496, 0xE9EB }, "Virtua Striker 2002" },
 	{{ "GVSJ8P\x00\x00" }, true,  0x29, 0x5024, 0xB0293FED, 0xDC9409130FD748BA,  764573696,  +695404544, {  741381888,  +695424828, 6496, 0xABEE }, "Virtua Striker 3 Ver. 2002" },
 	{{ "GVSP8P\x00\x00" }, true,  0x02, 0xCA03, 0x8F84DED4, 0xEB3FCC0FCE06F57D,  774316032,  +685662208, {    4261848,  +685642568, 8096, 0x6431 }, "Virtua Striker 3 Ver. 2002" },
-	{{ "GVWJDQ\x00\x00" }, true,  0xBC, 0x222D, 0xCF6D0AA5, 0x0C16F45E31B0FCDA, 1051209728,  +408768512, { 1051202972,      +50260, 6496, 0xF163 }, "Gakuen Toshi Vara Noir Roses" },
+	{{ "GVWJDQ\x00\x00" }, true,  0xBC, 0x222D, 0xCF6D0AA5, 0x0C16F45E31B0FCDA, 1051209728,  +408768512, { 1051202972,      +50260, 6496, 0xF163 }, "Gakuen Toshi Varanoir: Roses" },
 	{{ "GW2E78\x00\x00" }, false, 0x20, 0xFC58, 0xBB092C3A, 0x738C0903EE272DC0, 1278961664,  +181016576, {  395487724,  +181016632, 6496, 0x782F }, "WWE Day of Reckoning 2" },
 	{{ "GW2P78\x00\x00" }, false, 0x74, 0x3D6D, 0x069A9097, 0xFD31700E4C2E20B6, 1278965760,  +181012480, {  395490028,  +181014368, 6496, 0x782F }, "WWE Day of Reckoning 2" },
 	{{ "GW3E78\x00\x00" }, false, 0x39, 0xDCD9, 0xA37B1923, 0xA7A80B3C10A04590, 1414426624,   +45551616, { 1371755380,    +2289120, 6496, 0x9420 }, "WWE WrestleMania X8" },
@@ -1995,6 +2170,7 @@ static const struct {
 	{{ "GXPE78\x00\x00" }, false, 0x43, 0xC8EC, 0x242F4FF4, 0xFAB57366DF634AE2,  802619392,  +657358848, {  560811136,  +657360016, 6496, 0x7AC6 }, "Sphinx and the Cursed Mummy" },
 	{{ "GXPP78\x00\x00" }, false, 0x10, 0xC393, 0x4E830E05, 0x23DBAC502AC62ED7,  830459904,  +629518336, {  592219200,  +629519968, 8096, 0x7FE1 }, "Sphinx and the Cursed Mummy" },
 	{{ "GXQF41\x00\x00" }, false, 0xCA, 0xC240, 0x3A1A8D90, 0x60F26702E303F140,  478402560,  +981575680, {  478393544,     +743596, 8096, 0xA071 }, "Taxi 3: Le Jeu" },
+	{{ "GXRE08\x00\x00" }, false, 0x7A, 0xF1DF, 0x7B88690E, 0x1770D28A3AC63AF7, 1276858368,  +183119872, { 1276850076,  +183121668, 6496, 0x7F76 }, "Mega Man X: Command Mission" },
 	{{ "GXRE08\x00\x00" }, false, 0x87, 0x098E, 0x82115BD2, 0x57B2D8E49F1B3310, 1275594752,  +184383488, { 1275586724,  +184385020, 6496, 0x9F0B }, "Mega Man X: Command Mission" },
 	{{ "GXRJ08\x00\x00" }, false, 0xE7, 0x78F3, 0x179CF63B, 0x45A062339F7541E5, 1282611200,  +177367040, { 1282602892,  +177368852, 6496, 0x2997 }, "Rockman X: Command Mission" },
 	{{ "GXRP08\x00\x00" }, false, 0xE0, 0xB03A, 0xD2C90D02, 0x18DE0F637C9567C3, 1355704320,  +104273920, { 1355697356,  +104274388, 6496, 0x7A53 }, "Mega Man X: Command Mission" },
@@ -2026,8 +2202,8 @@ static const struct {
 	{{ "GYQP01\x00\x00" }, true,  0x3C, 0xD13B, 0xFA1CCFC7, 0x8BFF23A65619E1C6,  633487360,  +826490880, {   15677448,  +826486424, 6496, 0x5383 }, "Mario Superstar Baseball" },
 	{{ "GYRE41\x00\x00" }, false, 0xA6, 0xD73B, 0x9F10EDBC, 0xFB1155C25746600D, 1201399808,  +258578432, {  269121280,  +258579732, 6496, 0x1484 }, "TMNT" },
 	{{ "GYRP41\x00\x00" }, false, 0xE6, 0xB9D4, 0x1731F531, 0x5ED93D1244B3CBB7, 1368225792,   +91752448, {  269287548,   +91752556, 6496, 0x1484 }, "TMNT" },
-	{{ "GYTE69\x00\x00" }, false, 0x48, 0xB032, 0x228C96BE, 0x440DAFC37990E326, 1384898560,   +75079680, { 1254675708,      +11684, 6496, 0x5F32 }, "TY the Tasmanian Tiger 2: Bush Rescue" },
-	{{ "GYTP69\x00\x00" }, false, 0x9D, 0x3169, 0x28F8097D, 0x3B1B350E44E70176, 1379461120,   +80517120, { 1254654192,       +9840, 8096, 0xBCF6 }, "TY the Tasmanian Tiger 2: Bush Rescue" },
+	{{ "GYTE69\x00\x00" }, false, 0x48, 0xB032, 0x228C96BE, 0x440DAFC37990E326, 1384898560,   +75079680, { 1254675708,      +11684, 6496, 0x5F32 }, "Ty the Tasmanian Tiger 2: Bush Rescue" },
+	{{ "GYTP69\x00\x00" }, false, 0x9D, 0x3169, 0x28F8097D, 0x3B1B350E44E70176, 1379461120,   +80517120, { 1254654192,       +9840, 8096, 0xBCF6 }, "Ty the Tasmanian Tiger 2: Bush Rescue" },
 	{{ "GYWDE9\x00\x00" }, true,  0x69, 0xC312, 0xE439A68B, 0x96CDEC1C360D3818,  508981248,  +950996992, {  305514904,  +951010272, 6496, 0xE3A7 }, "Harvest Moon: A Wonderful Life" },
 	{{ "GYWEE9\x00\x00" }, true,  0x9E, 0x8A82, 0xD5C265C1, 0x282D139E151ECED5,  530059264,  +929918976, {  311542124,  +929910280, 6496, 0x7B52 }, "Harvest Moon: A Wonderful Life" },
 	{{ "GYWJ99\x00\x00" }, true,  0x0C, 0xAAB6, 0xA5A47F09, 0xBC91AE97FF9D9344,  663797760,  +796180480, {  415579196,  +796177764, 6496, 0x59A5 }, "Bokujou Monogatari: Wonderful Life" },
@@ -2050,7 +2226,7 @@ static const struct {
 	{{ "GZHJDA\x00\x00" }, false, 0x1D, 0xB05D, 0x86F1BB88, 0x8AECED8AB4BCB487,  445110272, +1014867968, {   83045600, +1014868124, 6496, 0x367E }, "Zoids: Full Metal Crash" },
 	{{ "GZLE01\x00\x00" }, false, 0x2C, 0x0503, 0xAD21C2BA, 0x36D193DF45BFDAA4, 1086173184,  +373805056, { 1084514500,  +373806324, 6496, 0x825E }, "The Legend of Zelda: The Wind Waker" },
 	{{ "GZLE01\x00\x30" }, false, 0xA7, 0x23BB, 0x79706BF2, 0x36D193DF45BFDAA4, 1086173184,  +373805056, { 1084514500,  +373806324, 6496, 0x825E }, "The Legend of Zelda: The Wind Waker" },
-	{{ "GZLJ01\x00\x00" }, false, 0x71, 0xDEDE, 0xC58B4E93, 0x66AA07FFD17C4906, 1028438016,  +431540224, { 1026790568,  +431540324, 6496, 0x4D3E }, "Zelda no Densetsu: Kaze no Takuto" },
+	{{ "GZLJ01\x00\x00" }, false, 0x71, 0xDEDE, 0xC58B4E93, 0x66AA07FFD17C4906, 1028438016,  +431540224, { 1026790568,  +431540324, 6496, 0x4D3E }, "Zelda no Densetsu: Kaze no Takt" },
 	{{ "GZLP01\x00\x00" }, false, 0x80, 0xBE51, 0x61FC5423, 0x19B91B3ECA0FF750, 1097971712,  +362006528, { 1091328128,  +362007624, 8096, 0xA9A7 }, "The Legend of Zelda: The Wind Waker" },
 	{{ "GZMP7D\x00\x00" }, false, 0x97, 0x50D8, 0x6D8D3BD4, 0x154717F0C1B938E0, 1329086464,  +130891776, {    1622364,      +16036, 6496, 0xF756 }, "Butt-Ugly Martians: Zoom or Doom!" },
 	{{ "GZOJDA\x00\x01" }, true,  0xA6, 0xF08B, 0x0E0403C3, 0xE6EBF1B229F61ECB, 1086898176,  +373080064, {  313197008,   +10420996, 6496, 0x8F48 }, "Zoids Vs." },
@@ -2088,6 +2264,7 @@ static const struct {
 	{{ "PZLP01\x00\x00" }, true,  0x77, 0xB216, 0x667329D4, 0x84C631E8D73C689F, 1319895040,  +140083200, {   33156000,  +140113088, 8096, 0x3AB8 }, "The Legend of Zelda: Collector's Edition" },
 	{{ "RELSAB\x00\x00" }, false, 0xE2, 0x4535, 0x5DC67D47, 0xC7F0615FF27C3BD0, 1298782208,  +161196032, {         ~0,          +0,    0, 0xFFFF }, "Galleon" },
 	{{ "RELSAB\x00\x00" }, true,  0x16, 0xBF42, 0x5542F6E9, 0xFD01394996D4907D,  746024960,  +713953280, {         ~0,          +0,    0, 0xFFFF }, "Pickles" },
+	{{ "RELSAB\x00\x00" }, true,  0x57, 0x7380, 0x7FA9A839, 0xF2C2C49A798EB874,  674945024,  +785033216, {         ~0,          +0,    0, 0xFFFF }, "Pickles" },
 	{{ "RELSAB\x01\x01" }, true,  0xB1, 0x771E, 0x17B30888, 0x3E5C6F107670681B,  134633472, +1325344768, {         ~0,          +0,    0, 0xFFFF }, "Crazy Taxi" },
 	{{ "UGPE01\x00\x02" }, false, 0xD7, 0xE266, 0xDCD8FA3D, 0x5546B27013E610DA,    2451456, +1457526784, {    1985860,      +12988, 6496, 0x8E43 }, "Game Boy Player Start-Up Disc" },
 	{{ "UGPE01\x00\x03" }, false, 0x79, 0x4067, 0xE502DC79, 0xF86BF542A29021D4,    2451456, +1457526784, {    1985860,      +12988, 6496, 0x8E43 }, "Game Boy Player Start-Up Disc" },
@@ -2097,7 +2274,8 @@ static const struct {
 	{{ "UGPJ01\x00\x03" }, false, 0xDE, 0xC4F0, 0xDFF567CB, 0xFB2218FBFA6AB9FE,    2473984, +1457504256, {    2003524,      +28092, 6496, 0xE53B }, "Game Boy Player Start-Up Disc" },
 	{{ "UGPP01\x00\x01" }, false, 0x2A, 0x6D4F, 0x5ECD9681, 0x4E9244DEFB94F10C,    5079040, +1454899200, {    2317764,       +8764, 8096, 0x8972 }, "Game Boy Player Start-Up Disc" },
 	{{ "UGPP01\x00\x02" }, false, 0x3A, 0xCA50, 0x1E26380C, 0x483B4CE794041533,    5079040, +1454899200, {    2317764,       +8764, 8096, 0x8972 }, "Game Boy Player Start-Up Disc" },
-#define REDUMP_COUNT (1988)
+	{{ "XXXXXX\x00\x01" }, false, 0x83, 0x7056, 0x5995AC59, 0x5CBC3D9F00D75112, 1287913472,  +172064768, {         ~0,          +0,    0, 0xFFFF }, "LEGO Super Soccer Adventure" },
+#define REDUMP_COUNT (2014)
 	{{"00\0E01\x00\x00" }, false, 0x8B, 0x42A2, 0x499CF1AB, 0xC1BAC83BFBED3EDB,   31170560, +1428807680, {    7795364,      +23900, 6496, 0xBBEA }, "Nintendo Developer Demo" },
 	{{"00\0E01\x00\x00" }, false, 0xD9, 0x21CF, 0xBF114CB3, 0xC1BAC83BFBED3EDB,   31170560, +1428807680, {    7795364,      +23900, 6496, 0xBBEA }, "Nintendo Developer Demo" },
 	{{ "060J01\x00\x00" }, true,  0x7E, 0x27AC, 0x94C088DF, 0x55221BF909AB54CC,  171485184, +1288493056, {     238648, +1288483336, 6496, 0xFD76 }, "Diag Ver 3.1.1" },
@@ -2127,6 +2305,7 @@ static const struct {
 	{{ "GASE8P\x00\x00" }, false, 0xB3, 0xA1B0, 0xDD918AD1, 0xD9B670DD43BD37A5, 1404723200,   +55255040, {  774689240,   +55255472, 6496, 0x0D21 }, "Sonic Adventure DX: Director's Cut" },
 	{{ "GB8E78\x00\x00" }, true,  0x03, 0x3B42, 0x1F19869C, 0x0716D4D5A73AB0BC,  432257024, +1027721216, {  412625660,      +32768, 6496, 0x9BD7 }, "BattleBots" },
 	{{ "GBIJ08\x00\x00" }, false, 0x75, 0x7EF2, 0xD752514D, 0xD4E03DF58675E232,  175702016, +1284276224, {    2519252, +1283945932, 6496, 0xEF92 }, "Resident Evil 4" },
+	{{ "GBLPGL\x00\x00" }, false, 0x02, 0x72B9, 0x5EB3D183, 0x9EA116C923108E24,    1570816,     +100352, {      17768,         +24, 6496, 0x4411 }, "240p Test Suite" },
 	{{ "GBLPGL\x00\x00" }, false, 0x18, 0x72B9, 0x24316D11, 0xAE30E4588E3FC3FD,     962560,      +86016, {      17768,         +24, 6496, 0x4411 }, "240p Test Suite" },
 	{{ "GBLPGL\x00\x00" }, false, 0x25, 0x72B9, 0x3B9EB672, 0x798B59FAFDD76092,    1167360,      +77824, {      17768,         +24, 6496, 0x4411 }, "240p Test Suite" },
 	{{ "GBLPGL\x00\x00" }, false, 0x39, 0x72B9, 0xB1C8AD07, 0x56FD6B99E1920B8F,     946176,     +102400, {      17768,         +24, 6496, 0x4411 }, "240p Test Suite" },
@@ -2134,20 +2313,68 @@ static const struct {
 	{{ "GBLPGL\x00\x00" }, false, 0x74, 0x72B9, 0x66F13AD8, 0x5C4B48DFD1F0CD01,    1640448,      +96256, {      17768,         +24, 6496, 0x4411 }, "240p Test Suite" },
 	{{ "GBLPGL\x00\x00" }, false, 0xC5, 0x72B9, 0xDE0EEDEF, 0xB7675CA1C96D1E05,    1372160,     +102400, {      17768,         +24, 6496, 0x4411 }, "240p Test Suite" },
 	{{ "GBLPGL\x00\x00" }, false, 0xD4, 0x72B9, 0xFC2DC457, 0x23D8CE720A3B44F3,     962560,      +86016, {      17768,         +24, 6496, 0x4411 }, "240p Test Suite" },
+	{{ "GBRJ18\x00\x00" }, true,  0x02, 0x7558, 0x10302DFD, 0xD511A1E5295168CC,  702013440,    +1810432, {  702006208,    +1784896, 6496, 0xA141 }, "Bloody Roar: Primal Fury" },
+	{{ "GBRJ18\x00\x00" }, true,  0x04, 0xF8C4, 0x15A26E24, 0xD511A1E5295168CC,  720531456,  +739446784, {  720523412,  +739443572, 6496, 0xA141 }, "Bloody Roar: Primal Fury" },
+	{{ "GBRJ18\x00\x00" }, true,  0x08, 0x9C60, 0x491BCB44, 0xD511A1E5295168CC,  702013440,  +757964800, {  702005576,  +757957476, 6496, 0xA141 }, "Bloody Roar: Primal Fury" },
+	{{ "GBRJ18\x00\x00" }, true,  0x36, 0x7558, 0xEA2E3174, 0xD511A1E5295168CC,  701579264,    +1818624, {  701571000,    +1794120, 6496, 0xA141 }, "Bloody Roar: Primal Fury" },
+	{{ "GBRJ18\x00\x00" }, true,  0x4C, 0x7558, 0x66236CDF, 0x573EDC1532490D40,  721467392,    +1853440, {  721460204,    +1827860, 6496, 0xD449 }, "Bloody Roar: Extreme" },
+	{{ "GBRJ18\x00\x00" }, true,  0x54, 0x7558, 0x4A73C265, 0x573EDC1532490D40,  702048256,    +1841152, {  702041240,    +1815400, 6496, 0xD449 }, "Bloody Roar: Extreme" },
+	{{ "GBRJ18\x00\x00" }, true,  0x5C, 0x7558, 0xC4596FF8, 0x573EDC1532490D40,  721932288,    +1847296, {  721924012,    +1822804, 6496, 0xD449 }, "Bloody Roar: Extreme" },
+	{{ "GBRJ18\x00\x00" }, true,  0x5D, 0x7558, 0x41B67D93, 0xD511A1E5295168CC,  720531456,    +1806336, {  720523992,    +1781032, 6496, 0xA141 }, "Bloody Roar: Primal Fury" },
+	{{ "GBRJ18\x00\x00" }, true,  0x69, 0x7558, 0x0A4B1E26, 0x573EDC1532490D40,  702513152,    +1835008, {  702505048,    +1810344, 6496, 0xD449 }, "Bloody Roar: Extreme" },
+	{{ "GBRJ18\x00\x00" }, true,  0x6B, 0x114B, 0x9A41970C, 0xD511A1E5295168CC,  720095232,  +739883008, {  720088216,  +739869552, 6496, 0xA141 }, "Bloody Roar: Primal Fury" },
+	{{ "GBRJ18\x00\x00" }, true,  0x70, 0x7558, 0xFF9B0B5A, 0xD511A1E5295168CC,  720982016,    +1847296, {  720975092,    +1821452, 6496, 0xA141 }, "Bloody Roar: Primal Fury" },
+	{{ "GBRJ18\x00\x00" }, true,  0x74, 0xB137, 0xA3454BB4, 0xD511A1E5295168CC,  721418240,  +738560000, {  721409740,  +738558780, 6496, 0xA141 }, "Bloody Roar: Primal Fury" },
+	{{ "GBRJ18\x00\x00" }, true,  0x77, 0x582F, 0x907088CB, 0x573EDC1532490D40,  721930240,  +738048000, {  721923448,  +738034192, 6496, 0xD449 }, "Bloody Roar: Extreme" },
+	{{ "GBRJ18\x00\x00" }, true,  0x79, 0x87DF, 0x6D09152D, 0x573EDC1532490D40,  702048256,  +757929984, {  702040624,  +757924732, 6496, 0xD449 }, "Bloody Roar: Extreme" },
+	{{ "GBRJ18\x00\x00" }, true,  0x83, 0x7558, 0x8C1D6EBD, 0x573EDC1532490D40,  701614080,    +1849344, {  701606032,    +1824624, 6496, 0xD449 }, "Bloody Roar: Extreme" },
+	{{ "GBRJ18\x00\x00" }, true,  0x89, 0xB5E6, 0x4AEABAAF, 0xD511A1E5295168CC,  701562880,  +758415360, {  701555528,  +758383460, 6496, 0xA141 }, "Bloody Roar: Primal Fury" },
+	{{ "GBRJ18\x00\x00" }, true,  0x96, 0x7558, 0x44240747, 0x573EDC1532490D40,  721033216,    +1861632, {  721024996,    +1837084, 6496, 0xD449 }, "Bloody Roar: Extreme" },
+	{{ "GBRJ18\x00\x00" }, true,  0x9C, 0xB5E6, 0x47D41EB3, 0xD511A1E5295168CC,  701577216,  +758401024, {  701570380,  +758383456, 6496, 0xA141 }, "Bloody Roar: Primal Fury" },
+	{{ "GBRJ18\x00\x00" }, true,  0xA2, 0x7558, 0xF9281EB7, 0xD511A1E5295168CC,  701999104,    +1824768, {  701991336,    +1799768, 6496, 0xA141 }, "Bloody Roar: Primal Fury" },
+	{{ "GBRJ18\x00\x00" }, true,  0xA3, 0xCABD, 0x839726ED, 0xD511A1E5295168CC,  720982016,  +738996224, {  720974544,  +738984760, 6496, 0xA141 }, "Bloody Roar: Primal Fury" },
+	{{ "GBRJ18\x00\x00" }, true,  0xC1, 0x7558, 0xD76D1DEA, 0xD511A1E5295168CC,  701562880,    +1835008, {  701556128,    +1808992, 6496, 0xA141 }, "Bloody Roar: Primal Fury" },
+	{{ "GBRJ18\x00\x00" }, true,  0xC1, 0x9F66, 0xA6BE3A9E, 0x573EDC1532490D40,  701612032,  +758366208, {  701605428,  +758350712, 6496, 0xD449 }, "Bloody Roar: Extreme" },
+	{{ "GBRJ18\x00\x00" }, true,  0xCB, 0x59D8, 0x702F0A2B, 0x573EDC1532490D40,  702511104,  +757467136, {  702504432,  +757465660, 6496, 0xD449 }, "Bloody Roar: Extreme" },
+	{{ "GBRJ18\x00\x00" }, true,  0xD6, 0x7558, 0x1C750980, 0xD511A1E5295168CC,  721418240,    +1837056, {  721410300,    +1812228, 6496, 0xA141 }, "Bloody Roar: Primal Fury" },
+	{{ "GBRJ18\x00\x00" }, true,  0xDB, 0x8636, 0x3CC9C574, 0x573EDC1532490D40,  721467392,  +738510848, {  721459640,  +738493200, 6496, 0xD449 }, "Bloody Roar: Extreme" },
+	{{ "GBRJ18\x00\x00" }, true,  0xE6, 0x7558, 0xA32A88FE, 0xD511A1E5295168CC,  720097280,    +1814528, {  720088784,    +1790256, 6496, 0xA141 }, "Bloody Roar: Primal Fury" },
+	{{ "GBRJ18\x00\x00" }, true,  0xE8, 0x9C60, 0x7FC466E5, 0xD511A1E5295168CC,  701999104,  +757979136, {  701990724,  +757957480, 6496, 0xA141 }, "Bloody Roar: Primal Fury" },
+	{{ "GBRJ18\x00\x00" }, true,  0xED, 0x9FBC, 0x87587845, 0x573EDC1532490D40,  721031168,  +738947072, {  721024444,  +738919180, 6496, 0xD449 }, "Bloody Roar: Extreme" },
+	{{ "GC4EBN\x00\x00" }, false, 0x6A, 0xC0A7, 0xF665334C, 0xD4AD315EFE4AD06F, 1459906560,      +71680, {   90439680,          +0, 6496, 0xE4F4 }, "Future GPX Cyber Formula: Road to the Evolution" },
+	{{ "GC6E01\x00\x00" }, false, 0x02, 0x4F30, 0x6C64900C, 0x85D5EF084054736E,  655089664,  +805037088, {  182645332,  +805038428, 6496, 0x719C }, "Pokémon Grand Colosseum: Johto Version" },
+	{{ "GC6E01\x00\x00" }, false, 0x0D, 0x9DA6, 0x2F88628D, 0x68D7AE2DF554948F,  660803584,  +799174656, {  185303372,  +797392564, 6496, 0x2CD0 }, "Pokémon Colosseum: Sketch Version" },
+	{{ "GC6E01\x00\x00" }, false, 0x26, 0x4F30, 0x3B11D928, 0xEFE3C75F02A3CE48,  655089664,  +805037088, {  182645332,  +805038428, 6496, 0x719C }, "Pokémon Grand Colosseum: Johto Version" },
+	{{ "GC6E01\x00\x00" }, false, 0x2B, 0x2A3D, 0xF4F3B43A, 0x15BA32D7E7F51655,  660836352,  +799141888, {  185303372,  +797361844, 6496, 0xEA89 }, "Pokémon Colosseum: Equality Version" },
+	{{ "GC6E01\x00\x00" }, false, 0x3A, 0x6ABC, 0xF9213634, 0x943543E941B878F3,  660846592,  +799131648, {  185303372,  +797392564, 6496, 0xF895 }, "Pokémon Colosseum: Poison Version" },
+	{{ "GC6E01\x00\x00" }, false, 0x46, 0x4F30, 0xDCFE01C7, 0x85D5EF084054736E,  655089664,  +805037088, {  182645716,  +805038044, 6496, 0x719C }, "Pokémon Grand Colosseum: Kanto Version" },
+	{{ "GC6E01\x00\x00" }, false, 0x69, 0x4F30, 0x2889F8BA, 0xEFE3C75F02A3CE48,  655089664,  +805037088, {  182645716,  +805038044, 6496, 0x719C }, "Pokémon Grand Colosseum: Kanto Version" },
+	{{ "GC6E01\x00\x00" }, false, 0x70, 0x4F30, 0x15FFE9B4, 0xEFE3C75F02A3CE48,  655089664,  +805037088, {  182645716,  +805038044, 6496, 0x719C }, "Pokémon Grand Colosseum: Hoenn Version" },
+	{{ "GC6E01\x00\x00" }, false, 0x73, 0x140B, 0x3AFB027E, 0xCD4D335C717DAA6F,  662243328,  +797734912, {  184036332,  +795954196, 6496, 0x719C }, "Pokémon Colosseum" },
+	{{ "GC6E01\x00\x00" }, false, 0x9E, 0x6BC0, 0x30F65871, 0xCD4D335C717DAA6F,  654651392,  +805326848, {  182812676,  +805328760, 6496, 0x719C }, "Pokémon Colosseum" },
+	{{ "GC6E01\x00\x00" }, false, 0x9E, 0x6BC0, 0x4CA55F32, 0xCD4D335C717DAA6F,  655673344,  +804304896, {  182811272,  +801673444, 6496, 0x719C }, "Pokémon Colosseum" },
+	{{ "GC6E01\x00\x00" }, false, 0xA1, 0xF713, 0x5E81A0DF, 0x47318D5ABA656D88,  660891648,  +799086592, {  185286580,  +797329484, 6496, 0xF515 }, "Pokémon Colosseum: Type Mayhem" },
+	{{ "GC6E01\x00\x00" }, false, 0xC8, 0x12CB, 0x4DA28412, 0x06DDF1F49F6DE4D6,  660819968,  +799158272, {  185303372,  +797392564, 6496, 0xB1A4 }, "Pokémon Colosseum: ReduX" },
+	{{ "GC6E01\x00\x00" }, false, 0xD4, 0x6BC0, 0x70BF5970, 0xCD4D335C717DAA6F,  659527680,  +800450560, {  184033736,  +800401832, 6496, 0x719C }, "Pokémon Colosseum" },
+	{{ "GC6E01\x00\x00" }, false, 0xD6, 0x4F30, 0x1DFB7B40, 0x85D5EF084054736E,  655089664,  +805037088, {  182645716,  +805038044, 6496, 0x719C }, "Pokémon Grand Colosseum: Hoenn Version" },
+	{{ "GC6E01\x00\x00" }, false, 0xE5, 0x6BC0, 0x338AEC48, 0xF0545D33E55E53A1,  654622720,  +805355520, {  182785616,  +805353180, 6496, 0x719C }, "Pokémon Colosseum" },
 	{{ "GCCE01\x00\x00" }, false, 0x13, 0xF223, 0xD466236E, 0x89D01E6E0E49A121, 1329932288,  +130045952, {  570366340,      +30392, 6496, 0x6BE6 }, "Final Fantasy Crystal Chronicles: Single Player Upgrade" },
 	{{ "GCREBM\x00\x00" }, false, 0xA7, 0x9EF5, 0x00FFED74, 0x34BF21CA529D0E02,   10774528,  +105123840, {      17736,         +24, 6496, 0x65EB }, "Xeno Crisis" },
-	{{ "GCRJBM\x00\x00" }, false, 0x6D, 0x80F9, 0x0C6D4075, 0x34BF21CA529D0E02,   10774528,  +105123840, {      17736,         +24, 6496, 0xFAC5 }, "Xeno Crisis" },
 	{{ "GDEE71\x00\x00" }, false, 0x65, 0xC228, 0xC2C80167, 0x616D2EAD3B11D74F, 1358307328,  +101670912, {  914092380,       +7536, 6496, 0x2D5A }, "Baldur's Gate: Dark Alliance" },
-	{{ "GEAE8P\x00\x00" }, false, 0x16, 0x4329, 0x22E6FE4B, 0x776C0A056378855A, 1421514752,   +38463488, { 1206244016,   +36660560, 6496, 0x51AD }, "Skies of Arcadia Legends Maeson" },
-	{{ "GEAE8P\x00\x00" }, false, 0x66, 0xE528, 0xEE8698CB, 0xEE3D9D60D95DC4D8, 1441400832,   +18577408, { 1206239432,   +16754488, 6496, 0xCB3E }, "Skies of Arcadia Legends" },
-	{{ "GEAP8P\x00\x00" }, false, 0x6D, 0xE97B, 0xDE5D8B4B, 0xBCF792111F227773, 1440671744,   +19306496, { 1221746028,   +17478292, 8096, 0x90EE }, "Skies of Arcadia Legends" },
-	{{ "GEAP8P\x00\x00" }, false, 0x87, 0x44D4, 0x0CCE9042, 0x9B16498254607B48, 1445722112,   +14256128, { 1221750612,   +12339372, 8096, 0x1EBE }, "Skies of Arcadia Legends Maeson" },
-	{{ "GEAP8P\x00\x00" }, false, 0xA2, 0x44D4, 0x7C966541, 0xB214B86A3A60F822, 1445722112,   +14256128, { 1221750612,   +12339372, 8096, 0x1EBE }, "Skies of Arcadia Legends Maeson" },
+	{{ "GDPJAF\x00\x00" }, false, 0x85, 0x5BBF, 0xEEAD97CB, 0xF5236848D65E4FF3,  913614848,  +546363392, {  542371948,  +546337144, 6496, 0x7780 }, "Mr. Driller: Drill Land" },
+	{{ "GEAE8P\x00\x00" }, false, 0x16, 0x4329, 0x22E6FE4B, 0x776C0A056378855A, 1421514752,   +38463488, { 1206244016,   +36660560, 6496, 0x51AD }, "Skies of Arcadia: Legends Maeson" },
+	{{ "GEAE8P\x00\x00" }, false, 0x66, 0xE528, 0xEE8698CB, 0xEE3D9D60D95DC4D8, 1441400832,   +18577408, { 1206239432,   +16754488, 6496, 0xCB3E }, "Skies of Arcadia: Legends" },
+	{{ "GEAP8P\x00\x00" }, false, 0x6D, 0xE97B, 0xDE5D8B4B, 0xBCF792111F227773, 1440671744,   +19306496, { 1221746028,   +17478292, 8096, 0x90EE }, "Skies of Arcadia: Legends" },
+	{{ "GEAP8P\x00\x00" }, false, 0x87, 0x44D4, 0x0CCE9042, 0x9B16498254607B48, 1445722112,   +14256128, { 1221750612,   +12339372, 8096, 0x1EBE }, "Skies of Arcadia: Legends Maeson" },
+	{{ "GEAP8P\x00\x00" }, false, 0xA2, 0x44D4, 0x7C966541, 0xB214B86A3A60F822, 1445722112,   +14256128, { 1221750612,   +12339372, 8096, 0x1EBE }, "Skies of Arcadia: Legends Maeson" },
+	{{ "GFEE01\x00\x00" }, false, 0x4A, 0x4275, 0x1661430C, 0x316050A7421877E3, 1300903936,   +93407232, {  669183468,   +15798804, 6496, 0xAD7F }, "Path of Radiance: Reverse Recruitment Ultimate" },
 	{{ "GFEJ01\x00\x00" }, false, 0x9B, 0xFC08, 0xE97ACE52, 0x8C16FBB32540FEAC, 1290264576,  +169713664, {  660224316,  +165844676, 6496, 0x4D38 }, "Fire Emblem: Souen no Kiseki" },
 	{{ "GFTP01\x00\x00" }, false, 0xCB, 0x3F77, 0x963DEB2E, 0x7EF65CF2B33925E9, 1336121344,  +123856896, {    2083652,  +123826684, 8096, 0x9AC5 }, "Mario Golf: Toadstool Tour" },
 	{{ "GGSEA4\x10\x00" }, false, 0x16, 0xCD03, 0xD1B33770, 0xBB75D2E06575ECBC, 1316773888,  +143204352, {  596774724,      +32956, 6496, 0x215E }, "Metal Gear Solid: The Twin Snakes" },
 	{{ "GGSEA4\x11\x00" }, false, 0xA9, 0x5C18, 0x85409E81, 0xBB75D2E06575ECBC, 1406547968,   +53430272, {  681679984,      +17296, 6496, 0x2460 }, "Metal Gear Solid: The Twin Snakes" },
 	{{ "GHEE91\x00\x01" }, false, 0x95, 0x4CAD, 0xA5391CA0, 0xD0D84B5A3961CAD8,  862353408,  +597624832, {  637646488,  +597625152, 6496, 0x94C1 }, "Homeland" },
+	{{ "GHEJ91\x00\x01" }, false, 0x27, 0x33B2, 0x490B2D9B, 0x6A0783B0D25BA15B,  862353408,  +597624832, {  637646488,  +597625152, 6496, 0x93E3 }, "Homeland" },
+	{{ "GHEJ91\x00\x01" }, false, 0x39, 0x33B2, 0xEC61F537, 0x6A0783B0D25BA15B,  862353408,  +597624832, {  637646488,  +597625152, 6496, 0x93E3 }, "Homeland" },
 	{{ "GIAP7D\x00\x00" }, false, 0x0B, 0x4B59, 0x85B0AE66, 0x98AF060B6E4E1EFC, 1459746816,     +231424, { 1459738284,     +231860, 8096, 0x9E52 }, "Ice Age 2: The Meltdown" },
 	{{ "GICE78\x00\x00" }, false, 0x19, 0x8D19, 0xE5D4FA8A, 0x83BF4A12324387B3, 1085521920,  +374456320, {         ~0,          +0,    0, 0xFFFF }, "Disney/Pixar The Incredibles" },
 	{{ "GICE78\x00\x00" }, false, 0x53, 0xBE32, 0x8BCDCAAF, 0xA1DBBC825BBD00DA,  144986112, +1314992128, {  120391172,      +23036, 6496, 0x6DF1 }, "Disney/Pixar The Incredibles" },
@@ -2158,17 +2385,23 @@ static const struct {
 	{{ "GIQE78\x00\x00" }, false, 0x95, 0xF761, 0x159A0B00, 0x8AED688FC4F83BE6,  815622144,  +644356096, {  757094452,     +118732, 6496, 0x967C }, "Disney/Pixar Mr. Incredible: Kyouteki Underminer Toujou" },
 	{{ "GIQJ8P\x00\x00" }, false, 0xA4, 0xCC5C, 0xD218556F, 0x730128D3010188E2,  795537408,  +664440832, {  737009764,     +112540, 6496, 0x5ED9 }, "Disney/Pixar Mr. Incredible: Kyouteki Underminer Toujou" },
 	{{ "GIQX78\x00\x00" }, false, 0xE2, 0x423B, 0x5ADAB4B5, 0x8AED688FC4F83BE6, 1245075456,  +214902784, { 1161970580,     +138348, 8096, 0x352E }, "Disney/Pixar The Incredibles: Rise of the Underminer" },
+	{{ "GK4E01\x10\x00" }, false, 0x00, 0x582E, 0x4DA7BCCF, 0x0EB1D488E8B069AA, 1451839488,    +8138752, {    2826864,    +6501776, 6496, 0xC573 }, "Baten Kaitos Origins" },
+	{{ "GK4E01\x10\x00" }, false, 0x19, 0x582E, 0x191EFC53, 0x880C39BE27B7C56A, 1451839488,    +8138752, {    2826864,    +6501776, 6496, 0xC573 }, "Baten Kaitos Origins" },
 	{{ "GK4E01\x10\x00" }, false, 0x54, 0xEFEF, 0x770EB63D, 0x1C17F99B64B4A901, 1454764032,    +5214208, {    2737124,    +3562524, 6496, 0x33F8 }, "Baten Kaitos Origins" },
 	{{ "GK4E01\x10\x00" }, false, 0x97, 0x1B8C, 0x8640ADA7, 0xBC1BC9EF51347766, 1451636736,    +8341504, {    2826708,    +6696492, 6496, 0xC964 }, "Baten Kaitos Origins" },
 	{{ "GK4E01\x10\x00" }, false, 0xA5, 0x1B8C, 0x4768F314, 0x5595E493D41BB2E7, 1456455680,    +3522560, {    2826708,    +1871404, 6496, 0xC964 }, "Baten Kaitos Origins" },
 	{{ "GK4E01\x10\x00" }, false, 0xCC, 0x3523, 0xCEA55401, 0x1C17F99B64B4A901, 1454843904,    +5134336, {    2826464,    +3491616, 6496, 0xBA4A }, "Baten Kaitos Origins" },
 	{{ "GK4E01\x10\x00" }, false, 0xCE, 0x1B8C, 0x8783BDE8, 0xBC1BC9EF51347766, 1456455680,    +3522560, {    2826708,    +1871404, 6496, 0xC964 }, "Baten Kaitos Origins" },
+	{{ "GK4E01\x10\x00" }, false, 0xD0, 0x582E, 0xD1C39018, 0xE7069D1584B570E7, 1451839488,    +8138752, {    2826864,    +6501776, 6496, 0xC573 }, "Baten Kaitos Origins" },
 	{{ "GK4E01\x10\x00" }, false, 0xD2, 0x1B8C, 0x4C578D78, 0x5595E493D41BB2E7, 1451636736,    +8341504, {    2826708,    +6696492, 6496, 0xC964 }, "Baten Kaitos Origins" },
+	{{ "GK4E01\x11\x00" }, false, 0x04, 0x8F48, 0x2871B958, 0xE7069D1584B570E7, 1391661056,   +68317184, {    2826864,   +66672016, 6496, 0xAB74 }, "Baten Kaitos Origins" },
 	{{ "GK4E01\x11\x00" }, false, 0x33, 0x1EE9, 0xB0133874, 0x5595E493D41BB2E7, 1391022080,   +68956160, {    2826864,   +67300752, 6496, 0xAE65 }, "Baten Kaitos Origins" },
 	{{ "GK4E01\x11\x00" }, false, 0x47, 0x1EE9, 0xD2768D19, 0x5595E493D41BB2E7, 1392433152,   +67545088, {    2826864,   +65891728, 6496, 0xAE65 }, "Baten Kaitos Origins" },
+	{{ "GK4E01\x11\x00" }, false, 0x4B, 0x8F48, 0xDB1B4BF0, 0x880C39BE27B7C56A, 1391661056,   +68317184, {    2826864,   +66672016, 6496, 0xAB74 }, "Baten Kaitos Origins" },
 	{{ "GK4E01\x11\x00" }, false, 0x6E, 0x1EE9, 0xCE2A8F82, 0xBC1BC9EF51347766, 1391022080,   +68956160, {    2826864,   +67300752, 6496, 0xAE65 }, "Baten Kaitos Origins" },
 	{{ "GK4E01\x11\x00" }, false, 0x88, 0x2A88, 0xA5BA3E53, 0x1C17F99B64B4A901, 1390612480,   +69365760, {    2737376,   +67732256, 6496, 0x15F9 }, "Baten Kaitos Origins" },
 	{{ "GK4E01\x11\x00" }, false, 0x9D, 0x1EE9, 0x38E4CFAB, 0xBC1BC9EF51347766, 1392433152,   +67545088, {    2826864,   +65891728, 6496, 0xAE65 }, "Baten Kaitos Origins" },
+	{{ "GK4E01\x11\x00" }, false, 0xCB, 0x8F48, 0xC42FF8A0, 0x0EB1D488E8B069AA, 1391661056,   +68317184, {    2826864,   +66672016, 6496, 0xAB74 }, "Baten Kaitos Origins" },
 	{{ "GK4E01\x11\x00" }, false, 0xCE, 0xC320, 0xED57831A, 0x1C17F99B64B4A901, 1391255552,   +68722688, {    2826620,   +67077764, 6496, 0x9C4B }, "Baten Kaitos Origins" },
 	{{ "GK7E08\x10\x00" }, false, 0x96, 0xC10B, 0xAF55EEF2, 0x0C83A4478AC072CC, 1328312320,  +131665920, {    3209852,  +131513796, 8096, 0x14E3 }, "Killer7" },
 	{{ "GK7E08\x11\x00" }, false, 0xAA, 0xA1FC, 0x389E399B, 0x0C83A4478AC072CC,  916094976,  +543883264, {    3182188,  +543631828, 8096, 0xB275 }, "Killer7" },
@@ -2179,17 +2412,33 @@ static const struct {
 	{{ "GKBEAF\x10\x00" }, false, 0x7D, 0x25A5, 0xE52B2B6B, 0x3286EDC536D4C0D3, 1440837632,   +19140608, { 1440830320,   +19139728, 6496, 0xD47E }, "Baten Kaitos: Eternal Wings and the Lost Ocean" },
 	{{ "GKBEAF\x11\x00" }, false, 0x23, 0x6D51, 0xF3B588CF, 0x3286EDC536D4C0D3, 1332668416,  +127309824, { 1332660460,  +127309588, 6496, 0x8880 }, "Baten Kaitos: Eternal Wings and the Lost Ocean" },
 	{{ "GKQE01\x00\x00" }, false, 0x54, 0x9E10, 0x0A1A7ABC, 0xDDCC878CAC3DB6AE,  239120384, +1220857856, {  170183312, +1220859652, 6496, 0x7D26 }, "Kururin Squash!" },
+	{{ "GKQE01\x00\x00" }, false, 0xB0, 0x9E10, 0x0969CA6B, 0xDDCC878CAC3DB6AE,  239120384, +1220857856, {  170183312, +1220859652, 6496, 0x7D26 }, "Kururin Squash!" },
 	{{ "GL3EE8\x10\x00" }, false, 0xC1, 0x7503, 0xB4F243B4, 0x4B2C1E055CD023FA, 1135499264,  +324478976, {  835948536,       +7688, 6496, 0x08BD }, "Lupin III: Lost Treasure Under the Sea" },
+	{{ "GL3EE8\x10\x00" }, false, 0xC1, 0x7503, 0xC84BFE67, 0x568BB29CC0410E31, 1135499264,  +324478976, {  835948536,       +7688, 6496, 0x08BD }, "Lupin III: Lost Treasure Under the Sea" },
+	{{ "GL3EE8\x10\x00" }, false, 0xEA, 0x7503, 0xD6A66CBD, 0x8DD29CAF465774AB, 1135499264,  +324478976, {  835948536,       +7688, 6496, 0x08BD }, "Lupin III: Lost Treasure Under the Sea" },
 	{{ "GL3EE8\x11\x00" }, false, 0x12, 0xDC00, 0x2CF6D984, 0x4B2C1E055CD023FA, 1099397120,  +360581120, { 1079112416,       +8780, 6496, 0xDEAB }, "Lupin III: Lost Treasure Under the Sea" },
+	{{ "GL3EE8\x11\x00" }, false, 0x51, 0xDC00, 0x08C63906, 0x568BB29CC0410E31, 1099397120,  +360581120, { 1079112416,       +8780, 6496, 0xDEAB }, "Lupin III: Lost Treasure Under the Sea" },
+	{{ "GL3EE8\x11\x00" }, false, 0x66, 0xDC00, 0xABB35F7C, 0x8DD29CAF465774AB, 1099397120,  +360581120, { 1079112416,       +8780, 6496, 0xDEAB }, "Lupin III: Lost Treasure Under the Sea" },
 	{{ "GLJEGG\x00\x00" }, false, 0x44, 0x3684, 0xC411F2F8, 0xED983A4B64245ED8,  577157120,  +883148800, {  560702976,  +882822244, 6496, 0x83D8 }, "Radio Allergy" },
+	{{ "GLJJMS\x00\x00" }, false, 0x16, 0xCB65, 0xB7A047F5, 0xF4AFE991FE4ECC7B,  575610880,   +25878528, {  559153824,   +15203680, 6496, 0xDA29 }, "Radirgy Generic" },
+	{{ "GLJJMS\x00\x00" }, false, 0xAE, 0xFD43, 0x78B86F33, 0xF4AFE991FE4ECC7B,  575600640,  +884377600, {  559145940,  +884376972, 6496, 0xDA29 }, "Radirgy Generic" },
+	{{ "GM8E01\x00\x00" }, false, 0x0D, 0xF5D6, 0xE2BE408A, 0xAE43A5550F45F4FF, 1323476992,  +136501248, { 1314573668,  +136500540, 6496, 0xE1FB }, "Samus Goes to the Fridge to Get a Glass of Milk 3D" },
+	{{ "GM8E01\x00\x00" }, false, 0xC3, 0x51EE, 0xBCB54B30, 0xAE43A5550F45F4FF, 1314445312,  +145532928, {     137444,  +120059484, 6496, 0xDAB5 }, "Metroid Prime: Double Trouble" },
+	{{ "GM8P01\x00\x00" }, false, 0x24, 0x909C, 0x3B9499FB, 0xF12C663EF4B5642F, 1425532928,   +34445312, {  629056224,   +34443008, 8096, 0xEE10 }, "Metroid Prime" },
 	{{ "GMPP01\x00\x00" }, false, 0x0E, 0x39B0, 0xB7DA63ED, 0x895DFE61A45E24FC,  607344640,  +852633600, {  559136944,     +232500, 8096, 0x03FE }, "Mario Party 4" },
 	{{ "GMPP01\x00\x02" }, false, 0x6C, 0x9D34, 0xF0DE4105, 0x895DFE61A45E24FC,  607346688,  +852631552, {  559137448,     +264764, 8096, 0x03FE }, "Mario Party 4" },
+	{{ "GMSE04\x00\x00" }, true,  0x09, 0xA7F5, 0x73E9F414, 0x87D62E4362D694A4, 1400141824,   +59836416, { 1400133500,   +59811972, 6496, 0xF7D5 }, "Super Mario Eclipse" },
+	{{ "GMSE04\x00\x00" }, true,  0x5D, 0xDD14, 0x627E447B, 0x87D62E4362D694A4, 1386201088,   +73777152, { 1386194056,   +73760768, 6496, 0x6A2B }, "Super Mario Eclipse" },
+	{{ "GMSE04\x00\x01" }, true,  0xD8, 0x2694, 0x759F84AD, 0x87D62E4362D694A4, 1386240000,   +73738240, { 1386232984,   +73728000, 6496, 0x6A2B }, "Super Mario Eclipse" },
+	{{ "GMSE04\x00\x02" }, true,  0xB6, 0x9F67, 0x0E725F51, 0x87D62E4362D694A4, 1366890496,   +93087744, { 1366882280,   +93063192, 6496, 0x6A2B }, "Super Mario Eclipse" },
+	{{ "GMSE04\x00\x03" }, true,  0x27, 0x0DDC, 0xE62348EC, 0x87D62E4362D694A4, 1367558144,   +92420096, { 1367549960,   +92395512, 6496, 0x6A2B }, "Super Mario Eclipse" },
 	{{ "GMSP01\x00\x00" }, false, 0x1D, 0x6C8C, 0xF968261A, 0x784E17B83254CEE8,  404224000,     +100352, {  404214580,      +70348, 8096, 0x4911 }, "Super Mario Sunshine" },
 	{{ "GMUP5D\x00\x00" }, false, 0x80, 0xEE0B, 0xD442A6BF, 0x436DC9BED493D5DE, 1425692672,   +34285568, {    6644012,    +5580500, 6496, 0x093D }, "Dr. Muto" },
-	{{ "GNDP8P\x01\x01" }, false, 0x11, 0x6F6A, 0x81525825, 0x7B6CD8E32A668D95,  894347264,  +565630976, {         ~0,          +0,    0, 0xFFFF }, "Need for Speed: Underground" },
 	{{ "GNHE5d\x00\x00" }, false, 0x94, 0xCCBB, 0xE7F301B7, 0x111E626AC7CDE6B5,     428032, +1459550208, {      94248,       +4056, 6496, 0x5AE1 }, "Action Replay Ultimate Codes for Use with Enter the Matrix" },
 	{{ "GP5P01\x00\x00" }, false, 0x3D, 0xFBF1, 0x9DC1BB2A, 0xC5CD32D7C41AAE3D,  922845184,  +537133056, {   14902032,      +41916, 8096, 0x3D31 }, "Mario Party 5" },
 	{{ "GPNE08\x00\x00" }, false, 0x44, 0xA6AC, 0xD42D1079, 0x43947E5CABB597D0,  689250304,  +770727936, {  492787200,  +770729280, 6496, 0x5AB7 }, "P.N. 03" },
+	{{ "GPZE01\x00\x00" }, false, 0x3E, 0xF60D, 0x0F13C224, 0x1C69883B549A7E38,  144412672, +1315565568, {   33273940,      +38004, 6496, 0x59D7 }, "Nintendo Puzzle Collection" },
+	{{ "GPZJ01\x00\x00" }, false, 0x49, 0x686E, 0xB6FEB467, 0x3F854F54EDCC3480,  144412672, +1315565568, {   33273940,      +38004, 6496, 0x59D7 }, "Nintendo Puzzle Collection" },
 	{{ "GPZJ01\x00\x00" }, false, 0x49, 0xB3A1, 0x05B32F44, 0xE8180E176D3D096B,  144412672, +1315565568, {   33275844, +1315481660, 6496, 0x0A78 }, "Nintendo Puzzle Collection" },
 	{{ "GQSEAF\x10\x00" }, false, 0x49, 0x0E94, 0x9E8B9546, 0xFD0C9D21D44DEA63, 1380898816,   +79079424, {  349195336,   +79079928, 6496, 0xF367 }, "Tales of Symphonia" },
 	{{ "GQSEAF\x11\x00" }, false, 0xA6, 0xED8E, 0xDA5B73F2, 0xFD0C9D21D44DEA63, 1395918848,   +64059392, {  387734936,   +64059656, 6496, 0xB169 }, "Tales of Symphonia" },
@@ -2197,7 +2446,7 @@ static const struct {
 	{{ "GSBJ8P\x00\x01" }, false, 0x69, 0x00C2, 0x37188ABA, 0x8C13A498D54AD764, 1381527552,   +78450688, { 1148003688,      +30812, 6496, 0xB21E }, "Sonic Adventure 2: Battle" },
 	{{ "GSNE8P\x00\x00" }, false, 0x20, 0x6D00, 0x9E1674E2, 0x56CDD54585A0FAA8, 1381541888,   +78436352, { 1148014968,       +3360, 6496, 0x1937 }, "Sonic Adventure 2: Battle" },
 	{{ "GSOE8P\x00\x00" }, false, 0x94, 0xF780, 0xC90A1327, 0x87A885FCC49F35AC,  400175104, +1059803136, {   17701084,       +6432, 6496, 0x10E5 }, "Sonic Mega Collection" },
-	{{ "GU4P78\x10\x00" }, false, 0x41, 0x7C72, 0x09FBD438, 0xF9A5FECB2A74C58A,  757372928,  +702605312, {  587177324,  +702606596, 6496, 0x77D5 }, "2 Games in 1: Nickelodeon SpongeBob SquarePants: The Movie" },
+	{{ "GU4P78\x10\x00" }, false, 0x41, 0x7C72, 0x09FBD438, 0xF9A5FECB2A74C58A,  757372928,  +702605312, {  587177324,  +702606596, 6496, 0x77D5 }, "2 Games in 1: Nickelodeon The SpongeBob SquarePants Movie" },
 	{{ "GU4P78\x11\x00" }, false, 0xC1, 0x17B9, 0xA582FD52, 0xB2E5743BD67B2D4A, 1260439552,  +199538688, { 1145594892,  +199539324, 6496, 0x92D7 }, "2 Games in 1: Nickelodeon SpongeBob SquarePants: Battle for Bikini Bottom" },
 	{{ "GU4X78\x10\x00" }, false, 0x31, 0xD771, 0x75A51568, 0xF9A5FECB2A74C58A,  888997888,  +570980352, {  651030656,  +570981108, 6496, 0x77D5 }, "2 Games in 1: Nickelodeon Bob L'éponge: Le Film" },
 	{{ "GU4X78\x11\x00" }, false, 0x0B, 0x22C1, 0x4D3EA301, 0xB2E5743BD67B2D4A, 1260439552,  +199538688, { 1145594892,  +199539324, 6496, 0x92D7 }, "2 Games in 1: Nickelodeon Bob L'éponge: La Bataille de Bikini Bottom" },
@@ -2212,15 +2461,22 @@ static const struct {
 	{{ "GXPE78\x00\x00" }, false, 0x29, 0x3EAD, 0xF1EEF03F, 0xFF6D003B8A5037E6, 1444642816,   +15335424, {         ~0,          +0,    0, 0xFFFF }, "Pirates of the Caribbean" },
 	{{ "GXQP41\x00\x00" }, false, 0x8B, 0x904A, 0xD0B0EDE0, 0x260C8DE80E2C787E,  478402560,  +981575680, {  478393544,     +743596, 8096, 0xA071 }, "Taxi 3: The Game" },
 	{{ "GXRE08\x00\x00" }, false, 0x65, 0x098E, 0x7FAD64AA, 0x57B2D8E49F1B3310, 1275594752,  +184383488, { 1275586724,  +184385020, 6496, 0x88E4 }, "Mega Man X: Command Mission" },
-	{{ "GXRE08\x00\x00" }, false, 0x7A, 0xF1DF, 0x7B88690E, 0x1770D28A3AC63AF7, 1276858368,  +183119872, { 1276850076,  +183121668, 6496, 0x7F76 }, "Mega Man X: Command Mission" },
 	{{ "GXRE08\x00\x00" }, false, 0x88, 0x4778, 0x864EAC0B, 0x57B2D8E49F1B3310, 1278449664,   +65759232, { 1278442420,   +65733708, 6496, 0x2817 }, "Mega Man X: Command Mission" },
+	{{ "GXXE01\x00\x00" }, false, 0x01, 0x763F, 0x1FE34AD9, 0x9012D76B5C48992B, 1093365760,  +366612480, {   12619752,  +363950104, 6496, 0xB039 }, "Pokémon XD: Gale of Darkness: Equality Version" },
 	{{ "GXXE01\x00\x00" }, false, 0x37, 0x98C1, 0xA6B80ED7, 0x04A19E878671BBA0, 1087750144,  +372228096, {   12617832,  +366595768, 6496, 0xBAC8 }, "Pokémon XG: NeXt Gen" },
 	{{ "GXXE01\x00\x00" }, false, 0x40, 0xA1B6, 0x734E4775, 0x136F486D1EA10408, 1093365760,  +366612480, {   12619752,  +363950104, 6496, 0xF5D7 }, "Pokémon XD: Gale of Darkness: ReduX" },
+	{{ "GXXE01\x00\x00" }, false, 0x49, 0x656E, 0x8F845E2E, 0x72C31BBBAEBBC996, 1142099968,  +317878272, {   12619752,  +315387928, 6496, 0x71F4 }, "Pokémon XD: Gale of Darkness: Groovy Version" },
 	{{ "GXXE01\x00\x00" }, false, 0x67, 0x98C1, 0x9B232C01, 0x8FC793E94063962B, 1089105920,  +370872320, {   11889508,  +367324092, 6496, 0xBAC8 }, "Pokémon XG: NeXt Gen" },
 	{{ "GXXE01\x00\x00" }, false, 0x79, 0x98C1, 0x5D851B48, 0x96CA3EBBA60A6975, 1076094976,  +383883264, {   12617832,  +366595768, 6496, 0xBAC8 }, "Pokémon XG: NeXt Gen" },
+	{{ "GXXE01\x00\x00" }, false, 0x7D, 0x75F7, 0x3D43E2C3, 0x5477146CEA5B90CB, 1093365760,  +366612480, {   12619752,  +363950104, 6496, 0xF5D7 }, "Pokémon XD: Gale of Darkness: ReduX" },
+	{{ "GXXE01\x00\x00" }, false, 0x85, 0x98C1, 0x8DEA2EC3, 0x466A399A8C6007B6, 1089280000,  +370698240, {   11889508,  +367324092, 6496, 0xBAC8 }, "Pokémon XG Remix" },
+	{{ "GXXE01\x00\x00" }, false, 0x8C, 0x5509, 0x5E38D624, 0x3880D8C29C9CAC45, 1093244928,  +366733312, {   12617832,  +366595768, 6496, 0xCDAC }, "Pokémon XD: Gale of Darkness: Type Mayhem" },
 	{{ "GXXE01\x00\x00" }, false, 0xA8, 0x98C1, 0xE0D19118, 0xA851883E7EBE15B2, 1093384192,  +366594048, {   12617832,  +366595768, 6496, 0xBAC8 }, "Pokémon XG: NeXt Gen" },
+	{{ "GXXE01\x00\x00" }, false, 0xB9, 0x86A8, 0x367E12C1, 0xB9B69063E0408256, 1093404672,  +366573568, {   12619752,  +363911192, 6496, 0x2776 }, "Pokémon XD: Gale of Darkness: Sketch Version" },
 	{{ "GXXE01\x00\x00" }, false, 0xBD, 0x98C1, 0xDF5B1825, 0x6816956D0220746F, 1087750144,  +372228096, {   12617832,  +366595768, 6496, 0xBAC8 }, "Pokémon XG: NeXt Gen" },
 	{{ "GXXE01\x00\x00" }, false, 0xCB, 0x98C1, 0xBE135566, 0xB56AE9983F6E4903, 1087750144,  +372228096, {   12617832,  +366595768, 6496, 0xBAC8 }, "Pokémon XG: NeXt Gen" },
+	{{ "GY3E01\x00\x00" }, false, 0x3C, 0x112A, 0x696F5AC7, 0x780C22857F53C0D0,  264794112, +1195184128, {    3756480, +1195184724, 6496, 0x12FC }, "Donkey Konga 3: Tabehoudai! Haru Mogitate 50-kyoku" },
+	{{ "GY3E01\x00\x00" }, false, 0xA4, 0x112A, 0xEBDE4B7E, 0xF8786AEC09D59DAE,  264794112, +1195184128, {    3756480, +1195184724, 6496, 0x12FC }, "Donkey Konga 3: Tabehoudai! Haru Mogitate 50-kyoku" },
 	{{ "GYFEA4\x00\x00" }, false, 0x99, 0xFD98, 0xF7DE993B, 0xF9A63BE22E0BCEE5,  584765440,  +875212800, {  344220044,  +875213940, 6496, 0x23CA }, "Yu-Gi-Oh! The Falsebound Kingdom" },
 	{{ "GZBEB2\x00\x00" }, false, 0x3E, 0x6A71, 0x21866440, 0x506BD6CC75ADDC0B,  553748480,  +906229760, {  114322196,       +1548, 6496, 0xB677 }, "Zatch Bell! Go! Go! Mamodo Fight!!" },
 	{{ "GZLE01\x00\x00" }, false, 0x09, 0x863D, 0x5D06C4D8, 0x36D193DF45BFDAA4,  720627712,   +40671232, {  225455448,    +9556648, 6496, 0xDF7E }, "The Legend of Zelda: The Wind Waker Rewritten" },
@@ -2229,9 +2485,11 @@ static const struct {
 	{{ "P4BJ08\x00\x00" }, false, 0x05, 0x5E4E, 0xDCCA4674, 0xB020404FA0B3C711,  341442560, +1118535680, {   18687900, +1118144116, 6496, 0x1D46 }, "Resident Evil 4" },
 	{{ "P4BJ08\x00\x00" }, false, 0x2D, 0x9B3F, 0x5C165AAF, 0xB020404FA0B3C711,  273385472, +1186592768, {  238830020,      +65084, 6496, 0x1D46 }, "Biohazard 4" },
 	{{ "P4BJ08\x00\x00" }, false, 0xE3, 0x9B3F, 0xEC06ECF3, 0xB020404FA0B3C711,  273813504, +1186164736, {  238912292,      +64732, 6496, 0x1D46 }, "Biohazard 4" },
+	{{ "PGSE01\x00\x00" }, true,  0xC9, 0xC359, 0x7BB4B5B1, 0xD136345CDEC01CA4,  929079296,  +530898944, {     506504,  +530885656, 6496, 0x0D21 }, "Metal Gear Solid: The Twin Snakes: Special Disc" },
 	{{ "PZHP69\x00\x00" }, false, 0x40, 0xBAC4, 0x3873B78F, 0x6644F65D96920450, 1110884352,  +349093888, {  583244796,      +30880, 8096, 0x1D7C }, "Need for Speed: Underground" },
 	{{ "RELSAB\x00\x00" }, false, 0x01, 0x58E1, 0x911795AE, 0xFEF0EF64907D1C20,    3733504, +1456244736, {         ~0,          +0,    0, 0xFFFF }, "KPAD Demo" },
 	{{ "RELSAB\x00\x00" }, false, 0x01, 0xD64E, 0x87A41CC0, 0x6973B52BB5B82A39, 1374566400,   +85411840, { 1374558044,       +4580, 6496, 0x9CA2 }, "Gladius" },
+	{{ "RELSAB\x00\x00" }, false, 0x68, 0xF505, 0xEE5FC0C9, 0x85E3A0F139E4F00D,     438272, +1459539968, {     382556,      +10660, 6496, 0x1071 }, "Wireless Receiver Test" },
 	{{ "RELSAB\x00\x00" }, false, 0x9E, 0xBA9E, 0x1D74AD4A, 0x1A5F0EA47A582D7E, 1455841280,    +4136960, {         ~0,          +0,    0, 0xFFFF }, "Memory Card Utility Program" },
 	{{ "RELSAB\x00\x00" }, false, 0xAD, 0x35B7, 0x524B2418, 0x589D3DE183C7219D,  750051328,  +709926912, {         ~0,          +0,    0, 0xFFFF }, "Disney/Pixar Ratatouille" },
 	{{ "RELSAB\x00\x00" }, false, 0xB8, 0x63C1, 0x55314C4D, 0xB739F7F167EBC63C, 1121071104,  +338907136, {  646741420,      +29460, 6496, 0xD28D }, "Sonic Adventure DX" },
@@ -2245,9 +2503,10 @@ static const struct {
 	{{ "RELSAB\x01\x01" }, false, 0x89, 0x8544, 0x64ADDC63, 0x5E74E9C536078EF4,     225280, +1459752960, {         ~0,          +0,    0, 0xFFFF }, "There Is No Program on This Disc" },
 	{{ "RELSAB\x01\x01" }, false, 0xB5, 0x3C92, 0xA553BEC9, 0xB2D663542AE4C391,  126601216, +1333377024, {   96423396,      +27800, 6496, 0x19E5 }, "Smashing Drive" },
 	{{ "RELSAB\x01\x01" }, true,  0xAE, 0xB04C, 0xF11E97F0, 0x5FFE80C83B9D8B46,  983810048,  +476168192, {  314979244,      +24252, 6496, 0xA75A }, "Crash Bandicoot: The Wrath of Cortex" },
+	{{ "SG4JDA\x00\x00" }, true,  0x52, 0xF019, 0x4BB4830A, 0x3645CAE26589C220, 1272594432,  +187383808, { 1272587604,  +187384140, 6496, 0x015D }, "Naruto: Clash of Ninja 4" },
 	{{ "SG4JDA\x00\x00" }, true,  0x9D, 0xB3B3, 0x424A4760, 0x38394EDF8E58393A, 1261602816,  +198375424, { 1261594344,  +198377400, 6496, 0x015D }, "Naruto: Clash of Ninja 4" },
 	{{ "TESTNA\x00\x00" }, false, 0xD2, 0x0C28, 0x6254FB97, 0xAA2E5EDD0EF81992,   26834944,       -1658, {         ~0,          +0,    0, 0xFFFF }, "Dodger Demo" },
-#define VALID_COUNT (REDUMP_COUNT + 149)
+#define VALID_GCM_COUNT (REDUMP_COUNT + 230)
 	{{ "101E01\x00\x05" }, true,  0x88, 0xB6FD, 0x4BB518CD, 0x27CFAD706924A030, 1435949056,   +24029184, {         ~0,          +0,    0, 0xFFFF }, "Hontai Kensa Disc DOL-USA" },
 	{{ "101E01\x00\x05" }, true,  0xC6, 0xB6FD, 0x4BB518CD, 0x27CFAD706924A030, 1435949056,   +24029184, {         ~0,          +0,    0, 0xFFFF }, "Hontai Kensa Disc DOL-USA" },
 	{{ "101J01\x00\x03" }, true,  0x67, 0xA361, 0x1A7B7608, 0x6E2DA2E062EF73BA, 1459453952,     +524288, {         ~0,          +0,    0, 0xFFFF }, "Hontai Kensa Disc DOL" },
@@ -2278,27 +2537,48 @@ static const struct {
 	{{ "G9SE8P\x00\x00" }, false, 0x96, 0x81CE, 0xDAFDE48B, 0x3BDC78E23AA114DA, 1459208192,     +770048, {         ~0,          +0,    0, 0xFFFF }, "Sonic Heroes" },
 	{{ "G9SJ8P\x00\x00" }, false, 0xDB, 0xC0D7, 0xE291DD98, 0xEF8BF465DC6C831C, 1459310592,     +667648, {  614910880,     +245776, 6496, 0x2336 }, "Sonic Heroes" },
 	{{ "GAYE5D\x00\x00" }, false, 0xE8, 0xAA49, 0x865FE16E, 0x173A64AD1AD285A1, 1392113664,   +67864576, {  423998044,   +67865148, 6496, 0xE6C1 }, "Midway Arcade Treasures 2" },
+	{{ "GC4EBN\x00\x00" }, false, 0x7A, 0xC0A7, 0xF665334C, 0xD4AD315EFE4AD06F, 1460013056,      -34816, {   90472448,      -32768, 6496, 0xE4F4 }, "Future GPX Cyber Formula: Road to the Evolution" },
 	{{ "GDXPA4\x00\x00" }, false, 0x62, 0xDD62, 0x1700CAE2, 0x9B30814C59362FDF,  573855744,  +886122496, {  573802548,  +886123820, 8096, 0x6909 }, "Disney Sports: Skateboarding" },
 	{{ "GHEE91\x00\x01" }, false, 0x10, 0x4CAD, 0xA5391CA0, 0xD0D84B5A3961CAD8, 1459980288,       -2048, { 1235271692,         -52, 6496, 0x94C1 }, "Homeland" },
 	{{ "GHEE91\x00\x01" }, false, 0x23, 0x4CAD, 0xA5391CA0, 0xD0D84B5A3961CAD8, 1459980288,       -2048, { 1235271648,          -8, 6496, 0x94C1 }, "Homeland" },
 	{{ "GIAP7D\x00\x00" }, false, 0x84, 0x4B59, 0x85B0AE66, 0x98AF060B6E4E1EFC, 1459746816,     +231424, { 1459738280,     +231864, 8096, 0x9E52 }, "Ice Age 2: The Meltdown" },
 	{{ "GIPEAF\x00\x00" }, false, 0x05, 0x15EB, 0x83911F16, 0x27948CC021FDA205,  772724736,  +687253504, {   58698940,  +670761124, 6496, 0x7257 }, "Shonen Jump's One Piece: Pirates' Carnival" },
+	{{ "GKQE01\x00\x00" }, false, 0x1B, 0x9E10, 0x0969CA6B, 0xDDCC878CAC3DB6AE, 1459984384,       -6144, { 1391047324,       -4360, 6496, 0x7D26 }, "Kururin Squash!" },
 	{{ "GKQE01\x00\x00" }, false, 0x4A, 0x9E10, 0x0A1A7ABC, 0xDDCC878CAC3DB6AE, 1459984384,       -6144, { 1391047416,       -4452, 6496, 0x7D26 }, "Kururin Squash!" },
 	{{ "GKQE01\x00\x00" }, false, 0x97, 0x9E10, 0x0A1A7ABC, 0xDDCC878CAC3DB6AE, 1459984384,       -6144, { 1391047324,       -4360, 6496, 0x7D26 }, "Kururin Squash!" },
+	{{ "GKQE01\x00\x00" }, false, 0x99, 0x9E10, 0x0969CA6B, 0xDDCC878CAC3DB6AE, 1459984384,       -6144, { 1391047416,       -4452, 6496, 0x7D26 }, "Kururin Squash!" },
+	{{ "GL3EE8\x10\x00" }, false, 0x05, 0x7503, 0xC84BFE67, 0x568BB29CC0410E31, 1459980288,       -2048, {  835956232,          -8, 6496, 0x08BD }, "Lupin III: Lost Treasure Under the Sea" },
 	{{ "GL3EE8\x10\x00" }, false, 0x3A, 0x7503, 0xB4F243B4, 0x4B2C1E055CD023FA, 1459980288,       -2048, {  835956232,          -8, 6496, 0x08BD }, "Lupin III: Lost Treasure Under the Sea" },
 	{{ "GL3EE8\x10\x00" }, false, 0x46, 0x7503, 0xB4F243B4, 0x4B2C1E055CD023FA, 1459980288,       -2048, {  835956232,          -8, 6496, 0x08BD }, "Lupin III: Lost Treasure Under the Sea" },
+	{{ "GL3EE8\x10\x00" }, false, 0x4A, 0x7503, 0xD6A66CBD, 0x8DD29CAF465774AB, 1459980288,       -2048, {  835956232,          -8, 6496, 0x08BD }, "Lupin III: Lost Treasure Under the Sea" },
+	{{ "GL3EE8\x10\x00" }, false, 0x75, 0x7503, 0xC84BFE67, 0x568BB29CC0410E31, 1459980288,       -2048, {  835956232,          -8, 6496, 0x08BD }, "Lupin III: Lost Treasure Under the Sea" },
+	{{ "GL3EE8\x10\x00" }, false, 0x91, 0x7503, 0xD6A66CBD, 0x8DD29CAF465774AB, 1459980288,       -2048, {  835956232,          -8, 6496, 0x08BD }, "Lupin III: Lost Treasure Under the Sea" },
 	{{ "GL3EE8\x11\x00" }, false, 0x11, 0xDC00, 0x2CF6D984, 0x4B2C1E055CD023FA, 1459980288,       -2048, { 1079121204,          -8, 6496, 0xDEAB }, "Lupin III: Lost Treasure Under the Sea" },
+	{{ "GL3EE8\x11\x00" }, false, 0x14, 0xDC00, 0x08C63906, 0x568BB29CC0410E31, 1459980288,       -2048, { 1079121204,          -8, 6496, 0xDEAB }, "Lupin III: Lost Treasure Under the Sea" },
+	{{ "GL3EE8\x11\x00" }, false, 0x17, 0xDC00, 0xABB35F7C, 0x8DD29CAF465774AB, 1459980288,       -2048, { 1079121204,          -8, 6496, 0xDEAB }, "Lupin III: Lost Treasure Under the Sea" },
+	{{ "GL3EE8\x11\x00" }, false, 0x28, 0xDC00, 0x08C63906, 0x568BB29CC0410E31, 1459980288,       -2048, { 1079121204,          -8, 6496, 0xDEAB }, "Lupin III: Lost Treasure Under the Sea" },
 	{{ "GL3EE8\x11\x00" }, false, 0x83, 0xDC00, 0x2CF6D984, 0x4B2C1E055CD023FA, 1459980288,       -2048, { 1079121204,          -8, 6496, 0xDEAB }, "Lupin III: Lost Treasure Under the Sea" },
+	{{ "GL3EE8\x11\x00" }, false, 0x89, 0xDC00, 0xABB35F7C, 0x8DD29CAF465774AB, 1459980288,       -2048, { 1079121204,          -8, 6496, 0xDEAB }, "Lupin III: Lost Treasure Under the Sea" },
 	{{ "GLJEGG\x00\x00" }, false, 0xD9, 0x3684, 0xC411F2F8, 0xED983A4B64245ED8,  577157120,  +883148800, {  560702976,  +882822244, 6496, 0x83D8 }, "Radio Allergy" },
 	{{ "GNMEAF\x00\x00" }, true,  0xD6, 0xBD06, 0x316232A1, 0x4537061684D7C9D1,  660848640,  +799129600, {  484029924,      +70216, 6496, 0x9E0C }, "Namco Museum" },
 	{{ "GNMEAF\x00\x01" }, true,  0x6B, 0x25E4, 0x0BECBC5F, 0xBA5DB6E856CA7B9A,  662274048,  +797704192, {  485454564,      +54600, 6496, 0x9E0C }, "Namco Museum" },
 	{{ "GPMEAF\x00\x00" }, true,  0x47, 0x1CEA, 0x2E6425F3, 0x272C8825B749E04B, 1154119680,  +305858560, {  172111684,     +520148, 6496, 0x1480 }, "Pac-Man Fever" },
+	{{ "GPZE01\x00\x00" }, false, 0x5E, 0xF60D, 0x0F13C224, 0x1C69883B549A7E38, 1459980288,       -2048, {   33311960,         -16, 6496, 0x59D7 }, "Nintendo Puzzle Collection" },
+	{{ "GPZE01\x00\x00" }, false, 0x7C, 0xF60D, 0x0F13C224, 0x1C69883B549A7E38, 1459980288,       -2048, {   33311960,         -16, 6496, 0x59D7 }, "Nintendo Puzzle Collection" },
+	{{ "GSYE6S\x00\x00" }, true,  0x66, 0x0711, 0x2C34401A, 0xDD8B3BD444212E82,  588488704,  +871489536, {  473008912,     +396456, 6496, 0xA89D }, "Shrek Super Party" },
+	{{ "GSYP6S\x00\x00" }, true,  0x73, 0x61E7, 0x7675F608, 0x60E42AF8F6A46140,  607197184,  +852781056, {  506408848,     +362800, 6496, 0xA89D }, "Shrek Super Party" },
 	{{ "GXQP41\x00\x00" }, false, 0x55, 0x904A, 0xD0B0EDE0, 0x260C8DE80E2C787E, 1459980288,       -2048, {  479137452,        -312, 8096, 0xA071 }, "Taxi 3: The Game" },
 	{{ "GXQP41\x00\x00" }, false, 0xCE, 0x904A, 0xD0B0EDE0, 0x260C8DE80E2C787E, 1459980288,       -2048, {  479137452,        -312, 8096, 0xA071 }, "Taxi 3: The Game" },
+	{{ "GY3E01\x00\x00" }, false, 0x0A, 0x112A, 0x696F5AC7, 0x780C22857F53C0D0, 1459980288,       -2048, { 1198941300,         -96, 6496, 0x12FC }, "Donkey Konga 3: Tabehoudai! Haru Mogitate 50-kyoku" },
+	{{ "GY3E01\x00\x00" }, false, 0x8A, 0x112A, 0xEBDE4B7E, 0xF8786AEC09D59DAE, 1459980288,       -2048, { 1198941212,          -8, 6496, 0x12FC }, "Donkey Konga 3: Tabehoudai! Haru Mogitate 50-kyoku" },
+	{{ "GY3E01\x00\x00" }, false, 0xE7, 0x112A, 0x696F5AC7, 0x780C22857F53C0D0, 1459980288,       -2048, { 1198941212,          -8, 6496, 0x12FC }, "Donkey Konga 3: Tabehoudai! Haru Mogitate 50-kyoku" },
+	{{ "GY3E01\x00\x00" }, false, 0xEB, 0x112A, 0xEBDE4B7E, 0xF8786AEC09D59DAE, 1459980288,       -2048, { 1198941300,         -96, 6496, 0x12FC }, "Donkey Konga 3: Tabehoudai! Haru Mogitate 50-kyoku" },
+	{{ "PGSE01\x00\x00" }, true,  0x65, 0xC359, 0x7BB4B5B1, 0xD136345CDEC01CA4, 1459980288,       -2048, {  531392140,         +20, 6496, 0x0D21 }, "Metal Gear Solid: The Twin Snakes: Special Disc" },
+	{{ "PGSE01\x00\x00" }, true,  0xA4, 0xC359, 0x7BB4B5B1, 0xD136345CDEC01CA4, 1460013056,      -34816, {  531392180,         -20, 6496, 0x0D21 }, "Metal Gear Solid: The Twin Snakes: Special Disc" },
 	{{ "RELSAB\x00\x00" }, false, 0xAC, 0xBA9E, 0x1D74AD4A, 0x1A5F0EA47A582D7E, 1455841280,    +4136960, {         ~0,          +0,    0, 0xFFFF }, "Memory Card Utility Program" },
 	{{ "RELSAB\x00\x00" }, true,  0x44, 0xFCCE, 0x146E4A5A, 0x1E9563341CFB48F4, 1459947520,      +30720, { 1193673280,          +0, 6496, 0x8F7A }, "Summoner: The Prophecy" },
 	{{ "RELSAB\x00\x00" }, true,  0xD6, 0xD9CE, 0x16D7BCCE, 0xB64ADF7A4E8423B8, 1459978240,          +0, { 1193214528,          +0, 6496, 0x1458 }, "Summoner: The Prophecy" },
-#define TOTAL_COUNT (VALID_COUNT + 50)
+#define TOTAL_GCM_COUNT (VALID_GCM_COUNT + 71)
 };
 
 uint8_t fletcher8(const void *buffer, size_t size)
@@ -2345,7 +2625,7 @@ bool is_multi_disc(const file_meta *meta)
 	if (!meta)
 		return false;
 
-	for (int i = 0; i < TOTAL_COUNT; i++)
+	for (int i = 0; i < TOTAL_GCM_COUNT; i++)
 		if (!memcmp(&meta->diskId, nkit_dat[i].header, 6) &&
 			meta->diskId.disknum == nkit_dat[i].disknum &&
 			meta->diskId.gamever == nkit_dat[i].gamever &&
@@ -2387,7 +2667,7 @@ bool is_streaming_disc(const DiskHeader *header)
 	if (is_nkit_format(header)) {
 		uint8_t header_sum = fletcher8(header, sizeof(*header));
 
-		for (int i = 0; i < TOTAL_COUNT; i++)
+		for (int i = 0; i < TOTAL_GCM_COUNT; i++)
 			if (header_sum == nkit_dat[i].header_sum8 &&
 				!memcmp(header, nkit_dat[i].header, 6) &&
 				header->DiscID == nkit_dat[i].disknum &&
@@ -2397,7 +2677,7 @@ bool is_streaming_disc(const DiskHeader *header)
 	} else {
 		uint16_t header_sum = fletcher16(header, sizeof(*header));
 
-		for (int i = 0; i < TOTAL_COUNT; i++)
+		for (int i = 0; i < TOTAL_GCM_COUNT; i++)
 			if (header_sum == nkit_dat[i].header_sum16 &&
 				!memcmp(header, nkit_dat[i].header, 6) &&
 				header->DiscID == nkit_dat[i].disknum &&
@@ -2405,13 +2685,7 @@ bool is_streaming_disc(const DiskHeader *header)
 				return nkit_dat[i].streaming;
 	}
 
-	for (int i = 0; i < TOTAL_COUNT; i++)
-		if (!memcmp(header, nkit_dat[i].header, 6) &&
-			header->DiscID == nkit_dat[i].disknum &&
-			header->Version == nkit_dat[i].gamever)
-			return nkit_dat[i].streaming;
-
-	return header->AudioStreaming;
+	return needs_audio_buffer((dvddiskid *)header);
 }
 
 bool is_verifiable_disc(const DiskHeader *header)
@@ -2419,7 +2693,7 @@ bool is_verifiable_disc(const DiskHeader *header)
 	if (is_nkit_format(header))
 		return true;
 
-	for (int i = 0; i < TOTAL_COUNT; i++)
+	for (int i = 0; i < TOTAL_GCM_COUNT; i++)
 		if (!memcmp(header, nkit_dat[i].header, 6) &&
 			header->DiscID == nkit_dat[i].disknum &&
 			header->Version == nkit_dat[i].gamever)
@@ -2435,7 +2709,7 @@ bool get_gcm_banner_fast(const DiskHeader *header, uint32_t *offset, uint32_t *s
 	if (is_nkit_format(header)) {
 		uint8_t header_sum = fletcher8(header, sizeof(*header));
 
-		for (int i = 0; i < TOTAL_COUNT; i++) {
+		for (int i = 0; i < TOTAL_GCM_COUNT; i++) {
 			if (header_sum == nkit_dat[i].header_sum8 &&
 				!memcmp(header, nkit_dat[i].header, 6) &&
 				header->DiscID == nkit_dat[i].disknum &&
@@ -2451,7 +2725,7 @@ bool get_gcm_banner_fast(const DiskHeader *header, uint32_t *offset, uint32_t *s
 	} else {
 		uint16_t header_sum = fletcher16(header, sizeof(*header));
 
-		for (int i = 0; i < TOTAL_COUNT; i++) {
+		for (int i = 0; i < TOTAL_GCM_COUNT; i++) {
 			if (header_sum == nkit_dat[i].header_sum16 &&
 				!memcmp(header, nkit_dat[i].header, 6) &&
 				header->DiscID == nkit_dat[i].disknum &&
@@ -2459,7 +2733,7 @@ bool get_gcm_banner_fast(const DiskHeader *header, uint32_t *offset, uint32_t *s
 				(*size == nkit_dat[i].size + nkit_dat[i]._size ||
 				*size == header->UserPos + header->UserLength)) {
 
-				for (int j = i + 1; j < TOTAL_COUNT; j++)
+				for (int j = i + 1; j < TOTAL_GCM_COUNT; j++)
 					if (nkit_dat[i].header_sum16 == nkit_dat[j].header_sum16 &&
 						!memcmp(nkit_dat[i].header, nkit_dat[j].header, 8) &&
 						nkit_dat[i].size + nkit_dat[i]._size == nkit_dat[j].size + nkit_dat[j]._size &&
@@ -2481,7 +2755,7 @@ uint64_t get_gcm_boot_hash(const DiskHeader *header, const file_meta *meta)
 	if (is_nkit_format(header)) {
 		uint8_t header_sum = fletcher8(header, sizeof(*header));
 
-		for (int i = 0; i < TOTAL_COUNT; i++)
+		for (int i = 0; i < TOTAL_GCM_COUNT; i++)
 			if (header_sum == nkit_dat[i].header_sum8 &&
 				!memcmp(header, nkit_dat[i].header, 6) &&
 				header->DiscID == nkit_dat[i].disknum &&
@@ -2491,7 +2765,7 @@ uint64_t get_gcm_boot_hash(const DiskHeader *header, const file_meta *meta)
 	} else {
 		uint16_t header_sum = fletcher16(header, sizeof(*header));
 
-		for (int i = 0; i < TOTAL_COUNT; i++)
+		for (int i = 0; i < TOTAL_GCM_COUNT; i++)
 			if (header_sum == nkit_dat[i].header_sum16 &&
 				!memcmp(header, nkit_dat[i].header, 6) &&
 				header->DiscID == nkit_dat[i].disknum &&
@@ -2511,7 +2785,7 @@ const char *get_gcm_title(const DiskHeader *header, file_meta *meta)
 	if (is_nkit_format(header)) {
 		uint8_t header_sum = fletcher8(header, sizeof(*header));
 
-		for (int i = 0; i < TOTAL_COUNT; i++) {
+		for (int i = 0; i < TOTAL_GCM_COUNT; i++) {
 			if (header_sum == nkit_dat[i].header_sum8 &&
 				!memcmp(header, nkit_dat[i].header, 6) &&
 				header->DiscID == nkit_dat[i].disknum &&
@@ -2524,7 +2798,7 @@ const char *get_gcm_title(const DiskHeader *header, file_meta *meta)
 	} else {
 		uint16_t header_sum = fletcher16(header, sizeof(*header));
 
-		for (int i = 0; i < TOTAL_COUNT; i++) {
+		for (int i = 0; i < TOTAL_GCM_COUNT; i++) {
 			if (header_sum == nkit_dat[i].header_sum16 &&
 				!memcmp(header, nkit_dat[i].header, 6) &&
 				header->DiscID == nkit_dat[i].disknum &&
@@ -2543,10 +2817,10 @@ int valid_dol_xxh3(const file_handle *file, uint64_t hash)
 {
 	const char *name = basename(file->name);
 
-	for (int i = 0; i < sizeof(firm_dat) / sizeof(*firm_dat); i++) {
-		if (!strcasecmp(name, firm_dat[i].name)) {
-			if (file->size == firm_dat[i].size &&
-				hash == firm_dat[i].hash)
+	for (int i = 0; i < VALID_DOL_COUNT; i++) {
+		if (!strcasecmp(name, file_dat[i].name)) {
+			if (file->size == file_dat[i].size &&
+				hash == file_dat[i].hash)
 				return 1;
 			else
 				return 0;
@@ -2564,7 +2838,7 @@ int valid_file_xxh3(const DiskHeader *header, const ExecutableFile *file)
 		if (is_nkit_format(header)) {
 			uint8_t header_sum = fletcher8(header, sizeof(*header));
 
-			for (int i = 0; i < VALID_COUNT; i++) {
+			for (int i = 0; i < VALID_GCM_COUNT; i++) {
 				if (header_sum == nkit_dat[i].header_sum8 &&
 					!memcmp(header, nkit_dat[i].header, 6) &&
 					header->DiscID == nkit_dat[i].disknum &&
@@ -2579,13 +2853,27 @@ int valid_file_xxh3(const DiskHeader *header, const ExecutableFile *file)
 		}
 	}
 
-	for (int i = 0; i < sizeof(firm_dat) / sizeof(*firm_dat); i++) {
-		if (!strcasecmp(file->name, firm_dat[i].name)) {
-			if (file->size == firm_dat[i].size &&
-				file->hash == firm_dat[i].hash)
-				return 1;
+	const char *name = basename(file->name);
 
-			valid = 0;
+	if (is_nkit_format(header)) {
+		for (int i = 0; i < NKIT_FIRM_COUNT; i++) {
+			if (!strcasecmp(name, file_dat[i].name)) {
+				if (file->size == file_dat[i].size &&
+					file->hash == file_dat[i].hash)
+					return 1;
+
+				valid = 0;
+			}
+		}
+	} else {
+		for (int i = 0; i < FIRM_COUNT; i++) {
+			if (!strcasecmp(name, file_dat[i].name)) {
+				if (file->size == file_dat[i].size &&
+					file->hash == file_dat[i].hash)
+					return 1;
+
+				valid = 0;
+			}
 		}
 	}
 
@@ -2605,7 +2893,7 @@ bool valid_gcm_crc32(const DiskHeader *header, uint32_t crc)
 	if (is_nkit_format(header))
 		return header->ImageCRC == crc;
 
-	for (int i = 0; i < VALID_COUNT; i++)
+	for (int i = 0; i < VALID_GCM_COUNT; i++)
 		if (!memcmp(header, nkit_dat[i].header, 6) &&
 			header->DiscID == nkit_dat[i].disknum &&
 			header->Version == nkit_dat[i].gamever &&
@@ -2627,7 +2915,7 @@ bool valid_gcm_size(const DiskHeader *header, off_t size)
 	if (is_nkit_format(header)) {
 		uint8_t header_sum = fletcher8(header, sizeof(*header));
 
-		for (int i = 0; i < VALID_COUNT; i++)
+		for (int i = 0; i < VALID_GCM_COUNT; i++)
 			if (header_sum == nkit_dat[i].header_sum8 &&
 				!memcmp(header, nkit_dat[i].header, 6) &&
 				header->DiscID == nkit_dat[i].disknum &&
@@ -2638,7 +2926,7 @@ bool valid_gcm_size(const DiskHeader *header, off_t size)
 	} else {
 		uint16_t header_sum = fletcher16(header, sizeof(*header));
 
-		for (int i = 0; i < VALID_COUNT; i++)
+		for (int i = 0; i < VALID_GCM_COUNT; i++)
 			if (header_sum == nkit_dat[i].header_sum16 &&
 				!memcmp(header, nkit_dat[i].header, 6) &&
 				header->DiscID == nkit_dat[i].disknum &&
@@ -2655,6 +2943,42 @@ bool valid_gcm_size2(const DiskHeader *header, off_t size)
 	return size == header->UserPos + header->UserLength;
 }
 
+bool needs_audio_buffer(const dvddiskid *diskId)
+{
+	if (!diskId->streaming)
+		return false;
+
+	for (int i = 0; i < TOTAL_GCM_COUNT; i++) {
+		if (!memcmp(diskId, nkit_dat[i].header, 6) &&
+			diskId->disknum == nkit_dat[i].disknum &&
+			diskId->gamever == nkit_dat[i].gamever) {
+			bool streaming = nkit_dat[i].streaming;
+
+			for (int j = i + 1; j < TOTAL_GCM_COUNT; j++)
+				if (!memcmp(diskId, nkit_dat[j].header, 6) &&
+					diskId->disknum == nkit_dat[j].disknum &&
+					diskId->gamever == nkit_dat[j].gamever)
+					streaming |= nkit_dat[j].streaming;
+
+			return streaming;
+		}
+	}
+
+	return diskId->streaming;
+}
+
+bool needs_flippy_bypass(const file_handle *file, uint64_t hash)
+{
+	const char *name = basename(file->name);
+
+	for (int i = VALID_DOL_COUNT; i < TOTAL_DOL_COUNT; i++)
+		if (!strcasecmp(name, file_dat[i].name) ||
+			(file->size == file_dat[i].size &&
+			hash == file_dat[i].hash)) return true;
+
+	return false;
+}
+
 bool needs_nkit_reencode(const DiskHeader *header, off_t size)
 {
 	if (!is_nkit_format(header))
@@ -2662,7 +2986,7 @@ bool needs_nkit_reencode(const DiskHeader *header, off_t size)
 
 	uint8_t header_sum = fletcher8(header, sizeof(*header));
 
-	for (int i = VALID_COUNT; i < TOTAL_COUNT; i++)
+	for (int i = VALID_GCM_COUNT; i < TOTAL_GCM_COUNT; i++)
 		if (header_sum == nkit_dat[i].header_sum8 &&
 			!memcmp(header, nkit_dat[i].header, 6) &&
 			header->DiscID == nkit_dat[i].disknum &&

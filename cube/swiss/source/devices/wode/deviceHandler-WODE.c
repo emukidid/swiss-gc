@@ -14,6 +14,7 @@
 #include "gui/IPLFontWrite.h"
 #include "swiss.h"
 #include "main.h"
+#include "flippy.h"
 #include "patcher.h"
 #include "dvd.h"
 #include "WodeInterface.h"
@@ -23,20 +24,12 @@ char *wode_regions_str[] = {"JPN","USA","EUR","ALL","KOR"};
 char disktype[] = {'?', 'G','W','W','I' };
 s32 wodeInited = 0;
 
-file_handle initial_WODE =
-	{ "wode:/",     // directory
-	  0ULL,     // fileBase (u64)
-	  0,        // offset
-	  0,        // size
-	  IS_DIR,
-	  DRV_ERROR
-	};
-device_info initial_WODE_info = {
-	0LL,
-	0LL,
-	true
+file_handle initial_WODE = {
+	.name     = "wode:/",
+	.fileType = IS_DIR,
+	.device   = &__device_wode,
 };
-	
+
 s32 startupWode() {
 	if(OpenWode() == 0) {
 		CloseWode();
@@ -51,7 +44,7 @@ s32 startupWode() {
 	// Wode initialised, return success
 	device_versions *wode_version_info = calloc(1, sizeof(device_versions));
 	if(GetVersions(wode_version_info)) {
-		print_gecko("WODE initialised: Loader:%04X WODE:%04X FPGA:%04X HW:%02X\r\n",
+		print_debug("WODE initialised: Loader:%04X WODE:%04X FPGA:%04X HW:%02X\n",
 			wode_version_info->loader_version, wode_version_info->wode_version,
 			wode_version_info->fpga_version, wode_version_info->hw_version);
 		return 0;
@@ -60,10 +53,11 @@ s32 startupWode() {
 }
 
 device_info* deviceHandler_WODE_info(file_handle* file) {
-	return &initial_WODE_info;
+	return NULL;
 }
 	
 s32 deviceHandler_WODE_readDir(file_handle* ffile, file_handle** dir, u32 type){	
+	if(type != -1) return -1;
 
 	if(!wodeInited) return 0;
 	uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Reading WODE"));
@@ -76,7 +70,8 @@ s32 deviceHandler_WODE_readDir(file_handle* ffile, file_handle** dir, u32 type){
 	u32 numPartitions = 0, numIsoInPartition = 0, i,j, num_entries = 1;
 	*dir = calloc(num_entries, sizeof(file_handle));
 	concat_path((*dir)[0].name, ffile->name, "..");
-	(*dir)[0].fileAttrib = IS_SPECIAL;
+	(*dir)[0].fileType = IS_SPECIAL;
+	(*dir)[0].device = ffile->device;
 
 	numPartitions = GetNumPartitions();
 	for(i=0;i<numPartitions;i++) {
@@ -91,15 +86,15 @@ s32 deviceHandler_WODE_readDir(file_handle* ffile, file_handle** dir, u32 type){
 				memset(&(*dir)[num_entries], 0, sizeof(file_handle));
 				concatf_path((*dir)[num_entries].name, ffile->name, "%.64s.gcm", &tmp.name[0]);
 				(*dir)[num_entries].size = DISC_SIZE;
-				(*dir)[num_entries].fileAttrib = IS_FILE;
+				(*dir)[num_entries].fileType = IS_FILE;
+				(*dir)[num_entries].device = ffile->device;
 				memcpy(&(*dir)[num_entries].other, &tmp, sizeof(ISOInfo_t));
-				print_gecko("Adding WODE entry: %s part:%08X iso:%08X region:%08X\r\n",
+				print_debug("Adding WODE entry: %s part:%08X iso:%08X region:%08X\n",
 					&tmp.name[0], tmp.iso_partition, tmp.iso_number, tmp.iso_region);
 				num_entries++;
 			}
 		}
 	}
-	initial_WODE_info.totalSpace = num_entries;
 	DrawDispose(msgBox);
 	return num_entries;
 }
@@ -120,7 +115,11 @@ s32 deviceHandler_WODE_readFile(file_handle* file, void* buffer, u32 length) {
 }
 
 s32 deviceHandler_WODE_setupFile(file_handle* file, file_handle* file2, ExecutableFile* filesToPatch, int numToPatch) {
-	if(numToPatch < 0) {
+	int i;
+	file_frag *fragList = NULL;
+	u32 numFrags = 0;
+	
+	if(numToPatch < 0 || !devices[DEVICE_CUR]->emulated()) {
 		if(file->status == STATUS_NOT_MAPPED) {
 			ISOInfo_t* isoInfo = (ISOInfo_t*)&file->other;
 			SetISO(isoInfo->iso_partition,isoInfo->iso_number);
@@ -134,11 +133,7 @@ s32 deviceHandler_WODE_setupFile(file_handle* file, file_handle* file2, Executab
 	
 	// Check if there are any fragments in our patch location for this game
 	if(devices[DEVICE_PATCHES] != NULL) {
-		int i;
-		file_frag *fragList = NULL;
-		u32 numFrags = 0;
-		
-		print_gecko("Save Patch device found\r\n");
+		print_debug("Save Patch device found\n");
 		
 		// Look for patch files, if we find some, open them and add them as fragments
 		file_handle patchFile;
@@ -162,22 +157,9 @@ s32 deviceHandler_WODE_setupFile(file_handle* file, file_handle* file2, Executab
 			}
 		}
 		
-		if(swissSettings.igrType == IGR_BOOTBIN || endsWith(file->name,".tgc")) {
+		if(swissSettings.igrType == IGR_APPLOADER || endsWith(file->name,".tgc")) {
 			memset(&patchFile, 0, sizeof(file_handle));
 			concat_path(patchFile.name, devices[DEVICE_PATCHES]->initial->name, "swiss/patches/apploader.img");
-			
-			ApploaderHeader apploaderHeader;
-			if(devices[DEVICE_PATCHES]->readFile(&patchFile, &apploaderHeader, sizeof(ApploaderHeader)) != sizeof(ApploaderHeader) || apploaderHeader.rebootSize != reboot_bin_size) {
-				devices[DEVICE_PATCHES]->deleteFile(&patchFile);
-				
-				memset(&apploaderHeader, 0, sizeof(ApploaderHeader));
-				apploaderHeader.rebootSize = reboot_bin_size;
-				
-				devices[DEVICE_PATCHES]->seekFile(&patchFile, 0, DEVICE_HANDLER_SEEK_SET);
-				devices[DEVICE_PATCHES]->writeFile(&patchFile, &apploaderHeader, sizeof(ApploaderHeader));
-				devices[DEVICE_PATCHES]->writeFile(&patchFile, reboot_bin, reboot_bin_size);
-				devices[DEVICE_PATCHES]->closeFile(&patchFile);
-			}
 			
 			getFragments(DEVICE_PATCHES, &patchFile, &fragList, &numFrags, FRAGS_APPLOADER, 0x2440, 0);
 			devices[DEVICE_PATCHES]->closeFile(&patchFile);
@@ -188,17 +170,17 @@ s32 deviceHandler_WODE_setupFile(file_handle* file, file_handle* file2, Executab
 				memset(&patchFile, 0, sizeof(file_handle));
 				concatf_path(patchFile.name, devices[DEVICE_PATCHES]->initial->name, "swiss/patches/MemoryCardA.%s.raw", wodeRegionToString(GCMDisk.RegionCode));
 				concatf_path(txtbuffer, devices[DEVICE_PATCHES]->initial->name, "swiss/saves/MemoryCardA.%s.raw", wodeRegionToString(GCMDisk.RegionCode));
-				ensure_path(DEVICE_PATCHES, "swiss/saves", NULL);
+				ensure_path(DEVICE_PATCHES, "swiss/saves", NULL, false);
 				devices[DEVICE_PATCHES]->renameFile(&patchFile, txtbuffer);	// TODO remove this in our next major release
 				
-				if(devices[DEVICE_PATCHES]->readFile(&patchFile, NULL, 0) != 0) {
+				if(devices[DEVICE_PATCHES]->statFile(&patchFile)) {
 					devices[DEVICE_PATCHES]->seekFile(&patchFile, 16*1024*1024, DEVICE_HANDLER_SEEK_SET);
 					devices[DEVICE_PATCHES]->writeFile(&patchFile, NULL, 0);
 					devices[DEVICE_PATCHES]->closeFile(&patchFile);
 				}
 				
 				if(getFragments(DEVICE_PATCHES, &patchFile, &fragList, &numFrags, FRAGS_CARD_A, 0, 31.5*1024*1024))
-					*(vu8*)VAR_CARD_A_ID = (patchFile.size * 8/1024/1024) & 0xFC;
+					*(vu8*)VAR_CARD_A_ID = (patchFile.size << 3 >> 20) & 0xFC;
 				devices[DEVICE_PATCHES]->closeFile(&patchFile);
 			}
 			
@@ -206,23 +188,23 @@ s32 deviceHandler_WODE_setupFile(file_handle* file, file_handle* file2, Executab
 				memset(&patchFile, 0, sizeof(file_handle));
 				concatf_path(patchFile.name, devices[DEVICE_PATCHES]->initial->name, "swiss/patches/MemoryCardB.%s.raw", wodeRegionToString(GCMDisk.RegionCode));
 				concatf_path(txtbuffer, devices[DEVICE_PATCHES]->initial->name, "swiss/saves/MemoryCardB.%s.raw", wodeRegionToString(GCMDisk.RegionCode));
-				ensure_path(DEVICE_PATCHES, "swiss/saves", NULL);
+				ensure_path(DEVICE_PATCHES, "swiss/saves", NULL, false);
 				devices[DEVICE_PATCHES]->renameFile(&patchFile, txtbuffer);	// TODO remove this in our next major release
 				
-				if(devices[DEVICE_PATCHES]->readFile(&patchFile, NULL, 0) != 0) {
+				if(devices[DEVICE_PATCHES]->statFile(&patchFile)) {
 					devices[DEVICE_PATCHES]->seekFile(&patchFile, 16*1024*1024, DEVICE_HANDLER_SEEK_SET);
 					devices[DEVICE_PATCHES]->writeFile(&patchFile, NULL, 0);
 					devices[DEVICE_PATCHES]->closeFile(&patchFile);
 				}
 				
 				if(getFragments(DEVICE_PATCHES, &patchFile, &fragList, &numFrags, FRAGS_CARD_B, 0, 31.5*1024*1024))
-					*(vu8*)VAR_CARD_B_ID = (patchFile.size * 8/1024/1024) & 0xFC;
+					*(vu8*)VAR_CARD_B_ID = (patchFile.size << 3 >> 20) & 0xFC;
 				devices[DEVICE_PATCHES]->closeFile(&patchFile);
 			}
 		}
 		
 		if(fragList) {
-			print_frag_list(fragList, numFrags);
+			printFragments(fragList, numFrags);
 			*(vu32**)VAR_FRAG_LIST = installPatch2(fragList, (numFrags + 1) * sizeof(file_frag));
 			free(fragList);
 			fragList = NULL;
@@ -230,12 +212,13 @@ s32 deviceHandler_WODE_setupFile(file_handle* file, file_handle* file2, Executab
 		
 		s32 exi_channel, exi_device;
 		if(getExiDeviceByLocation(devices[DEVICE_PATCHES]->location, &exi_channel, &exi_device)) {
+			exi_device = sdgecko_getDevice(exi_channel);
 			// Card Type
 			*(vu8*)VAR_SD_SHIFT = sdgecko_getAddressingType(exi_channel) ? 0:9;
 			// Copy the actual freq
 			*(vu8*)VAR_EXI_CPR = (exi_channel << 6) | ((1 << exi_device) << 3) | sdgecko_getSpeed(exi_channel);
 			// Device slot (0, 1 or 2)
-			*(vu8*)VAR_EXI_SLOT = exi_channel;
+			*(vu8*)VAR_EXI_SLOT = (*(vu8*)VAR_EXI_SLOT & 0xF0) | (((exi_device << 2) | exi_channel) & 0x0F);
 			*(vu32**)VAR_EXI_REGS = ((vu32(*)[5])0xCC006800)[exi_channel];
 		}
 	}
@@ -247,30 +230,41 @@ s32 deviceHandler_WODE_setupFile(file_handle* file, file_handle* file2, Executab
 }
 
 s32 deviceHandler_WODE_init(file_handle* file) {
+	if(devices[DEVICE_CUR] == &__device_flippy || devices[DEVICE_CUR] == &__device_flippyflash) {
+		return EBUSY;
+	}
+	if(swissSettings.hasFlippyDrive) flippy_bypass(true);
+	if(!swissSettings.hasDVDDrive) return ENODEV;
+	
 	int res = startupWode();
 	wodeInited = !res ? 1:0;
 	return res;
 }
 
 s32 deviceHandler_WODE_deinit(file_handle* file) {
-	initial_WODE_info.totalSpace = 0LL;
 	return 0;
 }
 
 char wodeRegionToChar(int region) {
-	return wode_regions[region];
+	return in_range(region, 0, 4) ? wode_regions[region] : '?';
 }
 
 char *wodeRegionToString(int region) {
-	return wode_regions_str[region];
+	return in_range(region, 0, 4) ? wode_regions_str[region] : "UNK";
 }
 
 s32 deviceHandler_WODE_closeFile(file_handle* file) {
     return 0;
 }
 
+static const dvddiskid WODEExtCFG = {
+	.gamename  = "GWDP",
+	.company   = "CF",
+	.magic     = DVD_MAGIC
+};
+
 bool deviceHandler_WODE_test() {
-	return swissSettings.hasDVDDrive && driveInfo.rel_date == 0x20080714;
+	return swissSettings.hasDVDDrive == 1 && !memcmp(DVDDiskID, &WODEExtCFG, sizeof(dvddiskid));
 }
 
 u32 deviceHandler_WODE_emulated() {
@@ -279,8 +273,12 @@ u32 deviceHandler_WODE_emulated() {
 			return EMU_READ | EMU_MEMCARD | EMU_BUS_ARBITER;
 		else
 			return EMU_READ | EMU_BUS_ARBITER;
-	} else
-		return EMU_READ;
+	} else {
+		if (swissSettings.disableHypervisor)
+			return EMU_NONE;
+		else
+			return EMU_READ;
+	}
 }
 
 char* deviceHandler_WODE_status(file_handle* file) {

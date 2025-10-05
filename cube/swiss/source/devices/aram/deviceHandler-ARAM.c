@@ -17,22 +17,17 @@
 
 static FATFS *aramfs = NULL;
 
-file_handle initial_ARAM =
-	{ "ram:/",       // directory
-	  0ULL,     // fileBase (u64)
-	  0,        // offset
-	  0,        // size
-	  IS_DIR,
-	  0,
-	  0
-	};
+file_handle initial_ARAM = {
+	.name     = "ram:/",
+	.fileType = IS_DIR,
+	.device   = &__device_aram,
+};
 
 s32 deviceHandler_ARAM_init(file_handle* file) {
 	if(aramfs != NULL) {
 		f_unmount("ram:/");
 		free(aramfs);
 		aramfs = NULL;
-		disk_shutdown(DEV_ARAM);
 	}
 	aramfs = (FATFS*)malloc(sizeof(FATFS));
 	file->status = f_mount(aramfs, "ram:/", 1);
@@ -51,13 +46,14 @@ s32 deviceHandler_ARAM_deinit(file_handle* file) {
 		f_unmount(file->name);
 		free(aramfs);
 		aramfs = NULL;
-		disk_shutdown(DEV_ARAM);
 	}
 	return 0;
 }
 
 bool deviceHandler_ARAM_test() {
-	return __io_aram.startup() && __io_aram.isInserted();
+	return __io_aram.startup(&__io_aram)
+		&& __io_aram.isInserted(&__io_aram)
+		&& __io_aram.shutdown(&__io_aram);
 }
 
 DEVICEHANDLER_INTERFACE __device_aram = {
@@ -74,12 +70,14 @@ DEVICEHANDLER_INTERFACE __device_aram = {
 	.init = deviceHandler_ARAM_init,
 	.makeDir = deviceHandler_FAT_makeDir,
 	.readDir = deviceHandler_FAT_readDir,
+	.statFile = deviceHandler_FAT_statFile,
 	.seekFile = deviceHandler_FAT_seekFile,
 	.readFile = deviceHandler_FAT_readFile,
 	.writeFile = deviceHandler_FAT_writeFile,
 	.closeFile = deviceHandler_FAT_closeFile,
 	.deleteFile = deviceHandler_FAT_deleteFile,
 	.renameFile = deviceHandler_FAT_renameFile,
+	.hideFile = deviceHandler_FAT_hideFile,
 	.deinit = deviceHandler_ARAM_deinit,
 	.status = deviceHandler_FAT_status,
 };

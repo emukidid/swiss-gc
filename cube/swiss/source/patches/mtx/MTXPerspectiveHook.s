@@ -9,6 +9,6 @@ MTXPerspectiveHook:
 	fmuls		%f1, %f4, %f29
 	trap
 
-.globl MTXPerspectiveHook_length
-MTXPerspectiveHook_length:
-.long (MTXPerspectiveHook_length - MTXPerspectiveHook)
+.globl MTXPerspectiveHook_size
+MTXPerspectiveHook_size:
+.long (. - MTXPerspectiveHook)

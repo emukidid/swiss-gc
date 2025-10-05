@@ -2,16 +2,16 @@ VAR_JUMP_TABLE		= VAR_AREA + 0x00A0;	/* Dolphin OS jump table */
 VAR_TVMODE			= VAR_AREA + 0x00CC;	/* TV format */
 
 VAR_CURRENT_DISC	= VAR_AREA + 0x09B0;	/* current disc number */
-VAR_SECOND_DISC		= VAR_AREA + 0x09B1;	/* second disc present */
-VAR_DRIVE_PATCHED	= VAR_AREA + 0x09B2;	/* disc drive patched */
-VAR_EMU_READ_SPEED	= VAR_AREA + 0x09B3;	/* emulate read speed */
-VAR_EXI_REGS		= VAR_AREA + 0x09B4;	/* pointer to EXI registers */
-VAR_EXI_SLOT		= VAR_AREA + 0x09B8;	/* is the EXI slot (0 = slot a, 1 = slot b) */
-VAR_EXI_CPR			= VAR_AREA + 0x09B9;	/* is the EXI frequency (4 = 16mhz, 5 = 32mhz) */
-VAR_SD_SHIFT		= VAR_AREA + 0x09BA;	/* is the SD Card shift amount when issueing read cmds */
-VAR_ATA_LBA48		= VAR_AREA + 0x09BA;	/* Is the HDD in use a 48 bit LBA supported HDD? */
-VAR_IGR_TYPE		= VAR_AREA + 0x09BB;	/* IGR exit type */
-VAR_FRAG_LIST		= VAR_AREA + 0x09BC;	/* pointer to fragments (u32 offset, u32 size, u32 rawsector) */
+VAR_DRIVE_FLAGS		= VAR_AREA + 0x09B1;	/* disc drive patched */
+VAR_EMU_READ_SPEED	= VAR_AREA + 0x09B2;	/* emulate read speed */
+VAR_IGR_TYPE		= VAR_AREA + 0x09B3;	/* IGR exit type */
+VAR_FRAG_LIST		= VAR_AREA + 0x09B4;	/* pointer to fragments (u32 offset, u32 size, u32 rawsector) */
+VAR_SD_SHIFT		= VAR_AREA + 0x09B8;	/* is the SD Card shift amount when issueing read cmds */
+VAR_ATA_LBA48		= VAR_AREA + 0x09B8;	/* Is the HDD in use a 48 bit LBA supported HDD? */
+VAR_EXI_SLOT		= VAR_AREA + 0x09B9;	/* is the EXI slot (0 = slot a, 1 = slot b) */
+VAR_EXI_CPR			= VAR_AREA + 0x09BA;	/* is the EXI frequency (4 = 16mhz, 5 = 32mhz) */
+VAR_EXI2_CPR		= VAR_AREA + 0x09BB;	/* is the EXI2 frequency (4 = 16mhz, 5 = 32mhz) */
+VAR_EXI_REGS		= VAR_AREA + 0x09BC;	/* pointer to EXI registers */
 
 VAR_DISC_1_ID		= VAR_AREA + 0x09CC;	/* disc 1 header */
 VAR_DISC_2_ID		= VAR_AREA + 0x09D4;	/* disc 2 header */
@@ -45,4 +45,5 @@ VAR_SECTOR_BUF		= VAR_AREA + 0x0A00;	/* 0x200 of read data */
 
 VAR_PATCHES_BASE	= VAR_AREA + 0x3000;	/* Patches get copied to below this area. */
 
+VAR_PAD_BUTTON		= VAR_AREA + 0x30E4;	/* PAD buttons */
 VAR_RMODE			= VAR_AREA + 0x30F8;	/* render mode */

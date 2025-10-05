@@ -36,6 +36,6 @@ VIConfigureHook1:
 	mtmsr		%r4
 	blr
 
-.globl VIConfigureHook1_length
-VIConfigureHook1_length:
-.long (VIConfigureHook1_length - VIConfigureHook1)
+.globl VIConfigureHook1_size
+VIConfigureHook1_size:
+.long (. - VIConfigureHook1)

@@ -11,5 +11,7 @@
 
 extern DEVICEHANDLER_INTERFACE __device_gcloader;
 
+bool gcloaderGetBootFile(file_handle* file);
+
 #endif
 

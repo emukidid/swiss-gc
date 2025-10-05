@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2020-2023, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2020-2024, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -23,30 +23,18 @@
 .section .init
 	.globl _start
 _start:
-#ifdef APPLOADER
-	lis		r3, 0x8000
-	lis		r0, 0xfee1
-	ori		r0, r0, 0xdead
-	stw		r0, 0x00E8 (r3)
-
-	li		r3, 0
-	mtsrr1	r3
-	lis		r3, startup@ha
-	addi	r3, r3, startup@l
-	mtsrr0	r3
-	rfi
-#else
 	mfmsr	r3
 	b		1f
 	.asciz	"STUBHAXX"
 	.align 2
 
-1:	li		r3, 0
+1:	rlwinm	r3, r3, 0, 17, 15
+	mtmsr	r3
+	li		r3, 0
 	mtsrr1	r3
 	li		r3, startup
 	mtsrr0	r3
 	rfi
-#endif
 
 startup:
 	lis		r0, 0x8000
@@ -64,11 +52,7 @@ startup:
 	blt		1b
 
 	li		r0, 0
-#ifdef APPLOADER
-	lis		sp, 0x0180
-#else
 	li		sp, 0x3000
-#endif
 	stwu	r0, -8 (sp)
 
 	bl		pf_main
@@ -83,6 +67,26 @@ startup:
 
 reset:
 	lis		r3, 0x0C00
+	li		r4, 0x6800
+	li		r0, ((1 << 1) << 7) | (3 << 4)
+	ecowx	r0, r4, r3
+	li		r5, 0x6800 + 4*4
+	lis		r0, 0xC000
+	ecowx	r0, r5, r3
+	li		r6, 0x6800 + 3*4
+	li		r0, ((4 - 1) << 4) | 0b01
+	ecowx	r0, r6, r3
+1:	eciwx	r0, r6, r3
+	andi.	r0, r0, 0b01
+	bne		1b
+	lis		r0, 0x0100
+	ecowx	r0, r5, r3
+	li		r0, ((4 - 1) << 4) | 0b01
+	ecowx	r0, r6, r3
+2:	eciwx	r0, r6, r3
+	andi.	r0, r0, 0b01
+	bne		2b
+	ecowx	r0, r4, r3
 	li		r4, 0x3000 + 9*4
 	li		r0, 0b000
 	ecowx	r0, r4, r3

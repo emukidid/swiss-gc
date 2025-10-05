@@ -51,6 +51,7 @@ ifneq ($(BUILD),$(notdir $(CURDIR)))
 
 export OUTPUT	:=	$(CURDIR)/$(TARGET)
 export SDLOADER	:=	$(CURDIR)/SDLOADER
+export REBOOT	:=	$(CURDIR)/reboot
 
 export VPATH	:=	$(foreach dir,$(SOURCES),$(CURDIR)/$(dir)) \
 					$(foreach dir,$(DATA),$(CURDIR)/$(dir))
@@ -97,17 +98,18 @@ export LIBPATHS	:=	-L$(LIBOGC_LIB) $(foreach dir,$(LIBDIRS),-L$(dir)/lib)
 
 export OUTPUT	:=	$(CURDIR)/$(TARGET)
 export SDLOADER	:=	$(CURDIR)/SDLOADER
+export REBOOT	:=	$(CURDIR)/reboot
 .PHONY: $(BUILD) clean
 
 #---------------------------------------------------------------------------------
 $(BUILD):
 	@[ -d $@ ] || mkdir -p $@
-	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile $(OUTPUT).dol $(SDLOADER).BIN
+	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile $(OUTPUT).dol $(SDLOADER).BIN $(REBOOT).dol
 
 #---------------------------------------------------------------------------------
 clean:
 	@echo clean ...
-	@rm -fr $(BUILD) $(OUTPUT).elf $(OUTPUT).dol $(SDLOADER).ELF $(SDLOADER).BIN
+	@rm -fr $(BUILD) $(OUTPUT).elf $(OUTPUT).dol $(SDLOADER).ELF $(SDLOADER).BIN $(REBOOT).elf $(REBOOT).dol
 
 #---------------------------------------------------------------------------------
 run:
@@ -164,6 +166,12 @@ $(SDLOADER).ELF : $(OFILES)
 #---------------------------------------------------------------------------------
 	$(SILENTMSG) linking ... $(notdir $@)
 	$(SILENTCMD)$(LD) $^ $(LDFLAGS) -Wl,--section-start,.init=0x01700000 $(LIBPATHS) $(LIBS) -o $@
+
+#---------------------------------------------------------------------------------
+$(REBOOT).elf : $(OFILES)
+#---------------------------------------------------------------------------------
+	$(SILENTMSG) linking ... $(notdir $@)
+	$(SILENTCMD)$(LD) $^ $(LDFLAGS) -Wl,--section-start,.init=0x01300000 $(LIBPATHS) $(LIBS) -o $@
 
 -include $(DEPENDS)
 

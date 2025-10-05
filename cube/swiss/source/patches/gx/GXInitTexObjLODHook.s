@@ -10,6 +10,6 @@ GXInitTexObjLODHook:
 1:	nop
 	trap
 
-.globl GXInitTexObjLODHook_length
-GXInitTexObjLODHook_length:
-.long (GXInitTexObjLODHook_length - GXInitTexObjLODHook)
+.globl GXInitTexObjLODHook_size
+GXInitTexObjLODHook_size:
+.long (. - GXInitTexObjLODHook)

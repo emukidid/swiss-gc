@@ -36,6 +36,6 @@ MTXOrthoHook:
 1:	fsubs		%f8, %f4, %f3
 	trap
 
-.globl MTXOrthoHook_length
-MTXOrthoHook_length:
-.long (MTXOrthoHook_length - MTXOrthoHook)
+.globl MTXOrthoHook_size
+MTXOrthoHook_size:
+.long (. - MTXOrthoHook)

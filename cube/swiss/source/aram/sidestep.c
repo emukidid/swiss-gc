@@ -6,10 +6,12 @@
 *
 * softdev March 2007
 ***************************************************************************/
+#include <argz.h>
 #include <gccore.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <malloc.h>
 #include <network.h>
 #include <ogc/lwp_threads.h>
@@ -167,8 +169,8 @@ void ARAMRunStub(void)
 ****************************************************************************/
 void ARAMRun(u32 entrypoint, u32 dst, u32 src, u32 len)
 {
-	_entrypoint = entrypoint;
-	_dst = dst;
+	_entrypoint = entrypoint | 0x80000000;
+	_dst = dst | 0x80000000;
 	_src = src;
 	_len = len;
 	
@@ -191,17 +193,17 @@ static void DOLMinMax(DOLHEADER * dol)
   int i;
 
   maxaddress = 0;
-  minaddress = 0x87100000;
+  minaddress = 0xffffffff;
 
   /*** Go through DOL sections ***/
   /*** Text sections ***/
   for (i = 0; i < MAXTEXTSECTION; i++)
   {
-    if (dol->textAddress[i] && dol->textLength[i])
+    if (dol->textOffset[i] && dol->textLength[i])
     {
       if (dol->textAddress[i] < minaddress)
         minaddress = dol->textAddress[i];
-      if ((dol->textAddress[i] + dol->textLength[i]) > maxaddress) 
+      if ((dol->textAddress[i] + dol->textLength[i]) > maxaddress)
         maxaddress = dol->textAddress[i] + dol->textLength[i];
     }
   }
@@ -209,20 +211,13 @@ static void DOLMinMax(DOLHEADER * dol)
   /*** Data sections ***/
   for (i = 0; i < MAXDATASECTION; i++)
   {
-    if (dol->dataAddress[i] && dol->dataLength[i])
+    if (dol->dataOffset[i] && dol->dataLength[i])
     {
       if (dol->dataAddress[i] < minaddress)
         minaddress = dol->dataAddress[i];
       if ((dol->dataAddress[i] + dol->dataLength[i]) > maxaddress)
         maxaddress = dol->dataAddress[i] + dol->dataLength[i];
     }
-  }
-
-  /*** And of course, any BSS section ***/
-  if (dol->bssAddress)
-  {
-    if ((dol->bssAddress + dol->bssLength) > maxaddress)
-      maxaddress = dol->bssAddress + dol->bssLength;
   }
 }
 
@@ -258,6 +253,52 @@ u32 DOLSize(DOLHEADER *dol)
   return sizeinbytes;
 }
 
+u32 DOLSizeFix(DOLHEADER *dol)
+{
+  u32 sizeinbytes;
+  int i;
+
+  sizeinbytes = DOLHDRLENGTH;
+
+  /*** Go through DOL sections ***/
+  /*** Text sections ***/
+  for (i = 0; i < MAXTEXTSECTION; i++)
+  {
+    if (dol->textOffset[i])
+    {
+      dol->textOffset[i] -= dol->textAddress[i] & 0x1f;
+      dol->textLength[i] += dol->textAddress[i] & 0x1f;
+      dol->textAddress[i] = dol->textAddress[i] & ~0x1f;
+
+      /*** Round length to 32 bytes ***/
+      if (dol->textLength[i] & 0x1f)
+        dol->textLength[i] = (dol->textLength[i] & ~0x1f) + 0x20;
+      if ((dol->textOffset[i] + dol->textLength[i]) > sizeinbytes)
+        sizeinbytes = dol->textOffset[i] + dol->textLength[i];
+    }
+  }
+
+  /*** Data sections ***/
+  for (i = 0; i < MAXDATASECTION; i++)
+  {
+    if (dol->dataOffset[i])
+    {
+      dol->dataOffset[i] -= dol->dataAddress[i] & 0x1f;
+      dol->dataLength[i] += dol->dataAddress[i] & 0x1f;
+      dol->dataAddress[i] = dol->dataAddress[i] & ~0x1f;
+
+      /*** Round length to 32 bytes ***/
+      if (dol->dataLength[i] & 0x1f)
+        dol->dataLength[i] = (dol->dataLength[i] & ~0x1f) + 0x20;
+      if ((dol->dataOffset[i] + dol->dataLength[i]) > sizeinbytes)
+        sizeinbytes = dol->dataOffset[i] + dol->dataLength[i];
+    }
+  }
+
+  /*** Return DOL size ***/
+  return sizeinbytes;
+}
+
 /****************************************************************************
 * DOLtoARAM
 *
@@ -270,7 +311,9 @@ int DOLtoARAM(unsigned char *dol, char *argz, size_t argz_len)
   DOLHEADER *dolhdr;
   u32 sizeinbytes;
   int i;
-  struct __argv args;
+  char *envz = NULL;
+  size_t envz_len = 0;
+  struct __argv argv;
 
   /*** Make sure ARAM subsystem is alive! ***/
   AR_Reset();
@@ -288,12 +331,15 @@ int DOLtoARAM(unsigned char *dol, char *argz, size_t argz_len)
   DOLMinMax(dolhdr);
   sizeinbytes = maxaddress - minaddress;
 
+  if ((ARAMSTART + sizeinbytes) > AR_GetInternalSize())
+    return 0;
+
   /*** Move all DOL sections into ARAM ***/
   /*** Move text sections ***/
   for (i = 0; i < MAXTEXTSECTION; i++)
   {
     /*** This may seem strange, but in developing d0lLZ we found some with section addresses with zero length ***/
-    if (dolhdr->textAddress[i] && dolhdr->textLength[i])
+    if (dolhdr->textOffset[i] && dolhdr->textLength[i])
     {
       if (dolhdr->entryPoint >= dolhdr->textAddress[i] &&
           dolhdr->entryPoint < (dolhdr->textAddress[i] + dolhdr->textLength[i]))
@@ -305,6 +351,10 @@ int DOLtoARAM(unsigned char *dol, char *argz, size_t argz_len)
           argz = NULL;
           argz_len = 0;
         }
+        else if (entrypoint[9] == ENVP_MAGIC)
+        {
+          argz_create(environ, &envz, &envz_len);
+        }
       }
 
       ARAMPut(dol + dolhdr->textOffset[i], (char *) ((dolhdr->textAddress[i] - minaddress) + ARAMSTART),
@@ -315,26 +365,35 @@ int DOLtoARAM(unsigned char *dol, char *argz, size_t argz_len)
   /*** Move data sections ***/
   for (i = 0; i < MAXDATASECTION; i++)
   {
-    if (dolhdr->dataAddress[i] && dolhdr->dataLength[i])
+    if (dolhdr->dataOffset[i] && dolhdr->dataLength[i])
     {
       ARAMPut(dol + dolhdr->dataOffset[i], (char *) ((dolhdr->dataAddress[i] - minaddress) + ARAMSTART),
               dolhdr->dataLength[i]);
     }
   }
 
-  /*** Pass a command line ***/
+  /*** Move command line and environment ***/
+  if (envz) envz = memcpy(SYS_AllocArenaMemHi(envz_len, 1), envz, envz_len);
+  if (argz) argz = memcpy(SYS_AllocArenaMemHi(argz_len, 1), argz, argz_len);
+
+  /*** Pass command line ***/
   if (argz)
   {
-    args.argvMagic = ARGV_MAGIC;
-    args.commandLine = argz;
-    args.length = argz_len;
+    argv.argvMagic = ARGV_MAGIC;
+    argv.commandLine = argz;
+    argv.length = argz_len;
 
-    ARAMPut((unsigned char *) args.commandLine, (char *) ((maxaddress - minaddress) + ARAMSTART), args.length);
+    ARAMPut((unsigned char *) &argv, (char *) ((dolhdr->entryPoint + 8 - minaddress) + ARAMSTART), sizeof(struct __argv));
+  }
 
-    args.commandLine = (char *) maxaddress;
-    sizeinbytes += args.length;
+  /*** Pass environment ***/
+  if (envz)
+  {
+    argv.argvMagic = ENVP_MAGIC;
+    argv.commandLine = envz;
+    argv.length = envz_len;
 
-    ARAMPut((unsigned char *) &args, (char *) ((dolhdr->entryPoint + 8 - minaddress) + ARAMSTART), sizeof(struct __argv));
+    ARAMPut((unsigned char *) &argv, (char *) ((dolhdr->entryPoint + 40 - minaddress) + ARAMSTART), sizeof(struct __argv));
   }
 
   /*** Now go run it ***/
@@ -349,17 +408,17 @@ static void ELFMinMax(Elf32_Ehdr *ehdr, Elf32_Phdr *phdr)
   int i;
 
   maxaddress = 0;
-  minaddress = 0x87100000;
+  minaddress = 0xffffffff;
 
   /*** Go through ELF segments ***/
   for (i = 0; i < ehdr->e_phnum; i++)
   {
-    if (phdr[i].p_type == PT_LOAD)
+    if (phdr[i].p_type == PT_LOAD && phdr[i].p_filesz)
     {
       if (phdr[i].p_vaddr < minaddress)
         minaddress = phdr[i].p_vaddr;
-      if ((phdr[i].p_vaddr + phdr[i].p_memsz) > maxaddress)
-        maxaddress = phdr[i].p_vaddr + phdr[i].p_memsz;
+      if ((phdr[i].p_vaddr + phdr[i].p_filesz) > maxaddress)
+        maxaddress = phdr[i].p_vaddr + phdr[i].p_filesz;
     }
   }
 }
@@ -370,7 +429,9 @@ int ELFtoARAM(unsigned char *elf, char *argz, size_t argz_len)
   Elf32_Phdr *phdr;
   u32 sizeinbytes;
   int i;
-  struct __argv args;
+  char *envz = NULL;
+  size_t envz_len = 0;
+  struct __argv argv;
 
   /*** Make sure ARAM subsystem is alive! ***/
   AR_Reset();
@@ -389,10 +450,13 @@ int ELFtoARAM(unsigned char *elf, char *argz, size_t argz_len)
   ELFMinMax(ehdr, phdr);
   sizeinbytes = maxaddress - minaddress;
 
+  if ((ARAMSTART + sizeinbytes) > AR_GetInternalSize())
+    return 0;
+
   /*** Move all ELF segments into ARAM ***/
   for (i = 0; i < ehdr->e_phnum; i++)
   {
-    if (phdr[i].p_type == PT_LOAD)
+    if (phdr[i].p_type == PT_LOAD && phdr[i].p_filesz)
     {
       if (ehdr->e_entry >= phdr[i].p_vaddr &&
           ehdr->e_entry < (phdr[i].p_vaddr + phdr[i].p_filesz))
@@ -404,25 +468,38 @@ int ELFtoARAM(unsigned char *elf, char *argz, size_t argz_len)
           argz = NULL;
           argz_len = 0;
         }
+        else if (entrypoint[9] == ENVP_MAGIC)
+        {
+          argz_create(environ, &envz, &envz_len);
+        }
       }
 
       ARAMPut(elf + phdr[i].p_offset, (char *) ((phdr[i].p_vaddr - minaddress) + ARAMSTART), phdr[i].p_filesz);
     }
   }
 
-  /*** Pass a command line ***/
+  /*** Move command line and environment ***/
+  if (envz) envz = memcpy(SYS_AllocArenaMemHi(envz_len, 1), envz, envz_len);
+  if (argz) argz = memcpy(SYS_AllocArenaMemHi(argz_len, 1), argz, argz_len);
+
+  /*** Pass command line ***/
   if (argz)
   {
-    args.argvMagic = ARGV_MAGIC;
-    args.commandLine = argz;
-    args.length = argz_len;
+    argv.argvMagic = ARGV_MAGIC;
+    argv.commandLine = argz;
+    argv.length = argz_len;
 
-    ARAMPut((unsigned char *) args.commandLine, (char *) ((maxaddress - minaddress) + ARAMSTART), args.length);
+    ARAMPut((unsigned char *) &argv, (char *) ((ehdr->e_entry + 8 - minaddress) + ARAMSTART), sizeof(struct __argv));
+  }
 
-    args.commandLine = (char *) maxaddress;
-    sizeinbytes += args.length;
+  /*** Pass environment ***/
+  if (envz)
+  {
+    argv.argvMagic = ENVP_MAGIC;
+    argv.commandLine = envz;
+    argv.length = envz_len;
 
-    ARAMPut((unsigned char *) &args, (char *) ((ehdr->e_entry + 8 - minaddress) + ARAMSTART), sizeof(struct __argv));
+    ARAMPut((unsigned char *) &argv, (char *) ((ehdr->e_entry + 40 - minaddress) + ARAMSTART), sizeof(struct __argv));
   }
 
   /*** Now go run it ***/
@@ -438,6 +515,9 @@ int BINtoARAM(unsigned char *bin, size_t len, unsigned int entrypoint, unsigned 
   AR_Reset();
   AR_Init(NULL, 0); /*** No stack - we need it all ***/
   AR_Clear(AR_ARAMINTALL);
+
+  if ((ARAMSTART + len) > AR_GetInternalSize())
+    return 0;
 
   /*** Move BIN into ARAM ***/
   ARAMPut(bin, (char *) ARAMSTART, len);

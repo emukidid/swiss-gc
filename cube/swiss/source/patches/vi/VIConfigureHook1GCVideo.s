@@ -41,6 +41,6 @@ VIConfigureHook1GCVideo:
 	mtmsr		%r4
 	blr
 
-.globl VIConfigureHook1GCVideo_length
-VIConfigureHook1GCVideo_length:
-.long (VIConfigureHook1GCVideo_length - VIConfigureHook1GCVideo)
+.globl VIConfigureHook1GCVideo_size
+VIConfigureHook1GCVideo_size:
+.long (. - VIConfigureHook1GCVideo)

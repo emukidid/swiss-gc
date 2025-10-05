@@ -10,6 +10,7 @@
 #include <string.h>
 #include <math.h>
 #include <malloc.h>
+#include <libdeflate.h>
 #include <zlib.h>
 #include "swiss.h"
 #include "main.h"
@@ -20,6 +21,7 @@
 #include "sidestep.h"
 #include "elf.h"
 #include "ata.h"
+#include "bba.h"
 #include "cheats.h"
 
 char VAR_AREA[0x3100];
@@ -36,80 +38,84 @@ void *installPatch(int patchId) {
 		case BACKWARDS_MEMCPY:
 			patch = backwards_memcpy_bin; patchSize = backwards_memcpy_bin_size; break;
 		case DVD_LOWTESTALARMHOOK:
-			patch = DVDLowTestAlarmHook; patchSize = DVDLowTestAlarmHook_length; break;
+			patch = DVDLowTestAlarmHook; patchSize = DVDLowTestAlarmHook_size; break;
 		case GX_COPYDISPHOOK:
-			patch = GXCopyDispHook; patchSize = GXCopyDispHook_length; break;
+			patch = GXCopyDispHook; patchSize = GXCopyDispHook_size; break;
 		case GX_INITTEXOBJLODHOOK:
-			patch = GXInitTexObjLODHook; patchSize = GXInitTexObjLODHook_length; break;
+			patch = GXInitTexObjLODHook; patchSize = GXInitTexObjLODHook_size; break;
 		case GX_SETPROJECTIONHOOK:
-			patch = GXSetProjectionHook; patchSize = GXSetProjectionHook_length; break;
+			patch = GXSetProjectionHook; patchSize = GXSetProjectionHook_size; break;
 		case GX_SETSCISSORHOOK:
-			patch = GXSetScissorHook; patchSize = GXSetScissorHook_length; break;
+			patch = GXSetScissorHook; patchSize = GXSetScissorHook_size; break;
 		case MTX_FRUSTUMHOOK:
-			patch = MTXFrustumHook; patchSize = MTXFrustumHook_length; break;
+			patch = MTXFrustumHook; patchSize = MTXFrustumHook_size; break;
 		case MTX_LIGHTFRUSTUMHOOK:
-			patch = MTXLightFrustumHook; patchSize = MTXLightFrustumHook_length; break;
+			patch = MTXLightFrustumHook; patchSize = MTXLightFrustumHook_size; break;
 		case MTX_LIGHTPERSPECTIVEHOOK:
-			patch = MTXLightPerspectiveHook; patchSize = MTXLightPerspectiveHook_length; break;
+			patch = MTXLightPerspectiveHook; patchSize = MTXLightPerspectiveHook_size; break;
 		case MTX_ORTHOHOOK:
-			patch = MTXOrthoHook; patchSize = MTXOrthoHook_length; break;
+			patch = MTXOrthoHook; patchSize = MTXOrthoHook_size; break;
 		case MTX_PERSPECTIVEHOOK:
-			patch = MTXPerspectiveHook; patchSize = MTXPerspectiveHook_length; break;
+			patch = MTXPerspectiveHook; patchSize = MTXPerspectiveHook_size; break;
 		case OS_CALLALARMHANDLER:
 			patch = CallAlarmHandler_bin; patchSize = CallAlarmHandler_bin_size; break;
 		case OS_RESERVED:
 			patchSize = 0x1800; break;
 		case PAD_CHECKSTATUS:
 			patch = CheckStatus_bin; patchSize = CheckStatus_bin_size; break;
+		case PAD_CHECKSTATUS_GCDIGITAL:
+			patch = CheckStatusGCDigital_bin; patchSize = CheckStatusGCDigital_bin_size; break;
 		case VI_CONFIGURE240P:
-			patch = VIConfigure240p; patchSize = VIConfigure240p_length; break;
+			patch = VIConfigure240p; patchSize = VIConfigure240p_size; break;
 		case VI_CONFIGURE288P:
-			patch = VIConfigure288p; patchSize = VIConfigure288p_length; break;
+			patch = VIConfigure288p; patchSize = VIConfigure288p_size; break;
 		case VI_CONFIGURE480I:
-			patch = VIConfigure480i; patchSize = VIConfigure480i_length; break;
+			patch = VIConfigure480i; patchSize = VIConfigure480i_size; break;
 		case VI_CONFIGURE480P:
-			patch = VIConfigure480p; patchSize = VIConfigure480p_length; break;
+			patch = VIConfigure480p; patchSize = VIConfigure480p_size; break;
 		case VI_CONFIGURE540P50:
-			patch = VIConfigure540p50; patchSize = VIConfigure540p50_length; break;
+			patch = VIConfigure540p50; patchSize = VIConfigure540p50_size; break;
 		case VI_CONFIGURE540P60:
-			patch = VIConfigure540p60; patchSize = VIConfigure540p60_length; break;
+			patch = VIConfigure540p60; patchSize = VIConfigure540p60_size; break;
 		case VI_CONFIGURE576I:
-			patch = VIConfigure576i; patchSize = VIConfigure576i_length; break;
+			patch = VIConfigure576i; patchSize = VIConfigure576i_size; break;
 		case VI_CONFIGURE576P:
-			patch = VIConfigure576p; patchSize = VIConfigure576p_length; break;
+			patch = VIConfigure576p; patchSize = VIConfigure576p_size; break;
 		case VI_CONFIGURE960I:
-			patch = VIConfigure960i; patchSize = VIConfigure960i_length; break;
+			patch = VIConfigure960i; patchSize = VIConfigure960i_size; break;
 		case VI_CONFIGURE1080I50:
-			patch = VIConfigure1080i50; patchSize = VIConfigure1080i50_length; break;
+			patch = VIConfigure1080i50; patchSize = VIConfigure1080i50_size; break;
 		case VI_CONFIGURE1080I60:
-			patch = VIConfigure1080i60; patchSize = VIConfigure1080i60_length; break;
+			patch = VIConfigure1080i60; patchSize = VIConfigure1080i60_size; break;
 		case VI_CONFIGURE1152I:
-			patch = VIConfigure1152i; patchSize = VIConfigure1152i_length; break;
+			patch = VIConfigure1152i; patchSize = VIConfigure1152i_size; break;
 		case VI_CONFIGUREAUTOP:
-			patch = VIConfigureAutop; patchSize = VIConfigureAutop_length; break;
+			patch = VIConfigureAutop; patchSize = VIConfigureAutop_size; break;
+		case VI_CONFIGUREFIELDMODE:
+			patch = VIConfigureFieldMode; patchSize = VIConfigureFieldMode_size; break;
 		case VI_CONFIGUREHOOK1:
-			patch = VIConfigureHook1; patchSize = VIConfigureHook1_length; break;
+			patch = VIConfigureHook1; patchSize = VIConfigureHook1_size; break;
 		case VI_CONFIGUREHOOK1_GCVIDEO:
-			patch = VIConfigureHook1GCVideo; patchSize = VIConfigureHook1GCVideo_length; break;
+			patch = VIConfigureHook1GCVideo; patchSize = VIConfigureHook1GCVideo_size; break;
 		case VI_CONFIGUREHOOK1_RT4K:
-			patch = VIConfigureHook1RT4K; patchSize = VIConfigureHook1RT4K_length; break;
+			patch = VIConfigureHook1RT4K; patchSize = VIConfigureHook1RT4K_size; break;
 		case VI_CONFIGUREHOOK2:
-			patch = VIConfigureHook2; patchSize = VIConfigureHook2_length; break;
+			patch = VIConfigureHook2; patchSize = VIConfigureHook2_size; break;
 		case VI_CONFIGURENOYSCALE:
-			patch = VIConfigureNoYScale; patchSize = VIConfigureNoYScale_length; break;
+			patch = VIConfigureNoYScale; patchSize = VIConfigureNoYScale_size; break;
 		case VI_CONFIGUREPANHOOK:
-			patch = VIConfigurePanHook; patchSize = VIConfigurePanHook_length; break;
+			patch = VIConfigurePanHook; patchSize = VIConfigurePanHook_size; break;
 		case VI_CONFIGUREPANHOOKD:
-			patch = VIConfigurePanHookD; patchSize = VIConfigurePanHookD_length; break;
+			patch = VIConfigurePanHookD; patchSize = VIConfigurePanHookD_size; break;
 		case VI_GETRETRACECOUNTHOOK:
-			patch = VIGetRetraceCountHook; patchSize = VIGetRetraceCountHook_length; break;
+			patch = VIGetRetraceCountHook; patchSize = VIGetRetraceCountHook_size; break;
 		case VI_RETRACEHANDLERHOOK:
-			patch = VIRetraceHandlerHook; patchSize = VIRetraceHandlerHook_length; break;
+			patch = VIRetraceHandlerHook; patchSize = VIRetraceHandlerHook_size; break;
 		default:
 			break;
 	}
 	patchLocation = installPatch2(patch, patchSize);
-	print_gecko("Installed patch %i to %08X\r\n", patchId, patchLocation);
+	print_debug("Installed patch %i to %08X\n", patchId, patchLocation);
 	return patchLocation;
 }
 
@@ -136,7 +142,7 @@ void *installPatch2(const void *patch, u32 patchSize) {
 // See patchIds enum in patcher.h
 void *getPatchAddr(int patchId) {
 	if(patchId >= PATCHES_MAX || patchId < 0) {
-		print_gecko("Invalid Patch location requested\r\n");
+		print_debug("Invalid Patch location requested\n");
 		return NULL;
 	}
 	if(!patch_locations[patchId]) {
@@ -164,14 +170,9 @@ int install_code(int final)
 	
 	// Reload Stub
 	if (!top_addr) {
-		patch     = stub_bin;
-		patchSize = stub_bin_size;
-		print_gecko("Installing Reload Stub\r\n");
-		
-		memcpy((void *)0x80001800, patch, patchSize);
-		DCFlushRangeNoSync((void *)0x80001800, patchSize);
-		ICInvalidateRange((void *)0x80001800, patchSize);
-		_sync();
+		u32 size = SYS_GetPhysicalMemSize();
+		*(u32 *)0x80000034 = (u32)MEM_PHYSICAL_TO_K0(size);
+		*(u32 *)0x800000F0 = size;
 		return 1;
 	}
 	// IDE-EXI
@@ -190,43 +191,105 @@ int install_code(int final)
 				patch     = !_ideexi_version ? ideexi_v1_card_bin      : ideexi_v2_card_bin;
 				patchSize = !_ideexi_version ? ideexi_v1_card_bin_size : ideexi_v2_card_bin_size;
 				break;
-			case EMU_READ | EMU_ETHERNET | EMU_BUS_ARBITER:
-				patch     = !_ideexi_version ? ideexi_v1_eth_bin      : ideexi_v2_eth_bin;
-				patchSize = !_ideexi_version ? ideexi_v1_eth_bin_size : ideexi_v2_eth_bin_size;
+			case EMU_READ | EMU_ETHERNET | EMU_BUS_ARBITER | EMU_NO_PAUSING:
+				if (!strcmp(bba_device_str, "ENC28J60")) {
+					patch     = !_ideexi_version ? ideexi_v1_enc28j60_eth_bin      : ideexi_v2_enc28j60_eth_bin;
+					patchSize = !_ideexi_version ? ideexi_v1_enc28j60_eth_bin_size : ideexi_v2_enc28j60_eth_bin_size;
+				} else if (!strcmp(bba_device_str, "WIZnet W5500")) {
+					patch     = !_ideexi_version ? ideexi_v1_w5500_eth_bin      : ideexi_v2_w5500_eth_bin;
+					patchSize = !_ideexi_version ? ideexi_v1_w5500_eth_bin_size : ideexi_v2_w5500_eth_bin_size;
+				} else if (!strcmp(bba_device_str, "WIZnet W6100")) {
+					patch     = !_ideexi_version ? ideexi_v1_w6100_eth_bin      : ideexi_v2_w6100_eth_bin;
+					patchSize = !_ideexi_version ? ideexi_v1_w6100_eth_bin_size : ideexi_v2_w6100_eth_bin_size;
+				} else if (!strcmp(bba_device_str, "WIZnet W6300")) {
+					patch     = !_ideexi_version ? ideexi_v1_w6300_eth_bin      : ideexi_v2_w6300_eth_bin;
+					patchSize = !_ideexi_version ? ideexi_v1_w6300_eth_bin_size : ideexi_v2_w6300_eth_bin_size;
+				} else
+					return 0;
 				break;
 			default:
 				return 0;
 		}
-		print_gecko("Installing Patch for IDE-EXI\r\n");
+		print_debug("Installing Patch for IDE-EXI\n");
 	}
 	// SD Card over EXI
 	else if(devices[DEVICE_CUR] == &__device_sd_a || devices[DEVICE_CUR] == &__device_sd_b || devices[DEVICE_CUR] == &__device_sd_c) {
-		switch (devices[DEVICE_CUR]->emulated()) {
-			case EMU_READ | EMU_BUS_ARBITER:
-			case EMU_READ | EMU_READ_SPEED | EMU_BUS_ARBITER:
-				patch     = sd_bin;
-				patchSize = sd_bin_size;
-				break;
-			case EMU_READ | EMU_AUDIO_STREAMING | EMU_BUS_ARBITER:
-				patch     = sd_dtk_bin;
-				patchSize = sd_dtk_bin_size;
-				break;
-			case EMU_READ | EMU_MEMCARD | EMU_BUS_ARBITER:
-				patch     = sd_card_bin;
-				patchSize = sd_card_bin_size;
-				break;
-			case EMU_READ | EMU_ETHERNET | EMU_BUS_ARBITER:
-				patch     = sd_eth_bin;
-				patchSize = sd_eth_bin_size;
-				break;
-			default:
-				return 0;
+		if (strcmp(devices[DEVICE_CUR]->hwName, "Semi-Passive SD Card Adapter")) {
+			switch (devices[DEVICE_CUR]->emulated()) {
+				case EMU_READ | EMU_BUS_ARBITER:
+				case EMU_READ | EMU_READ_SPEED | EMU_BUS_ARBITER:
+					patch     = sd_v1_bin;
+					patchSize = sd_v1_bin_size;
+					break;
+				case EMU_READ | EMU_AUDIO_STREAMING | EMU_BUS_ARBITER:
+					patch     = sd_v1_dtk_bin;
+					patchSize = sd_v1_dtk_bin_size;
+					break;
+				case EMU_READ | EMU_MEMCARD | EMU_BUS_ARBITER:
+					patch     = sd_v1_card_bin;
+					patchSize = sd_v1_card_bin_size;
+					break;
+				case EMU_READ | EMU_ETHERNET | EMU_BUS_ARBITER | EMU_NO_PAUSING:
+					if (!strcmp(bba_device_str, "ENC28J60")) {
+						patch     = sd_v1_enc28j60_eth_bin;
+						patchSize = sd_v1_enc28j60_eth_bin_size;
+					} else if (!strcmp(bba_device_str, "WIZnet W5500")) {
+						patch     = sd_v1_w5500_eth_bin;
+						patchSize = sd_v1_w5500_eth_bin_size;
+					} else if (!strcmp(bba_device_str, "WIZnet W6100")) {
+						patch     = sd_v1_w6100_eth_bin;
+						patchSize = sd_v1_w6100_eth_bin_size;
+					} else if (!strcmp(bba_device_str, "WIZnet W6300")) {
+						patch     = sd_v1_w6300_eth_bin;
+						patchSize = sd_v1_w6300_eth_bin_size;
+					} else
+						return 0;
+					break;
+				default:
+					return 0;
+			}
+		} else {
+			switch (devices[DEVICE_CUR]->emulated()) {
+				case EMU_READ | EMU_BUS_ARBITER:
+				case EMU_READ | EMU_READ_SPEED | EMU_BUS_ARBITER:
+					patch     = sd_v2_bin;
+					patchSize = sd_v2_bin_size;
+					break;
+				case EMU_READ | EMU_AUDIO_STREAMING | EMU_BUS_ARBITER:
+					patch     = sd_v2_dtk_bin;
+					patchSize = sd_v2_dtk_bin_size;
+					break;
+				case EMU_READ | EMU_MEMCARD | EMU_BUS_ARBITER:
+					patch     = sd_v2_card_bin;
+					patchSize = sd_v2_card_bin_size;
+					break;
+				case EMU_READ | EMU_ETHERNET | EMU_BUS_ARBITER | EMU_NO_PAUSING:
+					if (!strcmp(bba_device_str, "ENC28J60")) {
+						patch     = sd_v2_enc28j60_eth_bin;
+						patchSize = sd_v2_enc28j60_eth_bin_size;
+					} else if (!strcmp(bba_device_str, "WIZnet W5500")) {
+						patch     = sd_v2_w5500_eth_bin;
+						patchSize = sd_v2_w5500_eth_bin_size;
+					} else if (!strcmp(bba_device_str, "WIZnet W6100")) {
+						patch     = sd_v2_w6100_eth_bin;
+						patchSize = sd_v2_w6100_eth_bin_size;
+					} else if (!strcmp(bba_device_str, "WIZnet W6300")) {
+						patch     = sd_v2_w6300_eth_bin;
+						patchSize = sd_v2_w6300_eth_bin_size;
+					} else
+						return 0;
+					break;
+				default:
+					return 0;
+			}
 		}
-		print_gecko("Installing Patch for SD Card over EXI\r\n");
+		print_debug("Installing Patch for SD Card over EXI\n");
 	}
 	// DVD
 	else if(devices[DEVICE_CUR] == &__device_dvd || devices[DEVICE_CUR] == &__device_wode) {
 		switch (devices[DEVICE_CUR]->emulated()) {
+			case EMU_NONE:
+				break;
 			case EMU_READ:
 			case EMU_READ | EMU_BUS_ARBITER:
 				patch     = dvd_bin;
@@ -239,7 +302,7 @@ int install_code(int final)
 			default:
 				return 0;
 		}
-		print_gecko("Installing Patch for DVD\r\n");
+		print_debug("Installing Patch for DVD\n");
 	}
 	// USB Gecko
 	else if(devices[DEVICE_CUR] == &__device_usbgecko) {
@@ -251,11 +314,13 @@ int install_code(int final)
 			default:
 				return 0;
 		}
-		print_gecko("Installing Patch for USB Gecko\r\n");
+		print_debug("Installing Patch for USB Gecko\n");
 	}
 	// Wiikey Fusion
 	else if(devices[DEVICE_CUR] == &__device_wkf) {
 		switch (devices[DEVICE_CUR]->emulated()) {
+			case EMU_NONE:
+				break;
 			case EMU_READ:
 			case EMU_READ | EMU_BUS_ARBITER:
 				patch     = wkf_bin;
@@ -273,13 +338,13 @@ int install_code(int final)
 			default:
 				return 0;
 		}
-		print_gecko("Installing Patch for WKF\r\n");
+		print_debug("Installing Patch for WKF\n");
 	}
 	// Broadband Adapter
 	else if(devices[DEVICE_CUR] == &__device_fsp) {
 		if (devices[DEVICE_PATCHES] != &__device_fsp) {
 			switch (devices[DEVICE_CUR]->emulated()) {
-				case EMU_READ | EMU_BUS_ARBITER:
+				case EMU_READ | EMU_BUS_ARBITER | EMU_NO_PAUSING:
 					patch     = fsp_bin;
 					patchSize = fsp_bin_size;
 					break;
@@ -288,15 +353,15 @@ int install_code(int final)
 			}
 		} else {
 			switch (devices[DEVICE_CUR]->emulated()) {
-				case EMU_READ | EMU_BUS_ARBITER:
+				case EMU_READ | EMU_BUS_ARBITER | EMU_NO_PAUSING:
 					patch     = fsp_bin;
 					patchSize = fsp_bin_size;
 					break;
-				case EMU_READ | EMU_AUDIO_STREAMING | EMU_BUS_ARBITER:
+				case EMU_READ | EMU_AUDIO_STREAMING | EMU_BUS_ARBITER | EMU_NO_PAUSING:
 					patch     = fsp_dtk_bin;
 					patchSize = fsp_dtk_bin_size;
 					break;
-				case EMU_READ | EMU_ETHERNET | EMU_BUS_ARBITER:
+				case EMU_READ | EMU_ETHERNET | EMU_BUS_ARBITER | EMU_NO_PAUSING:
 					patch     = fsp_eth_bin;
 					patchSize = fsp_eth_bin_size;
 					break;
@@ -304,12 +369,14 @@ int install_code(int final)
 					return 0;
 			}
 		}
-		print_gecko("Installing Patch for File Service Protocol\r\n");
+		print_debug("Installing Patch for File Service Protocol\n");
 	}
 	// GC Loader
 	else if(devices[DEVICE_CUR] == &__device_gcloader) {
 		if (devices[DEVICE_PATCHES] != &__device_gcloader) {
 			switch (devices[DEVICE_CUR]->emulated()) {
+				case EMU_NONE:
+					break;
 				case EMU_READ:
 				case EMU_READ | EMU_BUS_ARBITER:
 				case EMU_READ | EMU_READ_SPEED:
@@ -326,6 +393,8 @@ int install_code(int final)
 			}
 		} else {
 			switch (devices[DEVICE_CUR]->emulated()) {
+				case EMU_NONE:
+					break;
 				case EMU_READ:
 				case EMU_READ | EMU_READ_SPEED:
 					patch     = gcloader_v2_bin;
@@ -339,28 +408,81 @@ int install_code(int final)
 					patch     = gcloader_v2_card_bin;
 					patchSize = gcloader_v2_card_bin_size;
 					break;
-				case EMU_READ | EMU_ETHERNET | EMU_BUS_ARBITER:
-					patch     = gcloader_v2_eth_bin;
-					patchSize = gcloader_v2_eth_bin_size;
+				case EMU_READ | EMU_ETHERNET | EMU_BUS_ARBITER | EMU_NO_PAUSING:
+					if (!strcmp(bba_device_str, "ENC28J60")) {
+						patch     = gcloader_v2_enc28j60_eth_bin;
+						patchSize = gcloader_v2_enc28j60_eth_bin_size;
+					} else if (!strcmp(bba_device_str, "WIZnet W5500")) {
+						patch     = gcloader_v2_w5500_eth_bin;
+						patchSize = gcloader_v2_w5500_eth_bin_size;
+					} else if (!strcmp(bba_device_str, "WIZnet W6100")) {
+						patch     = gcloader_v2_w6100_eth_bin;
+						patchSize = gcloader_v2_w6100_eth_bin_size;
+					} else if (!strcmp(bba_device_str, "WIZnet W6300")) {
+						patch     = gcloader_v2_w6300_eth_bin;
+						patchSize = gcloader_v2_w6300_eth_bin_size;
+					} else
+						return 0;
 					break;
 				default:
 					return 0;
 			}
 		}
-		print_gecko("Installing Patch for GC Loader\r\n");
+		print_debug("Installing Patch for GC Loader\n");
+	}
+	// FlippyDrive
+	else if(devices[DEVICE_CUR] == &__device_flippy || devices[DEVICE_CUR] == &__device_flippyflash) {
+		switch (devices[DEVICE_CUR]->emulated()) {
+			case EMU_NONE:
+				break;
+			case EMU_READ:
+			case EMU_READ | EMU_READ_SPEED:
+				patch     = flippy_bin;
+				patchSize = flippy_bin_size;
+				break;
+			case EMU_READ | EMU_MEMCARD:
+				patch     = flippy_card_bin;
+				patchSize = flippy_card_bin_size;
+				break;
+			case EMU_READ | EMU_ETHERNET | EMU_BUS_ARBITER | EMU_NO_PAUSING:
+				if (!strcmp(bba_device_str, "ENC28J60")) {
+					patch     = flippy_enc28j60_eth_bin;
+					patchSize = flippy_enc28j60_eth_bin_size;
+				} else if (!strcmp(bba_device_str, "WIZnet W5500")) {
+					patch     = flippy_w5500_eth_bin;
+					patchSize = flippy_w5500_eth_bin_size;
+				} else if (!strcmp(bba_device_str, "WIZnet W6100")) {
+					patch     = flippy_w6100_eth_bin;
+					patchSize = flippy_w6100_eth_bin_size;
+				} else if (!strcmp(bba_device_str, "WIZnet W6300")) {
+					patch     = flippy_w6300_eth_bin;
+					patchSize = flippy_w6300_eth_bin_size;
+				} else
+					return 0;
+				break;
+			default:
+				return 0;
+		}
+		print_debug("Installing Patch for FlippyDrive\n");
 	}
 	if (!final) {
-		print_gecko("Space for patch remaining: %i\r\n", top_addr - LO_RESERVE);
-		print_gecko("Space taken by vars/video patches: %i\r\n", HI_RESERVE - top_addr);
-		if (top_addr < LO_RESERVE + patchSize)
+		print_debug("Space for patch remaining: %i\n", top_addr - LO_RESERVE);
+		print_debug("Space taken by vars/video patches: %i\n", HI_RESERVE - top_addr);
+		if (top_addr < LO_RESERVE + patchSize ||
+			top_addr < 0x80001800)
 			return 0;
 		patchLocation = Calc_Address(NULL, PATCH_OTHER, LO_RESERVE);
 		memcpy(patchLocation, patch, patchSize);
 		DCFlushRange(patchLocation, patchSize);
 		ICInvalidateRange(patchLocation, patchSize);
 	} else {
-		for (u32 i = 0x100; i <= 0x900; i += 0x100)
-			*(u32 *)&VAR_AREA[i] = 0x4C000064;
+		for (u32 i = 0x100; i <= 0x900; i += 0x100) {
+			if (i == 0x300) {
+				((u32 *)&VAR_AREA[i])[0] = 0x48000002 | ((u32)DSI_EXCEPTION_VECTOR & 0x03FFFFFC);
+				((u32 *)&VAR_AREA[i])[1] = 0x4C000064;
+			} else
+				*(u32 *)&VAR_AREA[i] = 0x4C000064;
+		}
 		memcpy((void *)0x80000000, VAR_AREA, sizeof(VAR_AREA));
 		DCFlushRangeNoSync((void *)0x80000000, sizeof(VAR_AREA));
 		ICInvalidateRange((void *)0x80000000, sizeof(VAR_AREA));
@@ -372,7 +494,7 @@ int install_code(int final)
 	return 1;
 }
 
-void make_pattern(u32 *data, u32 offsetFoundAt, u32 length, FuncPattern *functionPattern)
+void make_pattern(u32 *data, int dataType, u32 offsetFoundAt, u32 length, FuncPattern *functionPattern)
 {
 	u32 i, j;
 	
@@ -417,6 +539,7 @@ void make_pattern(u32 *data, u32 offsetFoundAt, u32 length, FuncPattern *functio
 	}
 	
 	functionPattern->offsetFoundAt = offsetFoundAt;
+	functionPattern->properAddress = Calc_ProperAddress(data, dataType, offsetFoundAt * sizeof(u32));
 }
 
 bool compare_pattern(FuncPattern *FPatA, FuncPattern *FPatB)
@@ -424,30 +547,31 @@ bool compare_pattern(FuncPattern *FPatA, FuncPattern *FPatB)
 	return memcmp(FPatA, FPatB, sizeof(u32) * 6) == 0;
 }
 
-bool find_pattern(u32 *data, u32 offsetFoundAt, u32 length, FuncPattern *functionPattern)
+bool find_pattern(u32 *data, int dataType, u32 offsetFoundAt, u32 length, FuncPattern *functionPattern)
 {
 	FuncPattern FP;
 	
-	make_pattern(data, offsetFoundAt, length, &FP);
+	make_pattern(data, dataType, offsetFoundAt, length, &FP);
 	
 	if (functionPattern && compare_pattern(&FP, functionPattern)) {
 		functionPattern->offsetFoundAt = FP.offsetFoundAt;
+		functionPattern->properAddress = FP.properAddress;
 		return true;
 	}
 	
 	if (!functionPattern) {
-		print_gecko("Length: %d\n", FP.Length);
-		print_gecko("Loads: %d\n", FP.Loads);
-		print_gecko("Stores: %d\n", FP.Stores);
-		print_gecko("FCalls: %d\n", FP.FCalls);
-		print_gecko("Branch: %d\n", FP.Branch);
-		print_gecko("Moves: %d\n", FP.Moves);
+		print_debug("Length: %d\n", FP.Length);
+		print_debug("Loads: %d\n", FP.Loads);
+		print_debug("Stores: %d\n", FP.Stores);
+		print_debug("FCalls: %d\n", FP.FCalls);
+		print_debug("Branch: %d\n", FP.Branch);
+		print_debug("Moves: %d\n", FP.Moves);
 	}
 	
 	return false;
 }
 
-bool find_pattern_before(u32 *data, u32 length, FuncPattern *FPatA, FuncPattern *FPatB)
+bool find_pattern_before(u32 *data, int dataType, u32 length, FuncPattern *FPatA, FuncPattern *FPatB)
 {
 	u32 offsetFoundAt = FPatA->offsetFoundAt - FPatB->Length;
 	
@@ -462,10 +586,10 @@ bool find_pattern_before(u32 *data, u32 length, FuncPattern *FPatA, FuncPattern 
 		data[offsetFoundAt - 1] != 0x4C000064)
 		offsetFoundAt--;
 	
-	return find_pattern(data, offsetFoundAt, length, FPatB);
+	return find_pattern(data, dataType, offsetFoundAt, length, FPatB);
 }
 
-bool find_pattern_after(u32 *data, u32 length, FuncPattern *FPatA, FuncPattern *FPatB)
+bool find_pattern_after(u32 *data, int dataType, u32 length, FuncPattern *FPatA, FuncPattern *FPatB)
 {
 	u32 offsetFoundAt = FPatA->offsetFoundAt + FPatA->Length;
 	
@@ -475,7 +599,7 @@ bool find_pattern_after(u32 *data, u32 length, FuncPattern *FPatA, FuncPattern *
 	if (offsetFoundAt >= length / sizeof(u32))
 		return false;
 	
-	return find_pattern(data, offsetFoundAt, length, FPatB);
+	return find_pattern(data, dataType, offsetFoundAt, length, FPatB);
 }
 
 u32 branch(u32 *dst, u32 *src)
@@ -618,7 +742,7 @@ bool findi_pattern(u32 *data, int dataType, u32 offsetFoundAt, u32 offsetFoundAt
 	if (functionPattern && functionPattern->offsetFoundAt)
 		return address == data + functionPattern->offsetFoundAt;
 	
-	return address && find_pattern(data, address - data, length, functionPattern);
+	return address && find_pattern(data, dataType, address - data, length, functionPattern);
 }
 
 bool findi_patterns(u32 *data, int dataType, u32 offsetFoundAt, u32 offsetFoundAt2, u32 length, ...)
@@ -647,7 +771,7 @@ bool findp_pattern(u32 *data, int dataType, u32 offsetFoundAt, u32 offsetFoundAt
 	if (functionPattern && functionPattern->offsetFoundAt)
 		return address == data + functionPattern->offsetFoundAt;
 	
-	return address && find_pattern(data, address - data, length, functionPattern);
+	return address && find_pattern(data, dataType, address - data, length, functionPattern);
 }
 
 bool findp_patterns(u32 *data, int dataType, u32 offsetFoundAt, u32 offsetFoundAt2, u32 length, ...)
@@ -673,7 +797,7 @@ bool findx_pattern(u32 *data, int dataType, u32 offsetFoundAt, u32 length, FuncP
 	if (functionPattern && functionPattern->offsetFoundAt)
 		return offsetFoundAt == functionPattern->offsetFoundAt;
 	
-	return offsetFoundAt && find_pattern(data, offsetFoundAt, length, functionPattern);
+	return offsetFoundAt && find_pattern(data, dataType, offsetFoundAt, length, functionPattern);
 }
 
 bool findx_patterns(u32 *data, int dataType, u32 offsetFoundAt, u32 length, ...)
@@ -921,7 +1045,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 	int patched = 0;
 	u32 address;
 	FuncPattern memcpySig = 
-		{ 11, 3, 0, 0, 2, 1, memcpy_bin, memcpy_bin_size, "memcpy" };
+		{ 11, 3, 0, 0, 2, 1, memcpyPatch, memcpyPatchLength, "memcpy" };
 	FuncPattern PPCHaltSig = 
 		{ 5, 1, 0, 0, 1, 1, NULL, 0, "PPCHalt" };
 	FuncPattern ClearArenaSigs[5] = {
@@ -1632,24 +1756,24 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		{ 7, 2, 0, 0, 0, 0, NULL, 0, "AIGetDMAStartAddr" }
 	};
 	FuncPattern GXPeekARGBSigs[3] = {
-		{ 9, 1, 1, 0, 0, 1, GXPeekARGBPatch, GXPeekARGBPatch_length, "GXPeekARGB" },
-		{ 9, 1, 1, 0, 0, 1, GXPeekARGBPatch, GXPeekARGBPatch_length, "GXPeekARGB" },	// SN Systems ProDG
-		{ 9, 3, 1, 0, 0, 0, GXPeekARGBPatch, GXPeekARGBPatch_length, "GXPeekARGB" }
+		{ 9, 1, 1, 0, 0, 1, GXPeekARGBPatch, GXPeekARGBPatchLength, "GXPeekARGB" },
+		{ 9, 1, 1, 0, 0, 1, GXPeekARGBPatch, GXPeekARGBPatchLength, "GXPeekARGB" },	// SN Systems ProDG
+		{ 9, 3, 1, 0, 0, 0, GXPeekARGBPatch, GXPeekARGBPatchLength, "GXPeekARGB" }
 	};
 	FuncPattern GXPokeARGBSigs[3] = {
-		{ 8, 0, 1, 0, 0, 1, GXPokeARGBPatch, GXPokeARGBPatch_length, "GXPokeARGB" },
-		{ 8, 0, 1, 0, 0, 1, GXPokeARGBPatch, GXPokeARGBPatch_length, "GXPokeARGB" },	// SN Systems ProDG
-		{ 8, 2, 1, 0, 0, 0, GXPokeARGBPatch, GXPokeARGBPatch_length, "GXPokeARGB" }
+		{ 8, 0, 1, 0, 0, 1, GXPokeARGBPatch, GXPokeARGBPatchLength, "GXPokeARGB" },
+		{ 8, 0, 1, 0, 0, 1, GXPokeARGBPatch, GXPokeARGBPatchLength, "GXPokeARGB" },	// SN Systems ProDG
+		{ 8, 2, 1, 0, 0, 0, GXPokeARGBPatch, GXPokeARGBPatchLength, "GXPokeARGB" }
 	};
 	FuncPattern GXPeekZSigs[3] = {
-		{ 10, 1, 1, 0, 0, 1, GXPeekZPatch, GXPeekZPatch_length, "GXPeekZ" },
-		{ 10, 1, 1, 0, 0, 1, GXPeekZPatch, GXPeekZPatch_length, "GXPeekZ" },	// SN Systems ProDG
-		{  9, 3, 1, 0, 0, 0, GXPeekZPatch, GXPeekZPatch_length, "GXPeekZ" }
+		{ 10, 1, 1, 0, 0, 1, GXPeekZPatch, GXPeekZPatchLength, "GXPeekZ" },
+		{ 10, 1, 1, 0, 0, 1, GXPeekZPatch, GXPeekZPatchLength, "GXPeekZ" },	// SN Systems ProDG
+		{  9, 3, 1, 0, 0, 0, GXPeekZPatch, GXPeekZPatchLength, "GXPeekZ" }
 	};
 	FuncPattern GXPokeZSigs[3] = {
-		{ 9, 0, 1, 0, 0, 1, GXPokeZPatch, GXPokeZPatch_length, "GXPokeZ" },
-		{ 9, 0, 1, 0, 0, 1, GXPokeZPatch, GXPokeZPatch_length, "GXPokeZ" },	// SN Systems ProDG
-		{ 8, 2, 1, 0, 0, 0, GXPokeZPatch, GXPokeZPatch_length, "GXPokeZ" }
+		{ 9, 0, 1, 0, 0, 1, GXPokeZPatch, GXPokeZPatchLength, "GXPokeZ" },
+		{ 9, 0, 1, 0, 0, 1, GXPokeZPatch, GXPokeZPatchLength, "GXPokeZ" },	// SN Systems ProDG
+		{ 8, 2, 1, 0, 0, 0, GXPokeZPatch, GXPokeZPatchLength, "GXPokeZ" }
 	};
 	FuncPattern __VMBASESetupExceptionHandlersSigs[2] = {
 		{ 95, 38, 12, 6, 0, 20, NULL, 0, "__VMBASESetupExceptionHandlers" },
@@ -1720,7 +1844,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		}
 		
 		FuncPattern fp;
-		make_pattern(data, i, length, &fp);
+		make_pattern(data, dataType, i, length, &fp);
 		
 		for (j = 0; j < sizeof(ClearArenaSigs) / sizeof(FuncPattern); j++) {
 			if (compare_pattern(&fp, &ClearArenaSigs[j])) {
@@ -2521,7 +2645,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							                                               &SetInterruptMaskSigs[1],
 							                                               &SetInterruptMaskSigs[2], NULL) &&
 							findx_pattern (data, dataType, i + 27, length, &OSRestoreInterruptsSig) &&
-							find_pattern_before(data, length, &fp, &__OSMaskInterruptsSigs[0]))
+							find_pattern_before(data, dataType, length, &fp, &__OSMaskInterruptsSigs[0]))
 							__OSUnmaskInterruptsSigs[j].offsetFoundAt = i;
 						break;
 					case 1:
@@ -2530,14 +2654,14 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							                                               &SetInterruptMaskSigs[4],
 							                                               &SetInterruptMaskSigs[5], NULL) &&
 							findx_pattern (data, dataType, i + 25, length, &OSRestoreInterruptsSig) &&
-							find_pattern_before(data, length, &fp, &__OSMaskInterruptsSigs[1]))
+							find_pattern_before(data, dataType, length, &fp, &__OSMaskInterruptsSigs[1]))
 							__OSUnmaskInterruptsSigs[j].offsetFoundAt = i;
 						break;
 					case 2:
 						if (findx_pattern(data, dataType, i +  7, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i + 19, length, &SetInterruptMaskSigs[6]) &&
 							findx_pattern(data, dataType, i + 23, length, &OSRestoreInterruptsSig) &&
-							find_pattern_before(data, length, &fp, &__OSMaskInterruptsSigs[2]))
+							find_pattern_before(data, dataType, length, &fp, &__OSMaskInterruptsSigs[2]))
 							__OSUnmaskInterruptsSigs[j].offsetFoundAt = i;
 						break;
 				}
@@ -3274,7 +3398,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 35, length, &OSRestoreInterruptsSig) &&
 							findx_pattern(data, dataType, i + 44, length, &__OSMaskInterruptsSigs[0]) &&
 							findx_pattern(data, dataType, i + 46, length, &OSRestoreInterruptsSig) &&
-							find_pattern_before(data, length, &fp, &EXIAttachSigs[0]))
+							find_pattern_before(data, dataType, length, &fp, &EXIAttachSigs[0]))
 							EXIDetachSigs[j].offsetFoundAt = i;
 						break;
 					case 1:
@@ -3284,7 +3408,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 35, length, &OSRestoreInterruptsSig) &&
 							findx_pattern(data, dataType, i + 44, length, &__OSMaskInterruptsSigs[0]) &&
 							findx_pattern(data, dataType, i + 46, length, &OSRestoreInterruptsSig) &&
-							find_pattern_before(data, length, &fp, &EXIAttachSigs[1]))
+							find_pattern_before(data, dataType, length, &fp, &EXIAttachSigs[1]))
 							EXIDetachSigs[j].offsetFoundAt = i;
 						break;
 					case 2:
@@ -3295,7 +3419,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_patterns(data, dataType, i + 45, length, &__OSMaskInterruptsSigs[0],
 							                                               &__OSMaskInterruptsSigs[1], NULL) &&
 							findx_pattern (data, dataType, i + 47, length, &OSRestoreInterruptsSig) &&
-							find_pattern_before(data, length, &fp, &EXIAttachSigs[2]))
+							find_pattern_before(data, dataType, length, &fp, &EXIAttachSigs[2]))
 							EXIDetachSigs[j].offsetFoundAt = i;
 						break;
 					case 3:
@@ -3305,7 +3429,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 27, length, &OSRestoreInterruptsSig) &&
 							findx_pattern(data, dataType, i + 36, length, &__OSMaskInterruptsSigs[1]) &&
 							findx_pattern(data, dataType, i + 38, length, &OSRestoreInterruptsSig) &&
-							find_pattern_before(data, length, &fp, &EXIAttachSigs[3]))
+							find_pattern_before(data, dataType, length, &fp, &EXIAttachSigs[3]))
 							EXIDetachSigs[j].offsetFoundAt = i;
 						break;
 					case 4:
@@ -3315,7 +3439,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 27, length, &OSRestoreInterruptsSig) &&
 							findx_pattern(data, dataType, i + 36, length, &__OSMaskInterruptsSigs[1]) &&
 							findx_pattern(data, dataType, i + 38, length, &OSRestoreInterruptsSig) &&
-							find_pattern_before(data, length, &fp, &EXIAttachSigs[4]))
+							find_pattern_before(data, dataType, length, &fp, &EXIAttachSigs[4]))
 							EXIDetachSigs[j].offsetFoundAt = i;
 						break;
 					case 5:
@@ -3325,7 +3449,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 25, length, &OSRestoreInterruptsSig) &&
 							findx_pattern(data, dataType, i + 34, length, &__OSMaskInterruptsSigs[1]) &&
 							findx_pattern(data, dataType, i + 36, length, &OSRestoreInterruptsSig) &&
-							find_pattern_before(data, length, &fp, &EXIAttachSigs[5]))
+							find_pattern_before(data, dataType, length, &fp, &EXIAttachSigs[5]))
 							EXIDetachSigs[j].offsetFoundAt = i;
 						break;
 					case 6:
@@ -3335,7 +3459,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 27, length, &OSRestoreInterruptsSig) &&
 							findx_pattern(data, dataType, i + 36, length, &__OSMaskInterruptsSigs[1]) &&
 							findx_pattern(data, dataType, i + 38, length, &OSRestoreInterruptsSig) &&
-							find_pattern_before(data, length, &fp, &EXIAttachSigs[6]))
+							find_pattern_before(data, dataType, length, &fp, &EXIAttachSigs[6]))
 							EXIDetachSigs[j].offsetFoundAt = i;
 						break;
 					case 7:
@@ -3345,7 +3469,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 25, length, &OSRestoreInterruptsSig) &&
 							findx_pattern(data, dataType, i + 34, length, &__OSMaskInterruptsSigs[2]) &&
 							findx_pattern(data, dataType, i + 36, length, &OSRestoreInterruptsSig) &&
-							find_pattern_before(data, length, &fp, &EXIAttachSigs[7]))
+							find_pattern_before(data, dataType, length, &fp, &EXIAttachSigs[7]))
 							EXIDetachSigs[j].offsetFoundAt = i;
 						break;
 				}
@@ -3362,7 +3486,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 				findx_pattern(data, dataType, i + 73, length, &__OSMaskInterruptsSigs[1]) &&
 				findx_pattern(data, dataType, i + 76, length, &__OSMaskInterruptsSigs[1]) &&
 				findx_pattern(data, dataType, i + 78, length, &OSRestoreInterruptsSig) &&
-				find_pattern_after(data, length, &fp, &EXISelectSigs[6]))
+				find_pattern_after(data, dataType, length, &fp, &EXISelectSigs[6]))
 				EXISelectSDSig.offsetFoundAt = i;
 		}
 		
@@ -3379,7 +3503,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 55, length, &__OSUnmaskInterruptsSigs[0]) &&
 							findx_pattern(data, dataType, i + 57, length, &OSRestoreInterruptsSig) &&
 							findx_pattern(data, dataType, i + 63, length, &__EXIProbeSigs[0]) &&
-							find_pattern_before(data, length, &fp, &EXISelectSigs[0]))
+							find_pattern_before(data, dataType, length, &fp, &EXISelectSigs[0]))
 							EXIDeselectSigs[j].offsetFoundAt = i;
 						break;
 					case 1:
@@ -3392,7 +3516,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 55, length, &__OSUnmaskInterruptsSigs[0]) &&
 							findx_pattern(data, dataType, i + 57, length, &OSRestoreInterruptsSig) &&
 							findx_pattern(data, dataType, i + 63, length, &__EXIProbeSigs[1]) &&
-							find_pattern_before(data, length, &fp, &EXISelectSigs[1]))
+							find_pattern_before(data, dataType, length, &fp, &EXISelectSigs[1]))
 							EXIDeselectSigs[j].offsetFoundAt = i;
 						break;
 					case 2:
@@ -3407,7 +3531,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							                                               &__OSUnmaskInterruptsSigs[1], NULL) &&
 							findx_pattern (data, dataType, i + 58, length, &OSRestoreInterruptsSig) &&
 							findx_pattern (data, dataType, i + 64, length, &__EXIProbeSigs[2]) &&
-							find_pattern_before(data, length, &fp, &EXISelectSigs[2]))
+							find_pattern_before(data, dataType, length, &fp, &EXISelectSigs[2]))
 							EXIDeselectSigs[j].offsetFoundAt = i;
 						break;
 					case 3:
@@ -3419,7 +3543,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 44, length, &__OSUnmaskInterruptsSigs[1]) &&
 							findx_pattern(data, dataType, i + 46, length, &OSRestoreInterruptsSig) &&
 							findx_pattern(data, dataType, i + 52, length, &__EXIProbeSigs[3]) &&
-							find_pattern_before(data, length, &fp, &EXISelectSigs[3]))
+							find_pattern_before(data, dataType, length, &fp, &EXISelectSigs[3]))
 							EXIDeselectSigs[j].offsetFoundAt = i;
 						break;
 					case 4:
@@ -3431,7 +3555,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 44, length, &__OSUnmaskInterruptsSigs[1]) &&
 							findx_pattern(data, dataType, i + 46, length, &OSRestoreInterruptsSig) &&
 							findx_pattern(data, dataType, i + 52, length, &__EXIProbeSigs[3]) &&
-							find_pattern_before(data, length, &fp, &EXISelectSigs[3]))
+							find_pattern_before(data, dataType, length, &fp, &EXISelectSigs[3]))
 							EXIDeselectSigs[j].offsetFoundAt = i;
 						break;
 					case 5:
@@ -3443,7 +3567,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 44, length, &__OSUnmaskInterruptsSigs[1]) &&
 							findx_pattern(data, dataType, i + 46, length, &OSRestoreInterruptsSig) &&
 							findx_pattern(data, dataType, i + 52, length, &__EXIProbeSigs[4]) &&
-							find_pattern_before(data, length, &fp, &EXISelectSigs[4]))
+							find_pattern_before(data, dataType, length, &fp, &EXISelectSigs[4]))
 							EXIDeselectSigs[j].offsetFoundAt = i;
 						break;
 					case 6:
@@ -3456,7 +3580,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 45, length, &__OSUnmaskInterruptsSigs[1]) &&
 							findx_pattern(data, dataType, i + 47, length, &OSRestoreInterruptsSig) &&
 							findx_pattern(data, dataType, i + 53, length, &__EXIProbeSigs[5]) &&
-							find_pattern_before(data, length, &fp, &EXISelectSigs[5]))
+							find_pattern_before(data, dataType, length, &fp, &EXISelectSigs[5]))
 							EXIDeselectSigs[j].offsetFoundAt = i;
 						break;
 					case 7:
@@ -3470,7 +3594,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							                                               &__OSUnmaskInterruptsSigs[2], NULL) &&
 							findx_pattern (data, dataType, i + 46, length, &OSRestoreInterruptsSig) &&
 							findx_pattern (data, dataType, i + 52, length, &__EXIProbeSigs[6]) &&
-							find_pattern_before(data, length, &fp, &EXISelectSigs[6]))
+							find_pattern_before(data, dataType, length, &fp, &EXISelectSigs[6]))
 							EXIDeselectSigs[j].offsetFoundAt = i;
 						break;
 					case 8:
@@ -3490,7 +3614,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							get_immediate(data,  i + 107, i + 108, &address) && address == 0x800030C0 &&
 							get_immediate(data,  i + 118, i + 119, &address) && address == 0x800030C0 &&
 							findx_pattern(data, dataType, i + 122, length, &OSRestoreInterruptsSig) &&
-							find_pattern_before(data, length, &fp, &EXISelectSigs[7]))
+							find_pattern_before(data, dataType, length, &fp, &EXISelectSigs[7]))
 							EXIDeselectSigs[j].offsetFoundAt = i;
 						break;
 				}
@@ -3846,7 +3970,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 25, length, &OSRestoreInterruptsSig) &&
 							findx_pattern(data, dataType, i + 33, length, &SetExiInterruptMaskSigs[0]) &&
 							findx_pattern(data, dataType, i + 53, length, &OSRestoreInterruptsSig) &&
-							find_pattern_before(data, length, &fp, &EXILockSigs[0]))
+							find_pattern_before(data, dataType, length, &fp, &EXILockSigs[0]))
 							EXIUnlockSigs[j].offsetFoundAt = i;
 						break;
 					case 1:
@@ -3855,7 +3979,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 25, length, &OSRestoreInterruptsSig) &&
 							findx_pattern(data, dataType, i + 33, length, &SetExiInterruptMaskSigs[1]) &&
 							findx_pattern(data, dataType, i + 53, length, &OSRestoreInterruptsSig) &&
-							find_pattern_before(data, length, &fp, &EXILockSigs[1]))
+							find_pattern_before(data, dataType, length, &fp, &EXILockSigs[1]))
 							EXIUnlockSigs[j].offsetFoundAt = i;
 						break;
 					case 2:
@@ -3864,7 +3988,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 26, length, &OSRestoreInterruptsSig) &&
 							findx_pattern(data, dataType, i + 34, length, &SetExiInterruptMaskSigs[2]) &&
 							findx_pattern(data, dataType, i + 54, length, &OSRestoreInterruptsSig) &&
-							find_pattern_before(data, length, &fp, &EXILockSigs[2]))
+							find_pattern_before(data, dataType, length, &fp, &EXILockSigs[2]))
 							EXIUnlockSigs[j].offsetFoundAt = i;
 						break;
 					case 3:
@@ -3873,7 +3997,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 18, length, &OSRestoreInterruptsSig) &&
 							findx_pattern(data, dataType, i + 26, length, &SetExiInterruptMaskSigs[3]) &&
 							findx_pattern(data, dataType, i + 45, length, &OSRestoreInterruptsSig) &&
-							find_pattern_before(data, length, &fp, &EXILockSigs[3]))
+							find_pattern_before(data, dataType, length, &fp, &EXILockSigs[3]))
 							EXIUnlockSigs[j].offsetFoundAt = i;
 						break;
 					case 4:
@@ -3882,7 +4006,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 18, length, &OSRestoreInterruptsSig) &&
 							findx_pattern(data, dataType, i + 26, length, &SetExiInterruptMaskSigs[4]) &&
 							findx_pattern(data, dataType, i + 45, length, &OSRestoreInterruptsSig) &&
-							find_pattern_before(data, length, &fp, &EXILockSigs[4]))
+							find_pattern_before(data, dataType, length, &fp, &EXILockSigs[4]))
 							EXIUnlockSigs[j].offsetFoundAt = i;
 						break;
 					case 5:
@@ -3891,7 +4015,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 15, length, &OSRestoreInterruptsSig) &&
 							findx_pattern(data, dataType, i + 23, length, &SetExiInterruptMaskSigs[5]) &&
 							findx_pattern(data, dataType, i + 43, length, &OSRestoreInterruptsSig) &&
-							find_pattern_before(data, length, &fp, &EXILockSigs[5]))
+							find_pattern_before(data, dataType, length, &fp, &EXILockSigs[5]))
 							EXIUnlockSigs[j].offsetFoundAt = i;
 						break;
 					case 6:
@@ -3900,7 +4024,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 18, length, &OSRestoreInterruptsSig) &&
 							findx_pattern(data, dataType, i + 26, length, &SetExiInterruptMaskSigs[6]) &&
 							findx_pattern(data, dataType, i + 45, length, &OSRestoreInterruptsSig) &&
-							find_pattern_before(data, length, &fp, &EXILockSigs[6]))
+							find_pattern_before(data, dataType, length, &fp, &EXILockSigs[6]))
 							EXIUnlockSigs[j].offsetFoundAt = i;
 						break;
 					case 7:
@@ -3914,7 +4038,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 69, length, &__OSMaskInterruptsSigs[2]) &&
 							findx_pattern(data, dataType, i + 72, length, &__OSUnmaskInterruptsSigs[2]) &&
 							findx_pattern(data, dataType, i + 91, length, &OSRestoreInterruptsSig) &&
-							find_pattern_before(data, length, &fp, &EXILockSigs[7]))
+							find_pattern_before(data, dataType, length, &fp, &EXILockSigs[7]))
 							EXIUnlockSigs[j].offsetFoundAt = i;
 						break;
 				}
@@ -4026,7 +4150,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 						if (findx_pattern(data, dataType, i + 12, length, &__OSGetSystemTimeSigs[0]) &&
 							findx_pattern(data, dataType, i + 41, length, &SetTimeoutAlarmSigs[0]) &&
 							findx_pattern(data, dataType, i + 48, length, &SetTimeoutAlarmSigs[0]) &&
-							find_pattern_before(data, length, &SetTimeoutAlarmSigs[0], &AlarmHandlerForTimeoutSigs[0]))
+							find_pattern_before(data, dataType, length, &SetTimeoutAlarmSigs[0], &AlarmHandlerForTimeoutSigs[0]))
 							ReadSigs[j].offsetFoundAt = i;
 						break;
 					case 1:
@@ -4034,7 +4158,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							                                               &__OSGetSystemTimeSigs[1], NULL) &&
 							findx_pattern (data, dataType, i + 43, length, &SetTimeoutAlarmSigs[0]) &&
 							findx_pattern (data, dataType, i + 50, length, &SetTimeoutAlarmSigs[0]) &&
-							find_pattern_before(data, length, &SetTimeoutAlarmSigs[0], &AlarmHandlerForTimeoutSigs[0]))
+							find_pattern_before(data, dataType, length, &SetTimeoutAlarmSigs[0], &AlarmHandlerForTimeoutSigs[0]))
 							ReadSigs[j].offsetFoundAt = i;
 						break;
 					case 2:
@@ -4082,17 +4206,17 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 112, length, &DoJustReadSigs[0])) {
 							DVDLowReadSigs[j].offsetFoundAt = i;
 							
-							if (find_pattern_after(data, length, &DVDLowReadSigs[0], &DVDLowSeekSigs[0]) &&
-								find_pattern_after(data, length, &DVDLowSeekSigs[0], &DVDLowWaitCoverCloseSigs[0]) &&
-								find_pattern_after(data, length, &DVDLowWaitCoverCloseSigs[0], &DVDLowReadDiskIDSigs[0]) &&
-								find_pattern_after(data, length, &DVDLowReadDiskIDSigs[0], &DVDLowStopMotorSigs[0]) &&
-								find_pattern_after(data, length, &DVDLowStopMotorSigs[0], &DVDLowRequestErrorSigs[0]) &&
-								find_pattern_after(data, length, &DVDLowRequestErrorSigs[0], &DVDLowInquirySigs[0]) &&
-								find_pattern_after(data, length, &DVDLowInquirySigs[0], &DVDLowAudioStreamSigs[0]) &&
-								find_pattern_after(data, length, &DVDLowAudioStreamSigs[0], &DVDLowRequestAudioStatusSigs[0]) &&
-								find_pattern_after(data, length, &DVDLowRequestAudioStatusSigs[0], &DVDLowAudioBufferConfigSigs[0]) &&
-								find_pattern_after(data, length, &DVDLowAudioBufferConfigSigs[0], &DVDLowResetSigs[0]))
-								find_pattern_after(data, length, &DVDLowResetSigs[0], &DVDLowSetResetCoverCallbackSigs[0]);
+							if (find_pattern_after(data, dataType, length, &DVDLowReadSigs[0], &DVDLowSeekSigs[0]) &&
+								find_pattern_after(data, dataType, length, &DVDLowSeekSigs[0], &DVDLowWaitCoverCloseSigs[0]) &&
+								find_pattern_after(data, dataType, length, &DVDLowWaitCoverCloseSigs[0], &DVDLowReadDiskIDSigs[0]) &&
+								find_pattern_after(data, dataType, length, &DVDLowReadDiskIDSigs[0], &DVDLowStopMotorSigs[0]) &&
+								find_pattern_after(data, dataType, length, &DVDLowStopMotorSigs[0], &DVDLowRequestErrorSigs[0]) &&
+								find_pattern_after(data, dataType, length, &DVDLowRequestErrorSigs[0], &DVDLowInquirySigs[0]) &&
+								find_pattern_after(data, dataType, length, &DVDLowInquirySigs[0], &DVDLowAudioStreamSigs[0]) &&
+								find_pattern_after(data, dataType, length, &DVDLowAudioStreamSigs[0], &DVDLowRequestAudioStatusSigs[0]) &&
+								find_pattern_after(data, dataType, length, &DVDLowRequestAudioStatusSigs[0], &DVDLowAudioBufferConfigSigs[0]) &&
+								find_pattern_after(data, dataType, length, &DVDLowAudioBufferConfigSigs[0], &DVDLowResetSigs[0]))
+								find_pattern_after(data, dataType, length, &DVDLowResetSigs[0], &DVDLowSetResetCoverCallbackSigs[0]);
 						}
 						break;
 					case 1:
@@ -4103,17 +4227,17 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern (data, dataType, i + 112, length, &DoJustReadSigs[0])) {
 							DVDLowReadSigs[j].offsetFoundAt = i;
 							
-							if (find_pattern_after(data, length, &DVDLowReadSigs[1], &DVDLowSeekSigs[1]) &&
-								find_pattern_after(data, length, &DVDLowSeekSigs[1], &DVDLowWaitCoverCloseSigs[1]) &&
-								find_pattern_after(data, length, &DVDLowWaitCoverCloseSigs[1], &DVDLowReadDiskIDSigs[1]) &&
-								find_pattern_after(data, length, &DVDLowReadDiskIDSigs[1], &DVDLowStopMotorSigs[1]) &&
-								find_pattern_after(data, length, &DVDLowStopMotorSigs[1], &DVDLowRequestErrorSigs[1]) &&
-								find_pattern_after(data, length, &DVDLowRequestErrorSigs[1], &DVDLowInquirySigs[1]) &&
-								find_pattern_after(data, length, &DVDLowInquirySigs[1], &DVDLowAudioStreamSigs[1]) &&
-								find_pattern_after(data, length, &DVDLowAudioStreamSigs[1], &DVDLowRequestAudioStatusSigs[1]) &&
-								find_pattern_after(data, length, &DVDLowRequestAudioStatusSigs[1], &DVDLowAudioBufferConfigSigs[1]) &&
-								find_pattern_after(data, length, &DVDLowAudioBufferConfigSigs[1], &DVDLowResetSigs[0]))
-								find_pattern_after(data, length, &DVDLowResetSigs[0], &DVDLowSetResetCoverCallbackSigs[0]);
+							if (find_pattern_after(data, dataType, length, &DVDLowReadSigs[1], &DVDLowSeekSigs[1]) &&
+								find_pattern_after(data, dataType, length, &DVDLowSeekSigs[1], &DVDLowWaitCoverCloseSigs[1]) &&
+								find_pattern_after(data, dataType, length, &DVDLowWaitCoverCloseSigs[1], &DVDLowReadDiskIDSigs[1]) &&
+								find_pattern_after(data, dataType, length, &DVDLowReadDiskIDSigs[1], &DVDLowStopMotorSigs[1]) &&
+								find_pattern_after(data, dataType, length, &DVDLowStopMotorSigs[1], &DVDLowRequestErrorSigs[1]) &&
+								find_pattern_after(data, dataType, length, &DVDLowRequestErrorSigs[1], &DVDLowInquirySigs[1]) &&
+								find_pattern_after(data, dataType, length, &DVDLowInquirySigs[1], &DVDLowAudioStreamSigs[1]) &&
+								find_pattern_after(data, dataType, length, &DVDLowAudioStreamSigs[1], &DVDLowRequestAudioStatusSigs[1]) &&
+								find_pattern_after(data, dataType, length, &DVDLowRequestAudioStatusSigs[1], &DVDLowAudioBufferConfigSigs[1]) &&
+								find_pattern_after(data, dataType, length, &DVDLowAudioBufferConfigSigs[1], &DVDLowResetSigs[0]))
+								find_pattern_after(data, dataType, length, &DVDLowResetSigs[0], &DVDLowSetResetCoverCallbackSigs[0]);
 						}
 						break;
 					case 3:
@@ -4123,17 +4247,17 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_patterns(data, dataType, i + 125, length, &ReadSigs[2], &ReadSigs[3], NULL)) {
 							DVDLowReadSigs[j].offsetFoundAt = i;
 							
-							if (find_pattern_after(data, length, &DVDLowReadSigs[3], &DVDLowSeekSigs[3]) &&
-								find_pattern_after(data, length, &DVDLowSeekSigs[3], &DVDLowWaitCoverCloseSigs[2]) &&
-								find_pattern_after(data, length, &DVDLowWaitCoverCloseSigs[2], &DVDLowReadDiskIDSigs[3]) &&
-								find_pattern_after(data, length, &DVDLowReadDiskIDSigs[3], &DVDLowStopMotorSigs[3]) &&
-								find_pattern_after(data, length, &DVDLowStopMotorSigs[3], &DVDLowRequestErrorSigs[3]) &&
-								find_pattern_after(data, length, &DVDLowRequestErrorSigs[3], &DVDLowInquirySigs[3]) &&
-								find_pattern_after(data, length, &DVDLowInquirySigs[3], &DVDLowAudioStreamSigs[3]) &&
-								find_pattern_after(data, length, &DVDLowAudioStreamSigs[3], &DVDLowRequestAudioStatusSigs[3]) &&
-								find_pattern_after(data, length, &DVDLowRequestAudioStatusSigs[3], &DVDLowAudioBufferConfigSigs[3]) &&
-								find_pattern_after(data, length, &DVDLowAudioBufferConfigSigs[3], &DVDLowResetSigs[1]))
-								find_pattern_after(data, length, &DVDLowResetSigs[1], &DVDLowSetResetCoverCallbackSigs[1]);
+							if (find_pattern_after(data, dataType, length, &DVDLowReadSigs[3], &DVDLowSeekSigs[3]) &&
+								find_pattern_after(data, dataType, length, &DVDLowSeekSigs[3], &DVDLowWaitCoverCloseSigs[2]) &&
+								find_pattern_after(data, dataType, length, &DVDLowWaitCoverCloseSigs[2], &DVDLowReadDiskIDSigs[3]) &&
+								find_pattern_after(data, dataType, length, &DVDLowReadDiskIDSigs[3], &DVDLowStopMotorSigs[3]) &&
+								find_pattern_after(data, dataType, length, &DVDLowStopMotorSigs[3], &DVDLowRequestErrorSigs[3]) &&
+								find_pattern_after(data, dataType, length, &DVDLowRequestErrorSigs[3], &DVDLowInquirySigs[3]) &&
+								find_pattern_after(data, dataType, length, &DVDLowInquirySigs[3], &DVDLowAudioStreamSigs[3]) &&
+								find_pattern_after(data, dataType, length, &DVDLowAudioStreamSigs[3], &DVDLowRequestAudioStatusSigs[3]) &&
+								find_pattern_after(data, dataType, length, &DVDLowRequestAudioStatusSigs[3], &DVDLowAudioBufferConfigSigs[3]) &&
+								find_pattern_after(data, dataType, length, &DVDLowAudioBufferConfigSigs[3], &DVDLowResetSigs[1]))
+								find_pattern_after(data, dataType, length, &DVDLowResetSigs[1], &DVDLowSetResetCoverCallbackSigs[1]);
 						}
 						break;
 					case 4:
@@ -4143,17 +4267,17 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 125, length, &ReadSigs[4])) {
 							DVDLowReadSigs[j].offsetFoundAt = i;
 							
-							if (find_pattern_after(data, length, &DVDLowReadSigs[4], &DVDLowSeekSigs[4]) &&
-								find_pattern_after(data, length, &DVDLowSeekSigs[4], &DVDLowWaitCoverCloseSigs[3]) &&
-								find_pattern_after(data, length, &DVDLowWaitCoverCloseSigs[3], &DVDLowReadDiskIDSigs[4]) &&
-								find_pattern_after(data, length, &DVDLowReadDiskIDSigs[4], &DVDLowStopMotorSigs[4]) &&
-								find_pattern_after(data, length, &DVDLowStopMotorSigs[4], &DVDLowRequestErrorSigs[4]) &&
-								find_pattern_after(data, length, &DVDLowRequestErrorSigs[4], &DVDLowInquirySigs[4]) &&
-								find_pattern_after(data, length, &DVDLowInquirySigs[4], &DVDLowAudioStreamSigs[4]) &&
-								find_pattern_after(data, length, &DVDLowAudioStreamSigs[4], &DVDLowRequestAudioStatusSigs[4]) &&
-								find_pattern_after(data, length, &DVDLowRequestAudioStatusSigs[4], &DVDLowAudioBufferConfigSigs[4]) &&
-								find_pattern_after(data, length, &DVDLowAudioBufferConfigSigs[4], &DVDLowResetSigs[1]))
-								find_pattern_after(data, length, &DVDLowResetSigs[1], &DVDLowSetResetCoverCallbackSigs[1]);
+							if (find_pattern_after(data, dataType, length, &DVDLowReadSigs[4], &DVDLowSeekSigs[4]) &&
+								find_pattern_after(data, dataType, length, &DVDLowSeekSigs[4], &DVDLowWaitCoverCloseSigs[3]) &&
+								find_pattern_after(data, dataType, length, &DVDLowWaitCoverCloseSigs[3], &DVDLowReadDiskIDSigs[4]) &&
+								find_pattern_after(data, dataType, length, &DVDLowReadDiskIDSigs[4], &DVDLowStopMotorSigs[4]) &&
+								find_pattern_after(data, dataType, length, &DVDLowStopMotorSigs[4], &DVDLowRequestErrorSigs[4]) &&
+								find_pattern_after(data, dataType, length, &DVDLowRequestErrorSigs[4], &DVDLowInquirySigs[4]) &&
+								find_pattern_after(data, dataType, length, &DVDLowInquirySigs[4], &DVDLowAudioStreamSigs[4]) &&
+								find_pattern_after(data, dataType, length, &DVDLowAudioStreamSigs[4], &DVDLowRequestAudioStatusSigs[4]) &&
+								find_pattern_after(data, dataType, length, &DVDLowRequestAudioStatusSigs[4], &DVDLowAudioBufferConfigSigs[4]) &&
+								find_pattern_after(data, dataType, length, &DVDLowAudioBufferConfigSigs[4], &DVDLowResetSigs[1]))
+								find_pattern_after(data, dataType, length, &DVDLowResetSigs[1], &DVDLowSetResetCoverCallbackSigs[1]);
 						}
 						break;
 					case 5:
@@ -4163,16 +4287,16 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 219, length, &__OSGetSystemTimeSigs[2])) {
 							DVDLowReadSigs[j].offsetFoundAt = i;
 							
-							if (find_pattern_after(data, length, &DVDLowReadSigs[5], &DVDLowSeekSigs[5]) &&
-								find_pattern_after(data, length, &DVDLowSeekSigs[5], &DVDLowWaitCoverCloseSigs[4]) &&
-								find_pattern_after(data, length, &DVDLowWaitCoverCloseSigs[4], &DVDLowReadDiskIDSigs[5]) &&
-								find_pattern_after(data, length, &DVDLowReadDiskIDSigs[5], &DVDLowStopMotorSigs[5]) &&
-								find_pattern_after(data, length, &DVDLowStopMotorSigs[5], &DVDLowRequestErrorSigs[5]) &&
-								find_pattern_after(data, length, &DVDLowRequestErrorSigs[5], &DVDLowInquirySigs[5]) &&
-								find_pattern_after(data, length, &DVDLowInquirySigs[5], &DVDLowAudioStreamSigs[5]) &&
-								find_pattern_after(data, length, &DVDLowAudioStreamSigs[5], &DVDLowRequestAudioStatusSigs[5]) &&
-								find_pattern_after(data, length, &DVDLowRequestAudioStatusSigs[5], &DVDLowAudioBufferConfigSigs[5]))
-								find_pattern_after(data, length, &DVDLowAudioBufferConfigSigs[5], &DVDLowResetSigs[2]);
+							if (find_pattern_after(data, dataType, length, &DVDLowReadSigs[5], &DVDLowSeekSigs[5]) &&
+								find_pattern_after(data, dataType, length, &DVDLowSeekSigs[5], &DVDLowWaitCoverCloseSigs[4]) &&
+								find_pattern_after(data, dataType, length, &DVDLowWaitCoverCloseSigs[4], &DVDLowReadDiskIDSigs[5]) &&
+								find_pattern_after(data, dataType, length, &DVDLowReadDiskIDSigs[5], &DVDLowStopMotorSigs[5]) &&
+								find_pattern_after(data, dataType, length, &DVDLowStopMotorSigs[5], &DVDLowRequestErrorSigs[5]) &&
+								find_pattern_after(data, dataType, length, &DVDLowRequestErrorSigs[5], &DVDLowInquirySigs[5]) &&
+								find_pattern_after(data, dataType, length, &DVDLowInquirySigs[5], &DVDLowAudioStreamSigs[5]) &&
+								find_pattern_after(data, dataType, length, &DVDLowAudioStreamSigs[5], &DVDLowRequestAudioStatusSigs[5]) &&
+								find_pattern_after(data, dataType, length, &DVDLowRequestAudioStatusSigs[5], &DVDLowAudioBufferConfigSigs[5]))
+								find_pattern_after(data, dataType, length, &DVDLowAudioBufferConfigSigs[5], &DVDLowResetSigs[2]);
 						}
 						break;
 				}
@@ -4399,11 +4523,11 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 176, length, &DVDLowInquirySigs[0])) {
 							stateBusySigs[j].offsetFoundAt = i;
 							
-							find_pattern_after(data, length, &DVDLowSeekSigs[0], &DVDLowWaitCoverCloseSigs[0]);
-							find_pattern_after(data, length, &DVDLowStopMotorSigs[0], &DVDLowRequestErrorSigs[0]);
+							find_pattern_after(data, dataType, length, &DVDLowSeekSigs[0], &DVDLowWaitCoverCloseSigs[0]);
+							find_pattern_after(data, dataType, length, &DVDLowStopMotorSigs[0], &DVDLowRequestErrorSigs[0]);
 							
-							if (find_pattern_after(data, length, &DVDLowAudioBufferConfigSigs[0], &DVDLowResetSigs[0]))
-								find_pattern_after(data, length, &DVDLowResetSigs[0], &DVDLowSetResetCoverCallbackSigs[0]);
+							if (find_pattern_after(data, dataType, length, &DVDLowAudioBufferConfigSigs[0], &DVDLowResetSigs[0]))
+								find_pattern_after(data, dataType, length, &DVDLowResetSigs[0], &DVDLowSetResetCoverCallbackSigs[0]);
 						}
 						break;
 					case 1:
@@ -4424,11 +4548,11 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 176, length, &DVDLowInquirySigs[1])) {
 							stateBusySigs[j].offsetFoundAt = i;
 							
-							find_pattern_after(data, length, &DVDLowSeekSigs[1], &DVDLowWaitCoverCloseSigs[1]);
-							find_pattern_after(data, length, &DVDLowStopMotorSigs[1], &DVDLowRequestErrorSigs[1]);
+							find_pattern_after(data, dataType, length, &DVDLowSeekSigs[1], &DVDLowWaitCoverCloseSigs[1]);
+							find_pattern_after(data, dataType, length, &DVDLowStopMotorSigs[1], &DVDLowRequestErrorSigs[1]);
 							
-							if (find_pattern_after(data, length, &DVDLowAudioBufferConfigSigs[1], &DVDLowResetSigs[0]))
-								find_pattern_after(data, length, &DVDLowResetSigs[0], &DVDLowSetResetCoverCallbackSigs[0]);
+							if (find_pattern_after(data, dataType, length, &DVDLowAudioBufferConfigSigs[1], &DVDLowResetSigs[0]))
+								find_pattern_after(data, dataType, length, &DVDLowResetSigs[0], &DVDLowSetResetCoverCallbackSigs[0]);
 						}
 						break;
 					case 2:
@@ -4449,11 +4573,11 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 195, length, &DVDLowInquirySigs[1])) {
 							stateBusySigs[j].offsetFoundAt = i;
 							
-							find_pattern_after(data, length, &DVDLowSeekSigs[1], &DVDLowWaitCoverCloseSigs[1]);
-							find_pattern_after(data, length, &DVDLowStopMotorSigs[1], &DVDLowRequestErrorSigs[1]);
+							find_pattern_after(data, dataType, length, &DVDLowSeekSigs[1], &DVDLowWaitCoverCloseSigs[1]);
+							find_pattern_after(data, dataType, length, &DVDLowStopMotorSigs[1], &DVDLowRequestErrorSigs[1]);
 							
-							if (find_pattern_after(data, length, &DVDLowAudioBufferConfigSigs[1], &DVDLowResetSigs[0]))
-								find_pattern_after(data, length, &DVDLowResetSigs[0], &DVDLowSetResetCoverCallbackSigs[0]);
+							if (find_pattern_after(data, dataType, length, &DVDLowAudioBufferConfigSigs[1], &DVDLowResetSigs[0]))
+								find_pattern_after(data, dataType, length, &DVDLowResetSigs[0], &DVDLowSetResetCoverCallbackSigs[0]);
 						}
 						break;
 					case 3:
@@ -4475,11 +4599,11 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 203, length, &DVDLowStopMotorSigs[1])) {
 							stateBusySigs[j].offsetFoundAt = i;
 							
-							find_pattern_after(data, length, &DVDLowSeekSigs[1], &DVDLowWaitCoverCloseSigs[1]);
-							find_pattern_after(data, length, &DVDLowStopMotorSigs[1], &DVDLowRequestErrorSigs[1]);
+							find_pattern_after(data, dataType, length, &DVDLowSeekSigs[1], &DVDLowWaitCoverCloseSigs[1]);
+							find_pattern_after(data, dataType, length, &DVDLowStopMotorSigs[1], &DVDLowRequestErrorSigs[1]);
 							
-							if (find_pattern_after(data, length, &DVDLowAudioBufferConfigSigs[1], &DVDLowResetSigs[0]))
-								find_pattern_after(data, length, &DVDLowResetSigs[0], &DVDLowSetResetCoverCallbackSigs[0]);
+							if (find_pattern_after(data, dataType, length, &DVDLowAudioBufferConfigSigs[1], &DVDLowResetSigs[0]))
+								find_pattern_after(data, dataType, length, &DVDLowResetSigs[0], &DVDLowSetResetCoverCallbackSigs[0]);
 						}
 						break;
 					case 4:
@@ -4500,11 +4624,11 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 171, length, &DVDLowInquirySigs[2])) {
 							stateBusySigs[j].offsetFoundAt = i;
 							
-							find_pattern_after(data, length, &DVDLowSeekSigs[2], &DVDLowWaitCoverCloseSigs[2]);
-							find_pattern_after(data, length, &DVDLowStopMotorSigs[2], &DVDLowRequestErrorSigs[2]);
+							find_pattern_after(data, dataType, length, &DVDLowSeekSigs[2], &DVDLowWaitCoverCloseSigs[2]);
+							find_pattern_after(data, dataType, length, &DVDLowStopMotorSigs[2], &DVDLowRequestErrorSigs[2]);
 							
-							if (find_pattern_after(data, length, &DVDLowAudioBufferConfigSigs[2], &DVDLowResetSigs[1]))
-								find_pattern_after(data, length, &DVDLowResetSigs[1], &DVDLowSetResetCoverCallbackSigs[1]);
+							if (find_pattern_after(data, dataType, length, &DVDLowAudioBufferConfigSigs[2], &DVDLowResetSigs[1]))
+								find_pattern_after(data, dataType, length, &DVDLowResetSigs[1], &DVDLowSetResetCoverCallbackSigs[1]);
 						}
 						break;
 					case 5:
@@ -4525,11 +4649,11 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 171, length, &DVDLowInquirySigs[3])) {
 							stateBusySigs[j].offsetFoundAt = i;
 							
-							find_pattern_after(data, length, &DVDLowSeekSigs[3], &DVDLowWaitCoverCloseSigs[2]);
-							find_pattern_after(data, length, &DVDLowStopMotorSigs[3], &DVDLowRequestErrorSigs[3]);
+							find_pattern_after(data, dataType, length, &DVDLowSeekSigs[3], &DVDLowWaitCoverCloseSigs[2]);
+							find_pattern_after(data, dataType, length, &DVDLowStopMotorSigs[3], &DVDLowRequestErrorSigs[3]);
 							
-							if (find_pattern_after(data, length, &DVDLowAudioBufferConfigSigs[3], &DVDLowResetSigs[1]))
-								find_pattern_after(data, length, &DVDLowResetSigs[1], &DVDLowSetResetCoverCallbackSigs[1]);
+							if (find_pattern_after(data, dataType, length, &DVDLowAudioBufferConfigSigs[3], &DVDLowResetSigs[1]))
+								find_pattern_after(data, dataType, length, &DVDLowResetSigs[1], &DVDLowSetResetCoverCallbackSigs[1]);
 						}
 						break;
 					case 6:
@@ -4550,11 +4674,11 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 171, length, &DVDLowInquirySigs[4])) {
 							stateBusySigs[j].offsetFoundAt = i;
 							
-							find_pattern_after(data, length, &DVDLowSeekSigs[4], &DVDLowWaitCoverCloseSigs[3]);
-							find_pattern_after(data, length, &DVDLowStopMotorSigs[4], &DVDLowRequestErrorSigs[4]);
+							find_pattern_after(data, dataType, length, &DVDLowSeekSigs[4], &DVDLowWaitCoverCloseSigs[3]);
+							find_pattern_after(data, dataType, length, &DVDLowStopMotorSigs[4], &DVDLowRequestErrorSigs[4]);
 							
-							if (find_pattern_after(data, length, &DVDLowAudioBufferConfigSigs[4], &DVDLowResetSigs[1]))
-								find_pattern_after(data, length, &DVDLowResetSigs[1], &DVDLowSetResetCoverCallbackSigs[1]);
+							if (find_pattern_after(data, dataType, length, &DVDLowAudioBufferConfigSigs[4], &DVDLowResetSigs[1]))
+								find_pattern_after(data, dataType, length, &DVDLowResetSigs[1], &DVDLowSetResetCoverCallbackSigs[1]);
 						}
 						break;
 					case 7:
@@ -4575,11 +4699,11 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 171, length, &DVDLowInquirySigs[4])) {
 							stateBusySigs[j].offsetFoundAt = i;
 							
-							find_pattern_after(data, length, &DVDLowSeekSigs[4], &DVDLowWaitCoverCloseSigs[3]);
-							find_pattern_after(data, length, &DVDLowStopMotorSigs[4], &DVDLowRequestErrorSigs[4]);
+							find_pattern_after(data, dataType, length, &DVDLowSeekSigs[4], &DVDLowWaitCoverCloseSigs[3]);
+							find_pattern_after(data, dataType, length, &DVDLowStopMotorSigs[4], &DVDLowRequestErrorSigs[4]);
 							
-							if (find_pattern_after(data, length, &DVDLowAudioBufferConfigSigs[4], &DVDLowResetSigs[1]))
-								find_pattern_after(data, length, &DVDLowResetSigs[1], &DVDLowSetResetCoverCallbackSigs[1]);
+							if (find_pattern_after(data, dataType, length, &DVDLowAudioBufferConfigSigs[4], &DVDLowResetSigs[1]))
+								find_pattern_after(data, dataType, length, &DVDLowResetSigs[1], &DVDLowSetResetCoverCallbackSigs[1]);
 						}
 						break;
 					case 8:
@@ -4600,11 +4724,11 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 188, length, &DVDLowInquirySigs[4])) {
 							stateBusySigs[j].offsetFoundAt = i;
 							
-							find_pattern_after(data, length, &DVDLowSeekSigs[4], &DVDLowWaitCoverCloseSigs[3]);
-							find_pattern_after(data, length, &DVDLowStopMotorSigs[4], &DVDLowRequestErrorSigs[4]);
+							find_pattern_after(data, dataType, length, &DVDLowSeekSigs[4], &DVDLowWaitCoverCloseSigs[3]);
+							find_pattern_after(data, dataType, length, &DVDLowStopMotorSigs[4], &DVDLowRequestErrorSigs[4]);
 							
-							if (find_pattern_after(data, length, &DVDLowAudioBufferConfigSigs[4], &DVDLowResetSigs[1]))
-								find_pattern_after(data, length, &DVDLowResetSigs[1], &DVDLowSetResetCoverCallbackSigs[1]);
+							if (find_pattern_after(data, dataType, length, &DVDLowAudioBufferConfigSigs[4], &DVDLowResetSigs[1]))
+								find_pattern_after(data, dataType, length, &DVDLowResetSigs[1], &DVDLowSetResetCoverCallbackSigs[1]);
 						}
 						break;
 					case 9:
@@ -4625,9 +4749,9 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 175, length, &DVDLowInquirySigs[5])) {
 							stateBusySigs[j].offsetFoundAt = i;
 							
-							find_pattern_after(data, length, &DVDLowSeekSigs[5], &DVDLowWaitCoverCloseSigs[4]);
-							find_pattern_after(data, length, &DVDLowStopMotorSigs[5], &DVDLowRequestErrorSigs[5]);
-							find_pattern_after(data, length, &DVDLowAudioBufferConfigSigs[5], &DVDLowResetSigs[2]);
+							find_pattern_after(data, dataType, length, &DVDLowSeekSigs[5], &DVDLowWaitCoverCloseSigs[4]);
+							find_pattern_after(data, dataType, length, &DVDLowStopMotorSigs[5], &DVDLowRequestErrorSigs[5]);
+							find_pattern_after(data, dataType, length, &DVDLowAudioBufferConfigSigs[5], &DVDLowResetSigs[2]);
 						}
 						break;
 					case 10:
@@ -4649,11 +4773,11 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 196, length, &DVDLowStopMotorSigs[4])) {
 							stateBusySigs[j].offsetFoundAt = i;
 							
-							find_pattern_after(data, length, &DVDLowSeekSigs[4], &DVDLowWaitCoverCloseSigs[3]);
-							find_pattern_after(data, length, &DVDLowStopMotorSigs[4], &DVDLowRequestErrorSigs[4]);
+							find_pattern_after(data, dataType, length, &DVDLowSeekSigs[4], &DVDLowWaitCoverCloseSigs[3]);
+							find_pattern_after(data, dataType, length, &DVDLowStopMotorSigs[4], &DVDLowRequestErrorSigs[4]);
 							
-							if (find_pattern_after(data, length, &DVDLowAudioBufferConfigSigs[4], &DVDLowResetSigs[1]))
-								find_pattern_after(data, length, &DVDLowResetSigs[1], &DVDLowSetResetCoverCallbackSigs[1]);
+							if (find_pattern_after(data, dataType, length, &DVDLowAudioBufferConfigSigs[4], &DVDLowResetSigs[1]))
+								find_pattern_after(data, dataType, length, &DVDLowResetSigs[1], &DVDLowSetResetCoverCallbackSigs[1]);
 						}
 						break;
 				}
@@ -4749,9 +4873,9 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 159, length, &OSRestoreInterruptsSig)) {
 							DVDCancelAsyncSigs[j].offsetFoundAt = i;
 							
-							if (find_pattern_before(data, length, &DVDLowBreakSigs[0], &SetBreakAlarmSigs[0]) &&
-								find_pattern_before(data, length, &SetBreakAlarmSigs[0], &AlarmHandlerForBreakSigs[0]))
-								find_pattern_before(data, length, &AlarmHandlerForBreakSigs[0], &DoBreakSigs[0]);
+							if (find_pattern_before(data, dataType, length, &DVDLowBreakSigs[0], &SetBreakAlarmSigs[0]) &&
+								find_pattern_before(data, dataType, length, &SetBreakAlarmSigs[0], &AlarmHandlerForBreakSigs[0]))
+								find_pattern_before(data, dataType, length, &AlarmHandlerForBreakSigs[0], &DoBreakSigs[0]);
 						}
 						break;
 					case 1:
@@ -4765,9 +4889,9 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 159, length, &OSRestoreInterruptsSig)) {
 							DVDCancelAsyncSigs[j].offsetFoundAt = i;
 							
-							if (find_pattern_before(data, length, &DVDLowBreakSigs[1], &SetBreakAlarmSigs[0]) &&
-								find_pattern_before(data, length, &SetBreakAlarmSigs[0], &AlarmHandlerForBreakSigs[0]))
-								find_pattern_before(data, length, &AlarmHandlerForBreakSigs[0], &DoBreakSigs[0]);
+							if (find_pattern_before(data, dataType, length, &DVDLowBreakSigs[1], &SetBreakAlarmSigs[0]) &&
+								find_pattern_before(data, dataType, length, &SetBreakAlarmSigs[0], &AlarmHandlerForBreakSigs[0]))
+								find_pattern_before(data, dataType, length, &AlarmHandlerForBreakSigs[0], &DoBreakSigs[0]);
 						}
 						break;
 					case 2:
@@ -4781,9 +4905,9 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 164, length, &OSRestoreInterruptsSig)) {
 							DVDCancelAsyncSigs[j].offsetFoundAt = i;
 							
-							if (find_pattern_before(data, length, &DVDLowBreakSigs[1], &SetBreakAlarmSigs[0]) &&
-								find_pattern_before(data, length, &SetBreakAlarmSigs[0], &AlarmHandlerForBreakSigs[0]))
-								find_pattern_before(data, length, &AlarmHandlerForBreakSigs[0], &DoBreakSigs[0]);
+							if (find_pattern_before(data, dataType, length, &DVDLowBreakSigs[1], &SetBreakAlarmSigs[0]) &&
+								find_pattern_before(data, dataType, length, &SetBreakAlarmSigs[0], &AlarmHandlerForBreakSigs[0]))
+								find_pattern_before(data, dataType, length, &AlarmHandlerForBreakSigs[0], &DoBreakSigs[0]);
 						}
 						break;
 					case 3:
@@ -4817,9 +4941,9 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 147, length, &OSRestoreInterruptsSig)) {
 							DVDCancelAsyncSigs[j].offsetFoundAt = i;
 							
-							if (find_pattern_before(data, length, &DVDLowBreakSigs[3], &SetBreakAlarmSigs[1]) &&
-								find_pattern_before(data, length, &SetBreakAlarmSigs[1], &AlarmHandlerForBreakSigs[1]))
-								find_pattern_before(data, length, &AlarmHandlerForBreakSigs[1], &DoBreakSigs[1]);
+							if (find_pattern_before(data, dataType, length, &DVDLowBreakSigs[3], &SetBreakAlarmSigs[1]) &&
+								find_pattern_before(data, dataType, length, &SetBreakAlarmSigs[1], &AlarmHandlerForBreakSigs[1]))
+								find_pattern_before(data, dataType, length, &AlarmHandlerForBreakSigs[1], &DoBreakSigs[1]);
 						}
 						break;
 					case 6:
@@ -4833,9 +4957,9 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 147, length, &OSRestoreInterruptsSig)) {
 							DVDCancelAsyncSigs[j].offsetFoundAt = i;
 							
-							if (find_pattern_before(data, length, &DVDLowBreakSigs[4], &SetBreakAlarmSigs[1]) &&
-								find_pattern_before(data, length, &SetBreakAlarmSigs[1], &AlarmHandlerForBreakSigs[1]))
-								find_pattern_before(data, length, &AlarmHandlerForBreakSigs[1], &DoBreakSigs[1]);
+							if (find_pattern_before(data, dataType, length, &DVDLowBreakSigs[4], &SetBreakAlarmSigs[1]) &&
+								find_pattern_before(data, dataType, length, &SetBreakAlarmSigs[1], &AlarmHandlerForBreakSigs[1]))
+								find_pattern_before(data, dataType, length, &AlarmHandlerForBreakSigs[1], &DoBreakSigs[1]);
 						}
 						break;
 					case 7:
@@ -4850,9 +4974,9 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern (data, dataType, i + 150, length, &OSRestoreInterruptsSig)) {
 							DVDCancelAsyncSigs[j].offsetFoundAt = i;
 							
-							if (find_pattern_before(data, length, &DVDLowBreakSigs[4], &SetBreakAlarmSigs[1]) &&
-								find_pattern_before(data, length, &SetBreakAlarmSigs[1], &AlarmHandlerForBreakSigs[1]))
-								find_pattern_before(data, length, &AlarmHandlerForBreakSigs[1], &DoBreakSigs[1]);
+							if (find_pattern_before(data, dataType, length, &DVDLowBreakSigs[4], &SetBreakAlarmSigs[1]) &&
+								find_pattern_before(data, dataType, length, &SetBreakAlarmSigs[1], &AlarmHandlerForBreakSigs[1]))
+								find_pattern_before(data, dataType, length, &AlarmHandlerForBreakSigs[1], &DoBreakSigs[1]);
 						}
 						break;
 					case 8:
@@ -4877,31 +5001,31 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					case 0:
 						if (findx_pattern(data, dataType, i +  4, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i + 54, length, &OSRestoreInterruptsSig) &&
-							find_pattern_before(data, length, &fp, &DVDGetCurrentDiskIDSigs[0]))
+							find_pattern_before(data, dataType, length, &fp, &DVDGetCurrentDiskIDSigs[0]))
 							DVDCheckDiskSigs[j].offsetFoundAt = i;
 						break;
 					case 1:
 						if (findx_pattern(data, dataType, i +  4, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i + 59, length, &OSRestoreInterruptsSig) &&
-							find_pattern_before(data, length, &fp, &DVDGetCurrentDiskIDSigs[0]))
+							find_pattern_before(data, dataType, length, &fp, &DVDGetCurrentDiskIDSigs[0]))
 							DVDCheckDiskSigs[j].offsetFoundAt = i;
 						break;
 					case 2:
 						if (findx_pattern(data, dataType, i +  4, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i + 50, length, &OSRestoreInterruptsSig) &&
-							find_pattern_before(data, length, &fp, &DVDGetCurrentDiskIDSigs[1]))
+							find_pattern_before(data, dataType, length, &fp, &DVDGetCurrentDiskIDSigs[1]))
 							DVDCheckDiskSigs[j].offsetFoundAt = i;
 						break;
 					case 3:
 						if (findx_pattern(data, dataType, i +  4, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i + 54, length, &OSRestoreInterruptsSig) &&
-							find_pattern_before(data, length, &fp, &DVDGetCurrentDiskIDSigs[1]))
+							find_pattern_before(data, dataType, length, &fp, &DVDGetCurrentDiskIDSigs[1]))
 							DVDCheckDiskSigs[j].offsetFoundAt = i;
 						break;
 					case 4:
 						if (findx_pattern(data, dataType, i +  4, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i + 55, length, &OSRestoreInterruptsSig) &&
-							find_pattern_before(data, length, &fp, &DVDGetCurrentDiskIDSigs[1]))
+							find_pattern_before(data, dataType, length, &fp, &DVDGetCurrentDiskIDSigs[1]))
 							DVDCheckDiskSigs[j].offsetFoundAt = i;
 						break;
 				}
@@ -5185,10 +5309,10 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 			backwards_memcpy = getPatchAddr(BACKWARDS_MEMCPY);
 			
 			memset(data + i, 0, memcpySig.Length * sizeof(u32));
-			memcpy(data + i, memcpySig.Patch, memcpySig.PatchLength);
-			data[i + memcpySig.PatchLength / sizeof(u32) - 1] = branch(backwards_memcpy, _memcpy + memcpySig.PatchLength / sizeof(u32) - 1);
+			memcpy(data + i, memcpySig.Patch, memcpySig.PatchLength * sizeof(u32));
+			data[i + memcpySig.PatchLength - 1] = branch(backwards_memcpy, _memcpy + memcpySig.PatchLength - 1);
 			
-			print_gecko("Found:[%s] @ %08X\n", memcpySig.Name, _memcpy);
+			print_debug("Found:[%s] @ %08X\n", memcpySig.Name, _memcpy);
 			patched++;
 		}
 	}
@@ -5213,7 +5337,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i + 139] = 0x28000009;	// cmplwi	r0, 9
 					break;
 			}
-			print_gecko("Found:[%s$%i] @ %08X\n", OSExceptionInitSigs[j].Name, j, OSExceptionInit);
+			print_debug("Found:[%s$%i] @ %08X\n", OSExceptionInitSigs[j].Name, j, OSExceptionInit);
 			patched++;
 		}
 	}
@@ -5230,7 +5354,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 			if ((k = SystemCallVectorSig.offsetFoundAt))
 				data[k + 0] = (u32)OSSetAlarm;
 			
-			print_gecko("Found:[%s$%i] @ %08X\n", OSSetAlarmSigs[j].Name, j, OSSetAlarm);
+			print_debug("Found:[%s$%i] @ %08X\n", OSSetAlarmSigs[j].Name, j, OSSetAlarm);
 			patched++;
 		}
 	}
@@ -5243,7 +5367,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 			if ((k = SystemCallVectorSig.offsetFoundAt))
 				data[k + 1] = (u32)OSCancelAlarm;
 			
-			print_gecko("Found:[%s$%i] @ %08X\n", OSCancelAlarmSigs[j].Name, j, OSCancelAlarm);
+			print_debug("Found:[%s$%i] @ %08X\n", OSCancelAlarmSigs[j].Name, j, OSCancelAlarm);
 			patched++;
 		}
 	}
@@ -5272,7 +5396,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 						break;
 				}
 			}
-			print_gecko("Found:[%s$%i] @ %08X\n", DecrementerExceptionCallbackSigs[j].Name, j, DecrementerExceptionCallback);
+			print_debug("Found:[%s$%i] @ %08X\n", DecrementerExceptionCallbackSigs[j].Name, j, DecrementerExceptionCallback);
 			patched++;
 		}
 	}
@@ -5285,7 +5409,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 			if ((k = SystemCallVectorSig.offsetFoundAt))
 				data[k + 2] = (u32)OSLoadContext;
 			
-			print_gecko("Found:[%s$%i] @ %08X\n", OSLoadContextSigs[j].Name, j, OSLoadContext);
+			print_debug("Found:[%s$%i] @ %08X\n", OSLoadContextSigs[j].Name, j, OSLoadContext);
 			patched++;
 		}
 	}
@@ -5297,7 +5421,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 			if ((k = SystemCallVectorSig.offsetFoundAt))
 				data[k + 3] = (u32)OSDisableInterrupts;
 			
-			print_gecko("Found:[%s$%i] @ %08X\n", OSDisableInterruptsSig.Name, j, OSDisableInterrupts);
+			print_debug("Found:[%s$%i] @ %08X\n", OSDisableInterruptsSig.Name, j, OSDisableInterrupts);
 			patched++;
 		}
 	}
@@ -5319,7 +5443,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i + 13] = 0x3C800C00;	// lis		r4, 0x0C00
 					break;
 			}
-			print_gecko("Found:[%s$%i] @ %08X\n", __OSInterruptInitSigs[j].Name, j, __OSInterruptInit);
+			print_debug("Found:[%s$%i] @ %08X\n", __OSInterruptInitSigs[j].Name, j, __OSInterruptInit);
 			patched++;
 		}
 	}
@@ -5394,7 +5518,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i + 144] = 0x3C800C00;	// lis		r4, 0x0C00
 					break;
 			}
-			print_gecko("Found:[%s$%i] @ %08X\n", SetInterruptMaskSigs[j].Name, j, SetInterruptMask);
+			print_debug("Found:[%s$%i] @ %08X\n", SetInterruptMaskSigs[j].Name, j, SetInterruptMask);
 			patched++;
 		}
 	}
@@ -5459,7 +5583,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 			if ((k = SystemCallVectorSig.offsetFoundAt))
 				data[k + 4] = (u32)__OSDispatchInterrupt;
 			
-			print_gecko("Found:[%s$%i] @ %08X\n", __OSDispatchInterruptSigs[j].Name, j, __OSDispatchInterrupt);
+			print_debug("Found:[%s$%i] @ %08X\n", __OSDispatchInterruptSigs[j].Name, j, __OSDispatchInterrupt);
 			patched++;
 		}
 	}
@@ -5471,7 +5595,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		if (ExternalInterruptHandler) {
 			data[i + ExternalInterruptHandlerSigs[j].Length - 1] = branch(DISPATCH_INTERRUPT, ExternalInterruptHandler + ExternalInterruptHandlerSigs[j].Length - 1);
 			
-			print_gecko("Found:[%s$%i] @ %08X\n", ExternalInterruptHandlerSigs[j].Name, j, ExternalInterruptHandler);
+			print_debug("Found:[%s$%i] @ %08X\n", ExternalInterruptHandlerSigs[j].Name, j, ExternalInterruptHandler);
 			patched++;
 		}
 	}
@@ -5486,20 +5610,19 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 				case 1:
 				case 2: data[i + 5] = branchAndLink(FINI, __OSDoHotReset + 5); break;
 			}
-			print_gecko("Found:[%s$%i] @ %08X\n", __OSDoHotResetSigs[j].Name, j, __OSDoHotReset);
-			patched++;
-		}
-		
-		if ((i = PPCHaltSig.offsetFoundAt)) {
-			u32 *PPCHalt = Calc_ProperAddress(data, dataType, i * sizeof(u32));
-			
-			if (PPCHalt) {
-				if (__OSDoHotReset && swissSettings.igrType != IGR_OFF)
-					data[i + 4] = branch(__OSDoHotReset, PPCHalt + 4);
+			if ((k = PPCHaltSig.offsetFoundAt)) {
+				u32 *PPCHalt = Calc_ProperAddress(data, dataType, k * sizeof(u32));
 				
-				print_gecko("Found:[%s] @ %08X\n", PPCHaltSig.Name, PPCHalt);
-				patched++;
+				if (PPCHalt) {
+					if (swissSettings.igrType != IGR_OFF)
+						data[k + 4] = branch(__OSDoHotReset, PPCHalt + 4);
+					
+					print_debug("Found:[%s] @ %08X\n", PPCHaltSig.Name, PPCHalt);
+					patched++;
+				}
 			}
+			print_debug("Found:[%s$%i] @ %08X\n", __OSDoHotResetSigs[j].Name, j, __OSDoHotReset);
+			patched++;
 		}
 	}
 	
@@ -5525,7 +5648,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 			if ((k = SystemCallVectorSig.offsetFoundAt))
 				data[k + 5] = (u32)OSResetSystem;
 			
-			print_gecko("Found:[%s$%i] @ %08X\n", OSResetSystemSigs[j].Name, j, OSResetSystem);
+			print_debug("Found:[%s$%i] @ %08X\n", OSResetSystemSigs[j].Name, j, OSResetSystem);
 			patched++;
 		}
 	}
@@ -5603,7 +5726,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i + 19] = branchAndLink(INIT, __OSInitSystemCall + 19);
 					break;
 			}
-			print_gecko("Found:[%s$%i] @ %08X\n", __OSInitSystemCallSigs[j].Name, j, __OSInitSystemCall);
+			print_debug("Found:[%s$%i] @ %08X\n", __OSInitSystemCallSigs[j].Name, j, __OSInitSystemCall);
 			patched++;
 		}
 	}
@@ -5635,7 +5758,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i + 86] = 0x4182FFF4;	// beq		-3
 					break;
 			}
-			print_gecko("Found:[%s$%i] @ %08X\n", SelectThreadSigs[j].Name, j, SelectThread);
+			print_debug("Found:[%s$%i] @ %08X\n", SelectThreadSigs[j].Name, j, SelectThread);
 			patched++;
 		}
 	}
@@ -5656,7 +5779,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 						break;
 				}
 			}
-			print_gecko("Found:[%s$%i] @ %08X\n", CompleteTransferSigs[j].Name, j, CompleteTransfer);
+			print_debug("Found:[%s$%i] @ %08X\n", CompleteTransferSigs[j].Name, j, CompleteTransfer);
 			patched++;
 		}
 	}
@@ -5693,7 +5816,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 						break;
 				}
 			}
-			print_gecko("Found:[%s$%i] @ %08X\n", EXIImmSigs[j].Name, j, EXIImm);
+			print_debug("Found:[%s$%i] @ %08X\n", EXIImmSigs[j].Name, j, EXIImm);
 			patched++;
 		}
 	}
@@ -5729,7 +5852,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 						break;
 				}
 			}
-			print_gecko("Found:[%s$%i] @ %08X\n", EXIDmaSigs[j].Name, j, EXIDma);
+			print_debug("Found:[%s$%i] @ %08X\n", EXIDmaSigs[j].Name, j, EXIDma);
 			patched++;
 		}
 	}
@@ -5817,7 +5940,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 						break;
 				}
 			}
-			print_gecko("Found:[%s$%i] @ %08X\n", EXISyncSigs[j].Name, j, EXISync);
+			print_debug("Found:[%s$%i] @ %08X\n", EXISyncSigs[j].Name, j, EXISync);
 			patched++;
 		}
 	}
@@ -5850,7 +5973,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 						break;
 				}
 			}
-			print_gecko("Found:[%s$%i] @ %08X\n", EXIClearInterruptsSigs[j].Name, j, EXIClearInterrupts);
+			print_debug("Found:[%s$%i] @ %08X\n", EXIClearInterruptsSigs[j].Name, j, EXIClearInterrupts);
 			patched++;
 		}
 	}
@@ -5886,7 +6009,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 						break;
 				}
 			}
-			print_gecko("Found:[%s$%i] @ %08X\n", __EXIProbeSigs[j].Name, j, __EXIProbe);
+			print_debug("Found:[%s$%i] @ %08X\n", __EXIProbeSigs[j].Name, j, __EXIProbe);
 			patched++;
 		}
 	}
@@ -5903,7 +6026,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i + 188] = 0x3C600C00;	// lis		r3, 0x0C00
 				}
 			}
-			print_gecko("Found:[%s$%i] @ %08X\n", EXIAttachSigs[j].Name, j, EXIAttach);
+			print_debug("Found:[%s$%i] @ %08X\n", EXIAttachSigs[j].Name, j, EXIAttach);
 			patched++;
 		}
 	}
@@ -5920,7 +6043,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i + 11] = 0x2C1D0003;	// cmpwi	r29, 3
 					break;
 			}
-			print_gecko("Found:[%s$%i] @ %08X\n", EXIDetachSigs[j].Name, j, EXIDetach);
+			print_debug("Found:[%s$%i] @ %08X\n", EXIDetachSigs[j].Name, j, EXIDetach);
 			patched++;
 		}
 	}
@@ -5932,7 +6055,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 			if (devices[DEVICE_CUR]->emulated() & (EMU_MEMCARD | EMU_ETHERNET | EMU_BUS_ARBITER))
 				data[i + 55] = 0x3C600C00;	// lis		r3, 0x0C00
 			
-			print_gecko("Found:[%s] @ %08X\n", EXISelectSDSig.Name, EXISelectSD);
+			print_debug("Found:[%s] @ %08X\n", EXISelectSDSig.Name, EXISelectSD);
 			patched++;
 		}
 	}
@@ -5967,7 +6090,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 						break;
 				}
 			}
-			print_gecko("Found:[%s$%i] @ %08X\n", EXISelectSigs[j].Name, j, EXISelect);
+			print_debug("Found:[%s$%i] @ %08X\n", EXISelectSigs[j].Name, j, EXISelect);
 			patched++;
 		}
 	}
@@ -6006,7 +6129,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 						break;
 				}
 			}
-			print_gecko("Found:[%s$%i] @ %08X\n", EXIDeselectSigs[j].Name, j, EXIDeselect);
+			print_debug("Found:[%s$%i] @ %08X\n", EXIDeselectSigs[j].Name, j, EXIDeselect);
 			patched++;
 		}
 	}
@@ -6034,7 +6157,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 						break;
 				}
 			}
-			print_gecko("Found:[%s$%i] @ %08X\n", EXIIntrruptHandlerSigs[j].Name, j, EXIIntrruptHandler);
+			print_debug("Found:[%s$%i] @ %08X\n", EXIIntrruptHandlerSigs[j].Name, j, EXIIntrruptHandler);
 			patched++;
 		}
 	}
@@ -6063,7 +6186,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 						break;
 				}
 			}
-			print_gecko("Found:[%s$%i] @ %08X\n", TCIntrruptHandlerSigs[j].Name, j, TCIntrruptHandler);
+			print_debug("Found:[%s$%i] @ %08X\n", TCIntrruptHandlerSigs[j].Name, j, TCIntrruptHandler);
 			patched++;
 		}
 	}
@@ -6093,7 +6216,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 						break;
 				}
 			}
-			print_gecko("Found:[%s$%i] @ %08X\n", EXTIntrruptHandlerSigs[j].Name, j, EXTIntrruptHandler);
+			print_debug("Found:[%s$%i] @ %08X\n", EXTIntrruptHandlerSigs[j].Name, j, EXTIntrruptHandler);
 			patched++;
 		}
 	}
@@ -6151,7 +6274,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 						break;
 				}
 			}
-			print_gecko("Found:[%s$%i] @ %08X\n", EXIInitSigs[j].Name, j, EXIInit);
+			print_debug("Found:[%s$%i] @ %08X\n", EXIInitSigs[j].Name, j, EXIInit);
 			patched++;
 		}
 	}
@@ -6164,11 +6287,26 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 			if (devices[DEVICE_CUR]->emulated() & EMU_BUS_ARBITER) {
 				switch (j) {
 					case 0:
+						data[i + 26] = 0x281D0003;	// cmplwi	r29, 3
+						data[i + 27] = 0x41800018;	// blt		+6
+						data[i + 46] = 0x2C000002;	// cmpwi	r0, 2
+						data[i + 47] = 0x41800018;	// blt		+6
 						data[i + 56] = 0x38030024;	// addi		r0, r3, 36
 						data[i + 58] = 0x7C00C840;	// cmplw	r0, r25
 						break;
 					case 1:
+						data[i + 26] = 0x281D0003;	// cmplwi	r29, 3
+						data[i + 27] = 0x41800018;	// blt		+6
+						data[i + 46] = 0x2C000002;	// cmpwi	r0, 2
+						data[i + 47] = 0x41800018;	// blt		+6
+						data[i + 56] = 0x3803002C;	// addi		r0, r3, 44
+						data[i + 58] = 0x7C00C840;	// cmplw	r0, r25
+						break;
 					case 2:
+						data[i + 26] = 0x281C0003;	// cmplwi	r28, 3
+						data[i + 27] = 0x41800018;	// blt		+6
+						data[i + 46] = 0x2C000002;	// cmpwi	r0, 2
+						data[i + 47] = 0x41800018;	// blt		+6
 						data[i + 56] = 0x3803002C;	// addi		r0, r3, 44
 						data[i + 58] = 0x7C00C840;	// cmplw	r0, r25
 						break;
@@ -6197,7 +6335,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 			if ((k = SystemCallVectorSig.offsetFoundAt))
 				data[k + 6] = (u32)EXILock;
 			
-			print_gecko("Found:[%s$%i] @ %08X\n", EXILockSigs[j].Name, j, EXILock);
+			print_debug("Found:[%s$%i] @ %08X\n", EXILockSigs[j].Name, j, EXILock);
 			patched++;
 		}
 	}
@@ -6210,7 +6348,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 			if ((k = SystemCallVectorSig.offsetFoundAt))
 				data[k + 7] = (u32)EXIUnlock;
 			
-			print_gecko("Found:[%s$%i] @ %08X\n", EXIUnlockSigs[j].Name, j, EXIUnlock);
+			print_debug("Found:[%s$%i] @ %08X\n", EXIUnlockSigs[j].Name, j, EXIUnlock);
 			patched++;
 		}
 	}
@@ -6241,7 +6379,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i + 875] = 0x3C600C00;	// lis		r3, 0x0C00
 				}
 			}
-			print_gecko("Found:[%s$%i] @ %08X\n", EXIGetIDSigs[j].Name, j, EXIGetID);
+			print_debug("Found:[%s$%i] @ %08X\n", EXIGetIDSigs[j].Name, j, EXIGetID);
 			patched++;
 		}
 	}
@@ -6348,7 +6486,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i + 118] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 			}
-			print_gecko("Found:[%s$%i] @ %08X\n", __DVDInterruptHandlerSigs[j].Name, j, __DVDInterruptHandler);
+			print_debug("Found:[%s$%i] @ %08X\n", __DVDInterruptHandlerSigs[j].Name, j, __DVDInterruptHandler);
 			patched++;
 		}
 	}
@@ -6388,7 +6526,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i + 18] = 0x3C800C00;	// lis		r4, 0x0C00
 					break;
 			}
-			print_gecko("Found:[%s$%i] @ %08X\n", ReadSigs[j].Name, j, Read);
+			print_debug("Found:[%s$%i] @ %08X\n", ReadSigs[j].Name, j, Read);
 			patched++;
 		}
 	}
@@ -6415,7 +6553,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i + 223] = 0x3C800C00;	// lis		r4, 0x0C00
 					break;
 			}
-			print_gecko("Found:[%s$%i] @ %08X\n", DVDLowReadSigs[j].Name, j, DVDLowRead);
+			print_debug("Found:[%s$%i] @ %08X\n", DVDLowReadSigs[j].Name, j, DVDLowRead);
 			patched++;
 		}
 	}
@@ -6447,7 +6585,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i +  3] = 0x3CE00C00;	// lis		r7, 0x0C00
 					break;
 			}
-			print_gecko("Found:[%s$%i] @ %08X\n", DVDLowSeekSigs[j].Name, j, DVDLowSeek);
+			print_debug("Found:[%s$%i] @ %08X\n", DVDLowSeekSigs[j].Name, j, DVDLowSeek);
 			patched++;
 		}
 	}
@@ -6472,7 +6610,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i + 4] = 0x3C800C00;	// lis		r4, 0x0C00
 					break;
 			}
-			print_gecko("Found:[%s$%i] @ %08X\n", DVDLowWaitCoverCloseSigs[j].Name, j, DVDLowWaitCoverClose);
+			print_debug("Found:[%s$%i] @ %08X\n", DVDLowWaitCoverCloseSigs[j].Name, j, DVDLowWaitCoverClose);
 			patched++;
 		}
 	}
@@ -6512,7 +6650,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i +  6] = 0x3D000C00;	// lis		r8, 0x0C00
 					break;
 			}
-			print_gecko("Found:[%s$%i] @ %08X\n", DVDLowReadDiskIDSigs[j].Name, j, DVDLowReadDiskID);
+			print_debug("Found:[%s$%i] @ %08X\n", DVDLowReadDiskIDSigs[j].Name, j, DVDLowReadDiskID);
 			patched++;
 		}
 	}
@@ -6544,7 +6682,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i +  3] = 0x3CA00C00;	// lis		r5, 0x0C00
 					break;
 			}
-			print_gecko("Found:[%s$%i] @ %08X\n", DVDLowStopMotorSigs[j].Name, j, DVDLowStopMotor);
+			print_debug("Found:[%s$%i] @ %08X\n", DVDLowStopMotorSigs[j].Name, j, DVDLowStopMotor);
 			patched++;
 		}
 	}
@@ -6576,7 +6714,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i +  3] = 0x3CA00C00;	// lis		r5, 0x0C00
 					break;
 			}
-			print_gecko("Found:[%s$%i] @ %08X\n", DVDLowRequestErrorSigs[j].Name, j, DVDLowRequestError);
+			print_debug("Found:[%s$%i] @ %08X\n", DVDLowRequestErrorSigs[j].Name, j, DVDLowRequestError);
 			patched++;
 		}
 	}
@@ -6614,7 +6752,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i +  3] = 0x3D000C00;	// lis		r8, 0x0C00
 					break;
 			}
-			print_gecko("Found:[%s$%i] @ %08X\n", DVDLowInquirySigs[j].Name, j, DVDLowInquiry);
+			print_debug("Found:[%s$%i] @ %08X\n", DVDLowInquirySigs[j].Name, j, DVDLowInquiry);
 			patched++;
 		}
 	}
@@ -6650,7 +6788,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i +  6] = 0x3D000C00;	// lis		r8, 0x0C00
 					break;
 			}
-			print_gecko("Found:[%s$%i] @ %08X\n", DVDLowAudioStreamSigs[j].Name, j, DVDLowAudioStream);
+			print_debug("Found:[%s$%i] @ %08X\n", DVDLowAudioStreamSigs[j].Name, j, DVDLowAudioStream);
 			patched++;
 		}
 	}
@@ -6682,7 +6820,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i +  6] = 0x3CC00C00;	// lis		r6, 0x0C00
 					break;
 			}
-			print_gecko("Found:[%s$%i] @ %08X\n", DVDLowRequestAudioStatusSigs[j].Name, j, DVDLowRequestAudioStatus);
+			print_debug("Found:[%s$%i] @ %08X\n", DVDLowRequestAudioStatusSigs[j].Name, j, DVDLowRequestAudioStatus);
 			patched++;
 		}
 	}
@@ -6712,7 +6850,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i + 14] = 0x3CA00C00;	// lis		r5, 0x0C00
 					break;
 			}
-			print_gecko("Found:[%s$%i] @ %08X\n", DVDLowAudioBufferConfigSigs[j].Name, j, DVDLowAudioBufferConfig);
+			print_debug("Found:[%s$%i] @ %08X\n", DVDLowAudioBufferConfigSigs[j].Name, j, DVDLowAudioBufferConfig);
 			patched++;
 		}
 	}
@@ -6739,7 +6877,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i + 36] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 			}
-			print_gecko("Found:[%s$%i] @ %08X\n", DVDLowResetSigs[j].Name, j, DVDLowReset);
+			print_debug("Found:[%s$%i] @ %08X\n", DVDLowResetSigs[j].Name, j, DVDLowReset);
 			patched++;
 		}
 	}
@@ -6758,7 +6896,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i + 0] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 			}
-			print_gecko("Found:[%s$%i] @ %08X\n", DoBreakSigs[j].Name, j, DoBreak);
+			print_debug("Found:[%s$%i] @ %08X\n", DoBreakSigs[j].Name, j, DoBreak);
 			patched++;
 		}
 	}
@@ -6776,7 +6914,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i + 1] = 0x3C800C00;	// lis		r4, 0x0C00
 					break;
 			}
-			print_gecko("Found:[%s$%i] @ %08X\n", AlarmHandlerForBreakSigs[j].Name, j, AlarmHandlerForBreak);
+			print_debug("Found:[%s$%i] @ %08X\n", AlarmHandlerForBreakSigs[j].Name, j, AlarmHandlerForBreak);
 			patched++;
 		}
 	}
@@ -6797,7 +6935,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i + 1] = 0x3C800C00;	// lis		r4, 0x0C00
 					break;
 			}
-			print_gecko("Found:[%s$%i] @ %08X\n", DVDLowBreakSigs[j].Name, j, DVDLowBreak);
+			print_debug("Found:[%s$%i] @ %08X\n", DVDLowBreakSigs[j].Name, j, DVDLowBreak);
 			patched++;
 		}
 	}
@@ -6822,7 +6960,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i + 0] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 			}
-			print_gecko("Found:[%s$%i] @ %08X\n", DVDLowClearCallbackSigs[j].Name, j, DVDLowClearCallback);
+			print_debug("Found:[%s$%i] @ %08X\n", DVDLowClearCallbackSigs[j].Name, j, DVDLowClearCallback);
 			patched++;
 		}
 	}
@@ -6841,7 +6979,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i + 26] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 			}
-			print_gecko("Found:[%s$%i] @ %08X\n", DVDLowGetCoverStatusSigs[j].Name, j, DVDLowGetCoverStatus);
+			print_debug("Found:[%s$%i] @ %08X\n", DVDLowGetCoverStatusSigs[j].Name, j, DVDLowGetCoverStatus);
 			patched++;
 		}
 	}
@@ -6856,7 +6994,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 			data[i + 12] = 0x38000000;	// li		r0, 0
 			data[i + 13] = branch(__DVDLowTestAlarmHook, __DVDLowTestAlarm + 13);
 			
-			print_gecko("Found:[%s] @ %08X\n", __DVDLowTestAlarmSig.Name, __DVDLowTestAlarm);
+			print_debug("Found:[%s] @ %08X\n", __DVDLowTestAlarmSig.Name, __DVDLowTestAlarm);
 			patched++;
 		}
 	}
@@ -6867,7 +7005,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		if (DVDGetTransferredSize) {
 			data[i + 20] = 0x3C800C00;	// lis		r4, 0x0C00
 			
-			print_gecko("Found:[%s] @ %08X\n", DVDGetTransferredSizeSig.Name, DVDGetTransferredSize);
+			print_debug("Found:[%s] @ %08X\n", DVDGetTransferredSizeSig.Name, DVDGetTransferredSize);
 			patched++;
 		}
 	}
@@ -6906,7 +7044,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i + 28] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 			}
-			print_gecko("Found:[%s$%i] @ %08X\n", DVDInitSigs[j].Name, j, DVDInit);
+			print_debug("Found:[%s$%i] @ %08X\n", DVDInitSigs[j].Name, j, DVDInit);
 			patched++;
 		}
 	}
@@ -6942,7 +7080,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i + 25] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 			}
-			print_gecko("Found:[%s$%i] @ %08X\n", cbForStateGettingErrorSigs[j].Name, j, cbForStateGettingError);
+			print_debug("Found:[%s$%i] @ %08X\n", cbForStateGettingErrorSigs[j].Name, j, cbForStateGettingError);
 			patched++;
 		}
 	}
@@ -6972,7 +7110,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i + 21] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 			}
-			print_gecko("Found:[%s$%i] @ %08X\n", cbForUnrecoveredErrorRetrySigs[j].Name, j, cbForUnrecoveredErrorRetry);
+			print_debug("Found:[%s$%i] @ %08X\n", cbForUnrecoveredErrorRetrySigs[j].Name, j, cbForUnrecoveredErrorRetry);
 			patched++;
 		}
 	}
@@ -6998,7 +7136,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i +  1] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 			}
-			print_gecko("Found:[%s$%i] @ %08X\n", cbForStateMotorStoppedSigs[j].Name, j, cbForStateMotorStopped);
+			print_debug("Found:[%s$%i] @ %08X\n", cbForStateMotorStoppedSigs[j].Name, j, cbForStateMotorStopped);
 			patched++;
 		}
 	}
@@ -7154,7 +7292,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i + 190] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 			}
-			print_gecko("Found:[%s$%i] @ %08X\n", stateBusySigs[j].Name, j, stateBusy);
+			print_debug("Found:[%s$%i] @ %08X\n", stateBusySigs[j].Name, j, stateBusy);
 			patched++;
 		}
 	}
@@ -7238,7 +7376,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i + 274] = 0x3C600C00;	// lis		r3, 0x0C00
 					break;
 			}
-			print_gecko("Found:[%s$%i] @ %08X\n", cbForStateBusySigs[j].Name, j, cbForStateBusy);
+			print_debug("Found:[%s$%i] @ %08X\n", cbForStateBusySigs[j].Name, j, cbForStateBusy);
 			patched++;
 		}
 	}
@@ -7261,7 +7399,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i + 5] = 0x3C800C00;	// lis		r4, 0x0C00
 					break;
 			}
-			print_gecko("Found:[%s$%i] @ %08X\n", DVDResetSigs[j].Name, j, DVDReset);
+			print_debug("Found:[%s$%i] @ %08X\n", DVDResetSigs[j].Name, j, DVDReset);
 			patched++;
 		}
 	}
@@ -7282,7 +7420,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 					data[i + 40] = 0x3C800C00;	// lis		r4, 0x0C00
 					break;
 			}
-			print_gecko("Found:[%s$%i] @ %08X\n", DVDCheckDiskSigs[j].Name, j, DVDCheckDisk);
+			print_debug("Found:[%s$%i] @ %08X\n", DVDCheckDiskSigs[j].Name, j, DVDCheckDisk);
 			patched++;
 		}
 	}
@@ -7292,7 +7430,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		u32 *VISetRegs = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (VISetRegs) {
-			if (swissSettings.pauseAVOutput) {
+			if (swissSettings.pauseAVOutput && !(devices[DEVICE_CUR]->emulated() & EMU_NO_PAUSING)) {
 				switch (j) {
 					case 0:
 					case 1:
@@ -7301,7 +7439,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 						break;
 				}
 			}
-			print_gecko("Found:[%s$%i] @ %08X\n", VISetRegsSigs[j].Name, j, VISetRegs);
+			print_debug("Found:[%s$%i] @ %08X\n", VISetRegsSigs[j].Name, j, VISetRegs);
 			patched++;
 		}
 	}
@@ -7311,7 +7449,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		u32 *__VIRetraceHandler = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (__VIRetraceHandler) {
-			if (swissSettings.pauseAVOutput) {
+			if (swissSettings.pauseAVOutput && !(devices[DEVICE_CUR]->emulated() & EMU_NO_PAUSING)) {
 				switch (j) {
 					case 3:
 					case 4:
@@ -7332,7 +7470,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 						break;
 				}
 			}
-			print_gecko("Found:[%s$%i] @ %08X\n", __VIRetraceHandlerSigs[j].Name, j, __VIRetraceHandler);
+			print_debug("Found:[%s$%i] @ %08X\n", __VIRetraceHandlerSigs[j].Name, j, __VIRetraceHandler);
 			patched++;
 		}
 	}
@@ -7360,7 +7498,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 						break;
 				}
 			}
-			print_gecko("Found:[%s$%i] @ %08X\n", AIInitDMASigs[j].Name, j, AIInitDMA);
+			print_debug("Found:[%s$%i] @ %08X\n", AIInitDMASigs[j].Name, j, AIInitDMA);
 			patched++;
 		}
 	}
@@ -7381,7 +7519,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 						break;
 				}
 			}
-			print_gecko("Found:[%s] @ %08X\n", AIGetDMAStartAddrSigs[j].Name, AIGetDMAStartAddr);
+			print_debug("Found:[%s] @ %08X\n", AIGetDMAStartAddrSigs[j].Name, AIGetDMAStartAddr);
 			patched++;
 		}
 	}
@@ -7392,9 +7530,9 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		
 		if (GXPeekARGB) {
 			memset(data + i, 0, GXPeekARGBSigs[j].Length * sizeof(u32));
-			memcpy(data + i, GXPeekARGBSigs[j].Patch, GXPeekARGBSigs[j].PatchLength);
+			memcpy(data + i, GXPeekARGBSigs[j].Patch, GXPeekARGBSigs[j].PatchLength * sizeof(u32));
 			
-			print_gecko("Found:[%s$%i] @ %08X\n", GXPeekARGBSigs[j].Name, j, GXPeekARGB);
+			print_debug("Found:[%s$%i] @ %08X\n", GXPeekARGBSigs[j].Name, j, GXPeekARGB);
 			patched++;
 		}
 	}
@@ -7405,9 +7543,9 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		
 		if (GXPokeARGB) {
 			memset(data + i, 0, GXPokeARGBSigs[j].Length * sizeof(u32));
-			memcpy(data + i, GXPokeARGBSigs[j].Patch, GXPokeARGBSigs[j].PatchLength);
+			memcpy(data + i, GXPokeARGBSigs[j].Patch, GXPokeARGBSigs[j].PatchLength * sizeof(u32));
 			
-			print_gecko("Found:[%s$%i] @ %08X\n", GXPokeARGBSigs[j].Name, j, GXPokeARGB);
+			print_debug("Found:[%s$%i] @ %08X\n", GXPokeARGBSigs[j].Name, j, GXPokeARGB);
 			patched++;
 		}
 	}
@@ -7418,11 +7556,11 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		
 		if (GXPeekZ) {
 			memset(data + i, 0, GXPeekZSigs[j].Length * sizeof(u32));
-			memcpy(data + i, GXPeekZSigs[j].Patch, GXPeekZSigs[j].PatchLength);
+			memcpy(data + i, GXPeekZSigs[j].Patch, GXPeekZSigs[j].PatchLength * sizeof(u32));
 			
 			data[i + 1] = 0x3CC00800;	// lis		r6, 0x0800
 			
-			print_gecko("Found:[%s$%i] @ %08X\n", GXPeekZSigs[j].Name, j, GXPeekZ);
+			print_debug("Found:[%s$%i] @ %08X\n", GXPeekZSigs[j].Name, j, GXPeekZ);
 			patched++;
 		}
 	}
@@ -7433,9 +7571,9 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		
 		if (GXPokeZ) {
 			memset(data + i, 0, GXPokeZSigs[j].Length * sizeof(u32));
-			memcpy(data + i, GXPokeZSigs[j].Patch, GXPokeZSigs[j].PatchLength);
+			memcpy(data + i, GXPokeZSigs[j].Patch, GXPokeZSigs[j].PatchLength * sizeof(u32));
 			
-			print_gecko("Found:[%s$%i] @ %08X\n", GXPokeZSigs[j].Name, j, GXPokeZ);
+			print_debug("Found:[%s$%i] @ %08X\n", GXPokeZSigs[j].Name, j, GXPokeZ);
 			patched++;
 		}
 	}
@@ -7453,7 +7591,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 				data[i + 71] = 0x7C1EEFAC;	// icbi		r30, r29
 				data[i + 86] = 0x7C1EE7AC;	// icbi		r30, r28
 			}
-			print_gecko("Found:[%s$%i] @ %08X\n", __VMBASESetupExceptionHandlersSigs[j].Name, j, __VMBASESetupExceptionHandlers);
+			print_debug("Found:[%s$%i] @ %08X\n", __VMBASESetupExceptionHandlersSigs[j].Name, j, __VMBASESetupExceptionHandlers);
 			patched++;
 		}
 	}
@@ -7465,7 +7603,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 			data[i +  5] = 0x7CBA02A6;	// mfsrr0	r5
 			data[i + 10] = 0x7CBA02A6;	// mfsrr0	r5
 			
-			print_gecko("Found:[%s] @ %08X\n", __VMBASEISIExceptionHandlerSig.Name, __VMBASEISIExceptionHandler);
+			print_debug("Found:[%s] @ %08X\n", __VMBASEISIExceptionHandlerSig.Name, __VMBASEISIExceptionHandler);
 			patched++;
 		}
 	}
@@ -7709,6 +7847,17 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 		{   9,  3,  2, 1, 0,  2, NULL, 0, "__OSUnlockSram" },
 		{ 173, 53, 11, 9, 9, 25, NULL, 0, "__OSUnlockSram" }	// SN Systems ProDG
 	};
+	FuncPattern OSGetProgressiveModeSigs[4] = {
+		{ 16,  3, 2, 2, 0, 3, NULL, 0, "OSGetProgressiveModeD" },
+		{ 32,  9, 5, 3, 4, 2, NULL, 0, "OSGetProgressiveMode" },
+		{ 28,  9, 5, 3, 2, 2, NULL, 0, "OSGetProgressiveMode" },
+		{ 31, 11, 6, 3, 2, 2, NULL, 0, "OSGetProgressiveMode" }	// SN Systems ProDG
+	};
+	FuncPattern OSSetProgressiveModeSigs[3] = {
+		{  39,  8,  2,  4,  3,  6, NULL, 0, "OSSetProgressiveModeD" },
+		{  41, 12,  6,  4,  3,  4, NULL, 0, "OSSetProgressiveMode" },
+		{ 192, 54, 10, 14, 11, 27, NULL, 0, "OSSetProgressiveMode" }	// SN Systems ProDG
+	};
 	FuncPattern OSGetEuRgb60ModeSigs[3] = {
 		{ 16,  3, 2, 2, 0, 3, NULL, 0, "OSGetEuRgb60ModeD" },
 		{ 28,  9, 5, 3, 2, 2, NULL, 0, "OSGetEuRgb60Mode" },
@@ -7740,21 +7889,23 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 		{ 157, 50, 10, 15, 16, 13, NULL, 0, "__VIRetraceHandler" },
 		{ 164, 53, 13, 14, 16, 15, NULL, 0, "__VIRetraceHandler" }	// SN Systems ProDG
 	};
-	FuncPattern getTimingSigs[10] = {
-		{  30,  12,  2,  0,  7,  2,           NULL,                     0, "getTimingD" },
-		{  40,  16,  2,  0, 12,  2, getTimingPatch, getTimingPatch_length, "getTimingD" },
-		{  46,  21,  2,  0, 15,  2,           NULL,                     0, "getTimingD" },
-		{  26,  11,  0,  0,  0,  3,           NULL,                     0, "getTiming" },
-		{  30,  13,  0,  0,  0,  3,           NULL,                     0, "getTiming" },
-		{  36,  15,  0,  0,  0,  4, getTimingPatch, getTimingPatch_length, "getTiming" },
-		{  40,  19,  0,  0,  0,  2,           NULL,                     0, "getTiming" },
-		{ 559, 112, 44, 14, 53, 48,           NULL,                     0, "getTiming" },	// SN Systems ProDG
-		{ 560, 112, 44, 14, 53, 48,           NULL,                     0, "getTiming" },	// SN Systems ProDG
-		{  42,  20,  0,  0,  0,  2,           NULL,                     0, "getTiming" }
+	FuncPattern getTimingSigs[11] = {
+		{  30,  12,  2,  0,  7,  2,           NULL,                    0, "getTimingD" },
+		{  40,  16,  2,  0, 12,  2, getTimingPatch, getTimingPatchLength, "getTimingD" },
+		{  44,  20,  2,  0, 14,  2,           NULL,                    0, "getTimingD" },
+		{  46,  21,  2,  0, 15,  2,           NULL,                    0, "getTimingD" },
+		{  26,  11,  0,  0,  0,  3,           NULL,                    0, "getTiming" },
+		{  30,  13,  0,  0,  0,  3,           NULL,                    0, "getTiming" },
+		{  36,  15,  0,  0,  0,  4, getTimingPatch, getTimingPatchLength, "getTiming" },
+		{  40,  19,  0,  0,  0,  2,           NULL,                    0, "getTiming" },
+		{ 559, 112, 44, 14, 53, 48,           NULL,                    0, "getTiming" },	// SN Systems ProDG
+		{ 560, 112, 44, 14, 53, 48,           NULL,                    0, "getTiming" },	// SN Systems ProDG
+		{  42,  20,  0,  0,  0,  2,           NULL,                    0, "getTiming" }
 	};
-	FuncPattern __VIInitSigs[8] = {
+	FuncPattern __VIInitSigs[9] = {
 		{ 159, 44, 5, 4,  4, 16, NULL, 0, "__VIInitD" },
 		{ 161, 44, 5, 4,  5, 16, NULL, 0, "__VIInitD" },
+		{ 163, 44, 5, 4,  6, 16, NULL, 0, "__VIInitD" },
 		{ 168, 44, 5, 4,  8, 15, NULL, 0, "__VIInitD" },
 		{ 122, 21, 8, 1,  5,  5, NULL, 0, "__VIInit" },
 		{ 126, 23, 8, 1,  6,  5, NULL, 0, "__VIInit" },
@@ -7793,9 +7944,10 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 		{ 104, 22, 14, 0, 4, 25, NULL, 0, "setVerticalRegs" },
 		{ 114, 19, 13, 0, 4, 25, NULL, 0, "setVerticalRegs" }	// SN Systems ProDG
 	};
-	FuncPattern VIConfigureSigs[13] = {
+	FuncPattern VIConfigureSigs[14] = {
 		{ 280,  74, 15, 20, 21, 20, NULL, 0, "VIConfigureD" },
 		{ 314,  86, 15, 21, 27, 20, NULL, 0, "VIConfigureD" },
+		{ 357,  95, 15, 22, 45, 20, NULL, 0, "VIConfigureD" },
 		{ 338,  86, 15, 22, 40, 20, NULL, 0, "VIConfigureD" },
 		{ 428,  90, 43,  6, 32, 60, NULL, 0, "VIConfigure" },
 		{ 420,  87, 41,  6, 31, 60, NULL, 0, "VIConfigure" },
@@ -7887,13 +8039,13 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 		{  52, 17, 4, 1, 5, 7, NULL, 0, "GXSetDispCopyYScale" }		// SN Systems ProDG
 	};
 	FuncPattern GXSetCopyFilterSigs[7] = {
-		{ 567, 183, 44, 32, 36, 38, GXSetCopyFilterPatch, GXSetCopyFilterPatch_length, "GXSetCopyFilterD" },
-		{ 514, 196, 44, 32, 36,  7, GXSetCopyFilterPatch, GXSetCopyFilterPatch_length, "GXSetCopyFilterD" },
-		{ 138,  15,  7,  0,  4,  5, GXSetCopyFilterPatch, GXSetCopyFilterPatch_length, "GXSetCopyFilter" },
-		{ 163,  19, 23,  0,  3, 14, GXSetCopyFilterPatch, GXSetCopyFilterPatch_length, "GXSetCopyFilter" },	// SN Systems ProDG
-		{ 163,  19, 23,  0,  3, 14, GXSetCopyFilterPatch, GXSetCopyFilterPatch_length, "GXSetCopyFilter" },	// SN Systems ProDG
-		{ 130,  25,  7,  0,  4,  0, GXSetCopyFilterPatch, GXSetCopyFilterPatch_length, "GXSetCopyFilter" },
-		{ 124,  19,  6,  0,  4,  0, GXSetCopyFilterPatch, GXSetCopyFilterPatch_length, "GXSetCopyFilter" }	// SN Systems ProDG
+		{ 567, 183, 44, 32, 36, 38, GXSetCopyFilterPatch, GXSetCopyFilterPatchLength, "GXSetCopyFilterD" },
+		{ 514, 196, 44, 32, 36,  7, GXSetCopyFilterPatch, GXSetCopyFilterPatchLength, "GXSetCopyFilterD" },
+		{ 138,  15,  7,  0,  4,  5, GXSetCopyFilterPatch, GXSetCopyFilterPatchLength, "GXSetCopyFilter" },
+		{ 163,  19, 23,  0,  3, 14, GXSetCopyFilterPatch, GXSetCopyFilterPatchLength, "GXSetCopyFilter" },	// SN Systems ProDG
+		{ 163,  19, 23,  0,  3, 14, GXSetCopyFilterPatch, GXSetCopyFilterPatchLength, "GXSetCopyFilter" },	// SN Systems ProDG
+		{ 130,  25,  7,  0,  4,  0, GXSetCopyFilterPatch, GXSetCopyFilterPatchLength, "GXSetCopyFilter" },
+		{ 124,  19,  6,  0,  4,  0, GXSetCopyFilterPatch, GXSetCopyFilterPatchLength, "GXSetCopyFilter" }	// SN Systems ProDG
 	};
 	FuncPattern GXSetDispCopyGammaSigs[5] = {
 		{ 34, 12, 3, 2, 2, 3, NULL, 0, "GXSetDispCopyGammaD" },
@@ -7902,6 +8054,8 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 		{  6,  1, 1, 0, 0, 1, NULL, 0, "GXSetDispCopyGamma" },	// SN Systems ProDG
 		{  5,  2, 1, 0, 0, 0, NULL, 0, "GXSetDispCopyGamma" }
 	};
+	FuncPattern __GXVerifCopySig = 
+		{ 149, 62, 3, 14, 14, 3, NULL, 0, "__GXVerifCopyD" };
 	FuncPattern GXCopyDispSigs[7] = {
 		{ 149,  62,  3, 14, 14, 3, NULL, 0, "GXCopyDispD" },
 		{ 240, 140, 16,  4,  6, 9, NULL, 0, "GXCopyDispD" },
@@ -7912,26 +8066,26 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 		{  89,  34, 14,  0,  3, 0, NULL, 0, "GXCopyDisp" }	// SN Systems ProDG
 	};
 	FuncPattern GXSetBlendModeSigs[7] = {
-		{ 154, 66, 10, 7, 9, 17, GXSetBlendModePatch1, GXSetBlendModePatch1_length, "GXSetBlendModeD" },
-		{ 105, 38,  4, 7, 8, 10, GXSetBlendModePatch1, GXSetBlendModePatch1_length, "GXSetBlendModeD" },
-		{  65, 20,  8, 0, 2,  6, GXSetBlendModePatch1, GXSetBlendModePatch1_length, "GXSetBlendMode" },
-		{  21,  6,  2, 0, 0,  2, GXSetBlendModePatch2, GXSetBlendModePatch2_length, "GXSetBlendMode" },
-		{  23,  5,  2, 0, 0,  2,                 NULL,                           0, "GXSetBlendMode" },	// SN Systems ProDG
-		{  36,  2,  2, 0, 0,  6, GXSetBlendModePatch3, GXSetBlendModePatch3_length, "GXSetBlendMode" },	// SN Systems ProDG
-		{  38,  2,  2, 0, 0,  8, GXSetBlendModePatch3, GXSetBlendModePatch3_length, "GXSetBlendMode" }	// SN Systems ProDG
+		{ 154, 66, 10, 7, 9, 17, GXSetBlendModePatch1, GXSetBlendModePatch1Length, "GXSetBlendModeD" },
+		{ 105, 38,  4, 7, 8, 10, GXSetBlendModePatch1, GXSetBlendModePatch1Length, "GXSetBlendModeD" },
+		{  65, 20,  8, 0, 2,  6, GXSetBlendModePatch1, GXSetBlendModePatch1Length, "GXSetBlendMode" },
+		{  21,  6,  2, 0, 0,  2, GXSetBlendModePatch2, GXSetBlendModePatch2Length, "GXSetBlendMode" },
+		{  23,  5,  2, 0, 0,  2,                 NULL,                          0, "GXSetBlendMode" },	// SN Systems ProDG
+		{  36,  2,  2, 0, 0,  6, GXSetBlendModePatch3, GXSetBlendModePatch3Length, "GXSetBlendMode" },	// SN Systems ProDG
+		{  38,  2,  2, 0, 0,  8, GXSetBlendModePatch3, GXSetBlendModePatch3Length, "GXSetBlendMode" }	// SN Systems ProDG
 	};
 	FuncPattern __GXSetViewportSigs[2] = {
-		{ 163, 75, 15, 2, 12, 14,               NULL,                         0, "__GXSetViewportD" },
-		{  36, 15,  7, 0,  0,  0, GXSetViewportPatch, GXSetViewportPatch_length, "__GXSetViewport" }
+		{ 163, 75, 15, 2, 12, 14, NULL, 0, "__GXSetViewportD" },
+		{  36, 15,  7, 0,  0,  0, NULL, 0, "__GXSetViewport" }
 	};
 	FuncPattern GXSetViewportJitterSigs[7] = {
-		{ 193, 76, 22, 4, 15, 22, GXSetViewportJitterPatch, GXSetViewportJitterPatch_length, "GXSetViewportJitterD" },
-		{  52, 22, 14, 2,  1,  3,                     NULL,                               0, "GXSetViewportJitterD" },
-		{  71, 20, 15, 1,  1,  3, GXSetViewportJitterPatch, GXSetViewportJitterPatch_length, "GXSetViewportJitter" },
-		{  65, 14, 15, 1,  1,  3, GXSetViewportJitterPatch, GXSetViewportJitterPatch_length, "GXSetViewportJitter" },
-		{  31,  6, 10, 1,  0,  4,                     NULL,                               0, "GXSetViewportJitter" },	// SN Systems ProDG
-		{  22,  6,  8, 1,  0,  2,                     NULL,                               0, "GXSetViewportJitter" },
-		{  48, 17, 13, 0,  0,  0,                     NULL,                               0, "GXSetViewportJitter" }	// SN Systems ProDG
+		{ 193, 76, 22, 4, 15, 22, NULL, 0, "GXSetViewportJitterD" },
+		{  52, 22, 14, 2,  1,  3, NULL, 0, "GXSetViewportJitterD" },
+		{  71, 20, 15, 1,  1,  3, NULL, 0, "GXSetViewportJitter" },
+		{  65, 14, 15, 1,  1,  3, NULL, 0, "GXSetViewportJitter" },
+		{  31,  6, 10, 1,  0,  4, NULL, 0, "GXSetViewportJitter" },	// SN Systems ProDG
+		{  22,  6,  8, 1,  0,  2, NULL, 0, "GXSetViewportJitter" },
+		{  48, 17, 13, 0,  0,  0, NULL, 0, "GXSetViewportJitter" }	// SN Systems ProDG
 	};
 	FuncPattern GXSetViewportSigs[7] = {
 		{ 21,  9,  8, 1, 0, 2, NULL, 0, "GXSetViewportD" },
@@ -7972,68 +8126,147 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 		{ 221, 6, 1, 3, 1, 5, NULL, 0, "IDct10_GC" };
 	_SDA2_BASE_ = _SDA_BASE_ = 0;
 	
-	switch (swissSettings.gameVMode) {
-		case 2: case 9: case 5: case 12: case -1: case -2:
-			if (!swissSettings.forceVFilter)
-				swissSettings.forceVFilter = 1;
-			break;
-		case 3: case 10:
-			swissSettings.forceVOffset &= ~1;
-			if (!swissSettings.forceVFilter)
-				swissSettings.forceVFilter = 1;
-			if (!swissSettings.forceVJitter)
-				swissSettings.forceVJitter = 2;
-			break;
-		case 4: case 11:
-			swissSettings.forceVOffset &= ~1;
-			if (!swissSettings.forceVFilter)
-				swissSettings.forceVFilter = 1;
-			if (!swissSettings.forceVJitter)
-				swissSettings.forceVJitter = 1;
-			break;
-		case 6: case 13:
-			if (!swissSettings.forceHScale)
-				swissSettings.forceHScale = 1;
-			swissSettings.forceVOffset &= ~1;
-			if (!swissSettings.forceVFilter)
-				swissSettings.forceVFilter = 1;
-			if (!swissSettings.forceVJitter)
-				swissSettings.forceVJitter = 1;
-			break;
-		case 7: case 14:
-			if (!swissSettings.forceHScale)
-				swissSettings.forceHScale = 1;
-			swissSettings.forceVOffset &= ~1;
-			if (!swissSettings.forceVFilter)
-				swissSettings.forceVFilter = 1;
-			break;
-	}
-	
 	if (in_range(swissSettings.gameVMode, 1, 7)) {
 		for (j = 0; j < sizeof(GXAdjustForOverscanSigs) / sizeof(FuncPattern); j++) {
 			GXAdjustForOverscanSigs[j].Patch       = GXAdjustForOverscanPatch;
-			GXAdjustForOverscanSigs[j].PatchLength = GXAdjustForOverscanPatch_length;
+			GXAdjustForOverscanSigs[j].PatchLength = GXAdjustForOverscanPatchLength;
 		}
 	}
 	
-	if (swissSettings.aveCompat == 1 && swissSettings.rt4kOptim) {
+	if (in_range(swissSettings.aveCompat, GCDIGITAL_COMPAT, GCVIDEO_COMPAT) && swissSettings.rt4kOptim) {
 		for (j = 0; j < sizeof(GXSetDispCopyYScaleSigs) / sizeof(FuncPattern); j++) {
 			if (j == 6) {
 				GXSetDispCopyYScaleSigs[j].Patch       = GXSetDispCopyYScaleStub2;
-				GXSetDispCopyYScaleSigs[j].PatchLength = GXSetDispCopyYScaleStub2_length;
+				GXSetDispCopyYScaleSigs[j].PatchLength = GXSetDispCopyYScaleStub2Length;
 			} else {
 				GXSetDispCopyYScaleSigs[j].Patch       = GXSetDispCopyYScaleStub1;
-				GXSetDispCopyYScaleSigs[j].PatchLength = GXSetDispCopyYScaleStub1_length;
+				GXSetDispCopyYScaleSigs[j].PatchLength = GXSetDispCopyYScaleStub1Length;
 			}
 		}
 	} else if (in_range(swissSettings.gameVMode, 1, 7)) {
 		for (j = 0; j < sizeof(GXSetDispCopyYScaleSigs) / sizeof(FuncPattern); j++) {
 			if (j == 6) {
 				GXSetDispCopyYScaleSigs[j].Patch       = GXSetDispCopyYScalePatch2;
-				GXSetDispCopyYScaleSigs[j].PatchLength = GXSetDispCopyYScalePatch2_length;
+				GXSetDispCopyYScaleSigs[j].PatchLength = GXSetDispCopyYScalePatch2Length;
 			} else {
 				GXSetDispCopyYScaleSigs[j].Patch       = GXSetDispCopyYScalePatch1;
-				GXSetDispCopyYScaleSigs[j].PatchLength = GXSetDispCopyYScalePatch1_length;
+				GXSetDispCopyYScaleSigs[j].PatchLength = GXSetDispCopyYScalePatch1Length;
+			}
+		}
+	}
+	
+	if (swissSettings.forceVJitter == 3) {
+		for (j = 0; j < sizeof(__GXSetViewportSigs) / sizeof(FuncPattern); j++) {
+			__GXSetViewportSigs[j].Patch       = __GXSetViewportTAAPatch;
+			__GXSetViewportSigs[j].PatchLength = __GXSetViewportTAAPatchLength;
+		}
+		
+		for (j = 0; j < sizeof(GXSetViewportJitterSigs) / sizeof(FuncPattern); j++) {
+			switch (j) {
+				case 0:
+					GXSetViewportJitterSigs[j].Patch       = GXSetViewportJitterTAAPatch1;
+					GXSetViewportJitterSigs[j].PatchLength = GXSetViewportJitterTAAPatch1Length;
+					break;
+				case 1:
+					GXSetViewportJitterSigs[j].Patch       = GXSetViewportJitterPatch2;
+					GXSetViewportJitterSigs[j].PatchLength = GXSetViewportJitterPatch2Length;
+					break;
+				case 2:
+				case 3:
+					GXSetViewportJitterSigs[j].Patch       = GXSetViewportJitterTAAPatch1;
+					GXSetViewportJitterSigs[j].PatchLength = GXSetViewportJitterTAAPatch1Length;
+					break;
+				case 5:
+					GXSetViewportJitterSigs[j].Patch       = GXSetViewportJitterPatch2;
+					GXSetViewportJitterSigs[j].PatchLength = GXSetViewportJitterPatch2Length;
+					break;
+				case 6:
+					GXSetViewportJitterSigs[j].Patch       = GXSetViewportJitterTAAPatch3;
+					GXSetViewportJitterSigs[j].PatchLength = GXSetViewportJitterTAAPatch3Length;
+					break;
+			}
+		}
+		
+		for (j = 0; j < sizeof(GXSetViewportSigs) / sizeof(FuncPattern); j++) {
+			switch (j) {
+				case 0:
+					GXSetViewportSigs[j].Patch       = GXSetViewportPatch1;
+					GXSetViewportSigs[j].PatchLength = GXSetViewportPatch1Length;
+					break;
+				case 1:
+					GXSetViewportSigs[j].Patch       = GXSetViewportPatch2;
+					GXSetViewportSigs[j].PatchLength = GXSetViewportPatch2Length;
+					break;
+				case 2:
+				case 3:
+					GXSetViewportSigs[j].Patch       = GXSetViewportPatch1;
+					GXSetViewportSigs[j].PatchLength = GXSetViewportPatch1Length;
+					break;
+				case 5:
+					GXSetViewportSigs[j].Patch       = GXSetViewportPatch2;
+					GXSetViewportSigs[j].PatchLength = GXSetViewportPatch2Length;
+					break;
+				case 6:
+					GXSetViewportSigs[j].Patch       = GXSetViewportTAAPatch3;
+					GXSetViewportSigs[j].PatchLength = GXSetViewportTAAPatch3Length;
+					break;
+			}
+		}
+	} else if (swissSettings.forceVJitter == 1 || (swissSettings.forceVJitter != 2 && swissSettings.fixPixelCenter)) {
+		for (j = 0; j < sizeof(__GXSetViewportSigs) / sizeof(FuncPattern); j++) {
+			__GXSetViewportSigs[j].Patch       = __GXSetViewportPatch;
+			__GXSetViewportSigs[j].PatchLength = __GXSetViewportPatchLength;
+		}
+		
+		for (j = 0; j < sizeof(GXSetViewportJitterSigs) / sizeof(FuncPattern); j++) {
+			switch (j) {
+				case 0:
+					GXSetViewportJitterSigs[j].Patch       = GXSetViewportJitterPatch1;
+					GXSetViewportJitterSigs[j].PatchLength = GXSetViewportJitterPatch1Length;
+					break;
+				case 1:
+					GXSetViewportJitterSigs[j].Patch       = GXSetViewportJitterPatch2;
+					GXSetViewportJitterSigs[j].PatchLength = GXSetViewportJitterPatch2Length;
+					break;
+				case 2:
+				case 3:
+					GXSetViewportJitterSigs[j].Patch       = GXSetViewportJitterPatch1;
+					GXSetViewportJitterSigs[j].PatchLength = GXSetViewportJitterPatch1Length;
+					break;
+				case 5:
+					GXSetViewportJitterSigs[j].Patch       = GXSetViewportJitterPatch2;
+					GXSetViewportJitterSigs[j].PatchLength = GXSetViewportJitterPatch2Length;
+					break;
+				case 6:
+					GXSetViewportJitterSigs[j].Patch       = GXSetViewportJitterPatch3;
+					GXSetViewportJitterSigs[j].PatchLength = GXSetViewportJitterPatch3Length;
+					break;
+			}
+		}
+		
+		for (j = 0; j < sizeof(GXSetViewportSigs) / sizeof(FuncPattern); j++) {
+			switch (j) {
+				case 0:
+					GXSetViewportSigs[j].Patch       = GXSetViewportPatch1;
+					GXSetViewportSigs[j].PatchLength = GXSetViewportPatch1Length;
+					break;
+				case 1:
+					GXSetViewportSigs[j].Patch       = GXSetViewportPatch2;
+					GXSetViewportSigs[j].PatchLength = GXSetViewportPatch2Length;
+					break;
+				case 2:
+				case 3:
+					GXSetViewportSigs[j].Patch       = GXSetViewportPatch1;
+					GXSetViewportSigs[j].PatchLength = GXSetViewportPatch1Length;
+					break;
+				case 5:
+					GXSetViewportSigs[j].Patch       = GXSetViewportPatch2;
+					GXSetViewportSigs[j].PatchLength = GXSetViewportPatch2Length;
+					break;
+				case 6:
+					GXSetViewportSigs[j].Patch       = GXSetViewportPatch3;
+					GXSetViewportSigs[j].PatchLength = GXSetViewportPatch3Length;
+					break;
 			}
 		}
 	}
@@ -8106,7 +8339,97 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 			continue;
 		
 		FuncPattern fp;
-		make_pattern(data, i, length, &fp);
+		make_pattern(data, dataType, i, length, &fp);
+		
+		for (j = 0; j < sizeof(OSGetProgressiveModeSigs) / sizeof(FuncPattern); j++) {
+			if (compare_pattern(&fp, &OSGetProgressiveModeSigs[j])) {
+				switch (j) {
+					case 0:
+						if (findx_pattern(data, dataType, i +  4, length, &__OSLockSramSigs[0]) &&
+							(data[i +  6] & 0xFC00FFFF) == 0x88000013 &&
+							(data[i +  7] & 0xFC00FFFF) == 0x5400CFFE &&
+							findx_pattern(data, dataType, i +  9, length, &__OSUnlockSramSigs[0]))
+							OSGetProgressiveModeSigs[j].offsetFoundAt = i;
+						break;
+					case 1:
+						if (findx_pattern(data, dataType, i +  6, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 11, length, &OSRestoreInterruptsSig) &&
+							(data[i + 17] & 0xFC00FFFF) == 0x88000013 &&
+							(data[i + 18] & 0xFC00FFFF) == 0x54000631 &&
+							findx_pattern(data, dataType, i + 25, length, &UnlockSramSigs[2]))
+							OSGetProgressiveModeSigs[j].offsetFoundAt = i;
+						break;
+					case 2:
+						if (findx_pattern (data, dataType, i +  6, length, &OSDisableInterruptsSig) &&
+							findx_pattern (data, dataType, i + 11, length, &OSRestoreInterruptsSig) &&
+							(data[i + 17] & 0xFC00FFFF) == 0x88000013 &&
+							(data[i + 20] & 0xFC00FFFF) == 0x5400CFFE &&
+							findx_patterns(data, dataType, i + 21, length, &UnlockSramSigs[2],
+							                                               &UnlockSramSigs[3], NULL))
+							OSGetProgressiveModeSigs[j].offsetFoundAt = i;
+						break;
+					case 3:
+						if (findx_pattern(data, dataType, i +  4, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 10, length, &OSRestoreInterruptsSig) &&
+							(data[i + 17] & 0xFC00FFFF) == 0x88000013 &&
+							(data[i + 22] & 0xFC00FFFF) == 0x5400CFFE &&
+							findx_pattern(data, dataType, i + 24, length, &OSRestoreInterruptsSig))
+							OSGetProgressiveModeSigs[j].offsetFoundAt = i;
+						break;
+				}
+			}
+		}
+		
+		for (j = 0; j < sizeof(OSSetProgressiveModeSigs) / sizeof(FuncPattern); j++) {
+			if (compare_pattern(&fp, &OSSetProgressiveModeSigs[j])) {
+				switch (j) {
+					case 0:
+						if ((data[i + 15] & 0xFC00FFFF) == 0x54003830 &&
+							(data[i + 16] & 0xFC00FFFF) == 0x54000630 &&
+							findx_pattern(data, dataType, i + 17, length, &__OSLockSramSigs[0]) &&
+							(data[i + 19] & 0xFC00FFFF) == 0x88000013 &&
+							(data[i + 20] & 0xFC00FFFF) == 0x54000630 &&
+							findx_pattern(data, dataType, i + 24, length, &__OSUnlockSramSigs[0]) &&
+							(data[i + 26] & 0xFC00FFFF) == 0x88000013 &&
+							(data[i + 27] & 0xFC00FFFF) == 0x5400066E &&
+							(data[i + 28] & 0xFC00FFFF) == 0x98000013 &&
+							(data[i + 29] & 0xFC00FFFF) == 0x88000013 &&
+							(data[i + 31] & 0xFC00FFFF) == 0x98000013 &&
+							findx_pattern(data, dataType, i + 33, length, &__OSUnlockSramSigs[0]))
+							OSSetProgressiveModeSigs[j].offsetFoundAt = i;
+						break;
+					case 1:
+						if ((data[i +  7] & 0xFC00FFFF) == 0x54003E30 &&
+							findx_pattern (data, dataType, i +  8, length, &OSDisableInterruptsSig) &&
+							findx_pattern (data, dataType, i + 13, length, &OSRestoreInterruptsSig) &&
+							(data[i + 19] & 0xFC00FFFF) == 0x88000013 &&
+							(data[i + 20] & 0xFC00FFFF) == 0x54000630 &&
+							findx_patterns(data, dataType, i + 25, length, &UnlockSramSigs[2],
+							                                               &UnlockSramSigs[3], NULL) &&
+							(data[i + 27] & 0xFC00FFFF) == 0x5400066E &&
+							(data[i + 28] & 0xFC00FFFF) == 0x98000013 &&
+							(data[i + 31] & 0xFC00FFFF) == 0x88000013 &&
+							(data[i + 33] & 0xFC00FFFF) == 0x98000013 &&
+							findx_patterns(data, dataType, i + 34, length, &UnlockSramSigs[2],
+							                                               &UnlockSramSigs[3], NULL))
+							OSSetProgressiveModeSigs[j].offsetFoundAt = i;
+						break;
+					case 2:
+						if ((data[i +  5] & 0xFC00FFFF) == 0x54003E30 &&
+							findx_pattern(data, dataType, i +   6, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i +  12, length, &OSRestoreInterruptsSig) &&
+							(data[i + 19] & 0xFC00FFFF) == 0x88000013 &&
+							(data[i + 20] & 0xFC00FFFF) == 0x54000630 &&
+							findx_pattern(data, dataType, i +  28, length, &OSRestoreInterruptsSig) &&
+							(data[i + 30] & 0xFC00FFFF) == 0x5400067E &&
+							(data[i + 33] & 0xFC00FFFF) == 0x98000013 &&
+							(data[i + 37] & 0xFC00FFFF) == 0x98000013 &&
+							findx_pattern(data, dataType, i + 185, length, &OSRestoreInterruptsSig))
+							OSSetProgressiveModeSigs[j].offsetFoundAt = i;
+						break;
+				}
+			}
+		}
 		
 		for (j = 0; j < sizeof(OSGetEuRgb60ModeSigs) / sizeof(FuncPattern); j++) {
 			if (compare_pattern(&fp, &OSGetEuRgb60ModeSigs[j])) {
@@ -8149,6 +8472,7 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 							(data[i + 19] & 0xFC00FFFF) == 0x88000011 &&
 							(data[i + 20] & 0xFC00FFFF) == 0x54000672 &&
 							findx_pattern(data, dataType, i + 24, length, &__OSUnlockSramSigs[0]) &&
+							(data[i + 26] & 0xFC00FFFF) == 0x88000011 &&
 							(data[i + 27] & 0xFC00FFFF) == 0x540006B0 &&
 							(data[i + 28] & 0xFC00FFFF) == 0x98000011 &&
 							(data[i + 29] & 0xFC00FFFF) == 0x88000011 &&
@@ -8221,7 +8545,7 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 							__VIRetraceHandlerSigs[j].offsetFoundAt = i;
 						
 						if (findx_pattern(data, dataType, i + 60, length, &getCurrentFieldEvenOddSigs[3]))
-							find_pattern_before(data, length, &getCurrentFieldEvenOddSigs[3], &VIGetRetraceCountSig);
+							find_pattern_before(data, dataType, length, &getCurrentFieldEvenOddSigs[3], &VIGetRetraceCountSig);
 						break;
 					case 4:
 						if (findx_pattern(data, dataType, i +  39, length, &OSSetCurrentContextSig) &&
@@ -8230,7 +8554,7 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 							__VIRetraceHandlerSigs[j].offsetFoundAt = i;
 						
 						if (findx_pattern(data, dataType, i + 60, length, &getCurrentFieldEvenOddSigs[4]))
-							find_pattern_before(data, length, &getCurrentFieldEvenOddSigs[4], &VIGetRetraceCountSig);
+							find_pattern_before(data, dataType, length, &getCurrentFieldEvenOddSigs[4], &VIGetRetraceCountSig);
 						break;
 					case 5:
 						if (findx_pattern(data, dataType, i +  42, length, &OSSetCurrentContextSig) &&
@@ -8239,7 +8563,7 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 							__VIRetraceHandlerSigs[j].offsetFoundAt = i;
 						
 						if (findx_pattern(data, dataType, i + 63, length, &getCurrentFieldEvenOddSigs[4]))
-							find_pattern_before(data, length, &getCurrentFieldEvenOddSigs[4], &VIGetRetraceCountSig);
+							find_pattern_before(data, dataType, length, &getCurrentFieldEvenOddSigs[4], &VIGetRetraceCountSig);
 						break;
 					case 6:
 						if (findx_pattern(data, dataType, i +  42, length, &OSSetCurrentContextSig) &&
@@ -8248,7 +8572,7 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 							__VIRetraceHandlerSigs[j].offsetFoundAt = i;
 						
 						if (findx_pattern(data, dataType, i + 63, length, &getCurrentFieldEvenOddSigs[4]))
-							find_pattern_before(data, length, &getCurrentFieldEvenOddSigs[4], &VIGetRetraceCountSig);
+							find_pattern_before(data, dataType, length, &getCurrentFieldEvenOddSigs[4], &VIGetRetraceCountSig);
 						break;
 					case 7:
 						if (findx_pattern(data, dataType, i +  47, length, &OSSetCurrentContextSig) &&
@@ -8257,7 +8581,7 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 							__VIRetraceHandlerSigs[j].offsetFoundAt = i;
 						
 						if (findx_pattern(data, dataType, i + 68, length, &getCurrentFieldEvenOddSigs[5]))
-							find_pattern_before(data, length, &getCurrentFieldEvenOddSigs[5], &VIGetRetraceCountSig);
+							find_pattern_before(data, dataType, length, &getCurrentFieldEvenOddSigs[5], &VIGetRetraceCountSig);
 						break;
 					case 8:
 						if (findx_pattern(data, dataType, i +  44, length, &OSSetCurrentContextSig) &&
@@ -8267,7 +8591,7 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 							__VIRetraceHandlerSigs[j].offsetFoundAt = i;
 						
 						if (findx_pattern(data, dataType, i + 80, length, &getCurrentFieldEvenOddSigs[4]))
-							find_pattern_before(data, length, &getCurrentFieldEvenOddSigs[4], &VIGetRetraceCountSig);
+							find_pattern_before(data, dataType, length, &getCurrentFieldEvenOddSigs[4], &VIGetRetraceCountSig);
 						break;
 					case 9:
 						if (findx_pattern(data, dataType, i +  49, length, &OSSetCurrentContextSig) &&
@@ -8277,7 +8601,7 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 							__VIRetraceHandlerSigs[j].offsetFoundAt = i;
 						
 						if (findx_pattern(data, dataType, i + 85, length, &getCurrentFieldEvenOddSigs[5]))
-							find_pattern_before(data, length, &getCurrentFieldEvenOddSigs[5], &VIGetRetraceCountSig);
+							find_pattern_before(data, dataType, length, &getCurrentFieldEvenOddSigs[5], &VIGetRetraceCountSig);
 						break;
 				}
 			}
@@ -8299,32 +8623,33 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 							VIInitSigs[j].offsetFoundAt = i;
 						break;
 					case 2:
-						if (findx_pattern(data, dataType, i +  22, length, &__VIInitSigs[2]) &&
-							findx_pattern(data, dataType, i + 129, length, &ImportAdjustingValuesSig) &&
-							findx_pattern(data, dataType, i + 177, length, &AdjustPositionSig))
+						if (findx_patterns(data, dataType, i +  22, length, &__VIInitSigs[2],
+							                                                &__VIInitSigs[3], NULL) &&
+							findx_pattern (data, dataType, i + 129, length, &ImportAdjustingValuesSig) &&
+							findx_pattern (data, dataType, i + 177, length, &AdjustPositionSig))
 							VIInitSigs[j].offsetFoundAt = i;
 						break;
 					case 3:
 					case 4:
-						if (findx_pattern(data, dataType, i +  16, length, &__VIInitSigs[3]))
+						if (findx_pattern(data, dataType, i +  16, length, &__VIInitSigs[4]))
 							VIInitSigs[j].offsetFoundAt = i;
 						break;
 					case 5:
-						if (findx_pattern(data, dataType, i +  19, length, &__VIInitSigs[3]))
+						if (findx_pattern(data, dataType, i +  19, length, &__VIInitSigs[4]))
 							VIInitSigs[j].offsetFoundAt = i;
 						break;
 					case 6:
-						if (findx_pattern(data, dataType, i +  19, length, &__VIInitSigs[3]) ||
-							findx_pattern(data, dataType, i +  19, length, &__VIInitSigs[4]))
+						if (findx_patterns(data, dataType, i +  19, length, &__VIInitSigs[4],
+							                                                &__VIInitSigs[5], NULL))
 							VIInitSigs[j].offsetFoundAt = i;
 						break;
 					case 7:
-						if (findx_pattern(data, dataType, i +  25, length, &__VIInitSigs[5]) ||
-							findx_pattern(data, dataType, i +  25, length, &__VIInitSigs[7]))
+						if (findx_patterns(data, dataType, i +  25, length, &__VIInitSigs[6],
+							                                                &__VIInitSigs[8], NULL))
 							VIInitSigs[j].offsetFoundAt = i;
 						break;
 					case 8:
-						if (findx_pattern(data, dataType, i +  18, length, &__VIInitSigs[6]))
+						if (findx_pattern(data, dataType, i +  18, length, &__VIInitSigs[7]))
 							VIInitSigs[j].offsetFoundAt = i;
 						break;
 				}
@@ -8375,100 +8700,110 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 						findx_pattern(data, dataType, i + 306, length, &setVerticalRegsSigs[0]);
 						break;
 					case 2:
+						if (findx_pattern(data, dataType, i +  65, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i + 351, length, &OSRestoreInterruptsSig) &&
+							findx_pattern(data, dataType, i + 180, length, &AdjustPositionSig))
+							VIConfigureSigs[j].offsetFoundAt = i;
+						
+						findx_pattern(data, dataType, i + 176, length, &getTimingSigs[2]);
+						findx_pattern(data, dataType, i + 338, length, &setFbbRegsSigs[0]);
+						findx_pattern(data, dataType, i + 349, length, &setVerticalRegsSigs[1]);
+						break;
+					case 3:
 						if (findx_pattern(data, dataType, i +   9, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i + 332, length, &OSRestoreInterruptsSig) &&
 							findx_pattern(data, dataType, i + 171, length, &AdjustPositionSig))
 							VIConfigureSigs[j].offsetFoundAt = i;
 						
-						findx_pattern(data, dataType, i + 167, length, &getTimingSigs[2]);
+						findx_pattern(data, dataType, i + 167, length, &getTimingSigs[3]);
 						findx_pattern(data, dataType, i + 319, length, &setFbbRegsSigs[0]);
 						findx_pattern(data, dataType, i + 330, length, &setVerticalRegsSigs[1]);
 						break;
-					case 3:
+					case 4:
 						if (findx_pattern(data, dataType, i +   7, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i + 422, length, &OSRestoreInterruptsSig))
 							VIConfigureSigs[j].offsetFoundAt = i;
 						
-						findx_pattern(data, dataType, i +  77, length, &getTimingSigs[3]);
+						findx_pattern(data, dataType, i +  77, length, &getTimingSigs[4]);
 						findx_pattern(data, dataType, i + 409, length, &setFbbRegsSigs[1]);
 						findx_pattern(data, dataType, i + 420, length, &setVerticalRegsSigs[2]);
 						break;
-					case 4:
+					case 5:
 						if (findx_pattern(data, dataType, i +   7, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i + 414, length, &OSRestoreInterruptsSig))
 							VIConfigureSigs[j].offsetFoundAt = i;
 						
-						findx_pattern(data, dataType, i +  69, length, &getTimingSigs[3]);
+						findx_pattern(data, dataType, i +  69, length, &getTimingSigs[4]);
 						findx_pattern(data, dataType, i + 401, length, &setFbbRegsSigs[1]);
 						findx_pattern(data, dataType, i + 412, length, &setVerticalRegsSigs[2]);
 						break;
-					case 5:
+					case 6:
 						if (findx_pattern(data, dataType, i +   7, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i + 417, length, &OSRestoreInterruptsSig))
 							VIConfigureSigs[j].offsetFoundAt = i;
 						
-						findx_pattern(data, dataType, i +  72, length, &getTimingSigs[3]);
+						findx_pattern(data, dataType, i +  72, length, &getTimingSigs[4]);
 						findx_pattern(data, dataType, i + 404, length, &setFbbRegsSigs[1]);
 						findx_pattern(data, dataType, i + 415, length, &setVerticalRegsSigs[2]);
 						break;
-					case 6:
+					case 7:
 						if (findx_pattern(data, dataType, i +   9, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i + 458, length, &OSRestoreInterruptsSig))
 							VIConfigureSigs[j].offsetFoundAt = i;
 						
-						findx_pattern(data, dataType, i + 104, length, &getTimingSigs[4]);
+						findx_pattern(data, dataType, i + 104, length, &getTimingSigs[5]);
 						findx_pattern(data, dataType, i + 445, length, &setFbbRegsSigs[1]);
 						findx_pattern(data, dataType, i + 456, length, &setVerticalRegsSigs[2]);
 						break;
-					case 7:
+					case 8:
 						if (findx_pattern(data, dataType, i +   9, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i + 456, length, &OSRestoreInterruptsSig))
 							VIConfigureSigs[j].offsetFoundAt = i;
 						
-						findx_pattern(data, dataType, i + 107, length, &getTimingSigs[4]);
+						findx_pattern(data, dataType, i + 107, length, &getTimingSigs[5]);
 						findx_pattern(data, dataType, i + 443, length, &setFbbRegsSigs[1]);
 						findx_pattern(data, dataType, i + 454, length, &setVerticalRegsSigs[2]);
 						break;
-					case 8:
+					case 9:
 						if (findx_pattern(data, dataType, i +   9, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i + 481, length, &OSRestoreInterruptsSig))
 							VIConfigureSigs[j].offsetFoundAt = i;
 						
-						findx_pattern(data, dataType, i + 123, length, &getTimingSigs[5]);
+						findx_pattern(data, dataType, i + 123, length, &getTimingSigs[6]);
 						findx_pattern(data, dataType, i + 468, length, &setFbbRegsSigs[1]);
 						findx_pattern(data, dataType, i + 479, length, &setVerticalRegsSigs[2]);
 						break;
-					case 9:
+					case 10:
 						if (findx_pattern(data, dataType, i +   9, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i + 516, length, &OSRestoreInterruptsSig))
 							VIConfigureSigs[j].offsetFoundAt = i;
 						
-						findx_pattern(data, dataType, i + 155, length, &getTimingSigs[6]);
+						findx_pattern(data, dataType, i + 155, length, &getTimingSigs[7]);
 						findx_pattern(data, dataType, i + 503, length, &setFbbRegsSigs[1]);
 						findx_pattern(data, dataType, i + 514, length, &setVerticalRegsSigs[3]);
 						break;
-					case 10:
+					case 11:
 						if (findx_pattern(data, dataType, i +   8, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i + 552, length, &OSRestoreInterruptsSig))
-							VIConfigureSigs[j].offsetFoundAt = getTimingSigs[7].offsetFoundAt = i;
+							VIConfigureSigs[j].offsetFoundAt = getTimingSigs[8].offsetFoundAt = i;
 						
 						findx_pattern(data, dataType, i + 537, length, &setFbbRegsSigs[2]);
 						findx_pattern(data, dataType, i + 550, length, &setVerticalRegsSigs[4]);
 						break;
-					case 11:
+					case 12:
 						if (findx_pattern(data, dataType, i +   8, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i + 553, length, &OSRestoreInterruptsSig))
-							VIConfigureSigs[j].offsetFoundAt = getTimingSigs[8].offsetFoundAt = i;
+							VIConfigureSigs[j].offsetFoundAt = getTimingSigs[9].offsetFoundAt = i;
 						
 						findx_pattern(data, dataType, i + 538, length, &setFbbRegsSigs[2]);
 						findx_pattern(data, dataType, i + 551, length, &setVerticalRegsSigs[4]);
 						break;
-					case 12:
+					case 13:
 						if (findx_pattern(data, dataType, i +   9, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i + 508, length, &OSRestoreInterruptsSig))
 							VIConfigureSigs[j].offsetFoundAt = i;
 						
-						findx_pattern(data, dataType, i + 155, length, &getTimingSigs[9]);
+						findx_pattern(data, dataType, i + 155, length, &getTimingSigs[10]);
 						findx_pattern(data, dataType, i + 495, length, &setFbbRegsSigs[1]);
 						findx_pattern(data, dataType, i + 506, length, &setVerticalRegsSigs[3]);
 						break;
@@ -8529,20 +8864,20 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 				switch (j) {
 					case 0:
 						if (findx_pattern(data, dataType, i + 22, length, &getCurrentHalfLineSigs[0])) {
-							find_pattern_before(data, length, &getCurrentHalfLineSigs[0], &VIGetRetraceCountSig);
+							find_pattern_before(data, dataType, length, &getCurrentHalfLineSigs[0], &VIGetRetraceCountSig);
 							getCurrentFieldEvenOddSigs[j].offsetFoundAt = i;
 						}
 						break;
 					case 1:
 						if (findx_pattern(data, dataType, i +  3, length, &getCurrentHalfLineSigs[1])) {
-							find_pattern_before(data, length, &getCurrentHalfLineSigs[1], &VIGetRetraceCountSig);
+							find_pattern_before(data, dataType, length, &getCurrentHalfLineSigs[1], &VIGetRetraceCountSig);
 							getCurrentFieldEvenOddSigs[j].offsetFoundAt = i;
 						}
 						break;
 					case 2:
 						if (findx_pattern(data, dataType, i +  3, length, &getCurrentHalfLineSigs[2]) &&
-							find_pattern_before(data, length, &getCurrentHalfLineSigs[2], &GetCurrentDisplayPositionSigs[0])) {
-							find_pattern_before(data, length, &GetCurrentDisplayPositionSigs[0], &VIGetRetraceCountSig);
+							find_pattern_before(data, dataType, length, &getCurrentHalfLineSigs[2], &GetCurrentDisplayPositionSigs[0])) {
+							find_pattern_before(data, dataType, length, &GetCurrentDisplayPositionSigs[0], &VIGetRetraceCountSig);
 							getCurrentFieldEvenOddSigs[j].offsetFoundAt = i;
 						}
 						break;
@@ -8572,7 +8907,7 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 								if (findx_pattern(data, dataType, i +  5, length, &OSDisableInterruptsSig) &&
 									findx_pattern(data, dataType, i + 26, length, &OSRestoreInterruptsSig) &&
 									findx_pattern(data, dataType, i +  9, length, &GetCurrentDisplayPositionSigs[1])) {
-									find_pattern_before(data, length, &GetCurrentDisplayPositionSigs[1], &VIGetRetraceCountSig);
+									find_pattern_before(data, dataType, length, &GetCurrentDisplayPositionSigs[1], &VIGetRetraceCountSig);
 									VIGetNextFieldSigs[k].offsetFoundAt = i;
 								}
 								break;
@@ -8608,72 +8943,73 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 				switch (j) {
 					case 0:
 						if (findx_pattern(data, dataType, i + 1069, length, &GXSetDispCopySrcSigs[0]))
-							find_pattern_before(data, length, &GXSetDispCopySrcSigs[0], &GXAdjustForOverscanSigs[0]);
+							find_pattern_before(data, dataType, length, &GXSetDispCopySrcSigs[0], &GXAdjustForOverscanSigs[0]);
 						
 						findx_pattern(data, dataType, i + 1088, length, &GXSetDispCopyYScaleSigs[0]);
 						findx_pattern(data, dataType, i + 1095, length, &GXSetCopyFilterSigs[0]);
 						
 						if (findx_pattern(data, dataType, i + 1097, length, &GXSetDispCopyGammaSigs[0]))
-							find_pattern_after(data, length, &GXSetDispCopyGammaSigs[0], &GXCopyDispSigs[0]);
+							find_pattern_after(data, dataType, length, &GXSetDispCopyGammaSigs[0], &GXCopyDispSigs[0]);
 						
 						findx_pattern(data, dataType, i + 1033, length, &GXSetBlendModeSigs[0]);
 						findx_pattern(data, dataType, i +  727, length, &GXSetViewportSigs[0]);
 						break;
 					case 1:
 						if (findx_pattern(data, dataType, i + 480, length, &GXSetDispCopySrcSigs[0]))
-							find_pattern_before(data, length, &GXSetDispCopySrcSigs[0], &GXAdjustForOverscanSigs[0]);
+							find_pattern_before(data, dataType, length, &GXSetDispCopySrcSigs[0], &GXAdjustForOverscanSigs[0]);
 						
 						findx_pattern(data, dataType, i + 499, length, &GXSetDispCopyYScaleSigs[1]);
 						findx_pattern(data, dataType, i + 506, length, &GXSetCopyFilterSigs[0]);
 						
 						if (findx_pattern(data, dataType, i + 508, length, &GXSetDispCopyGammaSigs[0]))
-							find_pattern_after(data, length, &GXSetDispCopyGammaSigs[0], &GXCopyDispSigs[0]);
+							find_pattern_after(data, dataType, length, &GXSetDispCopyGammaSigs[0], &GXCopyDispSigs[0]);
 						
 						findx_pattern(data, dataType, i + 444, length, &GXSetBlendModeSigs[0]);
 						findx_pattern(data, dataType, i + 202, length, &GXSetViewportSigs[0]);
 						break;
 					case 2:
 						if (findx_pattern(data, dataType, i + 517, length, &GXSetDispCopySrcSigs[1]))
-							find_pattern_before(data, length, &GXSetDispCopySrcSigs[1], &GXAdjustForOverscanSigs[1]);
+							find_pattern_before(data, dataType, length, &GXSetDispCopySrcSigs[1], &GXAdjustForOverscanSigs[1]);
 						
 						findx_pattern(data, dataType, i + 536, length, &GXSetDispCopyYScaleSigs[2]);
 						findx_pattern(data, dataType, i + 543, length, &GXSetCopyFilterSigs[1]);
 						
-						if (findx_pattern(data, dataType, i + 545, length, &GXSetDispCopyGammaSigs[1]))
-							find_pattern_after(data, length, &GXSetDispCopyGammaSigs[1], &GXCopyDispSigs[1]);
+						if (findx_pattern(data, dataType, i + 545, length, &GXSetDispCopyGammaSigs[1]) &&
+							find_pattern_after(data, dataType, length, &GXSetDispCopyGammaSigs[1], &__GXVerifCopySig))
+							find_pattern_after(data, dataType, length, &__GXVerifCopySig, &GXCopyDispSigs[1]);
 						
 						findx_pattern(data, dataType, i + 481, length, &GXSetBlendModeSigs[1]);
 						findx_pattern(data, dataType, i + 210, length, &GXSetViewportSigs[1]);
 						break;
 					case 3:
 						if (findx_pattern(data, dataType, i + 917, length, &GXSetDispCopySrcSigs[2]))
-							find_pattern_before(data, length, &GXSetDispCopySrcSigs[2], &GXAdjustForOverscanSigs[2]);
+							find_pattern_before(data, dataType, length, &GXSetDispCopySrcSigs[2], &GXAdjustForOverscanSigs[2]);
 						
 						findx_pattern(data, dataType, i + 934, length, &GXSetDispCopyYScaleSigs[3]);
 						findx_pattern(data, dataType, i + 941, length, &GXSetCopyFilterSigs[2]);
 						
 						if (findx_pattern(data, dataType, i + 943, length, &GXSetDispCopyGammaSigs[2]))
-							find_pattern_after(data, length, &GXSetDispCopyGammaSigs[2], &GXCopyDispSigs[2]);
+							find_pattern_after(data, dataType, length, &GXSetDispCopyGammaSigs[2], &GXCopyDispSigs[2]);
 						
 						findx_pattern(data, dataType, i + 881, length, &GXSetBlendModeSigs[2]);
 						findx_pattern(data, dataType, i + 553, length, &GXSetViewportSigs[2]);
 						break;
 					case 4:
 						if (findx_pattern(data, dataType, i + 467, length, &GXSetDispCopySrcSigs[2]))
-							find_pattern_before(data, length, &GXSetDispCopySrcSigs[2], &GXAdjustForOverscanSigs[2]);
+							find_pattern_before(data, dataType, length, &GXSetDispCopySrcSigs[2], &GXAdjustForOverscanSigs[2]);
 						
 						findx_pattern(data, dataType, i + 484, length, &GXSetDispCopyYScaleSigs[3]);
 						findx_pattern(data, dataType, i + 491, length, &GXSetCopyFilterSigs[2]);
 						
 						if (findx_pattern(data, dataType, i + 493, length, &GXSetDispCopyGammaSigs[2]))
-							find_pattern_after(data, length, &GXSetDispCopyGammaSigs[2], &GXCopyDispSigs[2]);
+							find_pattern_after(data, dataType, length, &GXSetDispCopyGammaSigs[2], &GXCopyDispSigs[2]);
 						
 						findx_pattern(data, dataType, i + 431, length, &GXSetBlendModeSigs[2]);
 						findx_pattern(data, dataType, i + 186, length, &GXSetViewportSigs[2]);
 						break;
 					case 5:
 						if (findx_pattern(data, dataType, i + 482, length, &GXSetDispCopySrcSigs[2]))
-							find_pattern_before(data, length, &GXSetDispCopySrcSigs[2], &GXAdjustForOverscanSigs[2]);
+							find_pattern_before(data, dataType, length, &GXSetDispCopySrcSigs[2], &GXAdjustForOverscanSigs[2]);
 						
 						if (data[i + __GXInitGXSigs[j].Length - 2] == 0x7C0803A6)
 							findx_pattern(data, dataType, i + 499, length, &GXSetDispCopyYScaleSigs[4]);
@@ -8683,75 +9019,79 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 						findx_pattern(data, dataType, i + 506, length, &GXSetCopyFilterSigs[2]);
 						
 						if (findx_pattern(data, dataType, i + 508, length, &GXSetDispCopyGammaSigs[2]))
-							find_pattern_after(data, length, &GXSetDispCopyGammaSigs[2], &GXCopyDispSigs[2]);
+							find_pattern_after(data, dataType, length, &GXSetDispCopyGammaSigs[2], &GXCopyDispSigs[2]);
 						
 						findx_pattern(data, dataType, i + 446, length, &GXSetBlendModeSigs[2]);
 						findx_pattern(data, dataType, i + 202, length, &GXSetViewportSigs[2]);
 						break;
 					case 6:
 						if (findx_pattern(data, dataType, i + 497, length, &GXSetDispCopySrcSigs[3]))
-							find_pattern_before(data, length, &GXSetDispCopySrcSigs[3], &GXAdjustForOverscanSigs[2]);
+							find_pattern_before(data, dataType, length, &GXSetDispCopySrcSigs[3], &GXAdjustForOverscanSigs[2]);
 						
 						findx_pattern(data, dataType, i + 514, length, &GXSetDispCopyYScaleSigs[5]);
 						findx_pattern(data, dataType, i + 521, length, &GXSetCopyFilterSigs[2]);
 						
 						if (findx_pattern(data, dataType, i + 523, length, &GXSetDispCopyGammaSigs[2]))
-							find_pattern_after(data, length, &GXSetDispCopyGammaSigs[2], &GXCopyDispSigs[3]);
+							find_pattern_after(data, dataType, length, &GXSetDispCopyGammaSigs[2], &GXCopyDispSigs[3]);
 						
 						findx_pattern(data, dataType, i + 461, length, &GXSetBlendModeSigs[3]);
 						findx_pattern(data, dataType, i + 215, length, &GXSetViewportSigs[3]);
 						break;
 					case 7:
 						if (findx_pattern(data, dataType, i + 473, length, &GXSetDispCopySrcSigs[4]))
-							find_pattern_before(data, length, &GXSetDispCopySrcSigs[4], &GXAdjustForOverscanSigs[3]);
+							find_pattern_before(data, dataType, length, &GXSetDispCopySrcSigs[4], &GXAdjustForOverscanSigs[3]);
 						
 						findx_pattern(data, dataType, i + 492, length, &GXSetDispCopyYScaleSigs[6]);
 						findx_pattern(data, dataType, i + 499, length, &GXSetCopyFilterSigs[3]);
 						
 						if (findx_pattern(data, dataType, i + 501, length, &GXSetDispCopyGammaSigs[3]))
-							find_pattern_after(data, length, &GXSetDispCopyGammaSigs[3], &GXCopyDispSigs[4]);
+							find_pattern_after(data, dataType, length, &GXSetDispCopyGammaSigs[3], &GXCopyDispSigs[4]);
 						
 						findx_pattern(data, dataType, i + 433, length, &GXSetBlendModeSigs[5]);
 						findx_pattern(data, dataType, i + 202, length, &GXSetViewportSigs[4]);
 						break;
 					case 8:
 						if (findx_pattern(data, dataType, i + 475, length, &GXSetDispCopySrcSigs[4]))
-							find_pattern_before(data, length, &GXSetDispCopySrcSigs[4], &GXAdjustForOverscanSigs[3]);
+							find_pattern_before(data, dataType, length, &GXSetDispCopySrcSigs[4], &GXAdjustForOverscanSigs[3]);
 						
 						findx_pattern(data, dataType, i + 494, length, &GXSetDispCopyYScaleSigs[6]);
 						findx_pattern(data, dataType, i + 501, length, &GXSetCopyFilterSigs[4]);
 						
 						if (findx_pattern(data, dataType, i + 503, length, &GXSetDispCopyGammaSigs[3]))
-							find_pattern_after(data, length, &GXSetDispCopyGammaSigs[3], &GXCopyDispSigs[4]);
+							find_pattern_after(data, dataType, length, &GXSetDispCopyGammaSigs[3], &GXCopyDispSigs[4]);
 						
 						findx_pattern(data, dataType, i + 435, length, &GXSetBlendModeSigs[6]);
 						findx_pattern(data, dataType, i + 204, length, &GXSetViewportSigs[4]);
 						break;
 					case 9:
 						if (findx_pattern(data, dataType, i + 526, length, &GXSetDispCopySrcSigs[5]))
-							find_pattern_before(data, length, &GXSetDispCopySrcSigs[5], &GXAdjustForOverscanSigs[4]);
+							find_pattern_before(data, dataType, length, &GXSetDispCopySrcSigs[5], &GXAdjustForOverscanSigs[4]);
 						
 						findx_pattern(data, dataType, i + 543, length, &GXSetDispCopyYScaleSigs[7]);
 						findx_pattern(data, dataType, i + 550, length, &GXSetCopyFilterSigs[5]);
 						
 						if (findx_pattern(data, dataType, i + 552, length, &GXSetDispCopyGammaSigs[4]))
-							find_pattern_after(data, length, &GXSetDispCopyGammaSigs[4], &GXCopyDispSigs[5]);
+							find_pattern_after(data, dataType, length, &GXSetDispCopyGammaSigs[4], &GXCopyDispSigs[5]);
 						
 						findx_pattern(data, dataType, i + 490, length, &GXSetBlendModeSigs[3]);
-						findx_pattern(data, dataType, i + 215, length, &GXSetViewportSigs[5]);
+						
+						if (findx_pattern(data, dataType, i + 215, length, &GXSetViewportSigs[5]))
+							find_pattern_before(data, dataType, length, &GXSetViewportSigs[5], &GXSetViewportJitterSigs[5]);
 						break;
 					case 10:
 						if (findx_pattern(data, dataType, i + 512, length, &GXSetDispCopySrcSigs[6]))
-							find_pattern_before(data, length, &GXSetDispCopySrcSigs[6], &GXAdjustForOverscanSigs[2]);
+							find_pattern_before(data, dataType, length, &GXSetDispCopySrcSigs[6], &GXAdjustForOverscanSigs[2]);
 						
 						findx_pattern(data, dataType, i + 529, length, &GXSetDispCopyYScaleSigs[8]);
 						findx_pattern(data, dataType, i + 536, length, &GXSetCopyFilterSigs[6]);
 						
 						if (findx_pattern(data, dataType, i + 538, length, &GXSetDispCopyGammaSigs[4]))
-							find_pattern_after(data, length, &GXSetDispCopyGammaSigs[4], &GXCopyDispSigs[6]);
+							find_pattern_after(data, dataType, length, &GXSetDispCopyGammaSigs[4], &GXCopyDispSigs[6]);
 						
 						findx_pattern(data, dataType, i + 478, length, &GXSetBlendModeSigs[4]);
-						findx_pattern(data, dataType, i + 209, length, &GXSetViewportSigs[6]);
+						
+						if (findx_pattern(data, dataType, i + 209, length, &GXSetViewportSigs[6]))
+							find_pattern_before(data, dataType, length, &GXSetViewportSigs[6], &GXSetViewportJitterSigs[6]);
 						break;
 				}
 			}
@@ -8888,6 +9228,40 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 		i += fp.Length - 1;
 	}
 	
+	for (j = 0; j < sizeof(OSGetProgressiveModeSigs) / sizeof(FuncPattern); j++)
+	if ((i = OSGetProgressiveModeSigs[j].offsetFoundAt)) {
+		u32 *OSGetProgressiveMode = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+		
+		if (OSGetProgressiveMode) {
+			if (swissSettings.gameVMode < 0) {
+				memset(data + i, 0, OSGetProgressiveModeSigs[j].Length * sizeof(u32));
+				
+				data[i + 0] = 0x38600000;	// li		r3, 0
+				data[i + 1] = 0x4E800020;	// blr
+			} else if (swissSettings.gameVMode > 0) {
+				memset(data + i, 0, OSGetProgressiveModeSigs[j].Length * sizeof(u32));
+				
+				data[i + 0] = 0x38600000 | (swissSettings.sramProgressive & 0xFFFF);
+				data[i + 1] = 0x4E800020;	// blr
+			}
+			print_debug("Found:[%s$%i] @ %08X\n", OSGetProgressiveModeSigs[j].Name, j, OSGetProgressiveMode);
+		}
+	}
+	
+	for (j = 0; j < sizeof(OSSetProgressiveModeSigs) / sizeof(FuncPattern); j++)
+	if ((i = OSSetProgressiveModeSigs[j].offsetFoundAt)) {
+		u32 *OSSetProgressiveMode = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+		
+		if (OSSetProgressiveMode) {
+			if (swissSettings.gameVMode != 0) {
+				memset(data + i, 0, OSSetProgressiveModeSigs[j].Length * sizeof(u32));
+				
+				data[i + 0] = 0x4E800020;	// blr
+			}
+			print_debug("Found:[%s$%i] @ %08X\n", OSSetProgressiveModeSigs[j].Name, j, OSSetProgressiveMode);
+		}
+	}
+	
 	for (j = 0; j < sizeof(OSGetEuRgb60ModeSigs) / sizeof(FuncPattern); j++)
 	if ((i = OSGetEuRgb60ModeSigs[j].offsetFoundAt)) {
 		u32 *OSGetEuRgb60Mode = Calc_ProperAddress(data, dataType, i * sizeof(u32));
@@ -8896,10 +9270,10 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 			if (in_range(swissSettings.gameVMode, 1, 7)) {
 				memset(data + i, 0, OSGetEuRgb60ModeSigs[j].Length * sizeof(u32));
 				
-				data[i + 0] = 0x38600001;	// li		r3, 1
+				data[i + 0] = 0x38600000 | (swissSettings.sram60Hz & 0xFFFF);
 				data[i + 1] = 0x4E800020;	// blr
 			}
-			print_gecko("Found:[%s] @ %08X\n", OSGetEuRgb60ModeSigs[j].Name, OSGetEuRgb60Mode);
+			print_debug("Found:[%s$%i] @ %08X\n", OSGetEuRgb60ModeSigs[j].Name, j, OSGetEuRgb60Mode);
 		}
 	}
 	
@@ -8913,7 +9287,7 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 				
 				data[i + 0] = 0x4E800020;	// blr
 			}
-			print_gecko("Found:[%s] @ %08X\n", OSSetEuRgb60ModeSigs[j].Name, OSSetEuRgb60Mode);
+			print_debug("Found:[%s$%i] @ %08X\n", OSSetEuRgb60ModeSigs[j].Name, j, OSSetEuRgb60Mode);
 		}
 	}
 	
@@ -8963,7 +9337,7 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 						break;
 				}
 			}
-			print_gecko("Found:[%s$%i] @ %08X\n", getCurrentFieldEvenOddSigs[k].Name, k, getCurrentFieldEvenOdd);
+			print_debug("Found:[%s$%i] @ %08X\n", getCurrentFieldEvenOddSigs[k].Name, k, getCurrentFieldEvenOdd);
 		}
 		
 		if (j < sizeof(VISetRegsSigs) / sizeof(FuncPattern) && (i = VISetRegsSigs[j].offsetFoundAt)) {
@@ -9003,7 +9377,7 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 							break;
 					}
 				}
-				print_gecko("Found:[%s$%i] @ %08X\n", VISetRegsSigs[j].Name, j, VISetRegs);
+				print_debug("Found:[%s$%i] @ %08X\n", VISetRegsSigs[j].Name, j, VISetRegs);
 			}
 		}
 		
@@ -9083,7 +9457,7 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 							break;
 					}
 				}
-				if (swissSettings.forceVJitter == 1) {
+				if (swissSettings.forceVJitter == 1 || swissSettings.forceVJitter == 3) {
 					__VIRetraceHandlerHook = getPatchAddr(VI_RETRACEHANDLERHOOK);
 					
 					switch (j) {
@@ -9158,7 +9532,7 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 					else
 						data[i + __VIRetraceHandlerSigs[j].Length - 1] = branch(CHEATS_ENGINE_START, __VIRetraceHandler + __VIRetraceHandlerSigs[j].Length - 1);
 				}
-				print_gecko("Found:[%s$%i] @ %08X\n", __VIRetraceHandlerSigs[j].Name, j, __VIRetraceHandler);
+				print_debug("Found:[%s$%i] @ %08X\n", __VIRetraceHandlerSigs[j].Name, j, __VIRetraceHandler);
 			}
 		}
 	}
@@ -9176,11 +9550,11 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 		u8 (*timingTable)[38];
 		
 		if (getTiming) {
-			if (j == 7 || j == 8) {
+			if (j == 8 || j == 9) {
 				timingTableAddr = (data[i +   5] << 16) + (s16)data[i +   7];
 				jumpTableAddr   = (data[i + 147] << 16) + (s16)data[i + 149];
 				k = (u16)data[i + 144] + 1;
-			} else if (j >= 3) {
+			} else if (j >= 4) {
 				timingTableAddr = (data[i + 1] << 16) + (s16)data[i + 2];
 				jumpTableAddr   = (data[i + 4] << 16) + (s16)data[i + 5];
 				k = (u16)data[i] + 1;
@@ -9189,7 +9563,7 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 				jumpTableAddr   = (data[i + 6] << 16) + (s16)data[i + 7];
 				k = (u16)data[i + 4] + 1;
 			}
-			if (j == 2 || j > 5) timingTableAddr += 68;
+			if ((j > 1 && j < 4) || j > 6) timingTableAddr += 68;
 			
 			timingTable = Calc_Address(data, dataType, timingTableAddr);
 			jumpTable   = Calc_Address(data, dataType, jumpTableAddr);
@@ -9203,10 +9577,10 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 			else if (swissSettings.gameVMode == 4 || swissSettings.gameVMode == 11)
 				memcpy(timingTable + 6, video_timing_960i, sizeof(video_timing_960i));
 			
-			if (swissSettings.aveCompat == 3)
+			if (swissSettings.aveCompat == AVE_N_DOL_COMPAT)
 				memcpy(timingTable + 2, video_timing_ntsc50, sizeof(video_timing_ntsc50));
 			
-			if (j == 1 || j == 2 || j >= 5) {
+			if ((j >= 1 && j < 4) || j >= 6) {
 				if (swissSettings.gameVMode == 7 || swissSettings.gameVMode == 14)
 					memcpy(timingTable + 7, video_timing_540p50, sizeof(video_timing_540p50));
 				else if (swissSettings.gameVMode == 6 || swissSettings.gameVMode == 13)
@@ -9241,15 +9615,15 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 			if (getTimingSigs[j].Patch) {
 				memset(jumpTable, 0, k * sizeof(u32));
 				memset(data + i, 0, getTimingSigs[j].Length * sizeof(u32));
-				memcpy(data + i, getTimingSigs[j].Patch, getTimingSigs[j].PatchLength);
+				memcpy(data + i, getTimingSigs[j].Patch, getTimingSigs[j].PatchLength * sizeof(u32));
 				
-				data[i + 1] |= ((u32)getTiming + getTimingSigs[j].PatchLength + 0x8000) >> 16;
-				data[i + 2] |= ((u32)getTiming + getTimingSigs[j].PatchLength) & 0xFFFF;
+				data[i + 1] |= ((u32)(getTiming + getTimingSigs[j].PatchLength) + 0x8000) >> 16;
+				data[i + 2] |= ((u32)(getTiming + getTimingSigs[j].PatchLength) & 0xFFFF);
 				
-				for (k = 6; k < getTimingSigs[j].PatchLength / sizeof(u32); k++)
+				for (k = 6; k < getTimingSigs[j].PatchLength; k++)
 					data[i + k] += timingTableAddr;
 			}
-			print_gecko("Found:[%s$%i] @ %08X\n", getTimingSigs[j].Name, j, getTiming);
+			print_debug("Found:[%s$%i] @ %08X\n", getTimingSigs[j].Name, j, getTiming);
 		}
 	}
 	
@@ -9272,18 +9646,26 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 					data[i + 137] = 0x281B0003;	// cmplwi	r27, 3
 					data[i + 139] = 0x5760177A;	// rlwinm	r0, r27, 2, 29, 29
 					break;
-				case 3:
+				case 2:
+					data[i +  10] = 0x57DB07BE;	// clrlwi	r27, r30, 30
+					data[i + 135] = 0x281B0002;	// cmplwi	r27, 2
+					data[i + 137] = 0x281B0003;	// cmplwi	r27, 3
+					data[i + 139] = 0x281B0001;	// cmplwi	r27, 1
+					data[i + 140] = 0x4181002C;	// bgt		+11
+					data[i + 141] = 0x5760177A;	// rlwinm	r0, r27, 2, 29, 29
+					break;
+				case 4:
 					data[i +  11] = 0x57BE07BE;	// clrlwi	r30, r29, 30
 					data[i +  35] = 0x281E0002;	// cmplwi	r30, 2
 					data[i + 104] = 0x57C3177A;	// rlwinm	r3, r30, 2, 29, 29
 					break;
-				case 4:
+				case 5:
 					data[i +  11] = 0x57BE07BE;	// clrlwi	r30, r29, 30
 					data[i +  35] = 0x281E0002;	// cmplwi	r30, 2
 					data[i + 104] = 0x281E0003;	// cmplwi	r30, 3
 					data[i + 106] = 0x57C3177A;	// rlwinm	r3, r30, 2, 29, 29
 					break;
-				case 5:
+				case 6:
 					data[i +  11] = 0x57BE07BE;	// clrlwi	r30, r29, 30
 					data[i +  35] = 0x281E0002;	// cmplwi	r30, 2
 					data[i + 104] = 0x281E0003;	// cmplwi	r30, 3
@@ -9291,7 +9673,7 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 					data[i + 107] = 0x41810020;	// bgt		+8
 					data[i + 108] = 0x57C3177A;	// rlwinm	r3, r30, 2, 29, 29
 					break;
-				case 6:
+				case 7:
 					data[i +   5] = 0x546607BE;	// clrlwi	r6, r3, 30
 					data[i +  90] = 0x28060002;	// cmplwi	r6, 2
 					data[i + 157] = 0x28060003;	// cmplwi	r6, 3
@@ -9300,7 +9682,7 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 					data[i + 161] = 0x54C5177A;	// rlwinm	r5, r6, 2, 29, 29
 					break;
 			}
-			print_gecko("Found:[%s$%i] @ %08X\n", __VIInitSigs[j].Name, j, __VIInit);
+			print_debug("Found:[%s$%i] @ %08X\n", __VIInitSigs[j].Name, j, __VIInit);
 		}
 	}
 	
@@ -9325,7 +9707,7 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 			data[i + 105] = 0x5466083C;	// slwi		r6, r3, 1
 			data[i + 106] = 0x7CC03050;	// sub		r6, r6, r0
 			
-			print_gecko("Found:[%s] @ %08X\n", AdjustPositionSig.Name, AdjustPosition);
+			print_debug("Found:[%s] @ %08X\n", AdjustPositionSig.Name, AdjustPosition);
 		}
 	}
 	
@@ -9335,7 +9717,7 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 		if (ImportAdjustingValues) {
 			data[i + 17] = 0x38000000 | (swissSettings.forceVOffset & 0xFFFF);
 			
-			print_gecko("Found:[%s] @ %08X\n", ImportAdjustingValuesSig.Name, ImportAdjustingValues);
+			print_debug("Found:[%s] @ %08X\n", ImportAdjustingValuesSig.Name, ImportAdjustingValues);
 		}
 	}
 	
@@ -9382,7 +9764,7 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 					case 8: data[i + 201] = 0x39200000 | (swissSettings.sramVideo & 0xFFFF); break;
 				}
 			}
-			print_gecko("Found:[%s$%i] @ %08X\n", VIInitSigs[k].Name, k, VIInit);
+			print_debug("Found:[%s$%i] @ %08X\n", VIInitSigs[k].Name, k, VIInit);
 		}
 		
 		if (j < sizeof(VIWaitForRetraceSigs) / sizeof(FuncPattern) && (i = VIWaitForRetraceSigs[j].offsetFoundAt)) {
@@ -9401,7 +9783,7 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 							break;
 					}
 				}
-				print_gecko("Found:[%s$%i] @ %08X\n", VIWaitForRetraceSigs[j].Name, j, VIWaitForRetrace);
+				print_debug("Found:[%s$%i] @ %08X\n", VIWaitForRetraceSigs[j].Name, j, VIWaitForRetrace);
 			}
 		}
 	}
@@ -9449,7 +9831,7 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 						break;
 				}
 			}
-			print_gecko("Found:[%s$%i] @ %08X\n", setFbbRegsSigs[j].Name, j, setFbbRegs);
+			print_debug("Found:[%s$%i] @ %08X\n", setFbbRegsSigs[j].Name, j, setFbbRegs);
 		}
 	}
 	
@@ -9497,7 +9879,7 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 					case 4: data[i +  4] = 0x39800000; break;	// li		r12, 0
 				}
 			}
-			print_gecko("Found:[%s$%i] @ %08X\n", setVerticalRegsSigs[j].Name, j, setVerticalRegs);
+			print_debug("Found:[%s$%i] @ %08X\n", setVerticalRegsSigs[j].Name, j, setVerticalRegs);
 		}
 	}
 	
@@ -9511,13 +9893,16 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 		if (VIConfigure) {
 			VIConfigureHook2 = getPatchAddr(VI_CONFIGUREHOOK2);
 			
-			if (swissSettings.aveCompat == 1) {
+			if (in_range(swissSettings.aveCompat, GCDIGITAL_COMPAT, GCVIDEO_COMPAT)) {
 				if (swissSettings.rt4kOptim)
 					VIConfigureHook1 = getPatchAddr(VI_CONFIGUREHOOK1_RT4K);
 				else
 					VIConfigureHook1 = getPatchAddr(VI_CONFIGUREHOOK1_GCVIDEO);
 			} else
 				VIConfigureHook1 = getPatchAddr(VI_CONFIGUREHOOK1);
+			
+			if (swissSettings.forceVJitter == 1 || (swissSettings.forceVJitter != 2 && swissSettings.fixPixelCenter))
+				VIConfigureHook1 = getPatchAddr(VI_CONFIGUREFIELDMODE);
 			
 			switch (swissSettings.gameVMode) {
 				case -2:
@@ -9538,7 +9923,7 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 				case 14: VIConfigureHook1 = getPatchAddr(VI_CONFIGURE540P50);  break;
 			}
 			
-			if (swissSettings.aveCompat == 1 && swissSettings.rt4kOptim)
+			if (in_range(swissSettings.aveCompat, GCDIGITAL_COMPAT, GCVIDEO_COMPAT) && swissSettings.rt4kOptim)
 				VIConfigureHook1 = getPatchAddr(VI_CONFIGURENOYSCALE);
 			
 			switch (j) {
@@ -9578,6 +9963,28 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 					data[i + 308] = branchAndLink(VIConfigureHook2, VIConfigure + 308);
 					break;
 				case 2:
+					data[i +  66] = data[i + 8];
+					data[i +  65] = data[i + 7];
+					data[i +   8] = data[i + 6];
+					data[i +   7] = data[i + 5];
+					data[i +   5] = branchAndLink(VIConfigureHook1, VIConfigure + 5);
+					data[i +   6] = 0x7C771B78;	// mr		r23, r3
+					data[i +  18] = 0xA01E0016;	// lhz		r0, 22 (r30)
+					data[i +  41] = 0xA01E0016;	// lhz		r0, 22 (r30)
+					data[i + 121] = 0xA01E0012;	// lhz		r0, 18 (r30)
+					data[i + 131] = 0xA01E0014;	// lhz		r0, 20 (r30)
+					data[i + 137] = 0xA01E0016;	// lhz		r0, 22 (r30)
+					data[i + 289] = 0x801F0114;	// lwz		r0, 276 (r31)
+					data[i + 290] = 0x28000002;	// cmplwi	r0, 2
+					data[i + 292] = 0x801F0114;	// lwz		r0, 276 (r31)
+					data[i + 293] = 0x28000003;	// cmplwi	r0, 3
+					data[i + 295] = 0x801F0114;	// lwz		r0, 276 (r31)
+					data[i + 296] = 0x28000001;	// cmplwi	r0, 1
+					data[i + 297] = 0x40810010;	// ble		+4
+					data[i + 341] = 0xA87F00FA;	// lha		r3, 250 (r31)
+					data[i + 351] = branchAndLink(VIConfigureHook2, VIConfigure + 351);
+					break;
+				case 3:
 					data[i +  10] = data[i + 8];
 					data[i +   9] = data[i + 7];
 					data[i +   8] = data[i + 6];
@@ -9592,7 +9999,7 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 					data[i + 322] = 0xA87F00FA;	// lha		r3, 250 (r31)
 					data[i + 332] = branchAndLink(VIConfigureHook2, VIConfigure + 332);
 					break;
-				case 3:
+				case 4:
 					data[i +   7] = branchAndLink(VIConfigureHook1, VIConfigure + 7);
 					data[i +  19] = 0x548307BE;	// clrlwi	r3, r4, 30
 					data[i +  29] = 0xA01F0012;	// lhz		r0, 18 (r31)
@@ -9609,7 +10016,7 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 					data[i + 412] = 0xA8730000;	// lha		r3, 0 (r19)
 					data[i + 422] = branchAndLink(VIConfigureHook2, VIConfigure + 422);
 					break;
-				case 4:
+				case 5:
 					data[i +   7] = branchAndLink(VIConfigureHook1, VIConfigure + 7);
 					data[i +  21] = 0xA01F0012;	// lhz		r0, 18 (r31)
 					data[i +  33] = 0xA01F0014;	// lhz		r0, 20 (r31)
@@ -9625,7 +10032,7 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 					data[i + 404] = 0xA8730000;	// lha		r3, 0 (r19)
 					data[i + 414] = branchAndLink(VIConfigureHook2, VIConfigure + 414);
 					break;
-				case 5:
+				case 6:
 					data[i +   7] = branchAndLink(VIConfigureHook1, VIConfigure + 7);
 					data[i +  21] = 0xA01F0012;	// lhz		r0, 18 (r31)
 					data[i +  33] = 0xA01F0014;	// lhz		r0, 20 (r31)
@@ -9641,7 +10048,7 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 					data[i + 407] = 0xA8730000;	// lha		r3, 0 (r19)
 					data[i + 417] = branchAndLink(VIConfigureHook2, VIConfigure + 417);
 					break;
-				case 6:
+				case 7:
 					data[i +   9] = branchAndLink(VIConfigureHook1, VIConfigure + 9);
 					data[i +  56] = 0xA01F0012;	// lhz		r0, 18 (r31)
 					data[i +  68] = 0xA01F0014;	// lhz		r0, 20 (r31)
@@ -9657,7 +10064,7 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 					data[i + 448] = 0xA8730000;	// lha		r3, 0 (r19)
 					data[i + 458] = branchAndLink(VIConfigureHook2, VIConfigure + 458);
 					break;
-				case 7:
+				case 8:
 					data[i +   9] = branchAndLink(VIConfigureHook1, VIConfigure + 9);
 					data[i +  59] = 0xA01F0012;	// lhz		r0, 18 (r31)
 					data[i +  71] = 0xA01F0014;	// lhz		r0, 20 (r31)
@@ -9673,7 +10080,7 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 					data[i + 446] = 0xA8730000;	// lha		r3, 0 (r19)
 					data[i + 456] = branchAndLink(VIConfigureHook2, VIConfigure + 456);
 					break;
-				case 8:
+				case 9:
 					data[i +   9] = branchAndLink(VIConfigureHook1, VIConfigure + 9);
 					data[i +  59] = 0xA01F0012;	// lhz		r0, 18 (r31)
 					data[i +  71] = 0xA01F0014;	// lhz		r0, 20 (r31)
@@ -9690,7 +10097,7 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 					data[i + 471] = 0xA8730000;	// lha		r3, 0 (r19)
 					data[i + 481] = branchAndLink(VIConfigureHook2, VIConfigure + 481);
 					break;
-				case 9:
+				case 10:
 					data[i +   9] = branchAndLink(VIConfigureHook1, VIConfigure + 9);
 					data[i +  91] = 0xA01F0012;	// lhz		r0, 18 (r31)
 					data[i + 103] = 0xA01F0014;	// lhz		r0, 20 (r31)
@@ -9709,7 +10116,7 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 					data[i + 506] = 0xA8730000;	// lha		r3, 0 (r19)
 					data[i + 516] = branchAndLink(VIConfigureHook2, VIConfigure + 516);
 					break;
-				case 10:
+				case 11:
 					data[i +   8] = branchAndLink(VIConfigureHook1, VIConfigure + 8);
 					data[i +  96] = 0xA09B0012;	// lhz		r4, 18 (r27)
 					data[i + 106] = 0xA0FB0014;	// lhz		r7, 20 (r27)
@@ -9728,7 +10135,7 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 					data[i + 542] = 0xA87E000A;	// lha		r3, 10 (r30)
 					data[i + 552] = branchAndLink(VIConfigureHook2, VIConfigure + 552);
 					break;
-				case 11:
+				case 12:
 					data[i +   8] = branchAndLink(VIConfigureHook1, VIConfigure + 8);
 					data[i +  96] = 0xA09B0012;	// lhz		r4, 18 (r27)
 					data[i + 106] = 0xA0FB0014;	// lhz		r7, 20 (r27)
@@ -9747,7 +10154,7 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 					data[i + 543] = 0xA87E000A;	// lha		r3, 10 (r30)
 					data[i + 553] = branchAndLink(VIConfigureHook2, VIConfigure + 553);
 					break;
-				case 12:
+				case 13:
 					data[i +   9] = branchAndLink(VIConfigureHook1, VIConfigure + 9);
 					data[i +  91] = 0xA0130012;	// lhz		r0, 18 (r19)
 					data[i + 103] = 0xA0130014;	// lhz		r0, 20 (r19)
@@ -9787,56 +10194,69 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 						data[i + 100] = 0x881E0016;	// lbz		r0, 22 (r30)
 						break;
 					case 2:
+						data[i +  18] = 0x881E0017;	// lbz		r0, 23 (r30)
+						data[i +  21] = 0xA01E0002;	// lhz		r0, 2 (r30)
+						data[i +  24] = 0xA01E0002;	// lhz		r0, 2 (r30)
+						data[i +  27] = 0xA01E0002;	// lhz		r0, 2 (r30)
+						data[i +  41] = 0x881E0017;	// lbz		r0, 23 (r30)
+						data[i +  44] = 0xA01E0002;	// lhz		r0, 2 (r30)
+						data[i +  47] = 0xA01E0002;	// lhz		r0, 2 (r30)
+						data[i +  50] = 0xA01E0002;	// lhz		r0, 2 (r30)
+						data[i +  67] = 0xA01E0000;	// lhz		r0, 0 (r30)
+						data[i +  75] = 0xA01E0000;	// lhz		r0, 0 (r30)
+						data[i + 137] = 0x881E0016;	// lbz		r0, 22 (r30)
+						break;
+					case 3:
 						data[i +  11] = 0xA01E0000;	// lhz		r0, 0 (r30)
 						data[i +  28] = 0x881E0016;	// lbz		r0, 22 (r30)
 						data[i +  46] = 0x881E0016;	// lbz		r0, 22 (r30)
 						data[i +  65] = 0xA01E0000;	// lhz		r0, 0 (r30)
 						data[i + 128] = 0x881E0016;	// lbz		r0, 22 (r30)
 						break;
-					case 3:
+					case 4:
 						data[i +   8] = 0xA09F0000;	// lhz		r4, 0 (r31)
 						data[i +  54] = 0x887F0016;	// lbz		r3, 22 (r31)
 						data[i +  76] = 0xA07F0000;	// lhz		r3, 0 (r31)
 						break;
-					case 4:
+					case 5:
 						data[i +   8] = 0xA09F0000;	// lhz		r4, 0 (r31)
 						data[i +  46] = 0x887F0016;	// lbz		r3, 22 (r31)
 						data[i +  68] = 0xA07F0000;	// lhz		r3, 0 (r31)
 						break;
-					case 5:
+					case 6:
 						data[i +   8] = 0xA09F0000;	// lhz		r4, 0 (r31)
 						data[i +  46] = 0x887F0016;	// lbz		r3, 22 (r31)
 						break;
-					case 6:
+					case 7:
 						data[i +  10] = 0xA01F0000;	// lhz		r0, 0 (r31)
 						data[i +  45] = 0xA07F0000;	// lhz		r3, 0 (r31)
 						data[i +  81] = 0x887F0016;	// lbz		r3, 22 (r31)
 						data[i + 103] = 0xA07F0000;	// lhz		r3, 0 (r31)
 						data[i + 237] = 0xA0DF0000;	// lhz		r6, 0 (r31)
 						break;
-					case 7:
+					case 8:
 						data[i +  10] = 0xA09F0000;	// lhz		r4, 0 (r31)
 						data[i +  20] = 0xA01F0000;	// lhz		r0, 0 (r31)
 						data[i +  84] = 0x887F0016;	// lbz		r3, 22 (r31)
 						data[i + 106] = 0xA07F0000;	// lhz		r3, 0 (r31)
 						break;
-					case 8:
+					case 9:
 						data[i +  10] = 0xA09F0000;	// lhz		r4, 0 (r31)
 						data[i +  20] = 0xA01F0000;	// lhz		r0, 0 (r31)
 						data[i +  84] = 0x887F0016;	// lbz		r3, 22 (r31)
 						break;
-					case 9:
+					case 10:
 						data[i +  10] = 0xA09F0000;	// lhz		r4, 0 (r31)
 						data[i +  20] = 0xA01F0000;	// lhz		r0, 0 (r31)
 						data[i + 116] = 0x887F0016;	// lbz		r3, 22 (r31)
 						break;
-					case 10:
 					case 11:
+					case 12:
 						data[i +  10] = 0xA0BB0000;	// lhz		r5, 0 (r27)
 						data[i +  20] = 0xA01B0000;	// lhz		r0, 0 (r27)
 						data[i + 112] = 0x887B0016;	// lbz		r3, 22 (r27)
 						break;
-					case 12:
+					case 13:
 						data[i +  10] = 0xA0930000;	// lhz		r4, 0 (r19)
 						data[i +  20] = 0xA0130000;	// lhz		r0, 0 (r19)
 						data[i + 116] = 0x88730016;	// lbz		r3, 22 (r19)
@@ -9865,6 +10285,16 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 						data[i + 126] = 0xA01E0010;	// lhz		r0, 16 (r30)
 						break;
 					case 2:
+						data[i + 127] = 0x5400003C;	// clrrwi	r0, r0, 1
+						data[i + 150] = 0xA01E0010;	// lhz		r0, 16 (r30)
+						data[i + 155] = 0xA01E0010;	// lhz		r0, 16 (r30)
+						data[i + 157] = 0x801F0114;	// lwz		r0, 276 (r31)
+						data[i + 158] = 0x28000001;	// cmplwi	r0, 1
+						data[i + 160] = 0xA01E0010;	// lhz		r0, 16 (r30)
+						data[i + 161] = 0x5400003C;	// clrrwi	r0, r0, 1
+						data[i + 163] = 0xA01E0010;	// lhz		r0, 16 (r30)
+						break;
+					case 3:
 						data[i + 118] = 0x5400003C;	// clrrwi	r0, r0, 1
 						data[i + 141] = 0xA01E0010;	// lhz		r0, 16 (r30)
 						data[i + 146] = 0xA01E0010;	// lhz		r0, 16 (r30)
@@ -9874,7 +10304,7 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 						data[i + 152] = 0x5400003C;	// clrrwi	r0, r0, 1
 						data[i + 154] = 0xA01E0010;	// lhz		r0, 16 (r30)
 						break;
-					case 3:
+					case 4:
 						data[i +  35] = 0x5400003C;	// clrrwi	r0, r0, 1
 						data[i +  65] = 0xA01F0010;	// lhz		r0, 16 (r31)
 						data[i +  67] = 0x801B0000;	// lwz		r0, 0 (r27)
@@ -9882,15 +10312,6 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 						data[i +  70] = 0xA01F0010;	// lhz		r0, 16 (r31)
 						data[i +  71] = 0x5400003C;	// clrrwi	r0, r0, 1
 						data[i +  73] = 0xA01F0010;	// lhz		r0, 16 (r31)
-						break;
-					case 4:
-						data[i +  27] = 0x5400003C;	// clrrwi	r0, r0, 1
-						data[i +  57] = 0xA01F0010;	// lhz		r0, 16 (r31)
-						data[i +  59] = 0x801C0000;	// lwz		r0, 0 (r28)
-						data[i +  60] = 0x28000001;	// cmplwi	r0, 1
-						data[i +  62] = 0xA01F0010;	// lhz		r0, 16 (r31)
-						data[i +  63] = 0x5400003C;	// clrrwi	r0, r0, 1
-						data[i +  65] = 0xA01F0010;	// lhz		r0, 16 (r31)
 						break;
 					case 5:
 						data[i +  27] = 0x5400003C;	// clrrwi	r0, r0, 1
@@ -9902,6 +10323,15 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 						data[i +  65] = 0xA01F0010;	// lhz		r0, 16 (r31)
 						break;
 					case 6:
+						data[i +  27] = 0x5400003C;	// clrrwi	r0, r0, 1
+						data[i +  57] = 0xA01F0010;	// lhz		r0, 16 (r31)
+						data[i +  59] = 0x801C0000;	// lwz		r0, 0 (r28)
+						data[i +  60] = 0x28000001;	// cmplwi	r0, 1
+						data[i +  62] = 0xA01F0010;	// lhz		r0, 16 (r31)
+						data[i +  63] = 0x5400003C;	// clrrwi	r0, r0, 1
+						data[i +  65] = 0xA01F0010;	// lhz		r0, 16 (r31)
+						break;
+					case 7:
 						data[i +  62] = 0x5400003C;	// clrrwi	r0, r0, 1
 						data[i +  92] = 0xA01F0010;	// lhz		r0, 16 (r31)
 						data[i +  94] = 0x801C0000;	// lwz		r0, 0 (r28)
@@ -9910,7 +10340,7 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 						data[i +  98] = 0x5400003C;	// clrrwi	r0, r0, 1
 						data[i + 100] = 0xA01F0010;	// lhz		r0, 16 (r31)
 						break;
-					case 7:
+					case 8:
 						data[i +  65] = 0x5400003C;	// clrrwi	r0, r0, 1
 						data[i +  95] = 0xA01F0010;	// lhz		r0, 16 (r31)
 						data[i +  97] = 0x801C0000;	// lwz		r0, 0 (r28)
@@ -9919,7 +10349,7 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 						data[i + 101] = 0x5400003C;	// clrrwi	r0, r0, 1
 						data[i + 103] = 0xA01F0010;	// lhz		r0, 16 (r31)
 						break;
-					case 8:
+					case 9:
 						data[i +  65] = 0x5400003C;	// clrrwi	r0, r0, 1
 						data[i +  95] = 0xA01F0010;	// lhz		r0, 16 (r31)
 						data[i +  99] = 0xA01F0010;	// lhz		r0, 16 (r31)
@@ -9929,7 +10359,7 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 						data[i + 105] = 0x5400003C;	// clrrwi	r0, r0, 1
 						data[i + 107] = 0xA01F0010;	// lhz		r0, 16 (r31)
 						break;
-					case 9:
+					case 10:
 						data[i +  97] = 0x5400003C;	// clrrwi	r0, r0, 1
 						data[i + 127] = 0xA01F0010;	// lhz		r0, 16 (r31)
 						data[i + 131] = 0xA01F0010;	// lhz		r0, 16 (r31)
@@ -9939,8 +10369,8 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 						data[i + 137] = 0x5400003C;	// clrrwi	r0, r0, 1
 						data[i + 139] = 0xA01F0010;	// lhz		r0, 16 (r31)
 						break;
-					case 10:
 					case 11:
+					case 12:
 						data[i + 101] = 0x5408003C;	// clrrwi	r8, r0, 1
 						data[i + 123] = 0xA0FB0010;	// lhz		r7, 16 (r27)
 						data[i + 127] = 0xA0FB0010;	// lhz		r7, 16 (r27)
@@ -9948,7 +10378,7 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 						data[i + 131] = 0xA0FB0010;	// lhz		r7, 16 (r27)
 						data[i + 133] = 0xA0FB0010;	// lhz		r7, 16 (r27)
 						break;
-					case 12:
+					case 13:
 						data[i +  97] = 0x5400003C;	// clrrwi	r0, r0, 1
 						data[i + 127] = 0xA0130010;	// lhz		r0, 16 (r19)
 						data[i + 131] = 0xA0130010;	// lhz		r0, 16 (r19)
@@ -9960,8 +10390,8 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 						break;
 				}
 			}
-			if (swissSettings.aveCompat != 2 && (swissSettings.gameVMode == 4 || swissSettings.gameVMode == 11 ||
-												 swissSettings.gameVMode == 6 || swissSettings.gameVMode == 13)) {
+			if (swissSettings.aveCompat != AVE_RVL_COMPAT && (swissSettings.gameVMode == 4 || swissSettings.gameVMode == 11 ||
+				                                              swissSettings.gameVMode == 6 || swissSettings.gameVMode == 13)) {
 				switch (j) {
 					case 0:
 						data[i + 181] = 0x579C07B8;	// rlwinm	r28, r28, 0, 30, 28
@@ -9972,53 +10402,57 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 						data[i + 193] = 0x501C177A;	// rlwimi	r28, r0, 2, 29, 29
 						break;
 					case 2:
+						data[i + 229] = 0x579C07B8;	// rlwinm	r28, r28, 0, 30, 28
+						data[i + 230] = 0x501C177A;	// rlwimi	r28, r0, 2, 29, 29
+						break;
+					case 3:
 						data[i + 221] = 0x579C07B8;	// rlwinm	r28, r28, 0, 30, 28
 						data[i + 222] = 0x501C177A;	// rlwimi	r28, r0, 2, 29, 29
 						break;
-					case 3:
+					case 4:
 						data[i + 205] = 0x54A607B8;	// rlwinm	r6, r5, 0, 30, 28
 						data[i + 206] = 0x5006177A;	// rlwimi	r6, r0, 2, 29, 29
 						break;
-					case 4:
+					case 5:
 						data[i + 197] = 0x54A607B8;	// rlwinm	r6, r5, 0, 30, 28
 						data[i + 198] = 0x5006177A;	// rlwimi	r6, r0, 2, 29, 29
 						break;
-					case 5:
+					case 6:
 						data[i + 200] = 0x54A607B8;	// rlwinm	r6, r5, 0, 30, 28
 						data[i + 201] = 0x5006177A;	// rlwimi	r6, r0, 2, 29, 29
 						break;
-					case 6:
+					case 7:
 						data[i + 232] = 0x54A507B8;	// rlwinm	r5, r5, 0, 30, 28
 						data[i + 233] = 0x5005177A;	// rlwimi	r5, r0, 2, 29, 29
 						break;
-					case 7:
+					case 8:
 						data[i + 235] = 0x546307B8;	// rlwinm	r3, r3, 0, 30, 28
 						data[i + 236] = 0x5003177A;	// rlwimi	r3, r0, 2, 29, 29
 						break;
-					case 8:
+					case 9:
 						data[i + 253] = 0x54A507B8;	// rlwinm	r5, r5, 0, 30, 28
 						data[i + 254] = 0x5005177A;	// rlwimi	r5, r0, 2, 29, 29
 						break;
-					case 9:
+					case 10:
 						data[i + 285] = 0x54A507B8;	// rlwinm	r5, r5, 0, 30, 28
 						data[i + 286] = 0x5005177A;	// rlwimi	r5, r0, 2, 29, 29
 						break;
-					case 10:
+					case 11:
 						data[i + 309] = 0x7D004378;	// mr		r0, r8
 						data[i + 310] = 0x5160177A;	// rlwimi	r0, r11, 2, 29, 29
 						break;
-					case 11:
+					case 12:
 						data[i + 310] = 0x7D004378;	// mr		r0, r8
 						data[i + 311] = 0x5160177A;	// rlwimi	r0, r11, 2, 29, 29
 						break;
-					case 12:
+					case 13:
 						data[i + 288] = 0x5006177A;	// rlwimi	r6, r0, 2, 29, 29
 						data[i + 289] = 0x54E9003C;	// rlwinm	r9, r7, 0, 0, 30
 						data[i + 290] = 0x61290001;	// ori		r9, r9, 1
 						break;
 				}
 			}
-			if (swissSettings.aveCompat == 3) {
+			if (swissSettings.aveCompat == AVE_N_DOL_COMPAT) {
 				switch (j) {
 					case 0:
 						data[i + 170] = 0x801F0118;	// lwz		r0, 280 (r31)
@@ -10031,59 +10465,64 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 						data[i + 181] = 0x38000004;	// li		r0, 4
 						break;
 					case 2:
+						data[i + 215] = 0x801F0118;	// lwz		r0, 280 (r31)
+						data[i + 216] = 0x28000001;	// cmplwi	r0, 1
+						data[i + 218] = 0x38000004;	// li		r0, 4
+						break;
+					case 3:
 						data[i + 206] = 0x801F0118;	// lwz		r0, 280 (r31)
 						data[i + 207] = 0x28000001;	// cmplwi	r0, 1
 						data[i + 209] = 0x38000004;	// li		r0, 4
 						break;
-					case 3:
+					case 4:
 						data[i + 167] = 0x80150000;	// lwz		r0, 0 (r21)
 						data[i + 168] = 0x28000001;	// cmplwi	r0, 1
 						data[i + 170] = 0x38000000;	// li		r0, 0
 						break;
-					case 4:
+					case 5:
 						data[i + 159] = 0x80150000;	// lwz		r0, 0 (r21)
 						data[i + 160] = 0x28000001;	// cmplwi	r0, 1
 						data[i + 162] = 0x38000000;	// li		r0, 0
 						break;
-					case 5:
+					case 6:
 						data[i + 162] = 0x80180000;	// lwz		r0, 0 (r24)
 						data[i + 163] = 0x28000001;	// cmplwi	r0, 1
 						data[i + 165] = 0x38000000;	// li		r0, 0
 						break;
-					case 6:
+					case 7:
 						data[i + 194] = 0x80150000;	// lwz		r0, 0 (r21)
 						data[i + 195] = 0x28000001;	// cmplwi	r0, 1
 						data[i + 197] = 0x38000000;	// li		r0, 0
 						break;
-					case 7:
+					case 8:
 						data[i + 197] = 0x801D0118;	// lwz		r0, 280 (r29)
 						data[i + 198] = 0x28000001;	// cmplwi	r0, 1
 						data[i + 200] = 0x38000004;	// li		r0, 4
 						break;
-					case 8:
+					case 9:
 						data[i + 213] = 0x80150000;	// lwz		r0, 0 (r21)
 						data[i + 214] = 0x28000001;	// cmplwi	r0, 1
 						data[i + 216] = 0x38000004;	// li		r0, 4
 						break;
-					case 9:
+					case 10:
 						data[i + 245] = 0x80150000;	// lwz		r0, 0 (r21)
 						data[i + 246] = 0x28000001;	// cmplwi	r0, 1
 						data[i + 248] = 0x38000004;	// li		r0, 4
 						break;
-					case 10:
 					case 11:
+					case 12:
 						data[i + 232] = 0x81250028;	// lwz		r9, 40 (r5)
 						data[i + 250] = 0x28090001;	// cmplwi	r9, 1
 						data[i + 273] = 0x38000004;	// li		r0, 4
 						break;
-					case 12:
+					case 13:
 						data[i + 245] = 0x80160000;	// lwz		r0, 0 (r22)
 						data[i + 246] = 0x28000001;	// cmplwi	r0, 1
 						data[i + 248] = 0x38000004;	// li		r0, 4
 						break;
 				}
 			}
-			print_gecko("Found:[%s$%i] @ %08X\n", VIConfigureSigs[j].Name, j, VIConfigure);
+			print_debug("Found:[%s$%i] @ %08X\n", VIConfigureSigs[j].Name, j, VIConfigure);
 		}
 	}
 	
@@ -10117,7 +10556,7 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 					data[i + 214] = 0xA09D00FC;	// lhz		r4, 252 (r29)
 					break;
 			}
-			print_gecko("Found:[%s$%i] @ %08X\n", VIConfigurePanSigs[j].Name, j, VIConfigurePan);
+			print_debug("Found:[%s$%i] @ %08X\n", VIConfigurePanSigs[j].Name, j, VIConfigurePan);
 		}
 	}
 	
@@ -10142,7 +10581,7 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 					data[i + 14] = 0xA084000C;	// lhz		r4, 12 (r4)
 					break;
 			}
-			print_gecko("Found:[%s$%i] @ %08X\n", VISetBlackSigs[j].Name, j, VISetBlack);
+			print_debug("Found:[%s$%i] @ %08X\n", VISetBlackSigs[j].Name, j, VISetBlack);
 		}
 	}
 	
@@ -10156,15 +10595,13 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 				
 				data[i + 1] = branch(VIGetRetraceCountHook, VIGetRetraceCount + 1);
 				
-				print_gecko("Found:[%s] @ %08X\n", VIGetRetraceCountSig.Name, VIGetRetraceCount);
+				print_debug("Found:[%s] @ %08X\n", VIGetRetraceCountSig.Name, VIGetRetraceCount);
 			}
 		}
 	}
 	
 	for (j = 0; j < sizeof(VIGetNextFieldSigs) / sizeof(FuncPattern); j++)
-		if (VIGetNextFieldSigs[j].offsetFoundAt) break;
-	
-	if (j < sizeof(VIGetNextFieldSigs) / sizeof(FuncPattern) && (i = VIGetNextFieldSigs[j].offsetFoundAt)) {
+	if ((i = VIGetNextFieldSigs[j].offsetFoundAt)) {
 		u32 *VIGetNextField = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (VIGetNextField) {
@@ -10175,12 +10612,7 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 				if (j == 1)
 					data[i + 12] = 0x38600006;	// li		r3, 6
 			
-			if (swissSettings.forceVJitter == 2) {
-				memset(data + i, 0, VIGetNextFieldSigs[j].Length * sizeof(u32));
-				data[i + 0] = 0x38600001;	// li		r3, 1
-				data[i + 1] = 0x4E800020;	// blr
-			}
-			print_gecko("Found:[%s$%i] @ %08X\n", VIGetNextFieldSigs[j].Name, j, VIGetNextField);
+			print_debug("Found:[%s$%i] @ %08X\n", VIGetNextFieldSigs[j].Name, j, VIGetNextField);
 		}
 	}
 	
@@ -10189,7 +10621,7 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 		u32 *VIGetDTVStatus = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (VIGetDTVStatus) {
-			if (in_range(swissSettings.aveCompat, 3, 4)) {
+			if (in_range(swissSettings.aveCompat, AVE_N_DOL_COMPAT, AVE_P_DOL_COMPAT)) {
 				memset(data + i, 0, VIGetDTVStatusSigs[j].Length * sizeof(u32));
 				
 				data[i + 0] = 0x38600000;	// li		r3, 0
@@ -10200,14 +10632,12 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 				data[i + 0] = 0x38600001;	// li		r3, 1
 				data[i + 1] = 0x4E800020;	// blr
 			}
-			print_gecko("Found:[%s$%i] @ %08X\n", VIGetDTVStatusSigs[j].Name, j, VIGetDTVStatus);
+			print_debug("Found:[%s$%i] @ %08X\n", VIGetDTVStatusSigs[j].Name, j, VIGetDTVStatus);
 		}
 	}
 	
 	for (j = 0; j < sizeof(__GXInitGXSigs) / sizeof(FuncPattern); j++)
-		if (__GXInitGXSigs[j].offsetFoundAt) break;
-	
-	if (j < sizeof(__GXInitGXSigs) / sizeof(FuncPattern) && (i = __GXInitGXSigs[j].offsetFoundAt)) {
+	if ((i = __GXInitGXSigs[j].offsetFoundAt)) {
 		u32 *__GXInitGX = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (__GXInitGX) {
@@ -10226,55 +10656,50 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 					case 10: data[i +  503] = 0x38600001; break;
 				}
 			}
-			print_gecko("Found:[%s$%i] @ %08X\n", __GXInitGXSigs[j].Name, j, __GXInitGX);
+			print_debug("Found:[%s$%i] @ %08X\n", __GXInitGXSigs[j].Name, j, __GXInitGX);
 		}
 	}
 	
 	for (j = 0; j < sizeof(GXAdjustForOverscanSigs) / sizeof(FuncPattern); j++)
-		if (GXAdjustForOverscanSigs[j].offsetFoundAt) break;
-	
-	if (j < sizeof(GXAdjustForOverscanSigs) / sizeof(FuncPattern) && (i = GXAdjustForOverscanSigs[j].offsetFoundAt)) {
+	if ((i = GXAdjustForOverscanSigs[j].offsetFoundAt)) {
 		u32 *GXAdjustForOverscan = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (GXAdjustForOverscan) {
 			if (GXAdjustForOverscanSigs[j].Patch) {
 				memset(data + i, 0, GXAdjustForOverscanSigs[j].Length * sizeof(u32));
-				memcpy(data + i, GXAdjustForOverscanSigs[j].Patch, GXAdjustForOverscanSigs[j].PatchLength);
+				memcpy(data + i, GXAdjustForOverscanSigs[j].Patch, GXAdjustForOverscanSigs[j].PatchLength * sizeof(u32));
 			}
-			print_gecko("Found:[%s$%i] @ %08X\n", GXAdjustForOverscanSigs[j].Name, j, GXAdjustForOverscan);
+			print_debug("Found:[%s$%i] @ %08X\n", GXAdjustForOverscanSigs[j].Name, j, GXAdjustForOverscan);
 		}
 	}
 	
 	for (j = 0; j < sizeof(GXSetDispCopyYScaleSigs) / sizeof(FuncPattern); j++)
-		if (GXSetDispCopyYScaleSigs[j].offsetFoundAt) break;
-	
-	if (j < sizeof(GXSetDispCopyYScaleSigs) / sizeof(FuncPattern) && (i = GXSetDispCopyYScaleSigs[j].offsetFoundAt)) {
+	if ((i = GXSetDispCopyYScaleSigs[j].offsetFoundAt)) {
 		u32 *GXSetDispCopyYScale = Calc_ProperAddress(data, dataType, i * sizeof(u32));
-		u32 __GXData;
+		u32 __GXData = 0;
 		
 		if (GXSetDispCopyYScale) {
+			switch (j) {
+				case 0: __GXData = data[i + 65]      & 0x1FFFFF; break;
+				case 1: __GXData = data[i + 56]      & 0x1FFFFF; break;
+				case 2: __GXData = data[i + 55]      & 0x1FFFFF; break;
+				case 3:
+				case 4:
+				case 5: __GXData = data[i +  7]      & 0x1FFFFF; break;
+				case 6: __GXData = data[i +  7] >> 5 & 0x1F0000; break;
+				case 7: __GXData = data[i +  7]      & 0x1FFFFF; break;
+				case 8: __GXData = data[i + 13]      & 0x1FFFFF; break;
+			}
 			if (GXSetDispCopyYScaleSigs[j].Patch) {
-				switch (j) {
-					case 0: __GXData = data[i + 65]      & 0x1FFFFF; break;
-					case 1: __GXData = data[i + 56]      & 0x1FFFFF; break;
-					case 2: __GXData = data[i + 55]      & 0x1FFFFF; break;
-					case 3:
-					case 4:
-					case 5: __GXData = data[i +  7]      & 0x1FFFFF; break;
-					case 6: __GXData = data[i +  7] >> 5 & 0x1F0000; break;
-					case 7: __GXData = data[i +  7]      & 0x1FFFFF; break;
-					case 8: __GXData = data[i + 13]      & 0x1FFFFF; break;
-				}
-				
 				memset(data + i, 0, GXSetDispCopyYScaleSigs[j].Length * sizeof(u32));
-				memcpy(data + i, GXSetDispCopyYScaleSigs[j].Patch, GXSetDispCopyYScaleSigs[j].PatchLength);
+				memcpy(data + i, GXSetDispCopyYScaleSigs[j].Patch, GXSetDispCopyYScaleSigs[j].PatchLength * sizeof(u32));
 				
 				if (GXSetDispCopyYScaleSigs[j].Patch == GXSetDispCopyYScalePatch1)
 					data[i + 6] |= __GXData;
 				if (GXSetDispCopyYScaleSigs[j].Patch == GXSetDispCopyYScaleStub1)
-					data[i + 0] |= __GXData;
+					data[i + 1] |= __GXData;
 			}
-			print_gecko("Found:[%s$%i] @ %08X\n", GXSetDispCopyYScaleSigs[j].Name, j, GXSetDispCopyYScale);
+			print_debug("Found:[%s$%i] @ %08X\n", GXSetDispCopyYScaleSigs[j].Name, j, GXSetDispCopyYScale);
 		}
 	}
 	
@@ -10288,10 +10713,25 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 			if (GXSetCopyFilter) {
 				if (GXSetCopyFilterSigs[j].Patch) {
 					memset(data + i, 0, GXSetCopyFilterSigs[j].Length * sizeof(u32));
-					memcpy(data + i, GXSetCopyFilterSigs[j].Patch, GXSetCopyFilterSigs[j].PatchLength);
+					memcpy(data + i, GXSetCopyFilterSigs[j].Patch, GXSetCopyFilterSigs[j].PatchLength * sizeof(u32));
 				}
-				print_gecko("Found:[%s$%i] @ %08X\n", GXSetCopyFilterSigs[j].Name, j, GXSetCopyFilter);
+				print_debug("Found:[%s$%i] @ %08X\n", GXSetCopyFilterSigs[j].Name, j, GXSetCopyFilter);
 			}
+		}
+	}
+	
+	for (j = 0; j < sizeof(GXCopyDispSigs) / sizeof(FuncPattern); j++)
+	if ((i = GXCopyDispSigs[j].offsetFoundAt)) {
+		u32 *GXCopyDisp = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+		u32 *GXCopyDispHook;
+		
+		if (GXCopyDisp) {
+			if (swissSettings.forceVJitter == 1 || swissSettings.forceVJitter == 3) {
+				GXCopyDispHook = getPatchAddr(GX_COPYDISPHOOK);
+				
+				data[i + GXCopyDispSigs[j].Length - 1] = branch(GXCopyDispHook, GXCopyDisp + GXCopyDispSigs[j].Length - 1);
+			}
+			print_debug("Found:[%s$%i] @ %08X\n", GXCopyDispSigs[j].Name, j, GXCopyDisp);
 		}
 	}
 	
@@ -10301,114 +10741,228 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 		
 		if (j < sizeof(GXSetBlendModeSigs) / sizeof(FuncPattern) && (i = GXSetBlendModeSigs[j].offsetFoundAt)) {
 			u32 *GXSetBlendMode = Calc_ProperAddress(data, dataType, i * sizeof(u32));
-			u32 __GXData;
+			u32 __GXData = 0;
 			
 			if (GXSetBlendMode) {
+				switch (j) {
+					case 0: __GXData = data[i + 147] & 0x1FFFFF; break;
+					case 1: __GXData = data[i +  98] & 0x1FFFFF; break;
+					case 2: __GXData = data[i +  60] & 0x1FFFFF; break;
+					case 3: __GXData = data[i +   0] & 0x1FFFFF; break;
+					case 4: __GXData = data[i +   0] & 0x1FFFFF; break;
+					case 5: __GXData = data[i +  27] & 0x1F0000; break;
+					case 6: __GXData = data[i +  35] & 0x1F0000; break;
+				}
 				if (GXSetBlendModeSigs[j].Patch) {
-					switch (j) {
-						case 0: __GXData = data[i + 147] & 0x1FFFFF; break;
-						case 1: __GXData = data[i +  98] & 0x1FFFFF; break;
-						case 2: __GXData = data[i +  60] & 0x1FFFFF; break;
-						case 3: __GXData = data[i +   0] & 0x1FFFFF; break;
-						case 4: __GXData = data[i +   0] & 0x1FFFFF; break;
-						case 5: __GXData = data[i +  27] & 0x1F0000; break;
-						case 6: __GXData = data[i +  35] & 0x1F0000; break;
-					}
-					
 					memset(data + i, 0, GXSetBlendModeSigs[j].Length * sizeof(u32));
-					memcpy(data + i, GXSetBlendModeSigs[j].Patch, GXSetBlendModeSigs[j].PatchLength);
+					memcpy(data + i, GXSetBlendModeSigs[j].Patch, GXSetBlendModeSigs[j].PatchLength * sizeof(u32));
 					
 					if (GXSetBlendModeSigs[j].Patch != GXSetBlendModePatch3)
 						data[i +  0] |= __GXData;
 					if (GXSetBlendModeSigs[j].Patch == GXSetBlendModePatch2)
 						data[i + 21] |= __GXData;
 				}
-				print_gecko("Found:[%s$%i] @ %08X\n", GXSetBlendModeSigs[j].Name, j, GXSetBlendMode);
+				print_debug("Found:[%s$%i] @ %08X\n", GXSetBlendModeSigs[j].Name, j, GXSetBlendMode);
 			}
 		}
 	}
 	
-	if (swissSettings.forceVJitter == 1) {
-		for (j = 0; j < sizeof(GXCopyDispSigs) / sizeof(FuncPattern); j++)
-			if (GXCopyDispSigs[j].offsetFoundAt) break;
+	for (j = 0; j < sizeof(GXSetViewportSigs) / sizeof(FuncPattern); j++)
+	if ((i = GXSetViewportSigs[j].offsetFoundAt)) {
+		u32 *GXSetViewport = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+		u32 *GXSetViewportJitter = NULL;
+		u32 *__GXSetViewport = NULL;
+		u32 __GXData = 0;
+		u32 vpScale = 0;
+		u32 vpOffset = 0;
+		f32 *constant = NULL;
 		
-		if (j < sizeof(GXCopyDispSigs) / sizeof(FuncPattern) && (i = GXCopyDispSigs[j].offsetFoundAt)) {
-			u32 *GXCopyDisp = Calc_ProperAddress(data, dataType, i * sizeof(u32));
-			u32 *GXCopyDispHook;
-			
-			if (GXCopyDisp) {
-				GXCopyDispHook = getPatchAddr(GX_COPYDISPHOOK);
-				
-				data[i + GXCopyDispSigs[j].Length - 1] = branch(GXCopyDispHook, GXCopyDisp + GXCopyDispSigs[j].Length - 1);
-				
-				print_gecko("Found:[%s$%i] @ %08X\n", GXCopyDispSigs[j].Name, j, GXCopyDisp);
-			}
-		}
-		
-		for (j = 0; j < sizeof(GXSetViewportSigs) / sizeof(FuncPattern); j++)
-			if (GXSetViewportSigs[j].offsetFoundAt) break;
-		
-		if (j < sizeof(GXSetViewportSigs) / sizeof(FuncPattern) && (i = GXSetViewportSigs[j].offsetFoundAt)) {
-			u32 *GXSetViewport = Calc_ProperAddress(data, dataType, i * sizeof(u32));
-			
-			if (GXSetViewport) {
-				switch (j) {
-					case 0: findx_pattern(data, dataType, i + 16, length, &GXSetViewportJitterSigs[0]); break;
-					case 1: findx_pattern(data, dataType, i + 16, length, &GXSetViewportJitterSigs[1]); break;
-					case 2: findx_pattern(data, dataType, i +  4, length, &GXSetViewportJitterSigs[2]); break;
-					case 3: findx_pattern(data, dataType, i +  4, length, &GXSetViewportJitterSigs[3]); break;
-					case 4: findx_pattern(data, dataType, i +  1, length, &GXSetViewportJitterSigs[4]); break;
-					case 5:
-						findx_pattern(data, dataType, i + 10, length, &__GXSetViewportSigs[1]);
+		if (GXSetViewport) {
+			switch (j) {
+				case 0:
+					if (findx_pattern(data, dataType, i + 16, length, &GXSetViewportJitterSigs[0]))
+						GXSetViewportJitter = GXSetViewportJitterSigs[0].properAddress;
+					break;
+				case 1:
+					if (findx_pattern(data, dataType, i + 16, length, &GXSetViewportJitterSigs[1]) &&
+						find_pattern_before(data, dataType, length, &GXSetViewportJitterSigs[1], &__GXSetViewportSigs[0])) {
+						__GXSetViewport = __GXSetViewportSigs[0].properAddress;
 						
-						if ((i - __GXSetViewportSigs[1].offsetFoundAt) == 58) {
-							GXSetViewportJitterSigs[5].offsetFoundAt = i - 22;
-							
-							memset(data + i - 22, 0, 22 * sizeof(u32));
-							data[i - 22] = branch(GXSetViewport, GXSetViewport - 22);
-						}
+						__GXData = data[GXSetViewportJitterSigs[1].offsetFoundAt + 27] & 0x1FFFFF;
+					}
+					break;
+				case 2:
+					if (findx_pattern(data, dataType, i +  4, length, &GXSetViewportJitterSigs[2]))
+						GXSetViewportJitter = GXSetViewportJitterSigs[2].properAddress;
+					break;
+				case 3:
+					if (findx_pattern(data, dataType, i +  4, length, &GXSetViewportJitterSigs[3]))
+						GXSetViewportJitter = GXSetViewportJitterSigs[3].properAddress;
+					break;
+				case 4:
+					if (findx_pattern(data, dataType, i +  1, length, &GXSetViewportJitterSigs[4]))
+						GXSetViewportJitter = GXSetViewportJitterSigs[4].properAddress;
+					break;
+				case 5:
+					if (findx_pattern(data, dataType, i + 10, length, &__GXSetViewportSigs[1]))
+						__GXSetViewport = __GXSetViewportSigs[1].properAddress;
+					
+					__GXData = data[i + 3] & 0x1FFFFF;
+					break;
+				case 6:
+					__GXData = data[i + 0] & 0x1FFFFF;
+					vpScale  = data[i + 2] & 0x1FFFFF;
+					vpOffset = data[i + 7] & 0x1FFFFF;
+					constant = loadResolve(data, dataType, i + 7, 2);
+					break;
+			}
+			if (swissSettings.fixPixelCenter)
+				if (constant) *constant = truncf(*constant) + 0.5f / 12.0f * swissSettings.fixPixelCenter;
+			
+			if (GXSetViewportSigs[j].Patch) {
+				memset(data + i, 0, GXSetViewportSigs[j].Length * sizeof(u32));
+				memcpy(data + i, GXSetViewportSigs[j].Patch, GXSetViewportSigs[j].PatchLength * sizeof(u32));
+				
+				if (GXSetViewportSigs[j].Patch == GXSetViewportPatch1) {
+					data[i + GXSetViewportSigs[j].PatchLength - 1] = branch(GXSetViewportJitter, GXSetViewport + GXSetViewportSigs[j].PatchLength - 1);
+				} else if (GXSetViewportSigs[j].Patch == GXSetViewportPatch2) {
+					data[i +  0] |= __GXData;
+					data[i + GXSetViewportSigs[j].PatchLength - 1] = branch(__GXSetViewport, GXSetViewport + GXSetViewportSigs[j].PatchLength - 1);
+				} else if (GXSetViewportSigs[j].Patch == GXSetViewportPatch3 || GXSetViewportSigs[j].Patch == GXSetViewportTAAPatch3) {
+					data[i +  0] |= __GXData;
+					data[i +  2] |= vpScale;
+					data[i + 15] |= vpOffset;
+				}
+			}
+			print_debug("Found:[%s$%i] @ %08X\n", GXSetViewportSigs[j].Name, j, GXSetViewport);
+		}
+	}
+	
+	for (j = 0; j < sizeof(GXSetViewportJitterSigs) / sizeof(FuncPattern); j++)
+	if ((i = GXSetViewportJitterSigs[j].offsetFoundAt)) {
+		u32 *GXSetViewportJitter = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+		u32 *__GXSetViewport = NULL;
+		u32 __GXData = 0;
+		u32 vpScale = 0;
+		u32 vpZScale = 0;
+		u32 vpOffset = 0;
+		f32 *constant = NULL;
+		
+		if (GXSetViewportJitter) {
+			switch (j) {
+				case 0:
+					vpScale  = data[i + 31] & 0x1FFFFF;
+					vpOffset = data[i + 38] & 0x1FFFFF;
+					constant = loadResolve(data, dataType, i + 38, 2);
+					vpZScale = data[i + 48] & 0x1FFFFF;
+					__GXData = data[i + 54] & 0x1FFFFF;
+					break;
+				case 1:
+					if (findx_pattern(data, dataType, i + 43, length, &__GXSetViewportSigs[0]))
+						__GXSetViewport = __GXSetViewportSigs[0].properAddress;
+					
+					__GXData = data[i + 27] & 0x1FFFFF;
+					break;
+				case 2:
+				case 3:
+					vpScale  = data[i + 11] & 0x1FFFFF;
+					vpZScale = data[i + 15] & 0x1FFFFF;
+					vpOffset = data[i + 16] & 0x1FFFFF;
+					constant = loadResolve(data, dataType, i + 16, 2);
+					__GXData = data[i + 18] & 0x1FFFFF;
+					break;
+				case 5:
+					if (findx_pattern(data, dataType, i + 14, length, &__GXSetViewportSigs[1]))
+						__GXSetViewport = __GXSetViewportSigs[1].properAddress;
+					
+					__GXData = data[i +  7] & 0x1FFFFF;
+					break;
+				case 6:
+					vpScale  = data[i +  2] & 0x1FFFFF;
+					__GXData = data[i +  4] & 0x1FFFFF;
+					vpOffset = data[i + 11] & 0x1FFFFF;
+					constant = loadResolve(data, dataType, i + 11, 2);
+					break;
+			}
+			if (swissSettings.forceVJitter == 2) {
+				switch (j) {
+					case 0:
+						data[i + 32] = 0x60000000;	// nop
+						break;
+					case 1:
+						data[i + 25] = 0x60000000;	// nop
+						break;
+					case 2:
+					case 3:
+						data[i + 12] = 0x60000000;	// nop
+						break;
+					case 4:
+						data[i + 11] = 0x60000000;	// nop
+						break;
+					case 5:
+						data[i +  6] = 0x60000000;	// nop
+						break;
+					case 6:
+						data[i +  3] = 0x60000000;	// nop
 						break;
 				}
-				print_gecko("Found:[%s$%i] @ %08X\n", GXSetViewportSigs[j].Name, j, GXSetViewport);
 			}
-		}
-		
-		for (j = 0; j < sizeof(GXSetViewportJitterSigs) / sizeof(FuncPattern); j++)
-			if (GXSetViewportJitterSigs[j].offsetFoundAt) break;
-		
-		if (j < sizeof(GXSetViewportJitterSigs) / sizeof(FuncPattern) && (i = GXSetViewportJitterSigs[j].offsetFoundAt)) {
-			u32 *GXSetViewportJitter = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+			if (swissSettings.fixPixelCenter)
+				if (constant) *constant = truncf(*constant) + 0.5f / 12.0f * swissSettings.fixPixelCenter;
 			
-			if (GXSetViewportJitter) {
-				if (GXSetViewportJitterSigs[j].Patch) {
-					u32 op = j >= 2 ? data[i + 18] : data[i + 54];
-					memset(data + i, 0, GXSetViewportJitterSigs[j].Length * sizeof(u32));
-					memcpy(data + i, GXSetViewportJitterSigs[j].Patch, GXSetViewportJitterSigs[j].PatchLength);
-					
-					data[i + 0] |= op & 0x1FFFFF;
-					data[i + 2] |= ((u32)GXSetViewportJitter + GXSetViewportJitterSigs[j].PatchLength + 0x8000) >> 16;
-					data[i + 4] |= ((u32)GXSetViewportJitter + GXSetViewportJitterSigs[j].PatchLength) & 0xFFFF;
+			if (GXSetViewportJitterSigs[j].Patch) {
+				memset(data + i, 0, GXSetViewportJitterSigs[j].Length * sizeof(u32));
+				memcpy(data + i, GXSetViewportJitterSigs[j].Patch, GXSetViewportJitterSigs[j].PatchLength * sizeof(u32));
+				
+				if (GXSetViewportJitterSigs[j].Patch == GXSetViewportJitterPatch1 || GXSetViewportJitterSigs[j].Patch == GXSetViewportJitterTAAPatch1) {
+					data[i +  1] |= __GXData;
+					data[i +  2] |= vpScale;
+					data[i + 11] |= vpZScale;
+					data[i + 12] |= vpOffset;
+				} else if (GXSetViewportJitterSigs[j].Patch == GXSetViewportJitterPatch2) {
+					data[i +  0] |= __GXData;
+					data[i + GXSetViewportJitterSigs[j].PatchLength - 1] = branch(__GXSetViewport, GXSetViewportJitter + GXSetViewportJitterSigs[j].PatchLength - 1);
+				} else if (GXSetViewportJitterSigs[j].Patch == GXSetViewportJitterPatch3 || GXSetViewportJitterSigs[j].Patch == GXSetViewportJitterTAAPatch3) {
+					data[i +  1] |= __GXData;
+					data[i +  2] |= vpScale;
+					data[i + 13] |= vpOffset;
 				}
-				print_gecko("Found:[%s$%i] @ %08X\n", GXSetViewportJitterSigs[j].Name, j, GXSetViewportJitter);
 			}
+			print_debug("Found:[%s$%i] @ %08X\n", GXSetViewportJitterSigs[j].Name, j, GXSetViewportJitter);
 		}
+	}
+	
+	for (j = 0; j < sizeof(__GXSetViewportSigs) / sizeof(FuncPattern); j++)
+	if ((i = __GXSetViewportSigs[j].offsetFoundAt)) {
+		u32 *__GXSetViewport = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+		u32 vpScale = 0;
+		u32 vpOffset = 0;
+		f32 *constant = NULL;
 		
-		for (j = 0; j < sizeof(__GXSetViewportSigs) / sizeof(FuncPattern); j++)
-			if (__GXSetViewportSigs[j].offsetFoundAt) break;
-		
-		if (j < sizeof(__GXSetViewportSigs) / sizeof(FuncPattern) && (i = __GXSetViewportSigs[j].offsetFoundAt)) {
-			u32 *__GXSetViewport = Calc_ProperAddress(data, dataType, i * sizeof(u32));
-			
-			if (__GXSetViewport) {
-				if (__GXSetViewportSigs[j].Patch) {
-					memset(data + i, 0, __GXSetViewportSigs[j].Length * sizeof(u32));
-					memcpy(data + i, __GXSetViewportSigs[j].Patch, __GXSetViewportSigs[j].PatchLength);
-					
-					data[i + 1] |= ((u32)__GXSetViewport + __GXSetViewportSigs[j].PatchLength + 0x8000) >> 16;
-					data[i + 3] |= ((u32)__GXSetViewport + __GXSetViewportSigs[j].PatchLength) & 0xFFFF;
-				}
-				print_gecko("Found:[%s] @ %08X\n", __GXSetViewportSigs[j].Name, __GXSetViewport);
+		if (__GXSetViewport) {
+			switch (j) {
+				case 0:
+					vpScale  = data[i +  8] & 0x1FFFFF;
+					vpOffset = data[i + 15] & 0x1FFFFF;
+					constant = loadResolve(data, dataType, i + 15, 2);
+					break;
+				case 1:
+					vpScale  = data[i +  2] & 0x1FFFFF;
+					vpOffset = data[i + 20] & 0x1FFFFF;
+					constant = loadResolve(data, dataType, i + 20, 2);
+					break;
 			}
+			if (swissSettings.fixPixelCenter)
+				if (constant) *constant = truncf(*constant) + 0.5f / 12.0f * swissSettings.fixPixelCenter;
+			
+			if (__GXSetViewportSigs[j].Patch) {
+				memset(data + i, 0, __GXSetViewportSigs[j].Length * sizeof(u32));
+				memcpy(data + i, __GXSetViewportSigs[j].Patch, __GXSetViewportSigs[j].PatchLength * sizeof(u32));
+				
+				data[i + 1] |= vpScale;
+				data[i + 4] |= vpOffset;
+			}
+			print_debug("Found:[%s] @ %08X\n", __GXSetViewportSigs[j].Name, __GXSetViewport);
 		}
 	}
 	
@@ -10447,7 +11001,7 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 					data[i + 1445] = 0x11081828;	// ps_sub	f8, f8, f3
 					break;
 			}
-			print_gecko("Found:[%s$%i] @ %08X\n", __THPDecompressiMCURow512x448Sigs[j].Name, j, __THPDecompressiMCURow512x448);
+			print_debug("Found:[%s$%i] @ %08X\n", __THPDecompressiMCURow512x448Sigs[j].Name, j, __THPDecompressiMCURow512x448);
 		}
 	}
 	
@@ -10486,7 +11040,7 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 					data[i + 1445] = 0x11081828;	// ps_sub	f8, f8, f3
 					break;
 			}
-			print_gecko("Found:[%s$%i] @ %08X\n", __THPDecompressiMCURow640x480Sigs[j].Name, j, __THPDecompressiMCURow640x480);
+			print_debug("Found:[%s$%i] @ %08X\n", __THPDecompressiMCURow640x480Sigs[j].Name, j, __THPDecompressiMCURow640x480);
 		}
 	}
 	
@@ -10525,7 +11079,7 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 					data[i + 1448] = 0x11081828;	// ps_sub	f8, f8, f3
 					break;
 			}
-			print_gecko("Found:[%s$%i] @ %08X\n", __THPDecompressiMCURowNxNSigs[j].Name, j, __THPDecompressiMCURowNxN);
+			print_debug("Found:[%s$%i] @ %08X\n", __THPDecompressiMCURowNxNSigs[j].Name, j, __THPDecompressiMCURowNxN);
 		}
 	}
 	
@@ -10535,7 +11089,7 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 		if (IDct64_GC) {
 			data[i + 107] = 0x1272982A;	// ps_add	f19, f18, f19
 			
-			print_gecko("Found:[%s] @ %08X\n", IDct64_GCSig.Name, IDct64_GC);
+			print_debug("Found:[%s] @ %08X\n", IDct64_GCSig.Name, IDct64_GC);
 		}
 	}
 	
@@ -10545,7 +11099,7 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 		if (IDct10_GC) {
 			data[i + 76] = 0x1272982A;	// ps_add	f19, f18, f19
 			
-			print_gecko("Found:[%s] @ %08X\n", IDct10_GCSig.Name, IDct10_GC);
+			print_debug("Found:[%s] @ %08X\n", IDct10_GCSig.Name, IDct10_GC);
 		}
 	}
 }
@@ -10577,11 +11131,11 @@ void Patch_Widescreen(u32 *data, u32 length, int dataType)
 	for (i = 0; i < length / sizeof(u32); i++) {
 		if (data[i] != 0xED241828)
 			continue;
-		if (find_pattern(data, i, length, &MTXFrustumSig)) {
+		if (find_pattern(data, dataType, i, length, &MTXFrustumSig)) {
 			u32 *MTXFrustum = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 			u32 *MTXFrustumHook = NULL;
 			if (MTXFrustum) {
-				print_gecko("Found:[%s] @ %08X\n", MTXFrustumSig.Name, MTXFrustum);
+				print_debug("Found:[%s] @ %08X\n", MTXFrustumSig.Name, MTXFrustum);
 				MTXFrustumHook = installPatch(MTX_FRUSTUMHOOK);
 				MTXFrustumHook[7] = branch(MTXFrustum + 1, MTXFrustumHook + 7);
 				data[i] = branch(MTXFrustumHook, MTXFrustum);
@@ -10593,11 +11147,11 @@ void Patch_Widescreen(u32 *data, u32 length, int dataType)
 	for (i = 0; i < length / sizeof(u32); i++) {
 		if (data[i + 2] != 0xED441828)
 			continue;
-		if (find_pattern(data, i, length, &MTXLightFrustumSig)) {
+		if (find_pattern(data, dataType, i, length, &MTXLightFrustumSig)) {
 			u32 *MTXLightFrustum = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 			u32 *MTXLightFrustumHook = NULL;
 			if (MTXLightFrustum) {
-				print_gecko("Found:[%s] @ %08X\n", MTXLightFrustumSig.Name, MTXLightFrustum);
+				print_debug("Found:[%s] @ %08X\n", MTXLightFrustumSig.Name, MTXLightFrustum);
 				MTXLightFrustumHook = installPatch(MTX_LIGHTFRUSTUMHOOK);
 				MTXLightFrustumHook[7] = branch(MTXLightFrustum + 3, MTXLightFrustumHook + 7);
 				data[i + 2] = branch(MTXLightFrustumHook, MTXLightFrustum + 2);
@@ -10609,11 +11163,11 @@ void Patch_Widescreen(u32 *data, u32 length, int dataType)
 	for (i = 0; i < length / sizeof(u32); i++) {
 		if (data[i] != 0x7C0802A6)
 			continue;
-		if (find_pattern(data, i, length, &MTXPerspectiveSig)) {
+		if (find_pattern(data, dataType, i, length, &MTXPerspectiveSig)) {
 			u32 *MTXPerspective = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 			u32 *MTXPerspectiveHook = NULL;
 			if (MTXPerspective) {
-				print_gecko("Found:[%s] @ %08X\n", MTXPerspectiveSig.Name, MTXPerspective);
+				print_debug("Found:[%s] @ %08X\n", MTXPerspectiveSig.Name, MTXPerspective);
 				MTXPerspectiveHook = installPatch(MTX_PERSPECTIVEHOOK);
 				MTXPerspectiveHook[5] = branch(MTXPerspective + 21, MTXPerspectiveHook + 5);
 				data[i + 20] = branch(MTXPerspectiveHook, MTXPerspective + 20);
@@ -10625,11 +11179,11 @@ void Patch_Widescreen(u32 *data, u32 length, int dataType)
 	for (i = 0; i < length / sizeof(u32); i++) {
 		if (data[i] != 0x7C0802A6)
 			continue;
-		if (find_pattern(data, i, length, &MTXLightPerspectiveSig)) {
+		if (find_pattern(data, dataType, i, length, &MTXLightPerspectiveSig)) {
 			u32 *MTXLightPerspective = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 			u32 *MTXLightPerspectiveHook = NULL;
 			if (MTXLightPerspective) {
-				print_gecko("Found:[%s] @ %08X\n", MTXLightPerspectiveSig.Name, MTXLightPerspective);
+				print_debug("Found:[%s] @ %08X\n", MTXLightPerspectiveSig.Name, MTXLightPerspective);
 				MTXLightPerspectiveHook = installPatch(MTX_LIGHTPERSPECTIVEHOOK);
 				MTXLightPerspectiveHook[5] = branch(MTXLightPerspective + 25, MTXLightPerspectiveHook + 5);
 				data[i + 24] = branch(MTXLightPerspectiveHook, MTXLightPerspective + 24);
@@ -10642,11 +11196,11 @@ void Patch_Widescreen(u32 *data, u32 length, int dataType)
 		for (i = 0; i < length / sizeof(u32); i++) {
 			if (data[i] != 0xED041828)
 				continue;
-			if (find_pattern(data, i, length, &MTXOrthoSig)) {
+			if (find_pattern(data, dataType, i, length, &MTXOrthoSig)) {
 				u32 *MTXOrtho = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 				u32 *MTXOrthoHook = NULL;
 				if (MTXOrtho) {
-					print_gecko("Found:[%s] @ %08X\n", MTXOrthoSig.Name, MTXOrtho);
+					print_debug("Found:[%s] @ %08X\n", MTXOrthoSig.Name, MTXOrtho);
 					MTXOrthoHook = installPatch(MTX_ORTHOHOOK);
 					MTXOrthoHook[32] = branch(MTXOrtho + 1, MTXOrthoHook + 32);
 					data[i] = branch(MTXOrthoHook, MTXOrtho);
@@ -10661,14 +11215,14 @@ void Patch_Widescreen(u32 *data, u32 length, int dataType)
 				continue;
 			
 			FuncPattern fp;
-			make_pattern(data, i, length, &fp);
+			make_pattern(data, dataType, i, length, &fp);
 			
 			for (j = 0; j < sizeof(GXSetScissorSigs) / sizeof(FuncPattern); j++) {
 				if (compare_pattern(&fp, &GXSetScissorSigs[j])) {
 					u32 *GXSetScissor = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 					u32 *GXSetScissorHook = NULL;
 					if (GXSetScissor) {
-						print_gecko("Found:[%s$%i] @ %08X\n", GXSetScissorSigs[j].Name, j, GXSetScissor);
+						print_debug("Found:[%s$%i] @ %08X\n", GXSetScissorSigs[j].Name, j, GXSetScissor);
 						GXSetScissorHook = installPatch(GX_SETSCISSORHOOK);
 						GXSetScissorHook[ 0] = data[i];
 						GXSetScissorHook[ 1] = j == 1 ? 0x800801E8 : 0x800701E8;
@@ -10686,14 +11240,14 @@ void Patch_Widescreen(u32 *data, u32 length, int dataType)
 				continue;
 			
 			FuncPattern fp;
-			make_pattern(data, i, length, &fp);
+			make_pattern(data, dataType, i, length, &fp);
 			
 			for (j = 0; j < sizeof(GXSetProjectionSigs) / sizeof(FuncPattern); j++) {
 				if (compare_pattern(&fp, &GXSetProjectionSigs[j])) {
 					u32 *GXSetProjection = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 					u32 *GXSetProjectionHook = NULL;
 					if (GXSetProjection) {
-						print_gecko("Found:[%s$%i] @ %08X\n", GXSetProjectionSigs[j].Name, j, GXSetProjection);
+						print_debug("Found:[%s$%i] @ %08X\n", GXSetProjectionSigs[j].Name, j, GXSetProjection);
 						GXSetProjectionHook = installPatch(GX_SETPROJECTIONHOOK);
 						GXSetProjectionHook[5] = branch(GXSetProjection + 4, GXSetProjectionHook + 5);
 						data[i + 3] = branch(GXSetProjectionHook, GXSetProjection + 3);
@@ -10720,14 +11274,14 @@ int Patch_TexFilt(u32 *data, u32 length, int dataType)
 			continue;
 		
 		FuncPattern fp;
-		make_pattern(data, i, length, &fp);
+		make_pattern(data, dataType, i, length, &fp);
 		
 		for (j = 0; j < sizeof(GXInitTexObjLODSigs) / sizeof(FuncPattern); j++) {
 			if (compare_pattern(&fp, &GXInitTexObjLODSigs[j])) {
 				u32 *GXInitTexObjLOD = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 				u32 *GXInitTexObjLODHook = NULL;
 				if (GXInitTexObjLOD) {
-					print_gecko("Found:[%s$%i] @ %08X\n", GXInitTexObjLODSigs[j].Name, j, GXInitTexObjLOD);
+					print_debug("Found:[%s$%i] @ %08X\n", GXInitTexObjLODSigs[j].Name, j, GXInitTexObjLOD);
 					GXInitTexObjLODHook = installPatch(GX_INITTEXOBJLODHOOK);
 					GXInitTexObjLODHook[6] = data[i];
 					GXInitTexObjLODHook[7] = branch(GXInitTexObjLOD + 1, GXInitTexObjLODHook + 7);
@@ -10801,7 +11355,7 @@ int Patch_FontEncode(u32 *data, u32 length)
 			patched++;
 		}
 	}
-	print_gecko("Patch:[fontEncode] applied %d times\n", patched);
+	print_debug("Patch:[fontEncode] applied %d times\n", patched);
 	return patched;
 }
 
@@ -10907,13 +11461,13 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 			if(mode == 1 && memcmp(addr_start,GXSETVAT_PAL_orig,sizeof(GXSETVAT_PAL_orig))==0) 
 			{
 				memcpy(addr_start, GXSETVAT_PAL_patched, sizeof(GXSETVAT_PAL_patched));
-				print_gecko("Patched:[__GXSetVAT] PAL\r\n");
+				print_debug("Patched:[__GXSetVAT] PAL\n");
 				patched=1;
 			}
 			if(mode == 2 && memcmp(addr_start,GXSETVAT_NTSC_orig,sizeof(GXSETVAT_NTSC_orig))==0) 
 			{
 				memcpy(addr_start, GXSETVAT_NTSC_patched, sizeof(GXSETVAT_NTSC_patched));
-				print_gecko("Patched:[__GXSetVAT] NTSC\r\n");
+				print_debug("Patched:[__GXSetVAT] NTSC\n");
 				patched=1;
 			}
 			addr_start += 4;
@@ -10980,7 +11534,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 					
 					memcpy(data + 0x8135DDE0 - 0x81300000 + 0x20, BS2Pal520IntAa, sizeof(BS2Pal520IntAa));
 				}
-				print_gecko("Patched:[%s]\n", "NTSC Revision 1.0");
+				print_debug("Patched:[%s]\n", "NTSC Revision 1.0");
 				patched++;
 				break;
 			case 1448280:
@@ -11044,7 +11598,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 					
 					memcpy(data + 0x8135FD00 - 0x81300000 + 0x20, BS2Pal520IntAa, sizeof(BS2Pal520IntAa));
 				}
-				print_gecko("Patched:[%s]\n", "NTSC Revision 1.0");
+				print_debug("Patched:[%s]\n", "NTSC Revision 1.0");
 				patched++;
 				break;
 			case 1449848:
@@ -11112,7 +11666,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 					
 					memcpy(data + 0x81360160 - 0x81300000 + 0x20, BS2Pal520IntAa, sizeof(BS2Pal520IntAa));
 				}
-				print_gecko("Patched:[%s]\n", "DEV  Revision 1.0");
+				print_debug("Patched:[%s]\n", "DEV  Revision 1.0");
 				patched++;
 				break;
 			case 1583088:
@@ -11174,7 +11728,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 					
 					memcpy(data + 0x8137D9F0 - 0x81300000 + 0x20, BS2Pal520IntAa, sizeof(BS2Pal520IntAa));
 				}
-				print_gecko("Patched:[%s]\n", "NTSC Revision 1.1");
+				print_debug("Patched:[%s]\n", "NTSC Revision 1.1");
 				patched++;
 				break;
 			case 1763048:
@@ -11215,7 +11769,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 					
 					memcpy(data + 0x81380FD0 - 0x81300000 + 0x20, BS2Ntsc448IntAa, sizeof(BS2Ntsc448IntAa));
 				}
-				print_gecko("Patched:[%s]\n", "PAL  Revision 1.0");
+				print_debug("Patched:[%s]\n", "PAL  Revision 1.0");
 				patched++;
 				break;
 			case 1760152:
@@ -11257,7 +11811,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 					
 					memcpy(data + 0x81380384 - 0x81300000 + 0x20, BS2Ntsc448IntAa, sizeof(BS2Ntsc448IntAa));
 				}
-				print_gecko("Patched:[%s]\n", "PAL  Revision 1.0");
+				print_debug("Patched:[%s]\n", "PAL  Revision 1.0");
 				patched++;
 				break;
 			case 1561776:
@@ -11300,7 +11854,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 					
 					memcpy(data + 0x8137D910 - 0x81300000 + 0x20, BS2Pal520IntAa, sizeof(BS2Pal520IntAa));
 				}
-				print_gecko("Patched:[%s]\n", "MPAL Revision 1.1");
+				print_debug("Patched:[%s]\n", "MPAL Revision 1.1");
 				patched++;
 				break;
 			case 1607576:
@@ -11367,7 +11921,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 					*(u32 *)(data + 0x813111C4 - 0x81300000 + 0x20) = 0x9B830037;
 					*(u32 *)(data + 0x813111C8 - 0x81300000 + 0x20) = 0x99630035;
 				}
-				print_gecko("Patched:[%s]\n", "TDEV Revision 1.1");
+				print_debug("Patched:[%s]\n", "TDEV Revision 1.1");
 				patched++;
 				break;
 			case 1586352:
@@ -11429,7 +11983,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 					
 					memcpy(data + 0x8137ECB8 - 0x81300000 + 0x20, BS2Pal520IntAa, sizeof(BS2Pal520IntAa));
 				}
-				print_gecko("Patched:[%s]\n", "NTSC Revision 1.2");
+				print_debug("Patched:[%s]\n", "NTSC Revision 1.2");
 				patched++;
 				break;
 			case 1587504:
@@ -11491,7 +12045,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 					
 					memcpy(data + 0x8137F138 - 0x81300000 + 0x20, BS2Pal520IntAa, sizeof(BS2Pal520IntAa));
 				}
-				print_gecko("Patched:[%s]\n", "NTSC Revision 1.2");
+				print_debug("Patched:[%s]\n", "NTSC Revision 1.2");
 				patched++;
 				break;
 			case 1766768:
@@ -11532,7 +12086,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 					
 					memcpy(data + 0x81382470 - 0x81300000 + 0x20, BS2Ntsc448IntAa, sizeof(BS2Ntsc448IntAa));
 				}
-				print_gecko("Patched:[%s]\n", "PAL  Revision 1.2");
+				print_debug("Patched:[%s]\n", "PAL  Revision 1.2");
 				patched++;
 				break;
 		}
@@ -11553,7 +12107,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				
 				*(u32 *)(data + 0x8008789C - 0x800056A0 + 0x2600) = 0x60000000;
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
 		}
@@ -11574,7 +12128,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				
 				*(u32 *)(data + 0x80082090 - 0x800056A0 + 0x2600) = 0x60000000;
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
 		}
@@ -11595,7 +12149,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				
 				*(u32 *)(data + 0x80038ECC - 0x800055E0 + 0x25E0) = 0x60000000;
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
 		}
@@ -11616,7 +12170,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				
 				*(u32 *)(data + 0x80086FDC - 0x800056A0 + 0x2600) = 0x60000000;
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
 		}
@@ -11637,7 +12191,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				
 				*(u32 *)(data + 0x80036740 - 0x800055E0 + 0x25E0) = 0x60000000;
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
 		}
@@ -11647,7 +12201,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				// Strip anti-debugging code.
 				*(u32 *)(data + 0x80005CA4 - 0x800055E0 + 0x25E0) = 0x60000000;
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
 		}
@@ -11668,7 +12222,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				
 				*(u32 *)(data + 0x8003898C - 0x800055E0 + 0x25E0) = 0x60000000;
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
 		}
@@ -11685,7 +12239,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 					
 					*(s16 *)(data + 0x801F1FF2 - 0x800056C0 + 0x2600) = memSize < 32 ? 64 : memSize;
 				}
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
 		}
@@ -11702,7 +12256,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 					
 					*(s16 *)(data + 0x801FF53E - 0x800056C0 + 0x2600) = memSize < 32 ? 64 : memSize;
 				}
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
 		}
@@ -11712,7 +12266,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				// Fix race condition with ARAM DMA transfer.
 				*(u32 *)(data + 0x8000AF34 - 0x800032C0 + 0x2C0) = 0x60000000;
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
 		}
@@ -11722,7 +12276,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				// Fix race condition with ARAM DMA transfer.
 				*(u32 *)(data + 0x8000B7EC - 0x800032E0 + 0x2E0) = 0x60000000;
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
 		}
@@ -11747,7 +12301,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 					
 					*(s16 *)(data + 0x800F0502 - 0x800129E0 + 0x2520) = memSize < 32 ? 64 : memSize;
 				}
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
 		}
@@ -11772,11 +12326,11 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 					
 					*(s16 *)(data + 0x800E6BB6 - 0x80012260 + 0x2520) = memSize < 32 ? 64 : memSize;
 				}
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
 		}
-	} else if (!strncmp(gameID, "GFZE01", 6) && dataType == PATCH_DOL) {
+	} else if ((!strncmp(gameID, "GFZE01", 6) || !strncmp(gameID, "UFZE01", 6)) && dataType == PATCH_DOL) {
 		switch (length) {
 			case 1414848:
 				// Skip exception stubbing.
@@ -11796,11 +12350,11 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				*(u32 *)(data + 0x8000563C - 0x800055E0 + 0x25E0) = 0x60000000;
 				*(u32 *)(data + 0x80005640 - 0x800055E0 + 0x25E0) = 0x38000000;
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
 		}
-	} else if (!strncmp(gameID, "GFZJ01", 6) && dataType == PATCH_DOL) {
+	} else if ((!strncmp(gameID, "GFZJ01", 6) || !strncmp(gameID, "UFZJ01", 6)) && dataType == PATCH_DOL) {
 		switch (length) {
 			case 1412928:
 				// Skip exception stubbing and force Japanese language.
@@ -11826,11 +12380,11 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				*(u32 *)(data + 0x80005654 - 0x800055E0 + 0x25E0) = 0x60000000;
 				*(u32 *)(data + 0x80005658 - 0x800055E0 + 0x25E0) = 0x38000005;
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
 		}
-	} else if (!strncmp(gameID, "GFZP01", 6) && dataType == PATCH_DOL) {
+	} else if ((!strncmp(gameID, "GFZP01", 6) || !strncmp(gameID, "UFZP01", 6)) && dataType == PATCH_DOL) {
 		switch (length) {
 			case 1425760:
 				// Skip exception stubbing.
@@ -11850,7 +12404,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				*(u32 *)(data + 0x8000563C - 0x800055E0 + 0x25E0) = 0x60000000;
 				*(u32 *)(data + 0x80005640 - 0x800055E0 + 0x25E0) = 0x38000000;
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
 		}
@@ -11860,14 +12414,14 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				// Fix framebuffer initialization.
 				*(u32 *)(data + 0x8001501C - 0x800134A0 + 0x4A0) = 0x807E0000;
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
-			case 266324:
+			case 266336:
 				// Fix framebuffer initialization.
 				*(u32 *)(data + 0x807023F0 - 0x807003A0 + 0x500) = 0x807E0000;
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
 		}
@@ -11881,7 +12435,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				*(u32 *)(data + 0x80014598 - 0x800034A0 + 0x4A0) = 0x3D208000;
 				*(u32 *)(data + 0x8001459C - 0x800034A0 + 0x4A0) = 0x812900EC;
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
 		}
@@ -11891,7 +12445,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				// Fix race condition with ARAM DMA transfer.
 				*(u32 *)(data + 0x800339E4 - 0x80006820 + 0x2620) = 0x60000000;
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
 		}
@@ -11901,7 +12455,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				// Fix race condition with ARAM DMA transfer.
 				*(u32 *)(data + 0x80065FFC - 0x80006820 + 0x2620) = 0x60000000;
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
 		}
@@ -11911,7 +12465,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				// Fix race condition with ARAM DMA transfer.
 				*(u32 *)(data + 0x80033D60 - 0x80006820 + 0x2620) = 0x60000000;
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
 		}
@@ -11921,7 +12475,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				// Fix race condition with ARAM DMA transfer.
 				*(u32 *)(data + 0x80150E94 - 0x80006760 + 0x2620) = 0x60000000;
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
 		}
@@ -11931,7 +12485,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				// Fix race condition with ARAM DMA transfer.
 				*(u32 *)(data + 0x8015110C - 0x80006760 + 0x2620) = 0x60000000;
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
 		}
@@ -11941,14 +12495,14 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				// Fix framebuffer initialization.
 				*(u32 *)(data + 0x80014C54 - 0x800134A0 + 0x4A0) = 0x807E0000;
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
-			case 339500:
+			case 339520:
 				// Fix framebuffer initialization.
 				*(u32 *)(data + 0x80701C38 - 0x807003A0 + 0x500) = 0x807E0000;
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
 		}
@@ -11958,14 +12512,14 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				// Fix framebuffer initialization.
 				*(u32 *)(data + 0x80014C54 - 0x800134A0 + 0x4A0) = 0x807E0000;
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
-			case 338376:
+			case 338400:
 				// Fix framebuffer initialization.
 				*(u32 *)(data + 0x80701C38 - 0x807003A0 + 0x500) = 0x807E0000;
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
 		}
@@ -11975,14 +12529,14 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				// Fix framebuffer initialization.
 				*(u32 *)(data + 0x8001501C - 0x800134A0 + 0x4A0) = 0x807E0000;
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
-			case 268372:
+			case 268384:
 				// Fix framebuffer initialization.
 				*(u32 *)(data + 0x807023F0 - 0x807003A0 + 0x500) = 0x807E0000;
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
 		}
@@ -11998,7 +12552,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				*(s16 *)(data + 0x806C7E2A - 0x806C7500 + 0x2600) = ((u32)addr + 0x8000) >> 16;
 				*(s16 *)(data + 0x806C7E32 - 0x806C7500 + 0x2600) = ((u32)addr & 0xFFFF);
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
 			case 213952:
@@ -12011,7 +12565,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				*(s16 *)(data + 0x8000F566 - 0x8000E780 + 0x2620) = ((u32)addr + 0x8000) >> 16;
 				*(s16 *)(data + 0x8000F56E - 0x8000E780 + 0x2620) = ((u32)addr & 0xFFFF);
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
 			case 5233088:
@@ -12021,7 +12575,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				*(s16 *)(data + 0x8036F5C6 - 0x8000F740 + 0x2620) = ((u32)addr + 0x8000) >> 16;
 				*(s16 *)(data + 0x8036F5CE - 0x8000F740 + 0x2620) = ((u32)addr & 0xFFFF);
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
 		}
@@ -12037,7 +12591,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				*(s16 *)(data + 0x806C7EEA - 0x806C75C0 + 0x26C0) = ((u32)addr + 0x8000) >> 16;
 				*(s16 *)(data + 0x806C7EF2 - 0x806C75C0 + 0x26C0) = ((u32)addr & 0xFFFF);
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
 			case 214880:
@@ -12050,7 +12604,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				*(s16 *)(data + 0x8000F566 - 0x8000E780 + 0x2620) = ((u32)addr + 0x8000) >> 16;
 				*(s16 *)(data + 0x8000F56E - 0x8000E780 + 0x2620) = ((u32)addr & 0xFFFF);
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
 			case 5234880:
@@ -12060,7 +12614,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				*(s16 *)(data + 0x8036F1FA - 0x8000F740 + 0x2620) = ((u32)addr + 0x8000) >> 16;
 				*(s16 *)(data + 0x8036F202 - 0x8000F740 + 0x2620) = ((u32)addr & 0xFFFF);
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
 			case 5235488:
@@ -12070,7 +12624,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				*(s16 *)(data + 0x8036F446 - 0x8000F740 + 0x2620) = ((u32)addr + 0x8000) >> 16;
 				*(s16 *)(data + 0x8036F44E - 0x8000F740 + 0x2620) = ((u32)addr & 0xFFFF);
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
 		}
@@ -12086,7 +12640,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				*(s16 *)(data + 0x806C805E - 0x806C75C0 + 0x26C0) = ((u32)addr + 0x8000) >> 16;
 				*(s16 *)(data + 0x806C8066 - 0x806C75C0 + 0x26C0) = ((u32)addr & 0xFFFF);
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
 			case 220800:
@@ -12099,7 +12653,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				*(s16 *)(data + 0x8000F742 - 0x8000E820 + 0x26C0) = ((u32)addr + 0x8000) >> 16;
 				*(s16 *)(data + 0x8000F74A - 0x8000E820 + 0x26C0) = ((u32)addr & 0xFFFF);
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
 			case 4785536:
@@ -12112,7 +12666,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				*(s16 *)(data + 0x80315B92 - 0x8000E680 + 0x26C0) = ((u32)addr + 0x8000) >> 16;
 				*(s16 *)(data + 0x80315B9A - 0x8000E680 + 0x26C0) = ((u32)addr & 0xFFFF);
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
 		}
@@ -12128,7 +12682,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				*(s16 *)(data + 0x806C7EEA - 0x806C75C0 + 0x26C0) = ((u32)addr + 0x8000) >> 16;
 				*(s16 *)(data + 0x806C7EF2 - 0x806C75C0 + 0x26C0) = ((u32)addr & 0xFFFF);
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
 			case 222048:
@@ -12141,7 +12695,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				*(s16 *)(data + 0x8000F606 - 0x8000E820 + 0x26C0) = ((u32)addr + 0x8000) >> 16;
 				*(s16 *)(data + 0x8000F60E - 0x8000E820 + 0x26C0) = ((u32)addr & 0xFFFF);
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
 			case 4781856:
@@ -12154,7 +12708,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				*(s16 *)(data + 0x80314B3A - 0x8000E680 + 0x26C0) = ((u32)addr + 0x8000) >> 16;
 				*(s16 *)(data + 0x80314B42 - 0x8000E680 + 0x26C0) = ((u32)addr & 0xFFFF);
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
 		}
@@ -12170,7 +12724,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				*(s16 *)(data + 0x806C805E - 0x806C75C0 + 0x26C0) = ((u32)addr + 0x8000) >> 16;
 				*(s16 *)(data + 0x806C8066 - 0x806C75C0 + 0x26C0) = ((u32)addr & 0xFFFF);
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
 			case 221152:
@@ -12183,7 +12737,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				*(s16 *)(data + 0x8000F742 - 0x8000E820 + 0x26C0) = ((u32)addr + 0x8000) >> 16;
 				*(s16 *)(data + 0x8000F74A - 0x8000E820 + 0x26C0) = ((u32)addr & 0xFFFF);
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
 			case 4794720:
@@ -12196,7 +12750,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				*(s16 *)(data + 0x803167F2 - 0x8000E680 + 0x26C0) = ((u32)addr + 0x8000) >> 16;
 				*(s16 *)(data + 0x803167FA - 0x8000E680 + 0x26C0) = ((u32)addr & 0xFFFF);
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
 		}
@@ -12211,7 +12765,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				*(s16 *)(data + 0x80005B72 - 0x800056C0 + 0x2600) = (((u32)addr + 0xE00) + 0x8000) >> 16;
 				*(s16 *)(data + 0x80005B76 - 0x800056C0 + 0x2600) = (((u32)addr + 0xE00) & 0xFFFF);
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
 		}
@@ -12226,7 +12780,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				*(s16 *)(data + 0x80005B72 - 0x800056C0 + 0x2600) = (((u32)addr + 0xE00) + 0x8000) >> 16;
 				*(s16 *)(data + 0x80005B76 - 0x800056C0 + 0x2600) = (((u32)addr + 0xE00) & 0xFFFF);
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
 		}
@@ -12241,7 +12795,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				*(s16 *)(data + 0x80005B72 - 0x800056C0 + 0x2600) = (((u32)addr + 0xE00) + 0x8000) >> 16;
 				*(s16 *)(data + 0x80005B76 - 0x800056C0 + 0x2600) = (((u32)addr + 0xE00) & 0xFFFF);
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
 		}
@@ -12251,14 +12805,14 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				// Fix framebuffer initialization.
 				*(u32 *)(data + 0x80500EB4 - 0x805003A0 + 0x4A0) = 0x387D2720;
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
-			case 260164:
+			case 260192:
 				// Fix framebuffer initialization.
 				*(u32 *)(data + 0x80500EB4 - 0x805003A0 + 0x500) = 0x387D2720;
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
 		}
@@ -12268,14 +12822,14 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				// Fix framebuffer initialization.
 				*(u32 *)(data + 0x80500EB4 - 0x805003A0 + 0x4A0) = 0x387D2800;
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
-			case 260852:
+			case 260864:
 				// Fix framebuffer initialization.
 				*(u32 *)(data + 0x80500EB4 - 0x805003A0 + 0x500) = 0x387D2800;
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
 		}
@@ -12305,7 +12859,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				*(u32 *)(data + 0x80155A90 - 0x80014140 + 0x2620) = 0x39000002;
 				*(u32 *)(data + 0x80155A94 - 0x80014140 + 0x2620) = branchAndLink((u32 *)0x801996C8, (u32 *)0x80155A94);
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
 		}
@@ -12335,7 +12889,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				*(u32 *)(data + 0x80151AD8 - 0x80014180 + 0x2620) = 0x39000002;
 				*(u32 *)(data + 0x80151ADC - 0x80014180 + 0x2620) = branchAndLink((u32 *)0x8019414C, (u32 *)0x80151ADC);
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
 		}
@@ -12365,7 +12919,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				*(u32 *)(data + 0x80155AD4 - 0x80014140 + 0x2620) = 0x39000002;
 				*(u32 *)(data + 0x80155AD8 - 0x80014140 + 0x2620) = branchAndLink((u32 *)0x80199784, (u32 *)0x80155AD8);
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
 		}
@@ -12395,7 +12949,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				*(u32 *)(data + 0x80155A6C - 0x80014140 + 0x2620) = 0x39000002;
 				*(u32 *)(data + 0x80155A70 - 0x80014140 + 0x2620) = branchAndLink((u32 *)0x801996B8, (u32 *)0x80155A70);
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
 		}
@@ -12409,7 +12963,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				*(u32 *)(data + 0x8000DFD4 - 0x800034A0 + 0x4A0) = 0x3C608000;
 				*(u32 *)(data + 0x8000DFD8 - 0x800034A0 + 0x4A0) = 0x806300EC;
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
 		}
@@ -12423,7 +12977,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				*(u32 *)(data + 0x8000DFD4 - 0x800034A0 + 0x4A0) = 0x3C608000;
 				*(u32 *)(data + 0x8000DFD8 - 0x800034A0 + 0x4A0) = 0x806300EC;
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
 		}
@@ -12437,7 +12991,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				*(u32 *)(data + 0x80014598 - 0x800034A0 + 0x4A0) = 0x3D208000;
 				*(u32 *)(data + 0x8001459C - 0x800034A0 + 0x4A0) = 0x812900EC;
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
 		}
@@ -12454,7 +13008,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 					
 					*(s16 *)(data + 0x8003758E - 0x8000AEA0 + 0x2520) = memSize < 32 ? 64 : memSize;
 				}
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
 		}
@@ -12471,7 +13025,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 					
 					*(s16 *)(data + 0x8003740A - 0x8000AE60 + 0x2520) = memSize < 32 ? 64 : memSize;
 				}
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
 		}
@@ -12488,7 +13042,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 					
 					*(s16 *)(data + 0x800374D6 - 0x8000AE60 + 0x2520) = memSize < 32 ? 64 : memSize;
 				}
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
 		}
@@ -12509,7 +13063,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				
 				*(u32 *)(data + 0x800875BC - 0x800056A0 + 0x2600) = 0x60000000;
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
 			case 4336128:
@@ -12527,7 +13081,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				
 				*(u32 *)(data + 0x8008789C - 0x800056A0 + 0x2600) = 0x60000000;
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
 		}
@@ -12548,7 +13102,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				
 				*(u32 *)(data + 0x80084E70 - 0x800056A0 + 0x2600) = 0x60000000;
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
 		}
@@ -12569,7 +13123,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				
 				*(u32 *)(data + 0x80088574 - 0x800056A0 + 0x2600) = 0x60000000;
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
 		}
@@ -12590,7 +13144,803 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				
 				*(u32 *)(data + 0x80086FDC - 0x800056A0 + 0x2600) = 0x60000000;
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+		}
+	} else if (!strncmp(gameID, "PCKJ01", 6) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 3771872:
+				// Strip anti-debugging code.
+				*(u32 *)(data + 0x80005DD0 - 0x800055E0 + 0x25E0) = 0x60000000;
+				
+				print_debug("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+		}
+	} else if (!strncmp(gameID, "PCSJ01", 6) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 3771872:
+				// Strip anti-debugging code.
+				*(u32 *)(data + 0x80005DD0 - 0x800055E0 + 0x25E0) = 0x60000000;
+				
+				print_debug("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+		}
+	}
+	return patched;
+}
+
+// Overwrite game specific file content
+int Patch_GameSpecificFile(void *data, u32 length, const char *gameID, const char *fileName)
+{
+	void *addr;
+	int patched = 0;
+	
+	if (!strcmp(fileName, "boot.bin")) {
+		DiskHeader *diskHeader = (DiskHeader *) data;
+		diskHeader->DVDMagicWord = DVD_MAGIC;
+		memset(data + 0x200, 0, 0x200);
+		diskHeader->MaxFSTSize = GCMDisk.MaxFSTSize;
+		
+		print_debug("Patched:[%s]\n", fileName);
+		patched++;
+		
+		data    += 0x440;
+		length  -= 0x440;
+		fileName = "bi2.bin";
+	}
+	if (!strncmp(gameID, "DPOJ8P", 6)) {
+		if (!strcmp(fileName, "bi2.bin")) {
+			*(u32 *)(data + 0x4) = 0x1800000;
+			
+			print_debug("Patched:[%s]\n", fileName);
+			patched++;
+		}
+	} else if (!strncmp(gameID, "GCCE01", 6) || !strncmp(gameID, "GCCP01", 6)) {
+		if (!strcasecmp(fileName, "ffcc_cli.bin")) {
+			*(u16 *)(data + 0x2504) = __builtin_bswap16(0x8004);
+			*(u16 *)(data + 0x2506) = __builtin_bswap16(0x20FF);
+			*(u16 *)(data + 0x2508) = __builtin_bswap16(0x7018);
+			*(u16 *)(data + 0x250A) = __builtin_bswap16(0x705C);
+			*(u16 *)(data + 0x250C) = __builtin_bswap16(0x4904);
+			*(u16 *)(data + 0x250E) = __builtin_bswap16(0x2001);
+			*(u16 *)(data + 0x2510) = __builtin_bswap16(0x7008);
+			*(u16 *)(data + 0x2512) = __builtin_bswap16(0x4901);
+			*(u16 *)(data + 0x2514) = __builtin_bswap16(0x600C);
+			*(u16 *)(data + 0x2516) = __builtin_bswap16(0xE009);
+			
+			*(u32 *)(data + 0x2518) = __builtin_bswap32(0x03000190);
+			
+			print_debug("Patched:[%s]\n", fileName);
+			patched++;
+		}
+	} else if (!strncmp(gameID, "GCCJGC", 6)) {
+		if (!strcasecmp(fileName, "ffcc_cli.bin")) {
+			*(u16 *)(data + 0x132C) = __builtin_bswap16(0x8004);
+			*(u16 *)(data + 0x132E) = __builtin_bswap16(0x20FF);
+			*(u16 *)(data + 0x1330) = __builtin_bswap16(0x7018);
+			*(u16 *)(data + 0x1332) = __builtin_bswap16(0x705C);
+			*(u16 *)(data + 0x1334) = __builtin_bswap16(0x4904);
+			*(u16 *)(data + 0x1336) = __builtin_bswap16(0x2001);
+			*(u16 *)(data + 0x1338) = __builtin_bswap16(0x7008);
+			*(u16 *)(data + 0x133A) = __builtin_bswap16(0x4901);
+			*(u16 *)(data + 0x133C) = __builtin_bswap16(0x600C);
+			*(u16 *)(data + 0x133E) = __builtin_bswap16(0xE009);
+			
+			*(u32 *)(data + 0x1340) = __builtin_bswap32(0x03000138);
+			
+			print_debug("Patched:[%s]\n", fileName);
+			patched++;
+		}
+	} else if (!strncmp(gameID, "GHAE08", 6)) {
+		if (!strcasecmp(fileName, "claire.rel")) {
+			*(u32 *)(data + 0x190294) = 0x60000000;
+			
+			*(u8 *)(data + 0x1EFDF6) = R_PPC_NONE;
+			*(u32 *)(data + 0x1EFDF8) = 0;
+			
+			print_debug("Patched:[%s]\n", fileName);
+			patched++;
+		} else if (!strcasecmp(fileName, "leon.rel")) {
+			*(u32 *)(data + 0x1903FC) = 0x60000000;
+			
+			*(u8 *)(data + 0x1EFF86) = R_PPC_NONE;
+			*(u32 *)(data + 0x1EFF88) = 0;
+			
+			print_debug("Patched:[%s]\n", fileName);
+			patched++;
+		}
+	} else if (!strncmp(gameID, "GHAJ08", 6)) {
+		if (!strcasecmp(fileName, "claire.rel")) {
+			*(u32 *)(data + 0x1903FC) = 0x60000000;
+			
+			*(u8 *)(data + 0x1FD19A) = R_PPC_NONE;
+			*(u32 *)(data + 0x1FD19C) = 0;
+			
+			print_debug("Patched:[%s]\n", fileName);
+			patched++;
+		} else if (!strcasecmp(fileName, "leon.rel")) {
+			*(u32 *)(data + 0x1904C4) = 0x60000000;
+			
+			*(u8 *)(data + 0x1FD30A) = R_PPC_NONE;
+			*(u32 *)(data + 0x1FD30C) = 0;
+			
+			print_debug("Patched:[%s]\n", fileName);
+			patched++;
+		}
+	} else if (!strncmp(gameID, "GHAP08", 6)) {
+		if (!strcasecmp(fileName, "claire.rel")) {
+			*(u32 *)(data + 0x190710) = 0x60000000;
+			
+			*(u8 *)(data + 0x1F0FBE) = R_PPC_NONE;
+			*(u32 *)(data + 0x1F0FC0) = 0;
+			
+			print_debug("Patched:[%s]\n", fileName);
+			patched++;
+		} else if (!strcasecmp(fileName, "claire_f.rel")) {
+			*(u32 *)(data + 0x1912E8) = 0x60000000;
+			
+			*(u8 *)(data + 0x1F251E) = R_PPC_NONE;
+			*(u32 *)(data + 0x1F2520) = 0;
+			
+			print_debug("Patched:[%s]\n", fileName);
+			patched++;
+		} else if (!strcasecmp(fileName, "claire_g.rel")) {
+			*(u32 *)(data + 0x1905A8) = 0x60000000;
+			
+			*(u8 *)(data + 0x1F1AE6) = R_PPC_NONE;
+			*(u32 *)(data + 0x1F1AE8) = 0;
+			
+			print_debug("Patched:[%s]\n", fileName);
+			patched++;
+		} else if (!strcasecmp(fileName, "claire_i.rel")) {
+			*(u32 *)(data + 0x19113C) = 0x60000000;
+			
+			*(u8 *)(data + 0x1F269E) = R_PPC_NONE;
+			*(u32 *)(data + 0x1F26A0) = 0;
+			
+			print_debug("Patched:[%s]\n", fileName);
+			patched++;
+		} else if (!strcasecmp(fileName, "claire_s.rel")) {
+			*(u32 *)(data + 0x1912E4) = 0x60000000;
+			
+			*(u8 *)(data + 0x1F281E) = R_PPC_NONE;
+			*(u32 *)(data + 0x1F2820) = 0;
+			
+			print_debug("Patched:[%s]\n", fileName);
+			patched++;
+		} else if (!strcasecmp(fileName, "leon.rel")) {
+			*(u32 *)(data + 0x190878) = 0x60000000;
+			
+			*(u8 *)(data + 0x1F116E) = R_PPC_NONE;
+			*(u32 *)(data + 0x1F1170) = 0;
+			
+			print_debug("Patched:[%s]\n", fileName);
+			patched++;
+		} else if (!strcasecmp(fileName, "leon_f.rel")) {
+			*(u32 *)(data + 0x191408) = 0x60000000;
+			
+			*(u8 *)(data + 0x1F25EE) = R_PPC_NONE;
+			*(u32 *)(data + 0x1F25F0) = 0;
+			
+			print_debug("Patched:[%s]\n", fileName);
+			patched++;
+		} else if (!strcasecmp(fileName, "leon_g.rel")) {
+			*(u32 *)(data + 0x190638) = 0x60000000;
+			
+			*(u8 *)(data + 0x1F1AF6) = R_PPC_NONE;
+			*(u32 *)(data + 0x1F1AF8) = 0;
+			
+			print_debug("Patched:[%s]\n", fileName);
+			patched++;
+		} else if (!strcasecmp(fileName, "leon_i.rel")) {
+			*(u32 *)(data + 0x19125C) = 0x60000000;
+			
+			*(u8 *)(data + 0x1F278E) = R_PPC_NONE;
+			*(u32 *)(data + 0x1F2790) = 0;
+			
+			print_debug("Patched:[%s]\n", fileName);
+			patched++;
+		} else if (!strcasecmp(fileName, "leon_s.rel")) {
+			*(u32 *)(data + 0x191380) = 0x60000000;
+			
+			*(u8 *)(data + 0x1F286E) = R_PPC_NONE;
+			*(u32 *)(data + 0x1F2870) = 0;
+			
+			print_debug("Patched:[%s]\n", fileName);
+			patched++;
+		}
+	} else if (!strncmp(gameID, "GHQE7D", 6) || !strncmp(gameID, "GHQP7D", 6)) {
+		if (!strcmp(fileName, "bi2.bin")) {
+			*(u32 *)(data + 0x24) = 5;
+			
+			print_debug("Patched:[%s]\n", fileName);
+			patched++;
+		}
+	} else if (!strncmp(gameID, "GLEP08", 6)) {
+		if (!strcasecmp(fileName, "eng.rel")) {
+			*(u32 *)(data + 0x14C354) = 0x60000000;
+			
+			*(u8 *)(data + 0x1BFCE6) = R_PPC_NONE;
+			*(u32 *)(data + 0x1BFCE8) = 0;
+			
+			print_debug("Patched:[%s]\n", fileName);
+			patched++;
+		} else if (!strcasecmp(fileName, "fra.rel")) {
+			*(u32 *)(data + 0x14D21C) = 0x60000000;
+			
+			*(u8 *)(data + 0x1C0FE6) = R_PPC_NONE;
+			*(u32 *)(data + 0x1C0FE8) = 0;
+			
+			print_debug("Patched:[%s]\n", fileName);
+			patched++;
+		} else if (!strcasecmp(fileName, "ger.rel")) {
+			*(u32 *)(data + 0x14D020) = 0x60000000;
+			
+			*(u8 *)(data + 0x1C1886) = R_PPC_NONE;
+			*(u32 *)(data + 0x1C1888) = 0;
+			
+			print_debug("Patched:[%s]\n", fileName);
+			patched++;
+		} else if (!strcasecmp(fileName, "ita.rel")) {
+			*(u32 *)(data + 0x14D084) = 0x60000000;
+			
+			*(u8 *)(data + 0x1C1246) = R_PPC_NONE;
+			*(u32 *)(data + 0x1C1248) = 0;
+			
+			print_debug("Patched:[%s]\n", fileName);
+			patched++;
+		} else if (!strcasecmp(fileName, "spa.rel")) {
+			*(u32 *)(data + 0x14D204) = 0x60000000;
+			
+			*(u8 *)(data + 0x1C1386) = R_PPC_NONE;
+			*(u32 *)(data + 0x1C1388) = 0;
+			
+			print_debug("Patched:[%s]\n", fileName);
+			patched++;
+		}
+	} else if (!strncmp(gameID, "GMRE70", 6) || !strncmp(gameID, "GMRP70", 6)) {
+		if (!strcmp(fileName, "bi2.bin")) {
+			*(u32 *)(data + 0x24) = 5;
+			
+			print_debug("Patched:[%s]\n", fileName);
+			patched++;
+		}
+	} else if (!strncmp(gameID, "GS8P7D", 6)) {
+		if (!strcasecmp(fileName, "SPYROCFG_NGC.CFG")) {
+			if (in_range(swissSettings.gameVMode, 1, 7)) {
+				addr = strnstr(data, "\tHeight:\t\t\t496\r\n", length);
+				if (addr) memcpy(addr, "\tHeight:\t\t\t448\r\n", 16);
+			}
+			print_debug("Patched:[%s]\n", fileName);
+			patched++;
+		}
+	} else if (!strncmp(gameID, "GSXD64", 6)) {
+		if (!strcmp(fileName, "bi2.bin")) {
+			u32 args = *(u32 *)(data + 0x8);
+			if (args) memset(data + args, 0, length - args);
+			
+			*(u32 *)(data + 0x8) = 0x1FC8;
+			
+			*(u32 *)(data + 0x1FC8) = 4;
+			*(u32 *)(data + 0x1FCC) = 0x1FE0;
+			*(u32 *)(data + 0x1FD0) = 0x1FEE;
+			*(u32 *)(data + 0x1FD4) = 0x1FF3;
+			*(u32 *)(data + 0x1FD8) = 0x1FFD;
+			*(u32 *)(data + 0x1FDC) = 0;
+			
+			strcpy(data + 0x1FE0, "Clonewars.elf");
+			strcpy(data + 0x1FEE, "/pal");
+			strcpy(data + 0x1FF3, "/language");
+			strcpy(data + 0x1FFD, "1");
+			
+			print_debug("Patched:[%s]\n", fileName);
+			patched++;
+		}
+	} else if (!strncmp(gameID, "GSXE64", 6)) {
+		if (!strcmp(fileName, "bi2.bin")) {
+			u32 args = *(u32 *)(data + 0x8);
+			if (args) memset(data + args, 0, length - args);
+			
+			*(u32 *)(data + 0x8) = 0x1FE4;
+			
+			*(u32 *)(data + 0x1FE4) = 1;
+			*(u32 *)(data + 0x1FE8) = 0x1FF1;
+			*(u32 *)(data + 0x1FEC) = 0;
+			
+			strcpy(data + 0x1FF1, "Clonewars.elf");
+			
+			print_debug("Patched:[%s]\n", fileName);
+			patched++;
+		}
+	} else if (!strncmp(gameID, "GSXF64", 6)) {
+		if (!strcmp(fileName, "bi2.bin")) {
+			u32 args = *(u32 *)(data + 0x8);
+			if (args) memset(data + args, 0, length - args);
+			
+			*(u32 *)(data + 0x8) = 0x1FC8;
+			
+			*(u32 *)(data + 0x1FC8) = 4;
+			*(u32 *)(data + 0x1FCC) = 0x1FE0;
+			*(u32 *)(data + 0x1FD0) = 0x1FEE;
+			*(u32 *)(data + 0x1FD4) = 0x1FF3;
+			*(u32 *)(data + 0x1FD8) = 0x1FFD;
+			*(u32 *)(data + 0x1FDC) = 0;
+			
+			strcpy(data + 0x1FE0, "Clonewars.elf");
+			strcpy(data + 0x1FEE, "/pal");
+			strcpy(data + 0x1FF3, "/language");
+			strcpy(data + 0x1FFD, "2");
+			
+			print_debug("Patched:[%s]\n", fileName);
+			patched++;
+		}
+	} else if (!strncmp(gameID, "GSXI64", 6)) {
+		if (!strcmp(fileName, "bi2.bin")) {
+			u32 args = *(u32 *)(data + 0x8);
+			if (args) memset(data + args, 0, length - args);
+			
+			*(u32 *)(data + 0x8) = 0x1FC8;
+			
+			*(u32 *)(data + 0x1FC8) = 4;
+			*(u32 *)(data + 0x1FCC) = 0x1FE0;
+			*(u32 *)(data + 0x1FD0) = 0x1FEE;
+			*(u32 *)(data + 0x1FD4) = 0x1FF3;
+			*(u32 *)(data + 0x1FD8) = 0x1FFD;
+			*(u32 *)(data + 0x1FDC) = 0;
+			
+			strcpy(data + 0x1FE0, "Clonewars.elf");
+			strcpy(data + 0x1FEE, "/pal");
+			strcpy(data + 0x1FF3, "/language");
+			strcpy(data + 0x1FFD, "4");
+			
+			print_debug("Patched:[%s]\n", fileName);
+			patched++;
+		}
+	} else if (!strncmp(gameID, "GSXJ13", 6)) {
+		if (!strcmp(fileName, "bi2.bin")) {
+			u32 args = *(u32 *)(data + 0x8);
+			if (args) memset(data + args, 0, length - args);
+			
+			*(u32 *)(data + 0x8) = 0x1FC0;
+			
+			*(u32 *)(data + 0x1FC0) = 4;
+			*(u32 *)(data + 0x1FC4) = 0x1FDB;
+			*(u32 *)(data + 0x1FC8) = 0x1FE9;
+			*(u32 *)(data + 0x1FCC) = 0x1FF3;
+			*(u32 *)(data + 0x1FD0) = 0x1FF5;
+			*(u32 *)(data + 0x1FD4) = 0;
+			
+			strcpy(data + 0x1FDB, "Clonewars.elf");
+			strcpy(data + 0x1FE9, "/language");
+			strcpy(data + 0x1FF3, "5");
+			strcpy(data + 0x1FF5, "/japanese");
+			
+			print_debug("Patched:[%s]\n", fileName);
+			patched++;
+		}
+	} else if (!strncmp(gameID, "GSXP64", 6)) {
+		if (!strcmp(fileName, "bi2.bin")) {
+			u32 args = *(u32 *)(data + 0x8);
+			if (args) memset(data + args, 0, length - args);
+			
+			*(u32 *)(data + 0x8) = 0x1FDC;
+			
+			*(u32 *)(data + 0x1FDC) = 2;
+			*(u32 *)(data + 0x1FE0) = 0x1FEC;
+			*(u32 *)(data + 0x1FE4) = 0x1FFA;
+			*(u32 *)(data + 0x1FE8) = 0;
+			
+			strcpy(data + 0x1FEC, "Clonewars.elf");
+			strcpy(data + 0x1FFA, "/pal");
+			
+			print_debug("Patched:[%s]\n", fileName);
+			patched++;
+		}
+	} else if (!strncmp(gameID, "GSXS64", 6)) {
+		if (!strcmp(fileName, "bi2.bin")) {
+			u32 args = *(u32 *)(data + 0x8);
+			if (args) memset(data + args, 0, length - args);
+			
+			*(u32 *)(data + 0x8) = 0x1FC8;
+			
+			*(u32 *)(data + 0x1FC8) = 4;
+			*(u32 *)(data + 0x1FCC) = 0x1FE0;
+			*(u32 *)(data + 0x1FD0) = 0x1FEE;
+			*(u32 *)(data + 0x1FD4) = 0x1FF3;
+			*(u32 *)(data + 0x1FD8) = 0x1FFD;
+			*(u32 *)(data + 0x1FDC) = 0;
+			
+			strcpy(data + 0x1FE0, "Clonewars.elf");
+			strcpy(data + 0x1FEE, "/pal");
+			strcpy(data + 0x1FF3, "/language");
+			strcpy(data + 0x1FFD, "3");
+			
+			print_debug("Patched:[%s]\n", fileName);
+			patched++;
+		}
+	}
+	return patched;
+}
+
+int Patch_GameSpecificHypervisor(void *data, u32 length, const char *gameID, int dataType)
+{
+	int patched = 0;
+	
+	if (dataType == PATCH_BS2) {
+		switch (length) {
+			case 1435200:
+				*(s16 *)(data + 0x813007C2 - 0x81300000 + 0x20) = 0x0C00;
+				
+				print_debug("Patched:[%s]\n", "NTSC Revision 1.0");
+				patched++;
+				break;
+			case 1448280:
+				*(s16 *)(data + 0x813007DA - 0x81300000 + 0x20) = 0x0C00;
+				
+				*(s16 *)(data + 0x81301422 - 0x81300000 + 0x20) = 0x0C00;
+				*(s16 *)(data + 0x81301476 - 0x81300000 + 0x20) = 0x0C00;
+				*(u32 *)(data + 0x81301484 - 0x81300000 + 0x20) = 0x80050004;
+				*(u32 *)(data + 0x813014A8 - 0x81300000 + 0x20) = 0x90050004;
+				
+				*(s16 *)(data + 0x8130170E - 0x81300000 + 0x20) = 0x0C00;
+				
+				*(s16 *)(data + 0x813019AE - 0x81300000 + 0x20) = 0x0C00;
+				
+				print_debug("Patched:[%s]\n", "NTSC Revision 1.0");
+				patched++;
+				break;
+			case 1449848:
+				*(s16 *)(data + 0x81300B4E - 0x81300000 + 0x20) = 0x0C00;
+				
+				*(s16 *)(data + 0x81301762 - 0x81300000 + 0x20) = 0x0C00;
+				*(s16 *)(data + 0x813017B6 - 0x81300000 + 0x20) = 0x0C00;
+				*(u32 *)(data + 0x813017C4 - 0x81300000 + 0x20) = 0x80050004;
+				*(u32 *)(data + 0x813017E8 - 0x81300000 + 0x20) = 0x90050004;
+				
+				*(s16 *)(data + 0x81301A4E - 0x81300000 + 0x20) = 0x0C00;
+				
+				*(s16 *)(data + 0x81301CEE - 0x81300000 + 0x20) = 0x0C00;
+				
+				print_debug("Patched:[%s]\n", "DEV  Revision 1.0");
+				patched++;
+				break;
+			case 1583088:
+				*(s16 *)(data + 0x813005EA - 0x81300000 + 0x20) = 0x0C00;
+				
+				print_debug("Patched:[%s]\n", "NTSC Revision 1.1");
+				patched++;
+				break;
+			case 1763048:
+				*(s16 *)(data + 0x813005EA - 0x81300000 + 0x20) = 0x0C00;
+				
+				print_debug("Patched:[%s]\n", "PAL  Revision 1.0");
+				patched++;
+				break;
+			case 1760152:
+				*(s16 *)(data + 0x8130082E - 0x81300000 + 0x20) = 0x0C00;
+				
+				*(s16 *)(data + 0x81301496 - 0x81300000 + 0x20) = 0x0C00;
+				*(s16 *)(data + 0x813014E6 - 0x81300000 + 0x20) = 0x0C00;
+				*(u32 *)(data + 0x813014F4 - 0x81300000 + 0x20) = 0x80050004;
+				*(u32 *)(data + 0x81301518 - 0x81300000 + 0x20) = 0x90050004;
+				
+				*(s16 *)(data + 0x81301772 - 0x81300000 + 0x20) = 0x0C00;
+				
+				*(s16 *)(data + 0x813018A6 - 0x81300000 + 0x20) = 0x0C00;
+				
+				print_debug("Patched:[%s]\n", "PAL  Revision 1.0");
+				patched++;
+				break;
+			case 1561776:
+				*(s16 *)(data + 0x813005EA - 0x81300000 + 0x20) = 0x0C00;
+				
+				print_debug("Patched:[%s]\n", "MPAL Revision 1.1");
+				patched++;
+				break;
+			case 1607576:
+				*(s16 *)(data + 0x81300A5A - 0x81300000 + 0x20) = 0x0C00;
+				
+				*(s16 *)(data + 0x8130221A - 0x81300000 + 0x20) = 0x0C00;
+				*(s16 *)(data + 0x8130226E - 0x81300000 + 0x20) = 0x0C00;
+				*(u32 *)(data + 0x8130227C - 0x81300000 + 0x20) = 0x80050004;
+				*(u32 *)(data + 0x813022A0 - 0x81300000 + 0x20) = 0x90050004;
+				
+				*(s16 *)(data + 0x81302506 - 0x81300000 + 0x20) = 0x0C00;
+				
+				*(s16 *)(data + 0x813027A6 - 0x81300000 + 0x20) = 0x0C00;
+				
+				print_debug("Patched:[%s]\n", "TDEV Revision 1.1");
+				patched++;
+				break;
+			case 1586352:
+				*(s16 *)(data + 0x81300926 - 0x81300000 + 0x20) = 0x0C00;
+				
+				print_debug("Patched:[%s]\n", "NTSC Revision 1.2");
+				patched++;
+				break;
+			case 1587504:
+				*(s16 *)(data + 0x81300926 - 0x81300000 + 0x20) = 0x0C00;
+				
+				print_debug("Patched:[%s]\n", "NTSC Revision 1.2");
+				patched++;
+				break;
+			case 1766768:
+				*(s16 *)(data + 0x813006DA - 0x81300000 + 0x20) = 0x0C00;
+				
+				print_debug("Patched:[%s]\n", "PAL  Revision 1.2");
+				patched++;
+				break;
+		}
+	} else if ((!strncmp(gameID, "D58E01", 6) || !strncmp(gameID, "D59E01", 6) || !strncmp(gameID, "D62E01", 6)) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 4336128:
+				// Move up DSI exception handler.
+				*(s16 *)(data + 0x802AE366 - 0x800056A0 + 0x2600) = 0x0304;
+				
+				print_debug("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+		}
+	} else if ((!strncmp(gameID, "D78P01", 6) || !strncmp(gameID, "D86U01", 6)) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 4548544:
+				// Move up DSI exception handler.
+				*(s16 *)(data + 0x802A95B2 - 0x800056A0 + 0x2600) = 0x0304;
+				
+				print_debug("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+		}
+	} else if ((!strncmp(gameID, "E22J01", 6) || !strncmp(gameID, "E23J01", 6)) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 4205664:
+				// Move up DSI exception handler.
+				*(s16 *)(data + 0x802AB256 - 0x800056A0 + 0x2600) = 0x0304;
+				
+				print_debug("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+		}
+	} else if ((!strncmp(gameID, "G3FD69", 6) || !strncmp(gameID, "G3FE69", 6) || !strncmp(gameID, "G3FF69", 6) || !strncmp(gameID, "G3FP69", 6) || !strncmp(gameID, "G3FS69", 6)) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 4880320:
+				// Move up DSI exception handler.
+				*(s16 *)(data + 0x80184792 - 0x800055E0 + 0x25E0) = 0x0304;
+				*(s16 *)(data + 0x8018479A - 0x800055E0 + 0x25E0) = 0x0304;
+				*(s16 *)(data + 0x801847AA - 0x800055E0 + 0x25E0) = 56 * sizeof(u32);
+				*(s16 *)(data + 0x801847B6 - 0x800055E0 + 0x25E0) = 56 * sizeof(u32);
+				*(s16 *)(data + 0x801847C2 - 0x800055E0 + 0x25E0) = 56 * sizeof(u32);
+				
+				print_debug("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+		}
+	} else if ((!strncmp(gameID, "GHBE7D", 6) || !strncmp(gameID, "GHBP7D", 6)) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 647104:
+				// Move up jump to DSI exception handler.
+				*(s16 *)(data + 0x80004556 - 0x80003100 + 0x100) =  0x0304;
+				*(s16 *)(data + 0x80004562 - 0x80003100 + 0x100) = -0x0304;
+				*(s16 *)(data + 0x80004566 - 0x80003100 + 0x100) =  0x0304;
+				
+				// Fix ISI exception check.
+				*(u32 *)(data + 0x80005D84 - 0x80003100 + 0x100) = 0x7CBA02A6;
+				*(u32 *)(data + 0x80005D98 - 0x80003100 + 0x100) = 0x7CBA02A6;
+				
+				print_debug("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+		}
+	} else if (!strncmp(gameID, "GISE36", 6) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 3266176:
+				// Move up DSI exception handler.
+				*(s16 *)(data + 0x8010A74A - 0x800055E0 + 0x25E0) = 0x0304;
+				*(s16 *)(data + 0x8010A752 - 0x800055E0 + 0x25E0) = 0x0304;
+				*(s16 *)(data + 0x8010A762 - 0x800055E0 + 0x25E0) = 56 * sizeof(u32);
+				*(s16 *)(data + 0x8010A76E - 0x800055E0 + 0x25E0) = 56 * sizeof(u32);
+				*(s16 *)(data + 0x8010A77A - 0x800055E0 + 0x25E0) = 56 * sizeof(u32);
+				
+				print_debug("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+		}
+	} else if (!strncmp(gameID, "GISP36", 6) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 3268768:
+				// Move up DSI exception handler.
+				*(s16 *)(data + 0x8010AEE2 - 0x800055E0 + 0x25E0) = 0x0304;
+				*(s16 *)(data + 0x8010AEEA - 0x800055E0 + 0x25E0) = 0x0304;
+				*(s16 *)(data + 0x8010AEFA - 0x800055E0 + 0x25E0) = 56 * sizeof(u32);
+				*(s16 *)(data + 0x8010AF06 - 0x800055E0 + 0x25E0) = 56 * sizeof(u32);
+				*(s16 *)(data + 0x8010AF12 - 0x800055E0 + 0x25E0) = 56 * sizeof(u32);
+				
+				print_debug("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+		}
+	} else if (!strncmp(gameID, "GMIE70", 6) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 4147712:
+				// Move up jump to DSI exception handler.
+				*(s16 *)(data + 0x801EB86A - 0x80009080 + 0x25E0) =  0x0304;
+				*(s16 *)(data + 0x801EB872 - 0x80009080 + 0x25E0) =  0x0304;
+				*(s16 *)(data + 0x801EB876 - 0x80009080 + 0x25E0) = -0x0304;
+				*(s16 *)(data + 0x801EB886 - 0x80009080 + 0x25E0) =  0x0304;
+				*(s16 *)(data + 0x801EB8CE - 0x80009080 + 0x25E0) = -0x0308;
+				
+				print_debug("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+		}
+	} else if (!strncmp(gameID, "GMIJ70", 6) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 4196672:
+				// Move up jump to DSI exception handler.
+				*(s16 *)(data + 0x801EB51E - 0x80009080 + 0x25E0) =  0x0304;
+				*(s16 *)(data + 0x801EB526 - 0x80009080 + 0x25E0) =  0x0304;
+				*(s16 *)(data + 0x801EB52A - 0x80009080 + 0x25E0) = -0x0304;
+				*(s16 *)(data + 0x801EB53A - 0x80009080 + 0x25E0) =  0x0304;
+				*(s16 *)(data + 0x801EB582 - 0x80009080 + 0x25E0) = -0x0308;
+				
+				print_debug("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+		}
+	} else if (!strncmp(gameID, "GMIP70", 6) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 4147776:
+				// Move up jump to DSI exception handler.
+				*(s16 *)(data + 0x801EB8A2 - 0x80009080 + 0x25E0) =  0x0304;
+				*(s16 *)(data + 0x801EB8AA - 0x80009080 + 0x25E0) =  0x0304;
+				*(s16 *)(data + 0x801EB8AE - 0x80009080 + 0x25E0) = -0x0304;
+				*(s16 *)(data + 0x801EB8BE - 0x80009080 + 0x25E0) =  0x0304;
+				*(s16 *)(data + 0x801EB906 - 0x80009080 + 0x25E0) = -0x0308;
+				
+				print_debug("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+		}
+	} else if ((!strncmp(gameID, "GSXD64", 6) || !strncmp(gameID, "GSXF64", 6)) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 3728640:
+				// Move up DSI exception handler.
+				*(s16 *)(data + 0x80004ACE - 0x80003100 + 0x100) = 13;
+				*(s16 *)(data + 0x80004ADA - 0x80003100 + 0x100) = 0x0304;
+				*(s16 *)(data + 0x80004B02 - 0x80003100 + 0x100) = 13 * sizeof(u32);
+				*(s16 *)(data + 0x80004B06 - 0x80003100 + 0x100) = 0x0304;
+				
+				print_debug("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+		}
+	} else if (!strncmp(gameID, "GSXE64", 6) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 3728544:
+				// Move up DSI exception handler.
+				*(s16 *)(data + 0x80004ACE - 0x80003100 + 0x100) = 13;
+				*(s16 *)(data + 0x80004ADA - 0x80003100 + 0x100) = 0x0304;
+				*(s16 *)(data + 0x80004B02 - 0x80003100 + 0x100) = 13 * sizeof(u32);
+				*(s16 *)(data + 0x80004B06 - 0x80003100 + 0x100) = 0x0304;
+				
+				print_debug("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+		}
+	} else if ((!strncmp(gameID, "GSXI64", 6) || !strncmp(gameID, "GSXS64", 6)) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 3728640:
+				// Move up DSI exception handler.
+				*(s16 *)(data + 0x80004ACE - 0x80003100 + 0x100) = 13;
+				*(s16 *)(data + 0x80004ADA - 0x80003100 + 0x100) = 0x0304;
+				*(s16 *)(data + 0x80004B02 - 0x80003100 + 0x100) = 13 * sizeof(u32);
+				*(s16 *)(data + 0x80004B06 - 0x80003100 + 0x100) = 0x0304;
+				
+				print_debug("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+		}
+	} else if (!strncmp(gameID, "GSXJ13", 6) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 3730336:
+				// Move up DSI exception handler.
+				*(s16 *)(data + 0x80004AEA - 0x80003100 + 0x100) = 13;
+				*(s16 *)(data + 0x80004AF6 - 0x80003100 + 0x100) = 0x0304;
+				*(s16 *)(data + 0x80004B1E - 0x80003100 + 0x100) = 13 * sizeof(u32);
+				*(s16 *)(data + 0x80004B22 - 0x80003100 + 0x100) = 0x0304;
+				
+				print_debug("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+		}
+	} else if (!strncmp(gameID, "GSXP64", 6) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 3728640:
+				// Move up DSI exception handler.
+				*(s16 *)(data + 0x80004ACE - 0x80003100 + 0x100) = 13;
+				*(s16 *)(data + 0x80004ADA - 0x80003100 + 0x100) = 0x0304;
+				*(s16 *)(data + 0x80004B02 - 0x80003100 + 0x100) = 13 * sizeof(u32);
+				*(s16 *)(data + 0x80004B06 - 0x80003100 + 0x100) = 0x0304;
+				
+				print_debug("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+		}
+	} else if ((!strncmp(gameID, "GT6E70", 6) || !strncmp(gameID, "GT6P70", 6)) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 4248480:
+				// Move up jump to DSI exception handler.
+				*(s16 *)(data + 0x801FA75A - 0x800056C0 + 0x2600) =  0x0304;
+				*(s16 *)(data + 0x801FA762 - 0x800056C0 + 0x2600) =  0x0304;
+				*(s16 *)(data + 0x801FA766 - 0x800056C0 + 0x2600) = -0x0304;
+				*(s16 *)(data + 0x801FA776 - 0x800056C0 + 0x2600) =  0x0304;
+				*(s16 *)(data + 0x801FA7BE - 0x800056C0 + 0x2600) = -0x0308;
+				
+				print_debug("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+		}
+	} else if (!strncmp(gameID, "GT6J70", 6) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 4255968:
+				// Move up jump to DSI exception handler.
+				*(s16 *)(data + 0x801FA78A - 0x800056C0 + 0x2600) =  0x0304;
+				*(s16 *)(data + 0x801FA792 - 0x800056C0 + 0x2600) =  0x0304;
+				*(s16 *)(data + 0x801FA796 - 0x800056C0 + 0x2600) = -0x0304;
+				*(s16 *)(data + 0x801FA7A6 - 0x800056C0 + 0x2600) =  0x0304;
+				*(s16 *)(data + 0x801FA7EE - 0x800056C0 + 0x2600) = -0x0308;
+				
+				print_debug("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+		}
+	} else if (!strncmp(gameID, "GXXE01", 6) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 4333056:
+				// Move up DSI exception handler.
+				*(s16 *)(data + 0x802AE0F2 - 0x800056A0 + 0x2600) = 0x0304;
+				
+				print_debug("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+			case 4336128:
+				// Move up DSI exception handler.
+				*(s16 *)(data + 0x802AE366 - 0x800056A0 + 0x2600) = 0x0304;
+				
+				print_debug("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+		}
+	} else if (!strncmp(gameID, "GXXJ01", 6) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 4191264:
+				// Move up DSI exception handler.
+				*(s16 *)(data + 0x802A8B1A - 0x800056A0 + 0x2600) = 0x0304;
+				
+				print_debug("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+		}
+	} else if (!strncmp(gameID, "GXXP01", 6) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 4573216:
+				// Move up DSI exception handler.
+				*(s16 *)(data + 0x802B0046 - 0x800056A0 + 0x2600) = 0x0304;
+				
+				print_debug("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+		}
+	} else if (!strncmp(gameID, "NXXJ01", 6) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 4205664:
+				// Move up DSI exception handler.
+				*(s16 *)(data + 0x802AB256 - 0x800056A0 + 0x2600) = 0x0304;
+				
+				print_debug("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
 		}
@@ -12610,7 +13960,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				*(s16 *)(data + 0x80005CE2 - 0x800056C0 + 0x2600) = 0x019A;
 				*(s16 *)(data + 0x80005D3A - 0x800056C0 + 0x2600) = 0x019A;
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
 			case 832960:
@@ -12650,7 +14000,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				
 				*(s16 *)(data + 0x80007142 - 0x800056C0 + 0x2600) = 0x0199;
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
 		}
@@ -12667,7 +14017,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				*(s16 *)(data + 0x8000592E - 0x800056C0 + 0x2600) = 0x019A;
 				*(s16 *)(data + 0x80005996 - 0x800056C0 + 0x2600) = 0x0198;
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
 			case 771104:
@@ -12696,7 +14046,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				
 				*(s16 *)(data + 0x800068CA - 0x800056C0 + 0x2600) = 0x0199;
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
 		}
@@ -12716,14 +14066,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				*(s16 *)(data + 0x800076E2 - 0x80005C80 + 0x2600) = 0x01C1;
 				*(s16 *)(data + 0x8000783E - 0x80005C80 + 0x2600) = 0x01C1;
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
-				patched++;
-				break;
-			case 3771872:
-				// Strip anti-debugging code.
-				*(u32 *)(data + 0x80005DD0 - 0x800055E0 + 0x25E0) = 0x60000000;
-				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
 		}
@@ -12743,790 +14086,7 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				*(s16 *)(data + 0x800076E2 - 0x80005C80 + 0x2600) = 0x01C1;
 				*(s16 *)(data + 0x8000783E - 0x80005C80 + 0x2600) = 0x01C1;
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
-				patched++;
-				break;
-			case 3771872:
-				// Strip anti-debugging code.
-				*(u32 *)(data + 0x80005DD0 - 0x800055E0 + 0x25E0) = 0x60000000;
-				
-				print_gecko("Patched:[%.6s]\n", gameID);
-				patched++;
-				break;
-		}
-	}
-	return patched;
-}
-
-// Overwrite game specific file content
-int Patch_GameSpecificFile(void *data, u32 length, const char *gameID, const char *fileName)
-{
-	void *addr;
-	int patched = 0;
-	
-	if (!strcmp(fileName, "boot.bin")) {
-		DiskHeader *diskHeader = (DiskHeader *) data;
-		diskHeader->DVDMagicWord = DVD_MAGIC;
-		memset(data + 0x200, 0, 0x200);
-		diskHeader->MaxFSTSize = GCMDisk.MaxFSTSize;
-		
-		print_gecko("Patched:[%s]\n", fileName);
-		patched++;
-		
-		data    += 0x440;
-		length  -= 0x440;
-		fileName = "bi2.bin";
-	}
-	if (!strncmp(gameID, "DPOJ8P", 6)) {
-		if (!strcmp(fileName, "bi2.bin")) {
-			*(u32 *)(data + 0x4) = 0x1800000;
-			
-			print_gecko("Patched:[%s]\n", fileName);
-			patched++;
-		}
-	} else if (!strncmp(gameID, "GCCE01", 6) || !strncmp(gameID, "GCCP01", 6)) {
-		if (!strcasecmp(fileName, "ffcc_cli.bin")) {
-			*(u16 *)(data + 0x2504) = __builtin_bswap16(0x8004);
-			*(u16 *)(data + 0x2506) = __builtin_bswap16(0x20FF);
-			*(u16 *)(data + 0x2508) = __builtin_bswap16(0x7018);
-			*(u16 *)(data + 0x250A) = __builtin_bswap16(0x705C);
-			*(u16 *)(data + 0x250C) = __builtin_bswap16(0x4904);
-			*(u16 *)(data + 0x250E) = __builtin_bswap16(0x2001);
-			*(u16 *)(data + 0x2510) = __builtin_bswap16(0x7008);
-			*(u16 *)(data + 0x2512) = __builtin_bswap16(0x4901);
-			*(u16 *)(data + 0x2514) = __builtin_bswap16(0x600C);
-			*(u16 *)(data + 0x2516) = __builtin_bswap16(0xE009);
-			
-			*(u32 *)(data + 0x2518) = __builtin_bswap32(0x03000190);
-			
-			print_gecko("Patched:[%s]\n", fileName);
-			patched++;
-		}
-	} else if (!strncmp(gameID, "GCCJGC", 6)) {
-		if (!strcasecmp(fileName, "ffcc_cli.bin")) {
-			*(u16 *)(data + 0x132C) = __builtin_bswap16(0x8004);
-			*(u16 *)(data + 0x132E) = __builtin_bswap16(0x20FF);
-			*(u16 *)(data + 0x1330) = __builtin_bswap16(0x7018);
-			*(u16 *)(data + 0x1332) = __builtin_bswap16(0x705C);
-			*(u16 *)(data + 0x1334) = __builtin_bswap16(0x4904);
-			*(u16 *)(data + 0x1336) = __builtin_bswap16(0x2001);
-			*(u16 *)(data + 0x1338) = __builtin_bswap16(0x7008);
-			*(u16 *)(data + 0x133A) = __builtin_bswap16(0x4901);
-			*(u16 *)(data + 0x133C) = __builtin_bswap16(0x600C);
-			*(u16 *)(data + 0x133E) = __builtin_bswap16(0xE009);
-			
-			*(u32 *)(data + 0x1340) = __builtin_bswap32(0x03000138);
-			
-			print_gecko("Patched:[%s]\n", fileName);
-			patched++;
-		}
-	} else if (!strncmp(gameID, "GHAE08", 6)) {
-		if (!strcasecmp(fileName, "claire.rel")) {
-			*(u32 *)(data + 0x190294) = 0x60000000;
-			
-			*(u8 *)(data + 0x1EFDF6) = R_PPC_NONE;
-			*(u32 *)(data + 0x1EFDF8) = 0;
-			
-			print_gecko("Patched:[%s]\n", fileName);
-			patched++;
-		} else if (!strcasecmp(fileName, "leon.rel")) {
-			*(u32 *)(data + 0x1903FC) = 0x60000000;
-			
-			*(u8 *)(data + 0x1EFF86) = R_PPC_NONE;
-			*(u32 *)(data + 0x1EFF88) = 0;
-			
-			print_gecko("Patched:[%s]\n", fileName);
-			patched++;
-		}
-	} else if (!strncmp(gameID, "GHAJ08", 6)) {
-		if (!strcasecmp(fileName, "claire.rel")) {
-			*(u32 *)(data + 0x1903FC) = 0x60000000;
-			
-			*(u8 *)(data + 0x1FD19A) = R_PPC_NONE;
-			*(u32 *)(data + 0x1FD19C) = 0;
-			
-			print_gecko("Patched:[%s]\n", fileName);
-			patched++;
-		} else if (!strcasecmp(fileName, "leon.rel")) {
-			*(u32 *)(data + 0x1904C4) = 0x60000000;
-			
-			*(u8 *)(data + 0x1FD30A) = R_PPC_NONE;
-			*(u32 *)(data + 0x1FD30C) = 0;
-			
-			print_gecko("Patched:[%s]\n", fileName);
-			patched++;
-		}
-	} else if (!strncmp(gameID, "GHAP08", 6)) {
-		if (!strcasecmp(fileName, "claire.rel")) {
-			*(u32 *)(data + 0x190710) = 0x60000000;
-			
-			*(u8 *)(data + 0x1F0FBE) = R_PPC_NONE;
-			*(u32 *)(data + 0x1F0FC0) = 0;
-			
-			print_gecko("Patched:[%s]\n", fileName);
-			patched++;
-		} else if (!strcasecmp(fileName, "claire_f.rel")) {
-			*(u32 *)(data + 0x1912E8) = 0x60000000;
-			
-			*(u8 *)(data + 0x1F251E) = R_PPC_NONE;
-			*(u32 *)(data + 0x1F2520) = 0;
-			
-			print_gecko("Patched:[%s]\n", fileName);
-			patched++;
-		} else if (!strcasecmp(fileName, "claire_g.rel")) {
-			*(u32 *)(data + 0x1905A8) = 0x60000000;
-			
-			*(u8 *)(data + 0x1F1AE6) = R_PPC_NONE;
-			*(u32 *)(data + 0x1F1AE8) = 0;
-			
-			print_gecko("Patched:[%s]\n", fileName);
-			patched++;
-		} else if (!strcasecmp(fileName, "claire_i.rel")) {
-			*(u32 *)(data + 0x19113C) = 0x60000000;
-			
-			*(u8 *)(data + 0x1F269E) = R_PPC_NONE;
-			*(u32 *)(data + 0x1F26A0) = 0;
-			
-			print_gecko("Patched:[%s]\n", fileName);
-			patched++;
-		} else if (!strcasecmp(fileName, "claire_s.rel")) {
-			*(u32 *)(data + 0x1912E4) = 0x60000000;
-			
-			*(u8 *)(data + 0x1F281E) = R_PPC_NONE;
-			*(u32 *)(data + 0x1F2820) = 0;
-			
-			print_gecko("Patched:[%s]\n", fileName);
-			patched++;
-		} else if (!strcasecmp(fileName, "leon.rel")) {
-			*(u32 *)(data + 0x190878) = 0x60000000;
-			
-			*(u8 *)(data + 0x1F116E) = R_PPC_NONE;
-			*(u32 *)(data + 0x1F1170) = 0;
-			
-			print_gecko("Patched:[%s]\n", fileName);
-			patched++;
-		} else if (!strcasecmp(fileName, "leon_f.rel")) {
-			*(u32 *)(data + 0x191408) = 0x60000000;
-			
-			*(u8 *)(data + 0x1F25EE) = R_PPC_NONE;
-			*(u32 *)(data + 0x1F25F0) = 0;
-			
-			print_gecko("Patched:[%s]\n", fileName);
-			patched++;
-		} else if (!strcasecmp(fileName, "leon_g.rel")) {
-			*(u32 *)(data + 0x190638) = 0x60000000;
-			
-			*(u8 *)(data + 0x1F1AF6) = R_PPC_NONE;
-			*(u32 *)(data + 0x1F1AF8) = 0;
-			
-			print_gecko("Patched:[%s]\n", fileName);
-			patched++;
-		} else if (!strcasecmp(fileName, "leon_i.rel")) {
-			*(u32 *)(data + 0x19125C) = 0x60000000;
-			
-			*(u8 *)(data + 0x1F278E) = R_PPC_NONE;
-			*(u32 *)(data + 0x1F2790) = 0;
-			
-			print_gecko("Patched:[%s]\n", fileName);
-			patched++;
-		} else if (!strcasecmp(fileName, "leon_s.rel")) {
-			*(u32 *)(data + 0x191380) = 0x60000000;
-			
-			*(u8 *)(data + 0x1F286E) = R_PPC_NONE;
-			*(u32 *)(data + 0x1F2870) = 0;
-			
-			print_gecko("Patched:[%s]\n", fileName);
-			patched++;
-		}
-	} else if (!strncmp(gameID, "GHQE7D", 6) || !strncmp(gameID, "GHQP7D", 6)) {
-		if (!strcmp(fileName, "bi2.bin")) {
-			*(u32 *)(data + 0x24) = 5;
-			
-			print_gecko("Patched:[%s]\n", fileName);
-			patched++;
-		}
-	} else if (!strncmp(gameID, "GLEP08", 6)) {
-		if (!strcasecmp(fileName, "eng.rel")) {
-			*(u32 *)(data + 0x14C354) = 0x60000000;
-			
-			*(u8 *)(data + 0x1BFCE6) = R_PPC_NONE;
-			*(u32 *)(data + 0x1BFCE8) = 0;
-			
-			print_gecko("Patched:[%s]\n", fileName);
-			patched++;
-		} else if (!strcasecmp(fileName, "fra.rel")) {
-			*(u32 *)(data + 0x14D21C) = 0x60000000;
-			
-			*(u8 *)(data + 0x1C0FE6) = R_PPC_NONE;
-			*(u32 *)(data + 0x1C0FE8) = 0;
-			
-			print_gecko("Patched:[%s]\n", fileName);
-			patched++;
-		} else if (!strcasecmp(fileName, "ger.rel")) {
-			*(u32 *)(data + 0x14D020) = 0x60000000;
-			
-			*(u8 *)(data + 0x1C1886) = R_PPC_NONE;
-			*(u32 *)(data + 0x1C1888) = 0;
-			
-			print_gecko("Patched:[%s]\n", fileName);
-			patched++;
-		} else if (!strcasecmp(fileName, "ita.rel")) {
-			*(u32 *)(data + 0x14D084) = 0x60000000;
-			
-			*(u8 *)(data + 0x1C1246) = R_PPC_NONE;
-			*(u32 *)(data + 0x1C1248) = 0;
-			
-			print_gecko("Patched:[%s]\n", fileName);
-			patched++;
-		} else if (!strcasecmp(fileName, "spa.rel")) {
-			*(u32 *)(data + 0x14D204) = 0x60000000;
-			
-			*(u8 *)(data + 0x1C1386) = R_PPC_NONE;
-			*(u32 *)(data + 0x1C1388) = 0;
-			
-			print_gecko("Patched:[%s]\n", fileName);
-			patched++;
-		}
-	} else if (!strncmp(gameID, "GMRE70", 6) || !strncmp(gameID, "GMRP70", 6)) {
-		if (!strcmp(fileName, "bi2.bin")) {
-			*(u32 *)(data + 0x24) = 5;
-			
-			print_gecko("Patched:[%s]\n", fileName);
-			patched++;
-		}
-	} else if (!strncmp(gameID, "GS8P7D", 6)) {
-		if (!strcasecmp(fileName, "SPYROCFG_NGC.CFG")) {
-			if (in_range(swissSettings.gameVMode, 1, 7)) {
-				addr = strnstr(data, "\tHeight:\t\t\t496\r\n", length);
-				if (addr) memcpy(addr, "\tHeight:\t\t\t448\r\n", 16);
-			}
-			print_gecko("Patched:[%s]\n", fileName);
-			patched++;
-		}
-	} else if (!strncmp(gameID, "GSXD64", 6)) {
-		if (!strcmp(fileName, "bi2.bin")) {
-			u32 args = *(u32 *)(data + 0x8);
-			if (args) memset(data + args, 0, length - args);
-			
-			*(u32 *)(data + 0x8) = 0x1FC8;
-			
-			*(u32 *)(data + 0x1FC8) = 4;
-			*(u32 *)(data + 0x1FCC) = 0x1FE0;
-			*(u32 *)(data + 0x1FD0) = 0x1FEE;
-			*(u32 *)(data + 0x1FD4) = 0x1FF3;
-			*(u32 *)(data + 0x1FD8) = 0x1FFD;
-			*(u32 *)(data + 0x1FDC) = 0;
-			
-			strcpy(data + 0x1FE0, "Clonewars.elf");
-			strcpy(data + 0x1FEE, "/pal");
-			strcpy(data + 0x1FF3, "/language");
-			strcpy(data + 0x1FFD, "1");
-			
-			print_gecko("Patched:[%s]\n", fileName);
-			patched++;
-		}
-	} else if (!strncmp(gameID, "GSXE64", 6)) {
-		if (!strcmp(fileName, "bi2.bin")) {
-			u32 args = *(u32 *)(data + 0x8);
-			if (args) memset(data + args, 0, length - args);
-			
-			*(u32 *)(data + 0x8) = 0x1FE4;
-			
-			*(u32 *)(data + 0x1FE4) = 1;
-			*(u32 *)(data + 0x1FE8) = 0x1FF1;
-			*(u32 *)(data + 0x1FEC) = 0;
-			
-			strcpy(data + 0x1FF1, "Clonewars.elf");
-			
-			print_gecko("Patched:[%s]\n", fileName);
-			patched++;
-		}
-	} else if (!strncmp(gameID, "GSXF64", 6)) {
-		if (!strcmp(fileName, "bi2.bin")) {
-			u32 args = *(u32 *)(data + 0x8);
-			if (args) memset(data + args, 0, length - args);
-			
-			*(u32 *)(data + 0x8) = 0x1FC8;
-			
-			*(u32 *)(data + 0x1FC8) = 4;
-			*(u32 *)(data + 0x1FCC) = 0x1FE0;
-			*(u32 *)(data + 0x1FD0) = 0x1FEE;
-			*(u32 *)(data + 0x1FD4) = 0x1FF3;
-			*(u32 *)(data + 0x1FD8) = 0x1FFD;
-			*(u32 *)(data + 0x1FDC) = 0;
-			
-			strcpy(data + 0x1FE0, "Clonewars.elf");
-			strcpy(data + 0x1FEE, "/pal");
-			strcpy(data + 0x1FF3, "/language");
-			strcpy(data + 0x1FFD, "2");
-			
-			print_gecko("Patched:[%s]\n", fileName);
-			patched++;
-		}
-	} else if (!strncmp(gameID, "GSXI64", 6)) {
-		if (!strcmp(fileName, "bi2.bin")) {
-			u32 args = *(u32 *)(data + 0x8);
-			if (args) memset(data + args, 0, length - args);
-			
-			*(u32 *)(data + 0x8) = 0x1FC8;
-			
-			*(u32 *)(data + 0x1FC8) = 4;
-			*(u32 *)(data + 0x1FCC) = 0x1FE0;
-			*(u32 *)(data + 0x1FD0) = 0x1FEE;
-			*(u32 *)(data + 0x1FD4) = 0x1FF3;
-			*(u32 *)(data + 0x1FD8) = 0x1FFD;
-			*(u32 *)(data + 0x1FDC) = 0;
-			
-			strcpy(data + 0x1FE0, "Clonewars.elf");
-			strcpy(data + 0x1FEE, "/pal");
-			strcpy(data + 0x1FF3, "/language");
-			strcpy(data + 0x1FFD, "4");
-			
-			print_gecko("Patched:[%s]\n", fileName);
-			patched++;
-		}
-	} else if (!strncmp(gameID, "GSXJ13", 6)) {
-		if (!strcmp(fileName, "bi2.bin")) {
-			u32 args = *(u32 *)(data + 0x8);
-			if (args) memset(data + args, 0, length - args);
-			
-			*(u32 *)(data + 0x8) = 0x1FC0;
-			
-			*(u32 *)(data + 0x1FC0) = 4;
-			*(u32 *)(data + 0x1FC4) = 0x1FDB;
-			*(u32 *)(data + 0x1FC8) = 0x1FE9;
-			*(u32 *)(data + 0x1FCC) = 0x1FF3;
-			*(u32 *)(data + 0x1FD0) = 0x1FF5;
-			*(u32 *)(data + 0x1FD4) = 0;
-			
-			strcpy(data + 0x1FDB, "Clonewars.elf");
-			strcpy(data + 0x1FE9, "/language");
-			strcpy(data + 0x1FF3, "5");
-			strcpy(data + 0x1FF5, "/japanese");
-			
-			print_gecko("Patched:[%s]\n", fileName);
-			patched++;
-		}
-	} else if (!strncmp(gameID, "GSXP64", 6)) {
-		if (!strcmp(fileName, "bi2.bin")) {
-			u32 args = *(u32 *)(data + 0x8);
-			if (args) memset(data + args, 0, length - args);
-			
-			*(u32 *)(data + 0x8) = 0x1FDC;
-			
-			*(u32 *)(data + 0x1FDC) = 2;
-			*(u32 *)(data + 0x1FE0) = 0x1FEC;
-			*(u32 *)(data + 0x1FE4) = 0x1FFA;
-			*(u32 *)(data + 0x1FE8) = 0;
-			
-			strcpy(data + 0x1FEC, "Clonewars.elf");
-			strcpy(data + 0x1FFA, "/pal");
-			
-			print_gecko("Patched:[%s]\n", fileName);
-			patched++;
-		}
-	} else if (!strncmp(gameID, "GSXS64", 6)) {
-		if (!strcmp(fileName, "bi2.bin")) {
-			u32 args = *(u32 *)(data + 0x8);
-			if (args) memset(data + args, 0, length - args);
-			
-			*(u32 *)(data + 0x8) = 0x1FC8;
-			
-			*(u32 *)(data + 0x1FC8) = 4;
-			*(u32 *)(data + 0x1FCC) = 0x1FE0;
-			*(u32 *)(data + 0x1FD0) = 0x1FEE;
-			*(u32 *)(data + 0x1FD4) = 0x1FF3;
-			*(u32 *)(data + 0x1FD8) = 0x1FFD;
-			*(u32 *)(data + 0x1FDC) = 0;
-			
-			strcpy(data + 0x1FE0, "Clonewars.elf");
-			strcpy(data + 0x1FEE, "/pal");
-			strcpy(data + 0x1FF3, "/language");
-			strcpy(data + 0x1FFD, "3");
-			
-			print_gecko("Patched:[%s]\n", fileName);
-			patched++;
-		}
-	}
-	return patched;
-}
-
-int Patch_GameSpecificHypervisor(void *data, u32 length, const char *gameID, int dataType)
-{
-	int patched = 0;
-	
-	if (dataType == PATCH_BS2) {
-		switch (length) {
-			case 1435200:
-				*(s16 *)(data + 0x813007C2 - 0x81300000 + 0x20) = 0x0C00;
-				
-				print_gecko("Patched:[%s]\n", "NTSC Revision 1.0");
-				patched++;
-				break;
-			case 1448280:
-				*(s16 *)(data + 0x813007DA - 0x81300000 + 0x20) = 0x0C00;
-				
-				*(s16 *)(data + 0x81301422 - 0x81300000 + 0x20) = 0x0C00;
-				*(s16 *)(data + 0x81301476 - 0x81300000 + 0x20) = 0x0C00;
-				*(u32 *)(data + 0x81301484 - 0x81300000 + 0x20) = 0x80050004;
-				*(u32 *)(data + 0x813014A8 - 0x81300000 + 0x20) = 0x90050004;
-				
-				*(s16 *)(data + 0x8130170E - 0x81300000 + 0x20) = 0x0C00;
-				
-				*(s16 *)(data + 0x813019AE - 0x81300000 + 0x20) = 0x0C00;
-				
-				print_gecko("Patched:[%s]\n", "NTSC Revision 1.0");
-				patched++;
-				break;
-			case 1449848:
-				*(s16 *)(data + 0x81300B4E - 0x81300000 + 0x20) = 0x0C00;
-				
-				*(s16 *)(data + 0x81301762 - 0x81300000 + 0x20) = 0x0C00;
-				*(s16 *)(data + 0x813017B6 - 0x81300000 + 0x20) = 0x0C00;
-				*(u32 *)(data + 0x813017C4 - 0x81300000 + 0x20) = 0x80050004;
-				*(u32 *)(data + 0x813017E8 - 0x81300000 + 0x20) = 0x90050004;
-				
-				*(s16 *)(data + 0x81301A4E - 0x81300000 + 0x20) = 0x0C00;
-				
-				*(s16 *)(data + 0x81301CEE - 0x81300000 + 0x20) = 0x0C00;
-				
-				print_gecko("Patched:[%s]\n", "DEV  Revision 1.0");
-				patched++;
-				break;
-			case 1583088:
-				*(s16 *)(data + 0x813005EA - 0x81300000 + 0x20) = 0x0C00;
-				
-				print_gecko("Patched:[%s]\n", "NTSC Revision 1.1");
-				patched++;
-				break;
-			case 1763048:
-				*(s16 *)(data + 0x813005EA - 0x81300000 + 0x20) = 0x0C00;
-				
-				print_gecko("Patched:[%s]\n", "PAL  Revision 1.0");
-				patched++;
-				break;
-			case 1760152:
-				*(s16 *)(data + 0x8130082E - 0x81300000 + 0x20) = 0x0C00;
-				
-				*(s16 *)(data + 0x81301496 - 0x81300000 + 0x20) = 0x0C00;
-				*(s16 *)(data + 0x813014E6 - 0x81300000 + 0x20) = 0x0C00;
-				*(u32 *)(data + 0x813014F4 - 0x81300000 + 0x20) = 0x80050004;
-				*(u32 *)(data + 0x81301518 - 0x81300000 + 0x20) = 0x90050004;
-				
-				*(s16 *)(data + 0x81301772 - 0x81300000 + 0x20) = 0x0C00;
-				
-				*(s16 *)(data + 0x813018A6 - 0x81300000 + 0x20) = 0x0C00;
-				
-				print_gecko("Patched:[%s]\n", "PAL  Revision 1.0");
-				patched++;
-				break;
-			case 1561776:
-				*(s16 *)(data + 0x813005EA - 0x81300000 + 0x20) = 0x0C00;
-				
-				print_gecko("Patched:[%s]\n", "MPAL Revision 1.1");
-				patched++;
-				break;
-			case 1607576:
-				*(s16 *)(data + 0x81300A5A - 0x81300000 + 0x20) = 0x0C00;
-				
-				*(s16 *)(data + 0x8130221A - 0x81300000 + 0x20) = 0x0C00;
-				*(s16 *)(data + 0x8130226E - 0x81300000 + 0x20) = 0x0C00;
-				*(u32 *)(data + 0x8130227C - 0x81300000 + 0x20) = 0x80050004;
-				*(u32 *)(data + 0x813022A0 - 0x81300000 + 0x20) = 0x90050004;
-				
-				*(s16 *)(data + 0x81302506 - 0x81300000 + 0x20) = 0x0C00;
-				
-				*(s16 *)(data + 0x813027A6 - 0x81300000 + 0x20) = 0x0C00;
-				
-				print_gecko("Patched:[%s]\n", "TDEV Revision 1.1");
-				patched++;
-				break;
-			case 1586352:
-				*(s16 *)(data + 0x81300926 - 0x81300000 + 0x20) = 0x0C00;
-				
-				print_gecko("Patched:[%s]\n", "NTSC Revision 1.2");
-				patched++;
-				break;
-			case 1587504:
-				*(s16 *)(data + 0x81300926 - 0x81300000 + 0x20) = 0x0C00;
-				
-				print_gecko("Patched:[%s]\n", "NTSC Revision 1.2");
-				patched++;
-				break;
-			case 1766768:
-				*(s16 *)(data + 0x813006DA - 0x81300000 + 0x20) = 0x0C00;
-				
-				print_gecko("Patched:[%s]\n", "PAL  Revision 1.2");
-				patched++;
-				break;
-		}
-	} else if ((!strncmp(gameID, "D58E01", 6) || !strncmp(gameID, "D59E01", 6) || !strncmp(gameID, "D62E01", 6)) && dataType == PATCH_DOL) {
-		switch (length) {
-			case 4336128:
-				// Move up DSI exception handler.
-				*(s16 *)(data + 0x802AE366 - 0x800056A0 + 0x2600) = 0x0304;
-				
-				print_gecko("Patched:[%.6s]\n", gameID);
-				patched++;
-				break;
-		}
-	} else if ((!strncmp(gameID, "D78P01", 6) || !strncmp(gameID, "D86U01", 6)) && dataType == PATCH_DOL) {
-		switch (length) {
-			case 4548544:
-				// Move up DSI exception handler.
-				*(s16 *)(data + 0x802A95B2 - 0x800056A0 + 0x2600) = 0x0304;
-				
-				print_gecko("Patched:[%.6s]\n", gameID);
-				patched++;
-				break;
-		}
-	} else if ((!strncmp(gameID, "E22J01", 6) || !strncmp(gameID, "E23J01", 6)) && dataType == PATCH_DOL) {
-		switch (length) {
-			case 4205664:
-				// Move up DSI exception handler.
-				*(s16 *)(data + 0x802AB256 - 0x800056A0 + 0x2600) = 0x0304;
-				
-				print_gecko("Patched:[%.6s]\n", gameID);
-				patched++;
-				break;
-		}
-	} else if ((!strncmp(gameID, "G3FD69", 6) || !strncmp(gameID, "G3FE69", 6) || !strncmp(gameID, "G3FF69", 6) || !strncmp(gameID, "G3FP69", 6) || !strncmp(gameID, "G3FS69", 6)) && dataType == PATCH_DOL) {
-		switch (length) {
-			case 4880320:
-				// Move up DSI exception handler.
-				*(s16 *)(data + 0x80184792 - 0x800055E0 + 0x25E0) = 0x0304;
-				*(s16 *)(data + 0x8018479A - 0x800055E0 + 0x25E0) = 0x0304;
-				*(s16 *)(data + 0x801847AA - 0x800055E0 + 0x25E0) = 56 * sizeof(u32);
-				*(s16 *)(data + 0x801847B6 - 0x800055E0 + 0x25E0) = 56 * sizeof(u32);
-				*(s16 *)(data + 0x801847C2 - 0x800055E0 + 0x25E0) = 56 * sizeof(u32);
-				
-				print_gecko("Patched:[%.6s]\n", gameID);
-				patched++;
-				break;
-		}
-	} else if ((!strncmp(gameID, "GHBE7D", 6) || !strncmp(gameID, "GHBP7D", 6)) && dataType == PATCH_DOL) {
-		switch (length) {
-			case 647104:
-				// Move up jump to DSI exception handler.
-				*(s16 *)(data + 0x80004556 - 0x80003100 + 0x100) =  0x0304;
-				*(s16 *)(data + 0x80004562 - 0x80003100 + 0x100) = -0x0304;
-				*(s16 *)(data + 0x80004566 - 0x80003100 + 0x100) =  0x0304;
-				
-				// Fix ISI exception check.
-				*(u32 *)(data + 0x80005D84 - 0x80003100 + 0x100) = 0x7CBA02A6;
-				*(u32 *)(data + 0x80005D98 - 0x80003100 + 0x100) = 0x7CBA02A6;
-				
-				print_gecko("Patched:[%.6s]\n", gameID);
-				patched++;
-				break;
-		}
-	} else if (!strncmp(gameID, "GISE36", 6) && dataType == PATCH_DOL) {
-		switch (length) {
-			case 3266176:
-				// Move up DSI exception handler.
-				*(s16 *)(data + 0x8010A74A - 0x800055E0 + 0x25E0) = 0x0304;
-				*(s16 *)(data + 0x8010A752 - 0x800055E0 + 0x25E0) = 0x0304;
-				*(s16 *)(data + 0x8010A762 - 0x800055E0 + 0x25E0) = 56 * sizeof(u32);
-				*(s16 *)(data + 0x8010A76E - 0x800055E0 + 0x25E0) = 56 * sizeof(u32);
-				*(s16 *)(data + 0x8010A77A - 0x800055E0 + 0x25E0) = 56 * sizeof(u32);
-				
-				print_gecko("Patched:[%.6s]\n", gameID);
-				patched++;
-				break;
-		}
-	} else if (!strncmp(gameID, "GISP36", 6) && dataType == PATCH_DOL) {
-		switch (length) {
-			case 3268768:
-				// Move up DSI exception handler.
-				*(s16 *)(data + 0x8010AEE2 - 0x800055E0 + 0x25E0) = 0x0304;
-				*(s16 *)(data + 0x8010AEEA - 0x800055E0 + 0x25E0) = 0x0304;
-				*(s16 *)(data + 0x8010AEFA - 0x800055E0 + 0x25E0) = 56 * sizeof(u32);
-				*(s16 *)(data + 0x8010AF06 - 0x800055E0 + 0x25E0) = 56 * sizeof(u32);
-				*(s16 *)(data + 0x8010AF12 - 0x800055E0 + 0x25E0) = 56 * sizeof(u32);
-				
-				print_gecko("Patched:[%.6s]\n", gameID);
-				patched++;
-				break;
-		}
-	} else if (!strncmp(gameID, "GMIE70", 6) && dataType == PATCH_DOL) {
-		switch (length) {
-			case 4147712:
-				// Move up jump to DSI exception handler.
-				*(s16 *)(data + 0x801EB86A - 0x80009080 + 0x25E0) =  0x0304;
-				*(s16 *)(data + 0x801EB872 - 0x80009080 + 0x25E0) =  0x0304;
-				*(s16 *)(data + 0x801EB876 - 0x80009080 + 0x25E0) = -0x0304;
-				*(s16 *)(data + 0x801EB886 - 0x80009080 + 0x25E0) =  0x0304;
-				*(s16 *)(data + 0x801EB8CE - 0x80009080 + 0x25E0) = -0x0308;
-				
-				print_gecko("Patched:[%.6s]\n", gameID);
-				patched++;
-				break;
-		}
-	} else if (!strncmp(gameID, "GMIJ70", 6) && dataType == PATCH_DOL) {
-		switch (length) {
-			case 4196672:
-				// Move up jump to DSI exception handler.
-				*(s16 *)(data + 0x801EB51E - 0x80009080 + 0x25E0) =  0x0304;
-				*(s16 *)(data + 0x801EB526 - 0x80009080 + 0x25E0) =  0x0304;
-				*(s16 *)(data + 0x801EB52A - 0x80009080 + 0x25E0) = -0x0304;
-				*(s16 *)(data + 0x801EB53A - 0x80009080 + 0x25E0) =  0x0304;
-				*(s16 *)(data + 0x801EB582 - 0x80009080 + 0x25E0) = -0x0308;
-				
-				print_gecko("Patched:[%.6s]\n", gameID);
-				patched++;
-				break;
-		}
-	} else if (!strncmp(gameID, "GMIP70", 6) && dataType == PATCH_DOL) {
-		switch (length) {
-			case 4147776:
-				// Move up jump to DSI exception handler.
-				*(s16 *)(data + 0x801EB8A2 - 0x80009080 + 0x25E0) =  0x0304;
-				*(s16 *)(data + 0x801EB8AA - 0x80009080 + 0x25E0) =  0x0304;
-				*(s16 *)(data + 0x801EB8AE - 0x80009080 + 0x25E0) = -0x0304;
-				*(s16 *)(data + 0x801EB8BE - 0x80009080 + 0x25E0) =  0x0304;
-				*(s16 *)(data + 0x801EB906 - 0x80009080 + 0x25E0) = -0x0308;
-				
-				print_gecko("Patched:[%.6s]\n", gameID);
-				patched++;
-				break;
-		}
-	} else if ((!strncmp(gameID, "GSXD64", 6) || !strncmp(gameID, "GSXF64", 6)) && dataType == PATCH_DOL) {
-		switch (length) {
-			case 3728640:
-				// Move up DSI exception handler.
-				*(s16 *)(data + 0x80004ACE - 0x80003100 + 0x100) = 13;
-				*(s16 *)(data + 0x80004ADA - 0x80003100 + 0x100) = 0x0304;
-				*(s16 *)(data + 0x80004B02 - 0x80003100 + 0x100) = 13 * sizeof(u32);
-				*(s16 *)(data + 0x80004B06 - 0x80003100 + 0x100) = 0x0304;
-				
-				print_gecko("Patched:[%.6s]\n", gameID);
-				patched++;
-				break;
-		}
-	} else if (!strncmp(gameID, "GSXE64", 6) && dataType == PATCH_DOL) {
-		switch (length) {
-			case 3728544:
-				// Move up DSI exception handler.
-				*(s16 *)(data + 0x80004ACE - 0x80003100 + 0x100) = 13;
-				*(s16 *)(data + 0x80004ADA - 0x80003100 + 0x100) = 0x0304;
-				*(s16 *)(data + 0x80004B02 - 0x80003100 + 0x100) = 13 * sizeof(u32);
-				*(s16 *)(data + 0x80004B06 - 0x80003100 + 0x100) = 0x0304;
-				
-				print_gecko("Patched:[%.6s]\n", gameID);
-				patched++;
-				break;
-		}
-	} else if ((!strncmp(gameID, "GSXI64", 6) || !strncmp(gameID, "GSXS64", 6)) && dataType == PATCH_DOL) {
-		switch (length) {
-			case 3728640:
-				// Move up DSI exception handler.
-				*(s16 *)(data + 0x80004ACE - 0x80003100 + 0x100) = 13;
-				*(s16 *)(data + 0x80004ADA - 0x80003100 + 0x100) = 0x0304;
-				*(s16 *)(data + 0x80004B02 - 0x80003100 + 0x100) = 13 * sizeof(u32);
-				*(s16 *)(data + 0x80004B06 - 0x80003100 + 0x100) = 0x0304;
-				
-				print_gecko("Patched:[%.6s]\n", gameID);
-				patched++;
-				break;
-		}
-	} else if (!strncmp(gameID, "GSXJ13", 6) && dataType == PATCH_DOL) {
-		switch (length) {
-			case 3730336:
-				// Move up DSI exception handler.
-				*(s16 *)(data + 0x80004AEA - 0x80003100 + 0x100) = 13;
-				*(s16 *)(data + 0x80004AF6 - 0x80003100 + 0x100) = 0x0304;
-				*(s16 *)(data + 0x80004B1E - 0x80003100 + 0x100) = 13 * sizeof(u32);
-				*(s16 *)(data + 0x80004B22 - 0x80003100 + 0x100) = 0x0304;
-				
-				print_gecko("Patched:[%.6s]\n", gameID);
-				patched++;
-				break;
-		}
-	} else if (!strncmp(gameID, "GSXP64", 6) && dataType == PATCH_DOL) {
-		switch (length) {
-			case 3728640:
-				// Move up DSI exception handler.
-				*(s16 *)(data + 0x80004ACE - 0x80003100 + 0x100) = 13;
-				*(s16 *)(data + 0x80004ADA - 0x80003100 + 0x100) = 0x0304;
-				*(s16 *)(data + 0x80004B02 - 0x80003100 + 0x100) = 13 * sizeof(u32);
-				*(s16 *)(data + 0x80004B06 - 0x80003100 + 0x100) = 0x0304;
-				
-				print_gecko("Patched:[%.6s]\n", gameID);
-				patched++;
-				break;
-		}
-	} else if ((!strncmp(gameID, "GT6E70", 6) || !strncmp(gameID, "GT6P70", 6)) && dataType == PATCH_DOL) {
-		switch (length) {
-			case 4248480:
-				// Move up jump to DSI exception handler.
-				*(s16 *)(data + 0x801FA75A - 0x800056C0 + 0x2600) =  0x0304;
-				*(s16 *)(data + 0x801FA762 - 0x800056C0 + 0x2600) =  0x0304;
-				*(s16 *)(data + 0x801FA766 - 0x800056C0 + 0x2600) = -0x0304;
-				*(s16 *)(data + 0x801FA776 - 0x800056C0 + 0x2600) =  0x0304;
-				*(s16 *)(data + 0x801FA7BE - 0x800056C0 + 0x2600) = -0x0308;
-				
-				print_gecko("Patched:[%.6s]\n", gameID);
-				patched++;
-				break;
-		}
-	} else if (!strncmp(gameID, "GT6J70", 6) && dataType == PATCH_DOL) {
-		switch (length) {
-			case 4255968:
-				// Move up jump to DSI exception handler.
-				*(s16 *)(data + 0x801FA78A - 0x800056C0 + 0x2600) =  0x0304;
-				*(s16 *)(data + 0x801FA792 - 0x800056C0 + 0x2600) =  0x0304;
-				*(s16 *)(data + 0x801FA796 - 0x800056C0 + 0x2600) = -0x0304;
-				*(s16 *)(data + 0x801FA7A6 - 0x800056C0 + 0x2600) =  0x0304;
-				*(s16 *)(data + 0x801FA7EE - 0x800056C0 + 0x2600) = -0x0308;
-				
-				print_gecko("Patched:[%.6s]\n", gameID);
-				patched++;
-				break;
-		}
-	} else if (!strncmp(gameID, "GXXE01", 6) && dataType == PATCH_DOL) {
-		switch (length) {
-			case 4333056:
-				// Move up DSI exception handler.
-				*(s16 *)(data + 0x802AE0F2 - 0x800056A0 + 0x2600) = 0x0304;
-				
-				print_gecko("Patched:[%.6s]\n", gameID);
-				patched++;
-				break;
-			case 4336128:
-				// Move up DSI exception handler.
-				*(s16 *)(data + 0x802AE366 - 0x800056A0 + 0x2600) = 0x0304;
-				
-				print_gecko("Patched:[%.6s]\n", gameID);
-				patched++;
-				break;
-		}
-	} else if (!strncmp(gameID, "GXXJ01", 6) && dataType == PATCH_DOL) {
-		switch (length) {
-			case 4191264:
-				// Move up DSI exception handler.
-				*(s16 *)(data + 0x802A8B1A - 0x800056A0 + 0x2600) = 0x0304;
-				
-				print_gecko("Patched:[%.6s]\n", gameID);
-				patched++;
-				break;
-		}
-	} else if (!strncmp(gameID, "GXXP01", 6) && dataType == PATCH_DOL) {
-		switch (length) {
-			case 4573216:
-				// Move up DSI exception handler.
-				*(s16 *)(data + 0x802B0046 - 0x800056A0 + 0x2600) = 0x0304;
-				
-				print_gecko("Patched:[%.6s]\n", gameID);
-				patched++;
-				break;
-		}
-	} else if (!strncmp(gameID, "NXXJ01", 6) && dataType == PATCH_DOL) {
-		switch (length) {
-			case 4205664:
-				// Move up DSI exception handler.
-				*(s16 *)(data + 0x802AB256 - 0x800056A0 + 0x2600) = 0x0304;
-				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
 		}
@@ -13571,7 +14131,7 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 				SET_VI_WIDTH(data + 0x80105E58 - 0x800D67E0 + 0xD37E0, 704);
 				SET_VI_WIDTH(data + 0x80105ED0 - 0x800D67E0 + 0xD37E0, 704);
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				break;
 			case 1076832:
 				*(s16 *)(data + 0x80006BFE - 0x800056A0 + 0x2600) = 0;
@@ -13600,11 +14160,36 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 				SET_VI_WIDTH(data + 0x80107C18 - 0x800D83A0 + 0xD53A0, 704);
 				SET_VI_WIDTH(data + 0x80107C90 - 0x800D83A0 + 0xD53A0, 704);
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				break;
 		}
 	} else if (!strncmp(gameID, "GAFE01", 6) && dataType == PATCH_DOL) {
 		switch (length) {
+			case 910368:
+				*(s16 *)(data + 0x8000672E - 0x800056C0 + 0x2620) = 0;
+				*(s16 *)(data + 0x80006732 - 0x800056C0 + 0x2620) = 0;
+				*(s16 *)(data + 0x80006736 - 0x800056C0 + 0x2620) = 640;
+				*(s16 *)(data + 0x8000673A - 0x800056C0 + 0x2620) = 480;
+				
+				*(s16 *)(data + 0x80006EF2 - 0x800056C0 + 0x2620) = 0;
+				*(s16 *)(data + 0x80006EF6 - 0x800056C0 + 0x2620) = 0;
+				*(s16 *)(data + 0x80006EFA - 0x800056C0 + 0x2620) = 640;
+				*(s16 *)(data + 0x80006EFE - 0x800056C0 + 0x2620) = 480;
+				
+				SET_VI_WIDTH(data + 0x800AFE58 - 0x800AD3C0 + 0xAA3C0, 640);
+				SET_VI_WIDTH(data + 0x800AFE94 - 0x800AD3C0 + 0xAA3C0, 640);
+				SET_VI_WIDTH(data + 0x800AFED0 - 0x800AD3C0 + 0xAA3C0, 640);
+				SET_VI_WIDTH(data + 0x800AFF0C - 0x800AD3C0 + 0xAA3C0, 640);
+				SET_VI_WIDTH(data + 0x800AFF48 - 0x800AD3C0 + 0xAA3C0, 704);
+				SET_VI_WIDTH(data + 0x800AFF84 - 0x800AD3C0 + 0xAA3C0, 704);
+				
+				SET_VI_WIDTH(data + 0x800E15B0 - 0x800AD3C0 + 0xAA3C0, 704);
+				SET_VI_WIDTH(data + 0x800E15EC - 0x800AD3C0 + 0xAA3C0, 704);
+				SET_VI_WIDTH(data + 0x800E1628 - 0x800AD3C0 + 0xAA3C0, 704);
+				SET_VI_WIDTH(data + 0x800E16A0 - 0x800AD3C0 + 0xAA3C0, 704);
+				
+				print_debug("Patched:[%.6s]\n", gameID);
+				break;
 			case 918720:
 				*(s16 *)(data + 0x8000672E - 0x800056C0 + 0x2620) = 0;
 				*(s16 *)(data + 0x80006732 - 0x800056C0 + 0x2620) = 0;
@@ -13628,7 +14213,7 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 				SET_VI_WIDTH(data + 0x800E1628 - 0x800AF860 + 0xAC860, 704);
 				SET_VI_WIDTH(data + 0x800E16A0 - 0x800AF860 + 0xAC860, 704);
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				break;
 		}
 	} else if (!strncmp(gameID, "GAFJ01", 6) && dataType == PATCH_DOL) {
@@ -13656,7 +14241,7 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 				SET_VI_WIDTH(data + 0x800DAA1C - 0x800AC1C0 + 0xA91C0, 704);
 				SET_VI_WIDTH(data + 0x800DAA58 - 0x800AC1C0 + 0xA91C0, 704);
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				break;
 			case 890048:
 				*(s16 *)(data + 0x80006622 - 0x800055C0 + 0x2520) = 0;
@@ -13681,7 +14266,7 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 				SET_VI_WIDTH(data + 0x800DAF5C - 0x800AC4E0 + 0xA94E0, 704);
 				SET_VI_WIDTH(data + 0x800DAF98 - 0x800AC4E0 + 0xA94E0, 704);
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				break;
 		}
 	} else if (!strncmp(gameID, "GAFP01", 6) && dataType == PATCH_DOL) {
@@ -13725,7 +14310,7 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 				SET_VI_WIDTH(data + 0x800EE238 - 0x800BAFC0 + 0xB7FC0, 704);
 				SET_VI_WIDTH(data + 0x800EE2B0 - 0x800BAFC0 + 0xB7FC0, 704);
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				break;
 			case 974304:
 				*(s16 *)(data + 0x80006B4A - 0x80005680 + 0x25E0) = 574;
@@ -13766,7 +14351,7 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 				SET_VI_WIDTH(data + 0x800EEC58 - 0x800BAD60 + 0xB7D60, 704);
 				SET_VI_WIDTH(data + 0x800EECD0 - 0x800BAD60 + 0xB7D60, 704);
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				break;
 			case 978080:
 				*(s16 *)(data + 0x80006B4A - 0x80005680 + 0x25E0) = 574;
@@ -13807,7 +14392,7 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 				SET_VI_WIDTH(data + 0x800EFB18 - 0x800BAE80 + 0xB7E80, 704);
 				SET_VI_WIDTH(data + 0x800EFB90 - 0x800BAE80 + 0xB7E80, 704);
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				break;
 			case 973920:
 				*(s16 *)(data + 0x80006B4A - 0x80005680 + 0x25E0) = 574;
@@ -13848,7 +14433,7 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 				SET_VI_WIDTH(data + 0x800EEAD8 - 0x800BABE0 + 0xB7BE0, 704);
 				SET_VI_WIDTH(data + 0x800EEB50 - 0x800BABE0 + 0xB7BE0, 704);
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				break;
 			case 977760:
 				*(s16 *)(data + 0x80006B4A - 0x80005680 + 0x25E0) = 574;
@@ -13889,7 +14474,7 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 				SET_VI_WIDTH(data + 0x800EF9D8 - 0x800BAD00 + 0xB7D00, 704);
 				SET_VI_WIDTH(data + 0x800EFA50 - 0x800BAD00 + 0xB7D00, 704);
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				break;
 		}
 	} else if (!strncmp(gameID, "GAFU01", 6) && dataType == PATCH_DOL) {
@@ -13933,7 +14518,7 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 				SET_VI_WIDTH(data + 0x800EC4B8 - 0x800B9DA0 + 0xB6DA0, 704);
 				SET_VI_WIDTH(data + 0x800EC530 - 0x800B9DA0 + 0xB6DA0, 704);
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				break;
 		}
 	} else if (!strncmp(gameID, "GB4E51", 6) && dataType == PATCH_DOL) {
@@ -13944,7 +14529,7 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 				SET_VI_WIDTH(data + 0x801E4328 - 0x80199FA0 + 0x196F40, 704);
 				SET_VI_WIDTH(data + 0x801E43A0 - 0x80199FA0 + 0x196F40, 704);
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				break;
 		}
 	} else if (!strncmp(gameID, "GB4P51", 6) && dataType == PATCH_DOL) {
@@ -13957,7 +14542,7 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 				if (in_range(swissSettings.gameVMode, 1, 7))
 					*(s16 *)(data + 0x80008BD2 - 0x80005800 + 0x2620) = 0;
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				break;
 		}
 	} else if (!strncmp(gameID, "GBOE51", 6) && dataType == PATCH_DOL) {
@@ -13968,7 +14553,7 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 				SET_VI_WIDTH(data + 0x801D3600 - 0x80189060 + 0x186040, 704);
 				SET_VI_WIDTH(data + 0x801D3678 - 0x80189060 + 0x186040, 704);
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				break;
 		}
 	} else if (!strncmp(gameID, "GBOP51", 6) && dataType == PATCH_DOL) {
@@ -13984,7 +14569,7 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 					*(s16 *)(data + 0x800ADF46 - 0x800057E0 + 0x2600) = (0x801D37BC + 0x8000) >> 16;
 					*(s16 *)(data + 0x800ADF4E - 0x800057E0 + 0x2600) = (0x801D37BC & 0xFFFF);
 				}
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				break;
 		}
 	} else if (!strncmp(gameID, "GEDE01", 6) && dataType == PATCH_DOL) {
@@ -13997,7 +14582,7 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 				SET_VI_WIDTH(data + 0x802FEFD4 - 0x8023B940 + 0x238940, 704);
 				SET_VI_WIDTH(data + 0x802FF04C - 0x8023B940 + 0x238940, 704);
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				break;
 		}
 	} else if (!strncmp(gameID, "GEDJ01", 6) && dataType == PATCH_DOL) {
@@ -14010,7 +14595,7 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 				SET_VI_WIDTH(data + 0x802F1114 - 0x8023C240 + 0x239240, 704);
 				SET_VI_WIDTH(data + 0x802F118C - 0x8023C240 + 0x239240, 704);
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				break;
 		}
 	} else if (!strncmp(gameID, "GEDP01", 6) && dataType == PATCH_DOL) {
@@ -14030,7 +14615,7 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 					
 					*(u32 *)(data + 0x8061EB18 - 0x8061D420 + 0x303FA0) = 0x80301140;
 				}
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				break;
 		}
 	} else if (!strncmp(gameID, "GEDW01", 6) && dataType == PATCH_DOL) {
@@ -14043,7 +14628,7 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 				SET_VI_WIDTH(data + 0x802EBD34 - 0x8023B700 + 0x238700, 704);
 				SET_VI_WIDTH(data + 0x802EBDAC - 0x8023B700 + 0x238700, 704);
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				break;
 		}
 	} else if (!strncmp(gameID, "GEME7F", 6) && dataType == PATCH_DOL) {
@@ -14060,7 +14645,7 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 					
 					*(u32 *)(data + 0x806D0898 - 0x806D06C0 + 0x169120) = 0x801671CC;
 				}
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				break;
 		}
 	} else if (!strncmp(gameID, "GEMJ28", 6) && dataType == PATCH_DOL) {
@@ -14077,7 +14662,7 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 					
 					*(u32 *)(data + 0x806D0660 - 0x806D0480 + 0x169000) = 0x801670A4;
 				}
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				break;
 		}
 	} else if (!strncmp(gameID, "GEMP7F", 6) && dataType == PATCH_DOL) {
@@ -14132,7 +14717,7 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 					
 					*(u32 *)(data + 0x806D0F58 - 0x806D0D80 + 0x1698C0) = 0x801679CC;
 				}
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				break;
 		}
 	} else if (!strncmp(gameID, "GK7E08", 6) && dataType == PATCH_DOL) {
@@ -14176,7 +14761,7 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 				SET_VI_WIDTH(data + 0x802B1070 - 0x80269E80 + 0x266E80, 704);
 				SET_VI_WIDTH(data + 0x802B10E8 - 0x80269E80 + 0x266E80, 704);
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				break;
 		}
 	} else if (!strncmp(gameID, "GK7J08", 6) && dataType == PATCH_DOL) {
@@ -14220,7 +14805,7 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 				SET_VI_WIDTH(data + 0x802B70F0 - 0x8026C680 + 0x269680, 704);
 				SET_VI_WIDTH(data + 0x802B7168 - 0x8026C680 + 0x269680, 704);
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				break;
 		}
 	} else if (!strncmp(gameID, "GK7P08", 6) && dataType == PATCH_DOL) {
@@ -14250,7 +14835,7 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 				SET_VI_WIDTH(data + 0x802C81F4 - 0x8027D200 + 0x27A200, 704);
 				SET_VI_WIDTH(data + 0x802C826C - 0x8027D200 + 0x27A200, 704);
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				break;
 		}
 	} else if (!strncmp(gameID, "GKDP01", 6) && dataType == PATCH_DOL) {
@@ -14266,7 +14851,7 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 				SET_VI_WIDTH(data + 0x80101A18 - 0x800ECE80 + 0xE9E80, 704);
 				SET_VI_WIDTH(data + 0x80101A90 - 0x800ECE80 + 0xE9E80, 704);
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				break;
 		}
 	} else if (!strncmp(gameID, "GLME01", 6) && dataType == PATCH_DOL) {
@@ -14278,7 +14863,7 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 				SET_VI_WIDTH(data + 0x80395C7C - 0x80218100 + 0x215100, 704);
 				SET_VI_WIDTH(data + 0x80395CB8 - 0x80218100 + 0x215100, 704);
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				break;
 		}
 	} else if (!strncmp(gameID, "GLMJ01", 6) && dataType == PATCH_DOL) {
@@ -14290,7 +14875,7 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 				SET_VI_WIDTH(data + 0x8038ABDC - 0x8020D3E0 + 0x20A3E0, 704);
 				SET_VI_WIDTH(data + 0x8038AC18 - 0x8020D3E0 + 0x20A3E0, 704);
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				break;
 		}
 	} else if (!strncmp(gameID, "GLMP01", 6) && dataType == PATCH_DOL) {
@@ -14309,7 +14894,7 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 					
 					*(u32 *)(data + 0x804BD630 - 0x804BD620 + 0x384E80) = 0x803908D4;
 				}
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				break;
 		}
 	} else if (!strncmp(gameID, "GPIE01", 6) && dataType == PATCH_DOL) {
@@ -14321,7 +14906,7 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 				SET_VI_WIDTH(data + 0x802E8D28 - 0x80222D20 + 0x21FD20, 704);
 				SET_VI_WIDTH(data + 0x802E8D64 - 0x80222D20 + 0x21FD20, 704);
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				break;
 			case 3102592:
 				SET_VI_WIDTH(data + 0x802A5704 - 0x80222DC0 + 0x21FDC0, 704);
@@ -14330,7 +14915,7 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 				SET_VI_WIDTH(data + 0x802E8DC8 - 0x80222DC0 + 0x21FDC0, 704);
 				SET_VI_WIDTH(data + 0x802E8E04 - 0x80222DC0 + 0x21FDC0, 704);
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				break;
 		}
 	} else if (!strncmp(gameID, "GPIJ01", 6) && dataType == PATCH_DOL) {
@@ -14342,7 +14927,7 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 				SET_VI_WIDTH(data + 0x802EEF08 - 0x80227EA0 + 0x224EA0, 704);
 				SET_VI_WIDTH(data + 0x802EEF44 - 0x80227EA0 + 0x224EA0, 704);
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				break;
 			case 3128832:
 				SET_VI_WIDTH(data + 0x802AB0AC - 0x80228380 + 0x225380, 704);
@@ -14351,7 +14936,7 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 				SET_VI_WIDTH(data + 0x802EF3E8 - 0x80228380 + 0x225380, 704);
 				SET_VI_WIDTH(data + 0x802EF424 - 0x80228380 + 0x225380, 704);
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				break;
 		}
 	} else if (!strncmp(gameID, "GPIP01", 6) && dataType == PATCH_DOL) {
@@ -14374,7 +14959,7 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 					
 					*(f32 *)(data + 0x803ED5B0 - 0x803ED120 + 0x2F3DE0) = 1.0f;
 				}
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				break;
 		}
 	} else if (!strncmp(gameID, "GPTP41", 6) && dataType == PATCH_DOL) {
@@ -14392,7 +14977,7 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 					*(s16 *)(data + 0x801B25B2 - 0x8002B240 + 0x2600) = 640;
 					*(s16 *)(data + 0x801B25C2 - 0x8002B240 + 0x2600) = 448;
 				}
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				break;
 			case 639584:
 				if (in_range(swissSettings.gameVMode, 1, 7)) {
@@ -14401,7 +14986,27 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 					*(s16 *)(data + 0x8002E676 - 0x8000B400 + 0x2600) = 40;
 					*(s16 *)(data + 0x8002E67E - 0x8000B400 + 0x2600) = 40;
 				}
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
+				break;
+		}
+	} else if ((!strncmp(gameID, "GPZE01", 6) || !strncmp(gameID, "GPZJ01", 6)) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 803424:
+				*(s16 *)(data + 0x80006C72 - 0x80006780 + 0x2540) = 0;
+				*(s16 *)(data + 0x80006C7A - 0x80006780 + 0x2540) = 640;
+				
+				*(s16 *)(data + 0x8000C1FA - 0x80006780 + 0x2540) = 0;
+				*(s16 *)(data + 0x8000C202 - 0x80006780 + 0x2540) = 640;
+				
+				*(s16 *)(data + 0x8000C3DA - 0x80006780 + 0x2540) = 0;
+				*(s16 *)(data + 0x8000C3E2 - 0x80006780 + 0x2540) = 640;
+				
+				SET_VI_WIDTH(data + 0x800C66D0 - 0x800BDCA0 + 0xBACA0, 704);
+				SET_VI_WIDTH(data + 0x800C670C - 0x800BDCA0 + 0xBACA0, 704);
+				SET_VI_WIDTH(data + 0x800C6748 - 0x800BDCA0 + 0xBACA0, 704);
+				SET_VI_WIDTH(data + 0x800C67C0 - 0x800BDCA0 + 0xBACA0, 704);
+				
+				print_debug("Patched:[%.6s]\n", gameID);
 				break;
 		}
 	} else if (!strncmp(gameID, "GSAE01", 6) && dataType == PATCH_DOL) {
@@ -14426,7 +15031,7 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 				SET_VI_WIDTH(data + 0x8032E698 - 0x802C2D60 + 0x2BFD60, 704);
 				SET_VI_WIDTH(data + 0x8032E710 - 0x802C2D60 + 0x2BFD60, 704);
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				break;
 			case 3402176:
 				memset(data + 0x80049680 - 0x800066E0 + 0x2620, 0, 0x800496CC - 0x80049680);
@@ -14448,7 +15053,7 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 				SET_VI_WIDTH(data + 0x8032F2F0 - 0x802C34E0 + 0x2C04E0, 704);
 				SET_VI_WIDTH(data + 0x8032F368 - 0x802C34E0 + 0x2C04E0, 704);
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				break;
 		}
 	} else if (!strncmp(gameID, "GSAJ01", 6) && dataType == PATCH_DOL) {
@@ -14473,7 +15078,7 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 				SET_VI_WIDTH(data + 0x8032E7B8 - 0x802C2E60 + 0x2BFE60, 704);
 				SET_VI_WIDTH(data + 0x8032E830 - 0x802C2E60 + 0x2BFE60, 704);
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				break;
 			case 3402176:
 				memset(data + 0x80049680 - 0x800066E0 + 0x2620, 0, 0x800496CC - 0x80049680);
@@ -14495,7 +15100,7 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 				SET_VI_WIDTH(data + 0x8032F2F0 - 0x802C34E0 + 0x2C04E0, 704);
 				SET_VI_WIDTH(data + 0x8032F368 - 0x802C34E0 + 0x2C04E0, 704);
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				break;
 		}
 	} else if (!strncmp(gameID, "GSAP01", 6) && dataType == PATCH_DOL) {
@@ -14523,7 +15128,7 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 					*(s16 *)(data + 0x80020FFA - 0x800066E0 + 0x2620) = (0x8032FEAC + 0x8000) >> 16;
 					*(s16 *)(data + 0x80020FFE - 0x800066E0 + 0x2620) = (0x8032FEAC & 0xFFFF);
 				}
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				break;
 			case 3405600:
 				memset(data + 0x8004971C - 0x800066E0 + 0x2620, 0, 0x80049768 - 0x8004971C);
@@ -14548,7 +15153,7 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 					*(s16 *)(data + 0x80020FFA - 0x800066E0 + 0x2620) = (0x8033006C + 0x8000) >> 16;
 					*(s16 *)(data + 0x80020FFE - 0x800066E0 + 0x2620) = (0x8033006C & 0xFFFF);
 				}
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				break;
 		}
 	} else if ((!strncmp(gameID, "GVLD69", 6) || !strncmp(gameID, "GVLF69", 6) || !strncmp(gameID, "GVLP69", 6)) && dataType == PATCH_DOL) {
@@ -14556,7 +15161,7 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 			case 5309888:
 				*(s16 *)(data + 0x80219932 - 0x800034A0 + 0x4A0) = 384;
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				break;
 		}
 	} else if (!strncmp(gameID, "GVLE69", 6) && dataType == PATCH_DOL) {
@@ -14564,7 +15169,7 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 			case 5304256:
 				*(s16 *)(data + 0x80219732 - 0x800034A0 + 0x4A0) = 384;
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				break;
 		}
 	} else if (!strncmp(gameID, "GWRE01", 6) && dataType == PATCH_DOL) {
@@ -14574,7 +15179,7 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 				SET_VI_WIDTH(data + 0x8034145C - 0x80173DA0 + 0x170DA0, 704);
 				SET_VI_WIDTH(data + 0x80341498 - 0x80173DA0 + 0x170DA0, 704);
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				break;
 		}
 	} else if (!strncmp(gameID, "GWRJ01", 6) && dataType == PATCH_DOL) {
@@ -14584,7 +15189,7 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 				SET_VI_WIDTH(data + 0x8033E21C - 0x80170880 + 0x16D880, 704);
 				SET_VI_WIDTH(data + 0x8033E258 - 0x80170880 + 0x16D880, 704);
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				break;
 		}
 	} else if (!strncmp(gameID, "GWRP01", 6) && dataType == PATCH_DOL) {
@@ -14596,7 +15201,7 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 				SET_VI_WIDTH(data + 0x80343FFC - 0x80176760 + 0x173760, 704);
 				SET_VI_WIDTH(data + 0x80344038 - 0x80176760 + 0x173760, 704);
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				break;
 		}
 	} else if ((!strncmp(gameID, "GX2D52", 6) || !strncmp(gameID, "GX2P52", 6) || !strncmp(gameID, "GX2S52", 6)) && dataType == PATCH_DOL) {
@@ -14607,7 +15212,7 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 					*(s16 *)(data + 0x80010A1E - 0x80005760 + 0x2540) = VI_EURGB60;
 					*(s16 *)(data + 0x80010A22 - 0x80005760 + 0x2540) = (0x80368D5C & 0xFFFF);
 				}
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				break;
 		}
 	} else if (!strncmp(gameID, "GXLP52", 6) && dataType == PATCH_DOL) {
@@ -14618,7 +15223,7 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 					*(s16 *)(data + 0x8000E9FA - 0x80005760 + 0x2540) = VI_EURGB60;
 					*(s16 *)(data + 0x8000E9FE - 0x80005760 + 0x2540) = (0x80384784 & 0xFFFF);
 				}
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				break;
 		}
 	} else if (!strncmp(gameID, "GXLX52", 6) && dataType == PATCH_DOL) {
@@ -14629,7 +15234,7 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 					*(s16 *)(data + 0x8000E9FA - 0x80005760 + 0x2540) = VI_EURGB60;
 					*(s16 *)(data + 0x8000E9FE - 0x80005760 + 0x2540) = (0x803848C4 & 0xFFFF);
 				}
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				break;
 		}
 	} else if (!strncmp(gameID, "GZLE01", 6) && dataType == PATCH_DOL) {
@@ -14638,7 +15243,7 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 				SET_VI_WIDTH(data + 0x803716F0 - 0x80371580 + 0x36E580, 676);
 				SET_VI_WIDTH(data + 0x8037172C - 0x80371580 + 0x36E580, 676);
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				break;
 		}
 	} else if (!strncmp(gameID, "GZLJ01", 6) && dataType == PATCH_DOL) {
@@ -14647,7 +15252,7 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 				SET_VI_WIDTH(data + 0x80364B90 - 0x80364A20 + 0x361A20, 676);
 				SET_VI_WIDTH(data + 0x80364BCC - 0x80364A20 + 0x361A20, 676);
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				break;
 		}
 	} else if (!strncmp(gameID, "GZLP01", 6) && dataType == PATCH_DOL) {
@@ -14662,7 +15267,7 @@ void Patch_GameSpecificVideo(void *data, u32 length, const char *gameID, int dat
 				SET_VI_WIDTH(data + 0x803783D0 - 0x80378260 + 0x375260, 640);
 				SET_VI_WIDTH(data + 0x8037840C - 0x80378260 + 0x375260, 676);
 				
-				print_gecko("Patched:[%.6s]\n", gameID);
+				print_debug("Patched:[%.6s]\n", gameID);
 				break;
 		}
 	}
@@ -14729,12 +15334,12 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 	FuncPattern QueueLengthSig = 
 		{ 38, 21, 3, 6, 1, 2, NULL, 0, "QueueLengthD" };
 	FuncPattern WriteUARTNSigs[6] = {
-		{  99, 28, 3,  9, 17,  8, WriteUARTN_bin, WriteUARTN_bin_size, "WriteUARTND" },
-		{ 105, 28, 3, 12, 17,  9, WriteUARTN_bin, WriteUARTN_bin_size, "WriteUARTND" },
-		{ 128, 48, 4, 14, 18,  7, WriteUARTN_bin, WriteUARTN_bin_size, "WriteUARTN" },
-		{ 128, 47, 4, 14, 18,  7, WriteUARTN_bin, WriteUARTN_bin_size, "WriteUARTN" },
-		{ 135, 47, 4, 17, 18,  9, WriteUARTN_bin, WriteUARTN_bin_size, "WriteUARTN" },
-		{ 136, 46, 4, 19, 17, 11, WriteUARTN_bin, WriteUARTN_bin_size, "WriteUARTN" }	// SN Systems ProDG
+		{  99, 28, 3,  9, 17,  8, WriteUARTNPatch, WriteUARTNPatchLength, "WriteUARTND" },
+		{ 105, 28, 3, 12, 17,  9, WriteUARTNPatch, WriteUARTNPatchLength, "WriteUARTND" },
+		{ 128, 48, 4, 14, 18,  7, WriteUARTNPatch, WriteUARTNPatchLength, "WriteUARTN" },
+		{ 128, 47, 4, 14, 18,  7, WriteUARTNPatch, WriteUARTNPatchLength, "WriteUARTN" },
+		{ 135, 47, 4, 17, 18,  9, WriteUARTNPatch, WriteUARTNPatchLength, "WriteUARTN" },
+		{ 136, 46, 4, 19, 17, 11, WriteUARTNPatch, WriteUARTNPatchLength, "WriteUARTN" }	// SN Systems ProDG
 	};
 	FuncPattern SISetXYSigs[5] = {
 		{ 49, 15, 4, 5, 3, 4, NULL, 0, "SISetXYD" },
@@ -14939,7 +15544,7 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 			continue;
 		
 		FuncPattern fp;
-		make_pattern(data, i, length, &fp);
+		make_pattern(data, dataType, i, length, &fp);
 		
 		for (j = 0; j < sizeof(InitializeUARTSigs) / sizeof(FuncPattern); j++) {
 			if (compare_pattern(&fp, &InitializeUARTSigs[j])) {
@@ -15879,13 +16484,13 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 		u32 *InitializeUART = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (InitializeUART) {
-			if ((devices[DEVICE_CUR]->features & FEAT_HYPERVISOR) && swissSettings.debugUSB && !swissSettings.wiirdDebug) {
+			if (devices[DEVICE_CUR]->emulated() && swissSettings.enableUSBGecko && !swissSettings.wiirdDebug) {
 				memset(data + i, 0, InitializeUARTSigs[j].Length * sizeof(u32));
 				
 				data[i + 0] = 0x38600000;	// li		r3, 0
 				data[i + 1] = 0x4E800020;	// blr
 			}
-			print_gecko("Found:[%s$%i] @ %08X\n", InitializeUARTSigs[j].Name, j, InitializeUART);
+			print_debug("Found:[%s$%i] @ %08X\n", InitializeUARTSigs[j].Name, j, InitializeUART);
 			patched++;
 		}
 	}
@@ -15895,11 +16500,11 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 		u32 *WriteUARTN = Calc_ProperAddress(data, dataType, i * sizeof(u32));
 		
 		if (WriteUARTN) {
-			if ((devices[DEVICE_CUR]->features & FEAT_HYPERVISOR) && swissSettings.debugUSB && !swissSettings.wiirdDebug) {
+			if (devices[DEVICE_CUR]->emulated() && swissSettings.enableUSBGecko && !swissSettings.wiirdDebug) {
 				memset(data + i, 0, WriteUARTNSigs[j].Length * sizeof(u32));
-				memcpy(data + i, WriteUARTNSigs[j].Patch, WriteUARTNSigs[j].PatchLength);
+				memcpy(data + i, WriteUARTNSigs[j].Patch, WriteUARTNSigs[j].PatchLength * sizeof(u32));
 			}
-			print_gecko("Found:[%s$%i] @ %08X\n", WriteUARTNSigs[j].Name, j, WriteUARTN);
+			print_debug("Found:[%s$%i] @ %08X\n", WriteUARTNSigs[j].Name, j, WriteUARTN);
 			patched++;
 		}
 	}
@@ -15920,7 +16525,7 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 					case 6: data[i + 6] = 0x3BA00000 | ((swissSettings.forcePollRate - 1) & 0xFFFF); break;
 				}
 			}
-			print_gecko("Found:[%s$%i] @ %08X\n", SISetSamplingRateSigs[j].Name, j, SISetSamplingRate);
+			print_debug("Found:[%s$%i] @ %08X\n", SISetSamplingRateSigs[j].Name, j, SISetSamplingRate);
 			patched++;
 		}
 	}
@@ -15934,7 +16539,7 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 				if (j == 2)
 					data[i + 8] = 0x3BA00000 | ((swissSettings.forcePollRate - 1) & 0xFFFF);
 			
-			print_gecko("Found:[%s$%i] @ %08X\n", SIRefreshSamplingRateSigs[j].Name, j, SIRefreshSamplingRate);
+			print_debug("Found:[%s$%i] @ %08X\n", SIRefreshSamplingRateSigs[j].Name, j, SIRefreshSamplingRate);
 			patched++;
 		}
 	}
@@ -16012,7 +16617,7 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 						break;
 				}
 			}
-			print_gecko("Found:[%s$%i] @ %08X\n", UpdateOriginSigs[j].Name, j, UpdateOrigin);
+			print_debug("Found:[%s$%i] @ %08X\n", UpdateOriginSigs[j].Name, j, UpdateOrigin);
 			patched++;
 		}
 	}
@@ -16036,7 +16641,7 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 						data[i + 89] = 0x2004007F;	// subfic	r0, r4, 127
 				}
 			}
-			print_gecko("Found:[%s$%i] @ %08X\n", PADOriginCallbackSigs[j].Name, j, PADOriginCallback);
+			print_debug("Found:[%s$%i] @ %08X\n", PADOriginCallbackSigs[j].Name, j, PADOriginCallback);
 			patched++;
 		}
 	}
@@ -16060,7 +16665,7 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 						data[i + 96] = 0x2003007F;	// subfic	r0, r3, 127
 				}
 			}
-			print_gecko("Found:[%s$%i] @ %08X\n", PADOriginUpdateCallbackSigs[j].Name, j, PADOriginUpdateCallback);
+			print_debug("Found:[%s$%i] @ %08X\n", PADOriginUpdateCallbackSigs[j].Name, j, PADOriginUpdateCallback);
 			patched++;
 		}
 	}
@@ -16071,7 +16676,10 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 		u32 *CheckStatus;
 		
 		if (PADRead) {
-			CheckStatus = getPatchAddr(PAD_CHECKSTATUS);
+			if (swissSettings.aveCompat == GCDIGITAL_COMPAT)
+				CheckStatus = getPatchAddr(PAD_CHECKSTATUS_GCDIGITAL);
+			else
+				CheckStatus = getPatchAddr(PAD_CHECKSTATUS);
 			
 			switch (j) {
 				case 0:
@@ -16120,7 +16728,7 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 					data[i + 178] = branchAndLink(CheckStatus, PADRead + 178);
 					break;
 			}
-			print_gecko("Found:[%s$%i] @ %08X\n", PADReadSigs[j].Name, j, PADRead);
+			print_debug("Found:[%s$%i] @ %08X\n", PADReadSigs[j].Name, j, PADRead);
 			patched++;
 		}
 	}
@@ -16147,7 +16755,7 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 					                                                       &SPEC2_MakeStatusSigs[4], NULL);
 					break;
 			}
-			print_gecko("Found:[%s$%i] @ %08X\n", PADSetSpecSigs[j].Name, j, PADSetSpec);
+			print_debug("Found:[%s$%i] @ %08X\n", PADSetSpecSigs[j].Name, j, PADSetSpec);
 			patched++;
 		}
 	}
@@ -16203,7 +16811,7 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 					case 2: data[i + 82] = 0x20030080; break;	// subfic	r0, r3, 128
 				}
 			}
-			print_gecko("Found:[%s$%i] @ %08X\n", SPEC0_MakeStatusSigs[j].Name, j, SPEC0_MakeStatus);
+			print_debug("Found:[%s$%i] @ %08X\n", SPEC0_MakeStatusSigs[j].Name, j, SPEC0_MakeStatus);
 			patched++;
 		}
 	}
@@ -16259,7 +16867,7 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 					case 2: data[i + 82] = 0x20030080; break;	// subfic	r0, r3, 128
 				}
 			}
-			print_gecko("Found:[%s$%i] @ %08X\n", SPEC1_MakeStatusSigs[j].Name, j, SPEC1_MakeStatus);
+			print_debug("Found:[%s$%i] @ %08X\n", SPEC1_MakeStatusSigs[j].Name, j, SPEC1_MakeStatus);
 			patched++;
 		}
 	}
@@ -16271,7 +16879,7 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 			data[i + 3] = 0x41800020;	// blt		+8
 			data[i + 4] = 0x3BE4FF81;	// subi		r31, r4, 127
 			
-			print_gecko("Found:[%s] @ %08X\n", ClampS8Sig.Name, ClampS8);
+			print_debug("Found:[%s] @ %08X\n", ClampS8Sig.Name, ClampS8);
 			patched++;
 		}
 	}
@@ -16439,7 +17047,7 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 					case 4: data[i + 145] = 0x2006007F; break;	// subfic	r0, r6, 127
 				}
 			}
-			print_gecko("Found:[%s$%i] @ %08X\n", SPEC2_MakeStatusSigs[j].Name, j, SPEC2_MakeStatus);
+			print_debug("Found:[%s$%i] @ %08X\n", SPEC2_MakeStatusSigs[j].Name, j, SPEC2_MakeStatus);
 			patched++;
 		}
 	}
@@ -16455,7 +17063,7 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 				case 2:
 				case 3: data[i + 26] = 0x1CC007D0; break;	// mulli	r6, r0, 2000
 			}
-			print_gecko("Found:[%s$%i] @ %08X\n", SetupTimeoutAlarmSigs[j].Name, j, SetupTimeoutAlarm);
+			print_debug("Found:[%s$%i] @ %08X\n", SetupTimeoutAlarmSigs[j].Name, j, SetupTimeoutAlarm);
 			patched++;
 		}
 	}
@@ -16470,7 +17078,7 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 				case 4: data[i + 43] = 0x1CC007D0; break;	// mulli	r6, r0, 2000
 				case 5: data[i + 41] = 0x1CC007D0; break;	// mulli	r6, r0, 2000
 			}
-			print_gecko("Found:[%s$%i] @ %08X\n", RetrySigs[j].Name, j, Retry);
+			print_debug("Found:[%s$%i] @ %08X\n", RetrySigs[j].Name, j, Retry);
 			patched++;
 		}
 	}
@@ -16486,7 +17094,7 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 				case 5:
 				case 6: data[i + 69] = 0x1CC007D0; break;	// mulli	r6, r0, 2000
 			}
-			print_gecko("Found:[%s$%i] @ %08X\n", __CARDStartSigs[j].Name, j, __CARDStart);
+			print_debug("Found:[%s$%i] @ %08X\n", __CARDStartSigs[j].Name, j, __CARDStart);
 			patched++;
 		}
 	}
@@ -16500,7 +17108,7 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 				case 0: data[i + 16] = 0x38000000 | (swissSettings.fontEncode & 0xFFFF); break;
 				case 1: data[i + 12] = 0x38000000 | (swissSettings.fontEncode & 0xFFFF); break;
 			}
-			print_gecko("Found:[%s$%i] @ %08X\n", CARDGetEncodingSigs[j].Name, j, CARDGetEncoding);
+			print_debug("Found:[%s$%i] @ %08X\n", CARDGetEncodingSigs[j].Name, j, CARDGetEncoding);
 			patched++;
 		}
 	}
@@ -16515,7 +17123,7 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 			data[i + 0] = 0x38600000;	// li		r3, 0
 			data[i + 1] = 0x4E800020;	// blr
 			
-			print_gecko("Found:[%s$%i] @ %08X\n", VerifyIDSigs[j].Name, j, VerifyID);
+			print_debug("Found:[%s$%i] @ %08X\n", VerifyIDSigs[j].Name, j, VerifyID);
 			patched++;
 		}
 	}
@@ -16539,7 +17147,7 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 				case 10: data[i + 218] = 0x48000004; break;	// b		+1
 				case 11: data[i + 202] = 0x48000004; break;	// b		+1
 			}
-			print_gecko("Found:[%s$%i] @ %08X\n", DoMountSigs[j].Name, j, DoMount);
+			print_debug("Found:[%s$%i] @ %08X\n", DoMountSigs[j].Name, j, DoMount);
 			patched++;
 		}
 	}
@@ -16553,7 +17161,7 @@ void *Calc_ProperAddress(void *data, int dataType, u32 offsetFoundAt) {
 
 		// Doesn't look valid
 		if (hdr->textOffset[0] != DOLHDRLENGTH) {
-			print_gecko("DOL Header doesn't look valid %08X\r\n",hdr->textOffset[0]);
+			print_debug("DOL Header doesn't look valid %08X\n",hdr->textOffset[0]);
 			return NULL;
 		}
 
@@ -16643,7 +17251,7 @@ void *Calc_Address(void *data, int dataType, u32 properAddress) {
 
 		// Doesn't look valid
 		if (hdr->textOffset[0] != DOLHDRLENGTH) {
-			print_gecko("DOL Header doesn't look valid %08X\r\n",hdr->textOffset[0]);
+			print_debug("DOL Header doesn't look valid %08X\n",hdr->textOffset[0]);
 			return NULL;
 		}
 
@@ -16754,7 +17362,7 @@ int Patch_CheatsHook(u8 *data, u32 length, u32 type) {
 			// we'll need to work out where it will end up when it does get placed in memory to write the relative branch.
 			void *properAddress = Calc_ProperAddress(data, type, i+j);
 			if(properAddress) {
-				print_gecko("Found:[Hook:OSSleepThread] @ %08X\n", properAddress );
+				print_debug("Found:[Hook:OSSleepThread] @ %08X\n", properAddress );
 				*(vu32*)(data+i+j) = branch(CHEATS_ENGINE_START, properAddress);
 				break;
 			}
@@ -16789,7 +17397,7 @@ int Patch_CheatsHook(u8 *data, u32 length, u32 type) {
 			// we'll need to work out where it will end up when it does get placed in memory to write the relative branch.
 			void *properAddress = Calc_ProperAddress(data, type, i+j);
 			if(properAddress) {
-				print_gecko("Found:[Hook:GXDrawDone] @ %08X\n", properAddress );
+				print_debug("Found:[Hook:GXDrawDone] @ %08X\n", properAddress );
 				*(vu32*)(data+i+j) = branch(CHEATS_ENGINE_START, properAddress);
 				break;
 			}
@@ -16810,7 +17418,7 @@ int Patch_ExecutableFile(void **buffer, u32 *sizeToRead, const char *gameID, int
 		int patched = 0;
 		
 		// Patch hypervisor
-		if (devices[DEVICE_CUR]->features & FEAT_HYPERVISOR) {
+		if (devices[DEVICE_CUR]->emulated()) {
 			patched += Patch_Hypervisor(buffer, sizeToRead, type);
 			patched += Patch_GameSpecificHypervisor(buffer, sizeToRead, gameID, type);
 		}
@@ -16900,7 +17508,10 @@ int Patch_ExecutableFile(void **buffer, u32 *sizeToRead, const char *gameID, int
 			patched = patch(data, length, gameID, type);
 			
 			memcpy(dol, &dolhdr, DOLHDRLENGTH);
-			compress2(zlib->data, &zlib->deflateLength, (Bytef *)dol2, zlib->inflateLength, Z_BEST_COMPRESSION);
+			
+			struct libdeflate_compressor *compressor = libdeflate_alloc_compressor(7);
+			if (compressor) zlib->deflateLength = libdeflate_zlib_compress(compressor, (Bytef *)dol2, zlib->inflateLength, zlib->data, zlib->deflateLength);
+			libdeflate_free_compressor(compressor);
 			
 			length = DOLSize(data);
 			data = realloc(data, length);
@@ -16916,24 +17527,8 @@ int Patch_ExecutableFile(void **buffer, u32 *sizeToRead, const char *gameID, int
 	
 	patched = patch(data, length, gameID, type);
 	
-	if (type == PATCH_DOL) {
-		DOLHEADER *hdr = (DOLHEADER *) data;
-		
-		for (i = 0; i < MAXTEXTSECTION; i++) {
-			if (hdr->textOffset[i]) {
-				hdr->textOffset[i] -= hdr->textAddress[i] &  31;
-				hdr->textLength[i] += hdr->textAddress[i] &  31;
-				hdr->textAddress[i] = hdr->textAddress[i] & ~31;
-			}
-		}
-		
-		for (i = 0; i < MAXDATASECTION; i++) {
-			if (hdr->dataOffset[i]) {
-				hdr->dataOffset[i] -= hdr->dataAddress[i] &  31;
-				hdr->dataLength[i] += hdr->dataAddress[i] &  31;
-				hdr->dataAddress[i] = hdr->dataAddress[i] & ~31;
-			}
-		}
-	}
+	if (type == PATCH_DOL)
+		length = DOLSizeFix(data);
+	
 	return patched;
 }
