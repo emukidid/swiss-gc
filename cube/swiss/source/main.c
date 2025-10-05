@@ -216,7 +216,6 @@ int main(int argc, char *argv[])
 	allDevices[i++] = &__device_card_a;
 	allDevices[i++] = &__device_card_b;
 	allDevices[i++] = &__device_qoob;
-	allDevices[i++] = &__device_kunaigc;
 	allDevices[i++] = &__device_aram;
 	allDevices[i++] = &__device_sys;
 	allDevices[i++] = &__device_ata_a;
@@ -225,6 +224,7 @@ int main(int argc, char *argv[])
 	allDevices[i++] = &__device_smb;
 	allDevices[i++] = &__device_ftp;
 	allDevices[i++] = &__device_fsp;
+	allDevices[i++] = &__device_kunaigc;
 	allDevices[i++] = NULL;
 	
 	// Set current devices
