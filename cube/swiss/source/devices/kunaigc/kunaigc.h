@@ -8,11 +8,7 @@
 #ifndef KUNAIGC_H_
 #define KUNAIGC_H_
 
-#include <gccore.h>
-#include <unistd.h>
 
-
-#include "spiflash.h"
 #include "lfs.h"
 
 #define KUNAI_OFFS (256*1024) //first 512KiB are reserver for loader + recovery

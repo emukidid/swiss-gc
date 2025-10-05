@@ -2,8 +2,9 @@
 #ifndef _SPIFLASH_H_
 #define _SPIFLASH_H_
 
+#include "ogc/exi.h"
 #include <inttypes.h>
-#include <gccore.h>
+#include <exi.h>
 
 #ifdef __cplusplus
 #define _spiflash_h_ {
@@ -49,8 +50,7 @@ void spiflash_write_start(uint32_t addr);
 
 static inline
 void spiflash_write_uint8(uint8_t val) {
-	EXI_Imm(EXI_CHANNEL_0, &val, 1, EXI_WRITE, NULL);
-	EXI_Sync(EXI_CHANNEL_0);
+	EXI_ImmEx(EXI_CHANNEL_0, &val, 1, EXI_WRITE);
 }
 
 
