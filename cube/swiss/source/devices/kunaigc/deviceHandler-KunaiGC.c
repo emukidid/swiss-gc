@@ -110,7 +110,7 @@ s32 deviceHandler_KunaiGC_readDir(file_handle* ffile, file_handle** dir, u32 typ
             }
             memset(&(*dir)[i], 0, sizeof(file_handle));
             if(concat_path((*dir)[i].name, ffile->name, info.name) < PATHNAME_MAX
-                && !lfs_stat(&lfs, (*dir)[i].name, &fstat) && fstat.size <= UINT32_MAX) {
+                && !lfs_stat(&lfs, getDevicePath((*dir)[i].name), &fstat) && fstat.size <= UINT32_MAX) {
                 (*dir)[i].size       = fstat.size;
                 (*dir)[i].fileAttrib = (fstat.type == LFS_TYPE_DIR) ? ATTRIB_DIRECTORY : 0x00;
                 (*dir)[i].fileType   = (fstat.type == LFS_TYPE_DIR) ? IS_DIR : IS_FILE;
