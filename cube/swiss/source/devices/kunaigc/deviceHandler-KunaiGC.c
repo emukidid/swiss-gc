@@ -71,17 +71,17 @@ device_info* deviceHandler_KunaiGC_info(file_handle* file) {
 }
 
 s32 deviceHandler_KunaiGC_makeDir(file_handle* file) {	
-    return lfs_mkdir(&lfs, file->name);
+    return lfs_mkdir(&lfs, getDevicePath(file->name));
 }
 
 s32 deviceHandler_KunaiGC_readDir(file_handle* ffile, file_handle** dir, u32 type) {	
     lfs_dir_t lfsdir;
     struct lfs_info info;
 
-    int err = lfs_dir_open(&lfs, &lfsdir, ffile->name);
+    int err = lfs_dir_open(&lfs, &lfsdir, getDevicePath(ffile->name));
     
     if (err < 0) {
-        print_debug("KunaiGC: Error opening dir %s\n", ffile->name);
+        print_debug("KunaiGC: Error opening dir %s\n", getDevicePath(ffile->name));
         return -1;
     }
     
@@ -127,7 +127,7 @@ s32 deviceHandler_KunaiGC_readDir(file_handle* ffile, file_handle** dir, u32 typ
 
 s32 deviceHandler_KunaiGC_statFile(file_handle* file) {
     struct lfs_info fstat;
-    int ret = lfs_stat(&lfs, file->name, &fstat);
+    int ret = lfs_stat(&lfs, getDevicePath(file->name), &fstat);
     if (LFS_ERR_OK == ret) {
         file->size = fstat.size;
         file->fileType = IS_FILE;
@@ -144,7 +144,7 @@ s64 deviceHandler_KunaiGC_seekFile(file_handle* file, s64 where, u32 type) {
 
 s32 deviceHandler_KunaiGC_readFile(file_handle* file, void* buffer, u32 length) {
     if (!file->fp) {
-        if (lfs_file_open(&lfs, &lfs_file, file->name, LFS_O_RDONLY) < 0) return -1;
+        if (lfs_file_open(&lfs, &lfs_file, getDevicePath(file->name), LFS_O_RDONLY) < 0) return -1;
         file->fp = &lfs_file;		
     }
     if(file->size <= 0) {
@@ -163,7 +163,7 @@ s32 deviceHandler_KunaiGC_writeFile(file_handle* file, const void* buffer, u32 l
     s32 total_bytes_written = 0;
     print_debug("Wite called!\n");
     if (!file->fp || !(((lfs_file_t*)file->fp)->flags & LFS_O_WRONLY)) {
-        if (lfs_file_open(&lfs, &lfs_file, file->name, LFS_O_RDWR | LFS_O_CREAT) < 0) return -1;
+        if (lfs_file_open(&lfs, &lfs_file, getDevicePath(file->name), LFS_O_RDWR | LFS_O_CREAT) < 0) return -1;
         file->fp = (void*)&lfs_file;
     }
     lfs_file_seek(&lfs, (lfs_file_t *) file->fp, file->offset, LFS_SEEK_SET);
@@ -189,13 +189,13 @@ s32 deviceHandler_KunaiGC_deleteFile(file_handle* file) {
             lfs_file_close(&lfs, (lfs_file_t*)file->fp);
     }
     
-    lfs_remove(&lfs, file->name);
+    lfs_remove(&lfs, getDevicePath(file->name));
     readLFSInfo();
     return 0;
 }
 
 s32 deviceHandler_KunaiGC_renameFile(file_handle* file, char* name) {
-    return lfs_rename(&lfs, file->name, name);
+    return lfs_rename(&lfs, getDevicePath(file->name), getDevicePath(name));
 }
 
 bool deviceHandler_KunaiGC_test() {
