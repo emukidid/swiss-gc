@@ -26,7 +26,6 @@
 
 // variables used by the filesystem
 lfs_t lfs;
-lfs_file_t lfs_file;
 
 // configuration of the filesystem is provided by this struct
 struct lfs_config cfg = {
@@ -81,7 +80,6 @@ s32 deviceHandler_KunaiGC_readDir(file_handle* ffile, file_handle** dir, u32 typ
     int err = lfs_dir_open(&lfs, &lfsdir, getDevicePath(ffile->name));
     
     if (err < 0) {
-        print_debug("KunaiGC: Error opening dir %s\n", getDevicePath(ffile->name));
         return -1;
     }
     
@@ -89,8 +87,8 @@ s32 deviceHandler_KunaiGC_readDir(file_handle* ffile, file_handle** dir, u32 typ
     int num_entries = 1, i = 1;
     *dir = calloc(num_entries, sizeof(file_handle));
     concat_path((*dir)[0].name, ffile->name, "..");
-    (*dir)[0].fileAttrib = IS_SPECIAL;
-    (*dir)[0].device = &__device_kunaigc;
+    (*dir)[0].fileType = IS_SPECIAL;
+    (*dir)[0].device = ffile->device;
     
     // Read each entry of the directory
     while (lfs_dir_read(&lfs, &lfsdir, &info) > 0) {
@@ -99,6 +97,7 @@ s32 deviceHandler_KunaiGC_readDir(file_handle* ffile, file_handle** dir, u32 typ
         if(!strcmp(info.name, ".") || !strcmp(info.name, "..")) {
             continue;
         }
+        
         // Do we want this one?
         if((type == -1 || ((info.type == LFS_TYPE_DIR) ? (type==IS_DIR) : (type==IS_FILE)))) {
             struct lfs_info fstat;
@@ -144,8 +143,12 @@ s64 deviceHandler_KunaiGC_seekFile(file_handle* file, s64 where, u32 type) {
 
 s32 deviceHandler_KunaiGC_readFile(file_handle* file, void* buffer, u32 length) {
     if (!file->fp) {
-        if (lfs_file_open(&lfs, &lfs_file, getDevicePath(file->name), LFS_O_RDONLY) < 0) return -1;
-        file->fp = &lfs_file;		
+        file->fp = memalign(32, sizeof(lfs_file_t));
+        if (lfs_file_open(&lfs, file->fp, getDevicePath(file->name), LFS_O_RDONLY) < 0) {
+            free(file->fp);
+            file->fp = NULL;
+            return -1;
+        }
     }
     if(file->size <= 0) {
         lfs_file_seek(&lfs, (lfs_file_t*)file->fp, 0, LFS_SEEK_END);
@@ -154,17 +157,19 @@ s32 deviceHandler_KunaiGC_readFile(file_handle* file, void* buffer, u32 length) 
     lfs_file_seek(&lfs, (lfs_file_t*)file->fp, file->offset, LFS_SEEK_SET);
     size_t bytes_read = lfs_file_read(&lfs, (lfs_file_t*)file->fp, buffer, length);
     file->offset = lfs_file_tell(&lfs, (lfs_file_t*)file->fp);
-    print_debug("bytes read: %d- offset: %d- length: %d\n", bytes_read, file->offset, length);
     return bytes_read;
 }
 
 // Assumes a single call to write a file.
 s32 deviceHandler_KunaiGC_writeFile(file_handle* file, const void* buffer, u32 length) {
     s32 total_bytes_written = 0;
-    print_debug("Wite called!\n");
     if (!file->fp || !(((lfs_file_t*)file->fp)->flags & LFS_O_WRONLY)) {
-        if (lfs_file_open(&lfs, &lfs_file, getDevicePath(file->name), LFS_O_RDWR | LFS_O_CREAT) < 0) return -1;
-        file->fp = (void*)&lfs_file;
+        file->fp = memalign(32, sizeof(lfs_file_t));
+        if (lfs_file_open(&lfs, file->fp, getDevicePath(file->name), LFS_O_RDWR | LFS_O_CREAT) < 0) {
+            free(file->fp);
+            file->fp = NULL;
+            return -1;
+        }
     }
     lfs_file_seek(&lfs, (lfs_file_t *) file->fp, file->offset, LFS_SEEK_SET);
 
@@ -226,8 +231,9 @@ s32 deviceHandler_KunaiGC_closeFile(file_handle* file) {
     int ret = 0;
     if(file && file->fp) {
         ret = lfs_file_close(&lfs, (lfs_file_t*)file->fp);
-
+        free(file->fp);
         file->fp = NULL;
+		file->status = STATUS_NOT_MAPPED;
     }
     return ret;
 }
