@@ -129,6 +129,7 @@ static const struct {
 	{ "apploader.img", /* 2001/09/08       */  108544, 0x0F8C6C46B3C44150 },
 	{ "apploader.img", /* 2001/09/08       */  108544, 0x3967E55B5B9D7F25 },
 	{ "apploader.img", /* 2001/09/08       */  108544, 0x3DDD87752F8CE8BA },
+	{ "apploader.img", /* 2001/09/08       */  108544, 0x556159D06920253E },
 	{ "apploader.img", /* 2001/09/08       */  108544, 0x59AB007B4BB5165D },
 	{ "apploader.img", /* 2001/09/08       */  108544, 0x5E4B34B6C6A74809 },
 	{ "apploader.img", /* 2001/09/08       */  108544, 0x68362CDAF8230F6A },
@@ -183,7 +184,7 @@ static const struct {
 	{ "apploader.img", /* 2024/09/14       */  113536, 0xBECA9866ECE7A957 },
 	{ "apploader.img", /* 2024/09/17       */  113536, 0x623687789597750B },
 	{ "apploader.img", /* 2025/07/10       */  113536, 0xED22F838A52EABC5 },
-#define NKIT_FIRM_COUNT (FIRM_COUNT + 125)
+#define NKIT_FIRM_COUNT (FIRM_COUNT + 126)
 	{ "240p Test Suite (World) (v1.04) (Program) (Aftermarket) (Unl).dol",        2301384, 0x71BCDBA149B3AAAF },
 	{ "240p Test Suite (World) (v1.06) (Program) (Aftermarket) (Unl).dol",         930560, 0x7EB7DDDAF5105457 },
 	{ "240p Test Suite (World) (v1.07) (Program) (Aftermarket) (Unl).dol",         932032, 0x4DAB8540272CCBD5 },
@@ -1533,6 +1534,7 @@ static const struct {
 	{{ "GNHE5d\x00\x00" }, false, 0xD0, 0xCCBB, 0x4EE5DC34, 0xE124F07A58E1334C,     874496, +1459103744, {      94248,       +4056, 6496, 0x98DE }, "Cube CD 13 (32)" },
 	{{ "GNHE5d\x00\x00" }, false, 0xD6, 0xCCBB, 0x22EAE5C0, 0xE0D2EE7B7D7A9185,     837632, +1459140608, {      94248,       +4056, 6496, 0xB228 }, "FreeLoader for GameCube" },
 	{{ "GNHE5d\x00\x00" }, false, 0xDA, 0x3E90, 0x38FBD370, 0xD82129F8E4473619,    2203648, +1457774592, {      94248,       +4056, 6496, 0xE312 }, "Advance Game Port" },
+	{{ "GNHE5d\x00\x00" }, false, 0xDD, 0xD1BC, 0x26E2940F, 0xB254E4078781E0B8,     630784, +1459347456, {      94248,       +4056, 6496, 0x1F49 }, "SD Media Launcher for GameCube / Wii" },
 	{{ "GNHE5d\x00\x00" }, false, 0xE1, 0xCCBB, 0xDE08BB29, 0x1ED57927373BF559,    1888256, +1458089984, {      94248,       +4056, 6496, 0x98DE }, "Cube CD 11 (30)" },
 	{{ "GNHE5d\x00\x00" }, false, 0xE2, 0xCCBB, 0x4805F346, 0x67DB0165563C2F8C,    1318912, +1458659328, {      94248,       +4056, 6496, 0xB8A4 }, "Ultimate Codes for Use with The Legend of Zelda: The Wind Waker" },
 	{{ "GNHE5d\x00\x00" }, false, 0xE3, 0xD1BC, 0x03EBA636, 0x49DC91D7A21DD60A,    1996800, +1457981440, {      94248,       +4056, 6496, 0x0514 }, "Action Replay for GameCube" },
@@ -2275,7 +2277,7 @@ static const struct {
 	{{ "UGPP01\x00\x01" }, false, 0x2A, 0x6D4F, 0x5ECD9681, 0x4E9244DEFB94F10C,    5079040, +1454899200, {    2317764,       +8764, 8096, 0x8972 }, "Game Boy Player Start-Up Disc" },
 	{{ "UGPP01\x00\x02" }, false, 0x3A, 0xCA50, 0x1E26380C, 0x483B4CE794041533,    5079040, +1454899200, {    2317764,       +8764, 8096, 0x8972 }, "Game Boy Player Start-Up Disc" },
 	{{ "XXXXXX\x00\x01" }, false, 0x83, 0x7056, 0x5995AC59, 0x5CBC3D9F00D75112, 1287913472,  +172064768, {         ~0,          +0,    0, 0xFFFF }, "LEGO Super Soccer Adventure" },
-#define REDUMP_COUNT (2014)
+#define REDUMP_COUNT (2015)
 	{{"00\0E01\x00\x00" }, false, 0x8B, 0x42A2, 0x499CF1AB, 0xC1BAC83BFBED3EDB,   31170560, +1428807680, {    7795364,      +23900, 6496, 0xBBEA }, "Nintendo Developer Demo" },
 	{{"00\0E01\x00\x00" }, false, 0xD9, 0x21CF, 0xBF114CB3, 0xC1BAC83BFBED3EDB,   31170560, +1428807680, {    7795364,      +23900, 6496, 0xBBEA }, "Nintendo Developer Demo" },
 	{{ "060J01\x00\x00" }, true,  0x7E, 0x27AC, 0x94C088DF, 0x55221BF909AB54CC,  171485184, +1288493056, {     238648, +1288483336, 6496, 0xFD76 }, "Diag Ver 3.1.1" },

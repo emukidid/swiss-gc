@@ -88,9 +88,9 @@ build:
 	@cp $(DIST)/DOL/$(SVN_REVISION).dol $(DIST)/FlippyDrive/boot.dol
 	# copy licenses
 	@cp LICENSE $(DIST)/LICENSE.txt
+	@cp $(DEVKITPRO)/libogc2/gamecube/share/licenses/libdvm/COPYING $(DIST)/Licenses/libdvm.txt
 	@cp $(DEVKITPRO)/libogc2/libogc2_license.txt $(DIST)/Licenses/libogc2.txt
 	@cp $(DEVKITPRO)/libogc2/rtems_license.txt $(DIST)/Licenses/rtems.txt
-	@cp $(DEVKITPRO)/libogc2/share/licenses/libdvm/COPYING $(DIST)/Licenses/libdvm.txt
 	@cp $(DEVKITPRO)/licenses/devkitPPC/COPYING.LIBGLOSS $(DIST)/Licenses/libgloss.txt
 	@cp $(DEVKITPRO)/licenses/devkitPPC/COPYING.NEWLIB $(DIST)/Licenses/newlib.txt
 	@cp $(DEVKITPRO)/portlibs/ppc/licenses/ppc-libdeflate/COPYING $(DIST)/Licenses/libdeflate.txt
