@@ -43,7 +43,6 @@ GXTexObj sdsmallTexObj;
 GXTlutObj sdsmallTlutObj;
 GXTexObj hddTexObj;
 GXTlutObj hddTlutObj;
-GXTexObj kunaigcTexObj;
 GXTexObj qoobTexObj;
 GXTlutObj qoobTlutObj;
 GXTexObj qoobIndTexObj;
@@ -85,6 +84,7 @@ GXTexObj m2loaderTexObj;
 GXTexObj eth2gcTexObj;
 GXTexObj flippyTexObj;
 GXTexObj gcnetTexObj;
+GXTexObj kunaigcTexObj;
 
 static char fbTextBuffer[256];
 
@@ -340,7 +340,6 @@ static void init_textures()
 	GX_InitTexObjUserData(&sdsmallTexObj, &sdsmallTlutObj);
 	TPL_GetTextureCI(&imagesTPL, hddimg, &hddTexObj, &hddTlutObj, GX_TLUT0);
 	GX_InitTexObjUserData(&hddTexObj, &hddTlutObj);
-	TPL_GetTexture(&imagesTPL, kunaigcimg, &kunaigcTexObj);
 	TPL_GetTextureCI(&imagesTPL, qoobimg, &qoobTexObj, &qoobTlutObj, GX_TLUT0);
 	GX_InitTexObjUserData(&qoobTexObj, &qoobTlutObj);
 	TPL_GetTexture(&imagesTPL, qoobimg_ind, &qoobIndTexObj);
@@ -382,6 +381,7 @@ static void init_textures()
 	TPL_GetTexture(&imagesTPL, eth2gcimg, &eth2gcTexObj);
 	TPL_GetTexture(&imagesTPL, flippyimg, &flippyTexObj);
 	TPL_GetTexture(&imagesTPL, gcnetimg, &gcnetTexObj);
+	TPL_GetTexture(&imagesTPL, kunaigcimg, &kunaigcTexObj);
 }
 
 static void drawInit()
@@ -603,8 +603,9 @@ static void _DrawImageNow(int textureId, int x, int y, int width, int height, in
 		case TEX_GCODE:
 			texObj = &gcloaderTexObj; color = (GXColor) {216,216,216,255};
 			t1 -= 12.0f/88.0f;
+			break;
 		case TEX_KUNAIGC:
-			texObj = &kunaigcTexObj; 
+			texObj = &kunaigcTexObj; color = (GXColor) {216,216,216,255};
 			break;
 	}
 	
