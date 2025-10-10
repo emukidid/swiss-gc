@@ -244,8 +244,6 @@ enum DEV_ERRORS {
 #include "devices/gcloader/deviceHandler-gcloader.h"
 #include "devices/aram/deviceHandler-ARAM.h"
 #include "devices/flippydrive/deviceHandler-flippydrive.h"
-#include "devices/aram/deviceHandler-ARAM.h"
-#include "devices/flippydrive/deviceHandler-flippydrive.h"
 #include "devices/kunaigc/deviceHandler-KunaiGC.h"
 
 extern void deviceHandler_setStatEnabled(int enable);
@@ -253,6 +251,7 @@ extern int deviceHandler_getStatEnabled();
 extern bool deviceHandler_getDeviceAvailable(DEVICEHANDLER_INTERFACE *dev);
 extern void deviceHandler_setDeviceAvailable(DEVICEHANDLER_INTERFACE *dev, bool availability);
 extern void deviceHandler_setAllDevicesAvailable();
+
 #define MAX_DEVICES 23
 
 extern DEVICEHANDLER_INTERFACE* allDevices[MAX_DEVICES];
