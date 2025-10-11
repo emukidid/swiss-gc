@@ -40,9 +40,10 @@ struct lfs_config cfg = {
     .prog_size = W25Q80BV_PAGE_SIZE,
     .block_size = 4096,
     .block_count = 4032,
+    .block_cycles = 500,
     .cache_size = W25Q80BV_PAGE_SIZE*8,
     .lookahead_size = 16,
-    .block_cycles = 500,
+    .disk_version = 0x00020000,
 };
 
 
