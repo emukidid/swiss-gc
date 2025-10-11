@@ -177,7 +177,8 @@ typedef char* (* _fn_details)(file_handle*);
 #define DEVICE_ID_I			0x12
 #define DEVICE_ID_J			0x13
 #define DEVICE_ID_K			0x14
-#define DEVICE_ID_MAX		DEVICE_ID_K
+#define DEVICE_ID_L			0x15
+#define DEVICE_ID_MAX		DEVICE_ID_L
 #define DEVICE_ID_UNK		(DEVICE_ID_MAX + 1)
 
 struct DEVICEHANDLER_STRUCT {
@@ -243,6 +244,7 @@ enum DEV_ERRORS {
 #include "devices/gcloader/deviceHandler-gcloader.h"
 #include "devices/aram/deviceHandler-ARAM.h"
 #include "devices/flippydrive/deviceHandler-flippydrive.h"
+#include "devices/kunaigc/deviceHandler-KunaiGC.h"
 
 extern void deviceHandler_setStatEnabled(int enable);
 extern int deviceHandler_getStatEnabled();
@@ -250,7 +252,7 @@ extern bool deviceHandler_getDeviceAvailable(DEVICEHANDLER_INTERFACE *dev);
 extern void deviceHandler_setDeviceAvailable(DEVICEHANDLER_INTERFACE *dev, bool availability);
 extern void deviceHandler_setAllDevicesAvailable();
 
-#define MAX_DEVICES 22
+#define MAX_DEVICES 23
 
 extern DEVICEHANDLER_INTERFACE* allDevices[MAX_DEVICES];
 extern DEVICEHANDLER_INTERFACE* devices[MAX_DEVICE_SLOTS];

@@ -30,6 +30,7 @@ SOURCES		:=  source \
 			  source/devices/fsp \
 			  source/devices/ftp \
 			  source/devices/gcloader \
+              source/devices/kunaigc \
               source/devices/memcard \
               source/devices/qoob \
 			  source/devices/smb \
@@ -44,7 +45,8 @@ SOURCES		:=  source \
 			  source/patches/vi \
               source/images \
 			  source/images/buttons \
-			  source/fatfs
+			  source/fatfs \
+			  source/littlefs
 DATA		:=	data  
 TEXTURES	:=	source/images \
               source/images/buttons
@@ -54,7 +56,7 @@ INCLUDES	:=	include $(SOURCES) ..
 # options for code generation
 #---------------------------------------------------------------------------------
 
-CFLAGS		= -g -O2 -Wall -Wno-format-truncation -Wno-scalar-storage-order -fno-strict-aliasing -D_GNU_SOURCE $(MACHDEP) $(INCLUDE) -D'GIT_COMMIT="$(shell git rev-parse --short HEAD)"' -D'GIT_REVISION="$(shell git rev-list HEAD | wc -l)"'
+CFLAGS		= -g -O2 -Wall -Wno-format-truncation -Wno-scalar-storage-order -fno-strict-aliasing -D_GNU_SOURCE $(MACHDEP) $(INCLUDE) -D'GIT_COMMIT="$(shell git rev-parse --short HEAD)"' -D'GIT_REVISION="$(shell git rev-list HEAD | wc -l)"' -DLFS_MULTIVERSION
 CXXFLAGS	= $(CFLAGS)
 
 ASFLAGS		= $(MACHDEP) -mregnames -D_LANGUAGE_ASSEMBLY $(INCLUDE)
