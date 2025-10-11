@@ -37,7 +37,7 @@ void kunai_reenable(void) {
     EXI_Unlock(EXI_CHANNEL_0);
 }
 
-void kunai_wait() {
+void kunai_wait(void) {
     kunai_enable_passthrough();
     spiflash_wait();
     kunai_disable_passthrough();
@@ -137,4 +137,4 @@ int kunai_erase(const struct lfs_config *c, lfs_block_t block) {
     return retVal;
 }
 
-int kunai_sync(const struct lfs_config *c) { return 0;}
+int kunai_sync(const struct lfs_config *c) { return 0; }

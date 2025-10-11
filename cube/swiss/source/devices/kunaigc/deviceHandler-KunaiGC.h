@@ -1,6 +1,6 @@
-/* deviceHandler-Qoob.h
-	- device interface for Qoob Flash
-	by emu_kidid
+/* deviceHandler-KunaiGC.h
+    - device implementation for KunaiGC Flash
+    by bbsan2k
  */
 
 

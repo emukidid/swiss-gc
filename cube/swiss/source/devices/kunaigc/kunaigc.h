@@ -11,7 +11,7 @@
 
 #include "lfs.h"
 
-#define KUNAI_OFFS (256*1024) //first 512KiB are reserver for loader + recovery
+#define KUNAI_OFFS (256*1024) //first 256KiB are reserver for loader + recovery
 
 void kunai_sector_erase(uint32_t addr);
 void kunai_disable_passthrough(void);
