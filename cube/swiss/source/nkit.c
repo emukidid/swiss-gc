@@ -2287,6 +2287,7 @@ static const struct {
 	{{ "G2TE52\x00\x00" }, false, 0xC4, 0xC13C, 0xC98922BB, 0x55A84DC8C78EE6E7,  397957120, +1062021120, {         ~0,          +0,    0, 0xFFFF }, "Gun" },
 	{{ "G2TP52\x00\x00" }, false, 0x10, 0xEFEC, 0xEE959C7E, 0xA6DF308D2E6E85D7, 1459955712,      +22528, { 1018210520,          +0, 6496, 0x2179 }, "Memory Card Utility Program" },
 	{{ "G2TP52\x00\x00" }, false, 0x40, 0xEFEC, 0x0C20DB86, 0xA6DF308D2E6E85D7, 1459980288,       -2048, { 1018210520,          +0, 6496, 0x2A86 }, "Memory Card Utility Program" },
+	{{ "G2XJ8P\x00\x00" }, false, 0x78, 0x4354, 0x54945C2F, 0x9D241F84F310A2E0, 1360922624,   +99055616, {    2200740,   +98952028, 6496, 0x3FC1 }, "Sonic Gems Collection" },
 	{{ "G3EP51\x00\x00" }, true,  0x34, 0x80D0, 0x6F0DFACE, 0x4B8AC78E5081B62E,  459536384, +1000441856, {   87327232,    +2793404, 6496, 0x0649 }, "XGIII: Extreme G Racing" },
 	{{ "G3EP51\x00\x00" }, true,  0x68, 0x80D0, 0x395187D3, 0x4B8AC78E5081B62E,  459601920,  +188680192, {   87327232,    +2793404, 6496, 0x0649 }, "XGIII: Extreme G Racing" },
 	{{ "G4BE08\x10\x00" }, false, 0xD6, 0xAC60, 0xF42C8796, 0x74B4EC020FDC7489, 1391001600,   +68976640, {    3678236,   +67028612, 6496, 0xE6BE }, "Resident Evil 4" },
@@ -2508,7 +2509,7 @@ static const struct {
 	{{ "SG4JDA\x00\x00" }, true,  0x52, 0xF019, 0x4BB4830A, 0x3645CAE26589C220, 1272594432,  +187383808, { 1272587604,  +187384140, 6496, 0x015D }, "Naruto: Clash of Ninja 4" },
 	{{ "SG4JDA\x00\x00" }, true,  0x9D, 0xB3B3, 0x424A4760, 0x38394EDF8E58393A, 1261602816,  +198375424, { 1261594344,  +198377400, 6496, 0x015D }, "Naruto: Clash of Ninja 4" },
 	{{ "TESTNA\x00\x00" }, false, 0xD2, 0x0C28, 0x6254FB97, 0xAA2E5EDD0EF81992,   26834944,       -1658, {         ~0,          +0,    0, 0xFFFF }, "Dodger Demo" },
-#define VALID_GCM_COUNT (REDUMP_COUNT + 230)
+#define VALID_GCM_COUNT (REDUMP_COUNT + 231)
 	{{ "101E01\x00\x05" }, true,  0x88, 0xB6FD, 0x4BB518CD, 0x27CFAD706924A030, 1435949056,   +24029184, {         ~0,          +0,    0, 0xFFFF }, "Hontai Kensa Disc DOL-USA" },
 	{{ "101E01\x00\x05" }, true,  0xC6, 0xB6FD, 0x4BB518CD, 0x27CFAD706924A030, 1435949056,   +24029184, {         ~0,          +0,    0, 0xFFFF }, "Hontai Kensa Disc DOL-USA" },
 	{{ "101J01\x00\x03" }, true,  0x67, 0xA361, 0x1A7B7608, 0x6E2DA2E062EF73BA, 1459453952,     +524288, {         ~0,          +0,    0, 0xFFFF }, "Hontai Kensa Disc DOL" },
