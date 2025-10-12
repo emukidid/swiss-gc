@@ -100,6 +100,7 @@ char *getExternalPath(char *path)
 		{ "fdffs:/", "flash:" },
 		{ "fldrv:/", "dvd:"   },
 		{ "gcldr:/", "dvd:"   },
+		{ "kunai:/", "flash:" },
 		{ "sda:/",   "carda:" },
 		{ "sdb:/",   "cardb:" },
 		{ "sdc:/",   "sd:"    },

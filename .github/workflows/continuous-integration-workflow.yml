@@ -26,6 +26,7 @@ jobs:
       with:
         path: swiss
         fetch-depth: 0
+        submodules: true
 
     - name: Build Swiss artifacts
       run: make

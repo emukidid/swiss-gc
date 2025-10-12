@@ -1,0 +1,3 @@
+[submodule "cube/swiss/source/littlefs"]
+	path = cube/swiss/source/littlefs
+	url = https://github.com/littlefs-project/littlefs.git
