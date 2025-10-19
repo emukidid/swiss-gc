@@ -12,7 +12,7 @@ jobs:
     - name: Install packages
       run: |
         sudo apt-get update
-        sudo apt-get install -y --no-install-recommends gcc gcc-mingw-w64-i686 libc6-dev libc6-i386 p7zip-full xorriso
+        sudo apt-get install -y --no-install-recommends -t bookworm-backports 7zip gcc gcc-mingw-w64-i686 libc6-dev libc6-i386 xorriso
 
     - name: Checkout Swiss
       uses: actions/checkout@main
