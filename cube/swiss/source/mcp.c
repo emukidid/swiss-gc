@@ -91,7 +91,7 @@ s32 MCP_SetDiskID(s32 chan, const dvddiskid *diskID)
 s32 MCP_GetDiskInfo(s32 chan, char diskInfo[64])
 {
 	bool err = false;
-	u8 cmd[2];
+	u8 cmd[3];
 
 	if (!EXI_LockEx(chan, EXI_DEVICE_0)) return MCP_RESULT_BUSY;
 	if (!EXI_Select(chan, EXI_DEVICE_0, EXI_SPEED16MHZ)) {
@@ -101,6 +101,7 @@ s32 MCP_GetDiskInfo(s32 chan, char diskInfo[64])
 
 	cmd[0] = 0x8B;
 	cmd[1] = 0x12;
+	cmd[2] = 0x00;
 
 	err |= !EXI_ImmEx(chan, cmd, sizeof(cmd), EXI_WRITE);
 	err |= !EXI_ImmEx(chan, diskInfo, 64, EXI_READ);
@@ -126,6 +127,51 @@ s32 MCP_SetDiskInfo(s32 chan, const char diskInfo[64])
 
 	err |= !EXI_ImmEx(chan, cmd, sizeof(cmd), EXI_WRITE);
 	err |= !EXI_ImmEx(chan, (char *)diskInfo, 64, EXI_WRITE);
+	err |= !EXI_Deselect(chan);
+	EXI_Unlock(chan);
+
+	return err ? MCP_RESULT_NOCARD : MCP_RESULT_READY;
+}
+
+s32 MCP_GetGameID(s32 chan, char gameID[10])
+{
+	bool err = false;
+	u8 cmd[3];
+
+	if (!EXI_LockEx(chan, EXI_DEVICE_0)) return MCP_RESULT_BUSY;
+	if (!EXI_Select(chan, EXI_DEVICE_0, EXI_SPEED16MHZ)) {
+		EXI_Unlock(chan);
+		return MCP_RESULT_NOCARD;
+	}
+
+	cmd[0] = 0x8B;
+	cmd[1] = 0x1C;
+	cmd[2] = 0x00;
+
+	err |= !EXI_ImmEx(chan, cmd, sizeof(cmd), EXI_WRITE);
+	err |= !EXI_ImmEx(chan, gameID, 10, EXI_READ);
+	err |= !EXI_Deselect(chan);
+	EXI_Unlock(chan);
+
+	return err ? MCP_RESULT_NOCARD : MCP_RESULT_READY;
+}
+
+s32 MCP_SetGameID(s32 chan, const char gameID[10])
+{
+	bool err = false;
+	u8 cmd[2];
+
+	if (!EXI_LockEx(chan, EXI_DEVICE_0)) return MCP_RESULT_BUSY;
+	if (!EXI_Select(chan, EXI_DEVICE_0, EXI_SPEED16MHZ)) {
+		EXI_Unlock(chan);
+		return MCP_RESULT_NOCARD;
+	}
+
+	cmd[0] = 0x8B;
+	cmd[1] = 0x1D;
+
+	err |= !EXI_ImmEx(chan, cmd, sizeof(cmd), EXI_WRITE);
+	err |= !EXI_ImmEx(chan, (char *)gameID, 10, EXI_WRITE);
 	err |= !EXI_Deselect(chan);
 	EXI_Unlock(chan);
 

@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2022, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2022-2025, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -38,6 +38,8 @@ s32 MCP_GetDeviceID(s32 chan, u32 *id);
 s32 MCP_SetDiskID(s32 chan, const dvddiskid *diskID);
 s32 MCP_GetDiskInfo(s32 chan, char diskInfo[64]);
 s32 MCP_SetDiskInfo(s32 chan, const char diskInfo[64]);
+s32 MCP_GetGameID(s32 chan, char gameID[10]);
+s32 MCP_SetGameID(s32 chan, const char gameID[10]);
 
 #ifdef __cplusplus
 }
