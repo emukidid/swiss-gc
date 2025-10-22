@@ -194,7 +194,7 @@ uint32_t spiflash_jedec_id(void) {
     uint32_t id;
     uint8_t cmd = W25Q80BV_CMD_READ_JEDEC_ID;
     EXI_ImmEx(EXI_CHANNEL_0, &cmd, 1, EXI_WRITE);
-    id = spiflash_read_uint32() >> 8;
+    id = spiflash_read_uint32();
     return id;
 }
 

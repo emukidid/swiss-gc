@@ -156,7 +156,7 @@ s32 deviceHandler_KunaiGC_writeFile(file_handle* file, const void* buffer, u32 l
 
 bool deviceHandler_KunaiGC_test() {
     u32 jedec_id = kunai_get_jedecID();
-    cfg.block_count = (((1 << (jedec_id & 0xFF)) - KUNAI_OFFS) / cfg.block_size);
+    cfg.block_count = (((1 << ((jedec_id >> 8) & 0xFF)) - KUNAI_OFFS) / cfg.block_size);
 
     return (jedec_id != 0) && (jedec_id != 0xFFFFFFFF);
 }
