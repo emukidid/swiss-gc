@@ -17,12 +17,13 @@
  * with Swiss.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <stdbool.h>
-#include <string.h>
+#include <gctypes.h>
+#include <ogc/exi.h>
+#include <ogc/mmce.h>
 #include <ogc/si.h>
+#include <string.h>
 #include "gameid.h"
 #include "gcm.h"
-#include "mcp.h"
 #include "swiss.h"
 
 static char gameID[1 + 10] = {0x1D};
@@ -72,19 +73,19 @@ static void gameID_deinit(void)
 
 void gameID_early_set(const DiskHeader *header)
 {
-	for (s32 chan = 0; chan < 2; chan++) {
+	for (s32 chan = EXI_CHANNEL_0; chan < EXI_CHANNEL_MAX; chan++) {
 		u32 id;
 		s32 ret;
 
 		if (swissSettings.disableMCPGameID & (1 << chan))
 			continue;
-		while ((ret = MCP_ProbeEx(chan)) == MCP_RESULT_BUSY);
+		while ((ret = MMCE_ProbeEx(chan)) == MMCE_RESULT_BUSY);
 		if (ret < 0) continue;
-		ret = MCP_GetDeviceID(chan, &id);
+		ret = MMCE_GetDeviceID(chan, &id);
 		if (ret < 0) continue;
-		ret = MCP_SetDiskID(chan, (dvddiskid *)header);
+		ret = MMCE_SetDiskID(chan, (dvddiskid *)header);
 		if (ret < 0) continue;
-		ret = MCP_SetDiskInfo(chan, header->GameName);
+		ret = MMCE_SetDiskInfo(chan, header->GameName);
 		if (ret < 0) continue;
 	}
 }

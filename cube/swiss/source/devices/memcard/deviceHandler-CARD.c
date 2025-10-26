@@ -10,12 +10,12 @@
 #include <gccore.h>
 #include <malloc.h>
 #include <ogc/card.h>
+#include <ogc/mmce.h>
 #include "deviceHandler.h"
 #include "gui/FrameBufferMagic.h"
 #include "gui/IPLFontWrite.h"
 #include "swiss.h"
 #include "main.h"
-#include "mcp.h"
 #include "images/gamecube_rgb.h"
 
 
@@ -527,7 +527,7 @@ bool deviceHandler_CARD_test_a() {
 	if (ret == CARD_ERROR_READY) {
 		u32 id;
 
-		if (MCP_GetDeviceID(CARD_SLOTA, &id) == MCP_RESULT_READY)
+		if (MMCE_GetDeviceID(CARD_SLOTA, &id) == MMCE_RESULT_READY)
 			__device_card_a.hwName = "MemCard PRO GC";
 		else
 			__device_card_a.hwName = "Memory Card";
@@ -541,7 +541,7 @@ bool deviceHandler_CARD_test_b() {
 	if (ret == CARD_ERROR_READY) {
 		u32 id;
 
-		if (MCP_GetDeviceID(CARD_SLOTB, &id) == MCP_RESULT_READY)
+		if (MMCE_GetDeviceID(CARD_SLOTB, &id) == MMCE_RESULT_READY)
 			__device_card_b.hwName = "MemCard PRO GC";
 		else
 			__device_card_b.hwName = "Memory Card";
