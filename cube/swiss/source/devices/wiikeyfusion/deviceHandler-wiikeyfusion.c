@@ -20,8 +20,6 @@
 #include "patcher.h"
 #include "dvd.h"
 
-static FATFS *wkffs = NULL;
-
 file_handle initial_WKF = {
 	.name     = "wkf:/",
 	.fileType = IS_DIR,
@@ -164,24 +162,8 @@ s32 deviceHandler_WKF_init(file_handle* file) {
 	if(!deviceHandler_WKF_test()) return ENODEV;
 	
 	wkfReinit();	// TODO extended error status
-	if(wkffs != NULL) {
-		f_unmount("wkf:/");
-		free(wkffs);
-		wkffs = NULL;
-	}
-	wkffs = (FATFS*)malloc(sizeof(FATFS));
-	file->status = f_mount(wkffs, "wkf:/", 1);
+	file->status = fatFs_Mount(file);
 	return file->status == FR_OK ? 0 : EIO;
-}
-
-s32 deviceHandler_WKF_deinit(file_handle* file) {
-	deviceHandler_FAT_closeFile(file);
-	if(file) {
-		f_unmount(file->name);
-		free(wkffs);
-		wkffs = NULL;
-	}
-	return 0;
 }
 
 u32 deviceHandler_WKF_emulated() {
@@ -228,7 +210,7 @@ DEVICEHANDLER_INTERFACE __device_wkf = {
 	.renameFile = deviceHandler_FAT_renameFile,
 	.hideFile = deviceHandler_FAT_hideFile,
 	.setupFile = deviceHandler_WKF_setupFile,
-	.deinit = deviceHandler_WKF_deinit,
+	.deinit = deviceHandler_FAT_deinit,
 	.emulated = deviceHandler_WKF_emulated,
 	.status = deviceHandler_FAT_status,
 };

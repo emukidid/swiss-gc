@@ -192,6 +192,7 @@ struct DEVICEHANDLER_STRUCT {
 	u32				quirks;
 	u32				emulable;
 	u32				location;
+	void*			context;
 	file_handle*	initial;
 	_fn_test		test;
 	_fn_info	 	info;

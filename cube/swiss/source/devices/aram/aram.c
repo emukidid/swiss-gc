@@ -26,7 +26,7 @@
 #include <ogc/system.h>
 #include "aram.h"
 
-static bool __aram_Startup(DISC_INTERFACE *disc)
+static bool __aram_startup(DISC_INTERFACE *disc)
 {
 	static bool initialized;
 
@@ -40,7 +40,7 @@ static bool __aram_Startup(DISC_INTERFACE *disc)
 	return true;
 }
 
-static bool __aram_IsInserted(DISC_INTERFACE *disc)
+static bool __aram_isInserted(DISC_INTERFACE *disc)
 {
 	if (disc->ioType != DEVICE_TYPE_GAMECUBE_ARAM) return false;
 
@@ -49,7 +49,7 @@ static bool __aram_IsInserted(DISC_INTERFACE *disc)
 	return !!disc->numberOfSectors;
 }
 
-static bool __aram_ReadSectors(DISC_INTERFACE *disc, sec_t sector, sec_t numSectors, void *buffer)
+static bool __aram_readSectors(DISC_INTERFACE *disc, sec_t sector, sec_t numSectors, void *buffer)
 {
 	ARQRequest req;
 
@@ -59,6 +59,7 @@ static bool __aram_ReadSectors(DISC_INTERFACE *disc, sec_t sector, sec_t numSect
 	if ((sector + numSectors) > disc->numberOfSectors) return false;
 	if (disc->bytesPerSector != 512) return false;
 	if (!SYS_IsDMAAddress(buffer, 32)) return false;
+	if (!ARQ_CheckInit()) return false;
 
 	DCInvalidateRange(buffer, numSectors << 9);
 	ARQ_PostRequest(&req, sector, ARQ_ARAMTOMRAM, ARQ_PRIO_LO, AR_GetInternalSize() + (sector << 9), (u32)buffer, numSectors << 9);
@@ -66,7 +67,7 @@ static bool __aram_ReadSectors(DISC_INTERFACE *disc, sec_t sector, sec_t numSect
 	return true;
 }
 
-static bool __aram_WriteSectors(DISC_INTERFACE *disc, sec_t sector, sec_t numSectors, const void *buffer)
+static bool __aram_writeSectors(DISC_INTERFACE *disc, sec_t sector, sec_t numSectors, const void *buffer)
 {
 	ARQRequest req;
 
@@ -76,19 +77,20 @@ static bool __aram_WriteSectors(DISC_INTERFACE *disc, sec_t sector, sec_t numSec
 	if ((sector + numSectors) > disc->numberOfSectors) return false;
 	if (disc->bytesPerSector != 512) return false;
 	if (!SYS_IsDMAAddress(buffer, 32)) return false;
+	if (!ARQ_CheckInit()) return false;
 
-	DCFlushRange((void *)buffer, numSectors << 9);
+	DCStoreRange((void *)buffer, numSectors << 9);
 	ARQ_PostRequest(&req, sector, ARQ_MRAMTOARAM, ARQ_PRIO_LO, AR_GetInternalSize() + (sector << 9), (u32)buffer, numSectors << 9);
 
 	return true;
 }
 
-static bool __aram_ClearStatus(DISC_INTERFACE *disc)
+static bool __aram_clearStatus(DISC_INTERFACE *disc)
 {
 	return true;
 }
 
-static bool __aram_Shutdown(DISC_INTERFACE *disc)
+static bool __aram_shutdown(DISC_INTERFACE *disc)
 {
 	return true;
 }
@@ -96,12 +98,12 @@ static bool __aram_Shutdown(DISC_INTERFACE *disc)
 DISC_INTERFACE __io_aram = {
 	DEVICE_TYPE_GAMECUBE_ARAM,
 	FEATURE_MEDIUM_CANREAD | FEATURE_MEDIUM_CANWRITE,
-	__aram_Startup,
-	__aram_IsInserted,
-	__aram_ReadSectors,
-	__aram_WriteSectors,
-	__aram_ClearStatus,
-	__aram_Shutdown,
+	__aram_startup,
+	__aram_isInserted,
+	__aram_readSectors,
+	__aram_writeSectors,
+	__aram_clearStatus,
+	__aram_shutdown,
 	0,
 	512
 };

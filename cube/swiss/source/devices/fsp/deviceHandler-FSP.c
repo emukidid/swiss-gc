@@ -235,12 +235,12 @@ s32 deviceHandler_FSP_init(file_handle* file) {
 	
 	if((dirpro & (FSP_DIR_MKDIR|FSP_DIR_ADD|FSP_DIR_DEL|FSP_DIR_GET)) == (FSP_DIR_MKDIR|FSP_DIR_ADD|FSP_DIR_DEL) ||
 		(dirpro & FSP_DIR_OWNER)) {
-		__device_fsp.features |=  FEAT_PATCHES;
-		__device_fsp.emulable |=  EMU_ETHERNET;
+		file->device->features |=  FEAT_PATCHES;
+		file->device->emulable |=  EMU_ETHERNET;
 	}
 	else {
-		__device_fsp.features &= ~FEAT_PATCHES;
-		__device_fsp.emulable &= ~EMU_ETHERNET;
+		file->device->features &= ~FEAT_PATCHES;
+		file->device->emulable &= ~EMU_ETHERNET;
 	}
 	return 0;
 }

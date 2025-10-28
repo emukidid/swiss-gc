@@ -27,7 +27,10 @@ extern s32 deviceHandler_FAT_closeFile(file_handle* file);
 extern s32 deviceHandler_FAT_deleteFile(file_handle* file);
 extern s32 deviceHandler_FAT_renameFile(file_handle* file, char* name);
 extern s32 deviceHandler_FAT_hideFile(file_handle* file, bool hide);
+extern s32 deviceHandler_FAT_deinit(file_handle* file);
 extern char* deviceHandler_FAT_status(file_handle* file);
+
+extern s32 fatFs_Mount(file_handle* file);
 
 #endif
 

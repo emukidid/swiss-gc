@@ -15,8 +15,6 @@
 #include "main.h"
 #include "aram.h"
 
-static FATFS *aramfs = NULL;
-
 file_handle initial_ARAM = {
 	.name     = "ram:/",
 	.fileType = IS_DIR,
@@ -24,30 +22,15 @@ file_handle initial_ARAM = {
 };
 
 s32 deviceHandler_ARAM_init(file_handle* file) {
-	if(aramfs != NULL) {
-		f_unmount("ram:/");
-		free(aramfs);
-		aramfs = NULL;
-	}
-	aramfs = (FATFS*)malloc(sizeof(FATFS));
-	file->status = f_mount(aramfs, "ram:/", 1);
+	file->status = fatFs_Mount(file);
 	if(file->status == FR_NO_FILESYSTEM) {
-		file->status = f_mkfs("ram:/", &(MKFS_PARM){FM_EXFAT | FM_SFD}, aramfs->win, sizeof(aramfs->win));
+		FATFS* fatfs = file->device->context;
+		file->status = f_mkfs(file->name, &(MKFS_PARM){FM_EXFAT | FM_SFD}, fatfs->win, sizeof(fatfs->win));
 		if(file->status == FR_OK) {
-			file->status = f_mount(aramfs, "ram:/", 1);
+			file->status = f_mount(fatfs, file->name, 1);
 		}
 	}
 	return file->status == FR_OK ? 0 : EIO;
-}
-
-s32 deviceHandler_ARAM_deinit(file_handle* file) {
-	deviceHandler_FAT_closeFile(file);
-	if(file) {
-		f_unmount(file->name);
-		free(aramfs);
-		aramfs = NULL;
-	}
-	return 0;
 }
 
 bool deviceHandler_ARAM_test() {
@@ -78,6 +61,6 @@ DEVICEHANDLER_INTERFACE __device_aram = {
 	.deleteFile = deviceHandler_FAT_deleteFile,
 	.renameFile = deviceHandler_FAT_renameFile,
 	.hideFile = deviceHandler_FAT_hideFile,
-	.deinit = deviceHandler_ARAM_deinit,
+	.deinit = deviceHandler_FAT_deinit,
 	.status = deviceHandler_FAT_status,
 };

@@ -21,8 +21,6 @@
 #include "patcher.h"
 #include "dvd.h"
 
-static FATFS *fs[6] = {NULL, NULL, NULL, NULL, NULL, NULL};
-#define SD_COUNT 3
 #define IS_SDCARD(file) (file->name[0] == 's' && file->name[1] == 'd')
 int GET_SLOT(file_handle* file) {
 	if(IS_SDCARD(file)) {
@@ -299,15 +297,16 @@ s32 deviceHandler_FAT_setupFile(file_handle* file, file_handle* file2, Executabl
 	return 1;
 }
 
-s32 fatFs_Mount(u8 devNum, char *path) {
-	if(fs[devNum] != NULL) {
-		print_debug("Unmount %i devnum, %s path\n", devNum, path);
-		f_unmount(path);
-		free(fs[devNum]);
-		fs[devNum] = NULL;
+s32 fatFs_Mount(file_handle* file) {
+	FATFS* fatfs = file->device->context;
+	if(fatfs != NULL) {
+		print_debug("Unmount %i devnum, %s path\n", fatfs->pdrv, file->name);
+		f_unmount(file->name);
+		free(file->device->context);
+		file->device->context = NULL;
 	}
-	fs[devNum] = (FATFS*)malloc(sizeof(FATFS));
-	return f_mount(fs[devNum], path, 1);
+	file->device->context = malloc(sizeof(FATFS));
+	return f_mount(file->device->context, file->name, 1);
 }
 
 void setSDGeckoSpeed(int slot, bool fast) {
@@ -318,46 +317,15 @@ void setSDGeckoSpeed(int slot, bool fast) {
 s32 deviceHandler_FAT_init(file_handle* file) {
 	int isSDCard = IS_SDCARD(file);
 	int slot = GET_SLOT(file);
-	file->status = 0;
-	print_debug("Init %s %i\n", (isSDCard ? "SD":"ATA"), slot);
-	// SD Card - Slot A
-	if(isSDCard && slot == 0) {
+	if(isSDCard) {
 		setSDGeckoSpeed(slot, swissSettings.exiSpeed);
-		file->status = fatFs_Mount(DEV_SDA, "sda:/");
+	}
+	file->status = fatFs_Mount(file);
+	if(isSDCard) {
 		if(sdgecko_getSpeed(slot) < EXI_SPEED32MHZ)
-			__device_sd_a.quirks |=  QUIRK_EXI_SPEED;
+			file->device->quirks |=  QUIRK_EXI_SPEED;
 		else
-			__device_sd_a.quirks &= ~QUIRK_EXI_SPEED;
-	}
-	// SD Card - Slot B
-	if(isSDCard && slot == 1) {
-		setSDGeckoSpeed(slot, swissSettings.exiSpeed);
-		file->status = fatFs_Mount(DEV_SDB, "sdb:/");
-		if(sdgecko_getSpeed(slot) < EXI_SPEED32MHZ)
-			__device_sd_b.quirks |=  QUIRK_EXI_SPEED;
-		else
-			__device_sd_b.quirks &= ~QUIRK_EXI_SPEED;
-	}
-	// SD Card - SD2SP2
-	if(isSDCard && slot == 2) {
-		setSDGeckoSpeed(slot, swissSettings.exiSpeed);
-		file->status = fatFs_Mount(DEV_SDC, "sdc:/");
-		if(sdgecko_getSpeed(slot) < EXI_SPEED32MHZ)
-			__device_sd_c.quirks |=  QUIRK_EXI_SPEED;
-		else
-			__device_sd_c.quirks &= ~QUIRK_EXI_SPEED;
-	}
-	// IDE-EXI - Slot A
-	if(!isSDCard && slot == 0) {
-		file->status = fatFs_Mount(DEV_ATAA, "ataa:/");
-	}
-	// IDE-EXI - Slot B
-	if(!isSDCard && slot == 1) {
-		file->status = fatFs_Mount(DEV_ATAB, "atab:/");
-	}
-	// M.2 Loader
-	if(!isSDCard && slot == 2) {
-		file->status = fatFs_Mount(DEV_ATAC, "atac:/");
+			file->device->quirks &= ~QUIRK_EXI_SPEED;
 	}
 	return file->status == FR_OK ? 0 : EIO;
 }
@@ -375,11 +343,9 @@ s32 deviceHandler_FAT_closeFile(file_handle* file) {
 s32 deviceHandler_FAT_deinit(file_handle* file) {
 	deviceHandler_FAT_closeFile(file);
 	if(file) {
-		int isSDCard = IS_SDCARD(file);
-		int slot = GET_SLOT(file);
 		f_unmount(file->name);
-		free(fs[isSDCard ? slot : SD_COUNT+slot]);
-		fs[isSDCard ? slot : SD_COUNT+slot] = NULL;
+		free(file->device->context);
+		file->device->context = NULL;
 	}
 	return 0;
 }

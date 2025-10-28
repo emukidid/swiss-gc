@@ -22,7 +22,6 @@
 
 int gcloaderHwVersion;
 char *gcloaderVersionStr;
-static FATFS *gcloaderfs = NULL;
 
 file_handle initial_GCLoader = {
 	.name     = "gcldr:/",
@@ -243,13 +242,7 @@ s32 deviceHandler_GCLoader_init(file_handle* file) {
 	if(swissSettings.hasFlippyDrive) flippy_bypass(true);
 	if(!swissSettings.hasDVDDrive) return ENODEV;
 	
-	if(gcloaderfs != NULL) {
-		f_unmount("gcldr:/");
-		free(gcloaderfs);
-		gcloaderfs = NULL;
-	}
-	gcloaderfs = (FATFS*)malloc(sizeof(FATFS));
-	file->status = f_mount(gcloaderfs, "gcldr:/", 1);
+	file->status = fatFs_Mount(file);
 	return file->status == FR_OK ? 0 : EIO;
 }
 
@@ -263,16 +256,6 @@ s32 deviceHandler_GCLoader_closeFile(file_handle* file) {
 		file->status = STATUS_NOT_MAPPED;
 	}
 	return deviceHandler_FAT_closeFile(file);
-}
-
-s32 deviceHandler_GCLoader_deinit(file_handle* file) {
-	deviceHandler_GCLoader_closeFile(file);
-	if(file) {
-		f_unmount(file->name);
-		free(gcloaderfs);
-		gcloaderfs = NULL;
-	}
-	return 0;
 }
 
 bool deviceHandler_GCLoader_test() {
@@ -383,7 +366,7 @@ DEVICEHANDLER_INTERFACE __device_gcloader = {
 	.renameFile = deviceHandler_FAT_renameFile,
 	.hideFile = deviceHandler_FAT_hideFile,
 	.setupFile = deviceHandler_GCLoader_setupFile,
-	.deinit = deviceHandler_GCLoader_deinit,
+	.deinit = deviceHandler_FAT_deinit,
 	.emulated = deviceHandler_GCLoader_emulated,
 	.status = deviceHandler_FAT_status,
 };
