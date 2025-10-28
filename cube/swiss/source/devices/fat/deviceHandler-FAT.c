@@ -9,6 +9,7 @@
 #include <malloc.h>
 #include <ogc/dvd.h>
 #include <ogc/machine/processor.h>
+#include <ogc/mmce.h>
 #include <sdcard/card_cmn.h>
 #include <sdcard/card_io.h>
 #include <sdcard/gcsd.h>
@@ -46,6 +47,24 @@ file_handle initial_SD_C = {
 	.name     = "sdc:/",
 	.fileType = IS_DIR,
 	.device   = &__device_sd_c,
+};
+
+file_handle initial_MCP_A = {
+	.name     = "mcpa:/",
+	.fileType = IS_DIR,
+	.device   = &__device_mcp_a,
+};
+
+file_handle initial_MCP_B = {
+	.name     = "mcpb:/",
+	.fileType = IS_DIR,
+	.device   = &__device_mcp_b,
+};
+
+file_handle initial_MCP_C = {
+	.name     = "mcpc:/",
+	.fileType = IS_DIR,
+	.device   = &__device_mcp_c,
 };
 
 file_handle initial_ATA_A = {
@@ -389,7 +408,6 @@ bool deviceHandler_FAT_test_sd_a() {
 }
 bool deviceHandler_FAT_test_sd_b() {
 	bool ret = sdgecko_isInitialized(1) || (__io_gcsdb.startup(&__io_gcsdb) && __io_gcsdb.shutdown(&__io_gcsdb));
-
 	if (ret) {
 		if (sdgecko_getTransferMode(1) == CARDIO_TRANSFER_DMA)
 			__device_sd_b.hwName = "Semi-Passive SD Card Adapter";
@@ -402,7 +420,6 @@ bool deviceHandler_FAT_test_sd_b() {
 }
 bool deviceHandler_FAT_test_sd_c() {
 	bool ret = sdgecko_isInitialized(2) || (__io_gcsd2.startup(&__io_gcsd2) && __io_gcsd2.shutdown(&__io_gcsd2));
-
 	if (ret) {
 		if (sdgecko_getTransferMode(2) == CARDIO_TRANSFER_DMA)
 			__device_sd_c.hwName = "Semi-Passive SD Card Adapter";
@@ -412,6 +429,39 @@ bool deviceHandler_FAT_test_sd_c() {
 			__device_sd_c.hwName = "ETH2GC Sidecar+";
 	}
 	return ret;
+}
+bool deviceHandler_FAT_test_mcp_a() {
+	int ret;
+	while ((ret = MMCE_ProbeEx(0)) == MMCE_RESULT_BUSY);
+	if (ret == MMCE_RESULT_READY) {
+		u32 id;
+
+		if ((ret = MMCE_GetDeviceID(0, &id)) == MMCE_RESULT_READY && ((u16)id < 0x0101 || (u16)id == 0xFFFF))
+			ret = MMCE_RESULT_WRONGDEVICE;
+	}
+	return ret == MMCE_RESULT_READY;
+}
+bool deviceHandler_FAT_test_mcp_b() {
+	int ret;
+	while ((ret = MMCE_ProbeEx(1)) == MMCE_RESULT_BUSY);
+	if (ret == MMCE_RESULT_READY) {
+		u32 id;
+
+		if ((ret = MMCE_GetDeviceID(1, &id)) == MMCE_RESULT_READY && ((u16)id < 0x0101 || (u16)id == 0xFFFF))
+			ret = MMCE_RESULT_WRONGDEVICE;
+	}
+	return ret == MMCE_RESULT_READY;
+}
+bool deviceHandler_FAT_test_mcp_c() {
+	int ret;
+	while ((ret = MMCE_ProbeEx(2)) == MMCE_RESULT_BUSY);
+	if (ret == MMCE_RESULT_READY) {
+		u32 id;
+
+		if ((ret = MMCE_GetDeviceID(2, &id)) == MMCE_RESULT_READY && ((u16)id < 0x0101 || (u16)id == 0xFFFF))
+			ret = MMCE_RESULT_WRONGDEVICE;
+	}
+	return ret == MMCE_RESULT_READY;
 }
 bool deviceHandler_FAT_test_ata_a() {
 	return ide_exi_inserted(0);
@@ -734,5 +784,83 @@ DEVICEHANDLER_INTERFACE __device_ata_c = {
 	.setupFile = deviceHandler_FAT_setupFile,
 	.deinit = deviceHandler_FAT_deinit,
 	.emulated = deviceHandler_FAT_emulated_sd,
+	.status = deviceHandler_FAT_status,
+};
+
+DEVICEHANDLER_INTERFACE __device_mcp_a = {
+	.deviceUniqueId = DEVICE_ID_M,
+	.hwName = "Active SD Card Adapter",
+	.deviceName = "MMCE - Slot A",
+	.deviceDescription = "Supported File System(s): FAT16, FAT32, exFAT",
+	.deviceTexture = {TEX_SDSMALL, 59, 78, 64, 80},
+	.features = FEAT_READ|FEAT_WRITE|FEAT_BOOT_DEVICE|FEAT_CONFIG_DEVICE|FEAT_AUTOLOAD_DOL|FEAT_THREAD_SAFE,
+	.location = LOC_MEMCARD_SLOT_A,
+	.initial = &initial_MCP_A,
+	.test = deviceHandler_FAT_test_mcp_a,
+	.info = deviceHandler_FAT_info,
+	.init = deviceHandler_FAT_init,
+	.makeDir = deviceHandler_FAT_makeDir,
+	.readDir = deviceHandler_FAT_readDir,
+	.statFile = deviceHandler_FAT_statFile,
+	.seekFile = deviceHandler_FAT_seekFile,
+	.readFile = deviceHandler_FAT_readFile,
+	.writeFile = deviceHandler_FAT_writeFile,
+	.closeFile = deviceHandler_FAT_closeFile,
+	.deleteFile = deviceHandler_FAT_deleteFile,
+	.renameFile = deviceHandler_FAT_renameFile,
+	.hideFile = deviceHandler_FAT_hideFile,
+	.deinit = deviceHandler_FAT_deinit,
+	.status = deviceHandler_FAT_status,
+};
+
+DEVICEHANDLER_INTERFACE __device_mcp_b = {
+	.deviceUniqueId = DEVICE_ID_N,
+	.hwName = "Active SD Card Adapter",
+	.deviceName = "MMCE - Slot B",
+	.deviceDescription = "Supported File System(s): FAT16, FAT32, exFAT",
+	.deviceTexture = {TEX_SDSMALL, 59, 78, 64, 80},
+	.features = FEAT_READ|FEAT_WRITE|FEAT_BOOT_DEVICE|FEAT_CONFIG_DEVICE|FEAT_AUTOLOAD_DOL|FEAT_THREAD_SAFE,
+	.location = LOC_MEMCARD_SLOT_B,
+	.initial = &initial_MCP_B,
+	.test = deviceHandler_FAT_test_mcp_b,
+	.info = deviceHandler_FAT_info,
+	.init = deviceHandler_FAT_init,
+	.makeDir = deviceHandler_FAT_makeDir,
+	.readDir = deviceHandler_FAT_readDir,
+	.statFile = deviceHandler_FAT_statFile,
+	.seekFile = deviceHandler_FAT_seekFile,
+	.readFile = deviceHandler_FAT_readFile,
+	.writeFile = deviceHandler_FAT_writeFile,
+	.closeFile = deviceHandler_FAT_closeFile,
+	.deleteFile = deviceHandler_FAT_deleteFile,
+	.renameFile = deviceHandler_FAT_renameFile,
+	.hideFile = deviceHandler_FAT_hideFile,
+	.deinit = deviceHandler_FAT_deinit,
+	.status = deviceHandler_FAT_status,
+};
+
+DEVICEHANDLER_INTERFACE __device_mcp_c = {
+	.deviceUniqueId = DEVICE_ID_O,
+	.hwName = "Active SD Card Adapter",
+	.deviceName = "MMCE - Serial Port 2",
+	.deviceDescription = "Supported File System(s): FAT16, FAT32, exFAT",
+	.deviceTexture = {TEX_SDSMALL, 59, 78, 64, 80},
+	.features = FEAT_READ|FEAT_WRITE|FEAT_BOOT_DEVICE|FEAT_CONFIG_DEVICE|FEAT_AUTOLOAD_DOL|FEAT_THREAD_SAFE,
+	.location = LOC_SERIAL_PORT_2,
+	.initial = &initial_MCP_C,
+	.test = deviceHandler_FAT_test_mcp_c,
+	.info = deviceHandler_FAT_info,
+	.init = deviceHandler_FAT_init,
+	.makeDir = deviceHandler_FAT_makeDir,
+	.readDir = deviceHandler_FAT_readDir,
+	.statFile = deviceHandler_FAT_statFile,
+	.seekFile = deviceHandler_FAT_seekFile,
+	.readFile = deviceHandler_FAT_readFile,
+	.writeFile = deviceHandler_FAT_writeFile,
+	.closeFile = deviceHandler_FAT_closeFile,
+	.deleteFile = deviceHandler_FAT_deleteFile,
+	.renameFile = deviceHandler_FAT_renameFile,
+	.hideFile = deviceHandler_FAT_hideFile,
+	.deinit = deviceHandler_FAT_deinit,
 	.status = deviceHandler_FAT_status,
 };

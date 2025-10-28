@@ -209,9 +209,12 @@ int main(int argc, char *argv[])
 	allDevices[i++] = &__device_wode;
 	allDevices[i++] = &__device_gcloader;
 	allDevices[i++] = &__device_ata_c;
+	allDevices[i++] = &__device_mcp_c;
 	allDevices[i++] = &__device_sd_c;
 	allDevices[i++] = &__device_sd_a;
 	allDevices[i++] = &__device_sd_b;
+	allDevices[i++] = &__device_mcp_a;
+	allDevices[i++] = &__device_mcp_b;
 	allDevices[i++] = &__device_dvd;
 	allDevices[i++] = &__device_card_a;
 	allDevices[i++] = &__device_card_b;

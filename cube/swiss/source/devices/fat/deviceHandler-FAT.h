@@ -12,6 +12,9 @@
 extern DEVICEHANDLER_INTERFACE __device_sd_a;
 extern DEVICEHANDLER_INTERFACE __device_sd_b;
 extern DEVICEHANDLER_INTERFACE __device_sd_c;
+extern DEVICEHANDLER_INTERFACE __device_mcp_a;
+extern DEVICEHANDLER_INTERFACE __device_mcp_b;
+extern DEVICEHANDLER_INTERFACE __device_mcp_c;
 extern DEVICEHANDLER_INTERFACE __device_ata_a;
 extern DEVICEHANDLER_INTERFACE __device_ata_b;
 extern DEVICEHANDLER_INTERFACE __device_ata_c;

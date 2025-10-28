@@ -30,12 +30,15 @@ typedef enum {
 	DEV_SDA = 0,
 	DEV_SDB,
 	DEV_SDC,
+	DEV_MCPA,
+	DEV_MCPB,
+	DEV_MCPC,
 	DEV_ATAA,
 	DEV_ATAB,
 	DEV_ATAC,
 	DEV_WKF,
 	DEV_GCLDR,
-	DEV_ARAM,
+	DEV_RAM,
 	DEV_MAX
 } DeviceNumber;
 
