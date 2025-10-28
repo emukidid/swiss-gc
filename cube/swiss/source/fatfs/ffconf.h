@@ -180,7 +180,7 @@
 /---------------------------------------------------------------------------*/
 
 #define FF_VOLUMES		9
-/* Number of volumes (logical drives) to be used. (1-10) */
+/* Number of volumes (logical drives) to be used. (1-256) */
 
 
 #define FF_STR_VOLUME_ID	1

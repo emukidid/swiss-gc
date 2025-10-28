@@ -460,7 +460,7 @@ typedef struct {	/* Open object identifier with status */
 /* File/Volume controls           */
 /*--------------------------------*/
 
-#if FF_VOLUMES < 1 || FF_VOLUMES > 10
+#if FF_VOLUMES < 1 || FF_VOLUMES > 256
 #error Wrong FF_VOLUMES setting
 #endif
 static FATFS *FatFs[FF_VOLUMES];	/* Pointer to the filesystem objects (logical drives) */
@@ -3254,21 +3254,20 @@ static int get_ldnumber (	/* Returns logical drive number (-1:invalid drive numb
 
 	if (chr == ':') {	/* Is there a DOS/Windows style volume ID? */
 		i = FF_VOLUMES;
+#if FF_STR_VOLUME_ID == 0
 		if (IsDigit(*tp) && tp + 2 == tt) {	/* Is it a numeric volume ID + colon? */
 			i = (int)*tp - '0';	/* Get the logical drive number */
 		}
-#if FF_STR_VOLUME_ID == 1	/* Arbitrary string volume ID is enabled */
-		else {
-			i = 0;	/* Find volume ID string in the preconfigured table */
-			do {
-				vsp = VolumeStr[i]; tp = *path;	/* Preconfigured string and path name to test */
-				do {	/* Compare the volume ID with path name in case-insensitive */
-					vchr = *vsp++; chr = *tp++;
-					if (IsLower(vchr)) vchr -= 0x20;
-					if (IsLower(chr)) chr -= 0x20;
-				} while (vchr && (TCHAR)vchr == chr);
-			} while ((vchr || tp != tt) && ++i < FF_VOLUMES);	/* Repeat for each id until pattern match */
-		}
+#elif FF_STR_VOLUME_ID == 1	/* Arbitrary string volume ID is enabled */
+		i = 0;	/* Find volume ID string in the preconfigured table */
+		do {
+			vsp = VolumeStr[i]; tp = *path;	/* Preconfigured string and path name to test */
+			do {	/* Compare the volume ID with path name in case-insensitive */
+				vchr = *vsp++; chr = *tp++;
+				if (IsLower(vchr)) vchr -= 0x20;
+				if (IsLower(chr)) chr -= 0x20;
+			} while (vchr && (TCHAR)vchr == chr);
+		} while ((vchr || tp != tt) && ++i < FF_VOLUMES);	/* Repeat for each id until pattern match */
 #endif
 		if (i >= FF_VOLUMES) return -1;	/* Not found or invalid volume ID */
 		*path = tt;		/* Snip the drive prefix off */
