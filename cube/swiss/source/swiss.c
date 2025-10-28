@@ -2173,7 +2173,7 @@ void load_game() {
 				break;
 			}
 		}
-		if(swissSettings.bs2Boot) {
+		if(swissSettings.bs2Boot || (devices[DEVICE_CUR]->emulated() & EMU_MEMCARD)) {
 			fileToPatch = &filesToPatch[numToPatch++];
 			strcpy(fileToPatch->name, "BS2.img");
 			fileToPatch->type = PATCH_BS2;
