@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2019-2024, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2019-2025, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -69,8 +69,8 @@ static struct {
 	OSAlarm alarm[EXI_CHANNEL_MAX];
 } exi = {
 	.reg = {
-		{ .cpr = 0b11100000000000 },
-		{ .cpr = 0b01100000000000 }
+		{ .cpr = 0b11000000000000 },
+		{ .cpr = 0b01000000000000 }
 	}
 };
 

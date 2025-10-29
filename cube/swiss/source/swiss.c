@@ -1042,6 +1042,11 @@ void load_app(ExecutableFile *fileToPatch)
 	*(vu32*)(VAR_AREA+0x00F8) = SYS_GetBusFrequency();
 	*(vu32*)(VAR_AREA+0x00FC) = SYS_GetCoreFrequency();
 	
+	if(devices[DEVICE_CUR]->emulated() & EMU_MEMCARD) {
+		*(vu32*)(VAR_AREA+0x30C0) = 
+		*(vu32*)(VAR_AREA+0x30C4) = ticks_to_millisecs(gettime()) / 100 + 1;
+	}
+	
 	// Copy the game header to 0x80000000
 	memcpy(VAR_AREA,(void*)&GCMDisk,0x20);
 	
