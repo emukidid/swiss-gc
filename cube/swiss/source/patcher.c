@@ -61,6 +61,8 @@ void *installPatch(int patchId) {
 			patch = CallAlarmHandler_bin; patchSize = CallAlarmHandler_bin_size; break;
 		case OS_RESERVED:
 			patchSize = 0x1800; break;
+		case OS_SETARENAHIHOOK:
+			patch = OSSetArenaHiHook; patchSize = OSSetArenaHiHook_size; break;
 		case PAD_CHECKSTATUS:
 			patch = CheckStatus_bin; patchSize = CheckStatus_bin_size; break;
 		case PAD_CHECKSTATUS_GCDIGITAL:
@@ -5401,6 +5403,26 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		}
 	}
 	
+	if ((i = OSSetArenaHiSig.offsetFoundAt)) {
+		u32 *OSSetArenaHi = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+		u32 *OSSetArenaHiHook;
+		u32 __OSArenaHi;
+		
+		if (OSSetArenaHi) {
+			OSSetArenaHiHook = getPatchAddr(OS_SETARENAHIHOOK);
+			
+			if (get_immediate(data, i, 13, &__OSArenaHi))
+				data[i + 0] = 0x388D0000 | ((__OSArenaHi - _SDA_BASE_) & 0xFFFF);
+			else
+				data[i + 0] = 0x38800000;	// li		r4, 0
+			
+			data[i + 1] = branch(OSSetArenaHiHook, OSSetArenaHi + 1);
+			
+			print_debug("Found:[%s] @ %08X\n", OSSetArenaHiSig.Name, OSSetArenaHi);
+			patched++;
+		}
+	}
+	
 	for (j = 0; j < sizeof(OSLoadContextSigs) / sizeof(FuncPattern); j++)
 	if ((i = OSLoadContextSigs[j].offsetFoundAt)) {
 		u32 *OSLoadContext = Calc_ProperAddress(data, dataType, i * sizeof(u32));
@@ -5421,7 +5443,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 			if ((k = SystemCallVectorSig.offsetFoundAt))
 				data[k + 3] = (u32)OSDisableInterrupts;
 			
-			print_debug("Found:[%s$%i] @ %08X\n", OSDisableInterruptsSig.Name, j, OSDisableInterrupts);
+			print_debug("Found:[%s] @ %08X\n", OSDisableInterruptsSig.Name, OSDisableInterrupts);
 			patched++;
 		}
 	}
@@ -5670,13 +5692,13 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 						get_immediate(data, OSSetArenaLoSig.offsetFoundAt, 13, &__OSArenaLo))
 						data[i + 20] = 0x386D0000 | ((__OSArenaLo - _SDA_BASE_) & 0xFFFF);
 					else
-						data[i + 20] = 0x38600000;
+						data[i + 20] = 0x38600000;	// li		r3, 0
 					
 					if (get_immediate(data, OSGetArenaHiSigs[0].offsetFoundAt, 13, &__OSArenaHi) ||
 						get_immediate(data, OSSetArenaHiSig.offsetFoundAt, 13, &__OSArenaHi))
 						data[i + 21] = 0x388D0000 | ((__OSArenaHi - _SDA_BASE_) & 0xFFFF);
 					else
-						data[i + 21] = 0x38800000;
+						data[i + 21] = 0x38800000;	// li		r4, 0
 					
 					data[i + 22] = branchAndLink(INIT, __OSInitSystemCall + 22);
 					break;
@@ -5691,13 +5713,13 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 						get_immediate(data, OSSetArenaLoSig.offsetFoundAt, 13, &__OSArenaLo))
 						data[i + 17] = 0x386D0000 | ((__OSArenaLo - _SDA_BASE_) & 0xFFFF);
 					else
-						data[i + 17] = 0x38600000;
+						data[i + 17] = 0x38600000;	// li		r3, 0
 					
 					if (get_immediate(data, OSGetArenaHiSigs[1].offsetFoundAt, 13, &__OSArenaHi) ||
 						get_immediate(data, OSSetArenaHiSig.offsetFoundAt, 13, &__OSArenaHi))
 						data[i + 18] = 0x388D0000 | ((__OSArenaHi - _SDA_BASE_) & 0xFFFF);
 					else
-						data[i + 18] = 0x38800000;
+						data[i + 18] = 0x38800000;	// li		r4, 0
 					
 					data[i + 19] = branchAndLink(INIT, __OSInitSystemCall + 19);
 					break;
@@ -5715,13 +5737,13 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 						get_immediate(data, OSSetArenaLoSig.offsetFoundAt, 13, &__OSArenaLo))
 						data[i + 17] = 0x386D0000 | ((__OSArenaLo - _SDA_BASE_) & 0xFFFF);
 					else
-						data[i + 17] = 0x38600000;
+						data[i + 17] = 0x38600000;	// li		r3, 0
 					
 					if (get_immediate(data, OSGetArenaHiSigs[2].offsetFoundAt, 13, &__OSArenaHi) ||
 						get_immediate(data, OSSetArenaHiSig.offsetFoundAt, 13, &__OSArenaHi))
 						data[i + 18] = 0x388D0000 | ((__OSArenaHi - _SDA_BASE_) & 0xFFFF);
 					else
-						data[i + 18] = 0x38800000;
+						data[i + 18] = 0x38800000;	// li		r4, 0
 					
 					data[i + 19] = branchAndLink(INIT, __OSInitSystemCall + 19);
 					break;

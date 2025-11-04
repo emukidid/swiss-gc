@@ -149,6 +149,8 @@ extern u32 MTXOrthoHook_size;
 extern u8 MTXPerspectiveHook[];
 extern u32 MTXPerspectiveHook_size;
 #include "CallAlarmHandler_bin.h"
+extern u8 OSSetArenaHiHook[];
+extern u32 OSSetArenaHiHook_size;
 #include "CheckStatus_bin.h"
 #include "CheckStatusGCDigital_bin.h"
 extern u8 getTimingPatch[];
@@ -214,6 +216,7 @@ enum patchIds {
 	MTX_PERSPECTIVEHOOK,
 	OS_CALLALARMHANDLER,
 	OS_RESERVED,
+	OS_SETARENAHIHOOK,
 	PAD_CHECKSTATUS,
 	PAD_CHECKSTATUS_GCDIGITAL,
 	VI_CONFIGURE240P,
