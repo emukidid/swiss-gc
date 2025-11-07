@@ -81,7 +81,8 @@ void gameID_early_set(const DiskHeader *header)
 			continue;
 		while ((ret = MMCE_ProbeEx(chan)) == MMCE_RESULT_BUSY);
 		if (ret < 0) continue;
-		ret = MMCE_GetDeviceID(chan, &id);
+		if ((ret = MMCE_GetDeviceID(chan, &id)) == MMCE_RESULT_VERSION)
+			ret = MMCE_RESULT_READY;
 		if (ret < 0) continue;
 		ret = MMCE_SetDiskID(chan, (dvddiskid *)header);
 		if (ret < 0) continue;

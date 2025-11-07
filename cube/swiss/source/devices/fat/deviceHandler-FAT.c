@@ -436,8 +436,8 @@ bool deviceHandler_FAT_test_mcp_a() {
 	if (ret == MMCE_RESULT_READY) {
 		u32 id;
 
-		if ((ret = MMCE_GetDeviceID(0, &id)) == MMCE_RESULT_READY && ((id << 16) == EXI_MEMCARDPRO || (u16)id < 0x0101 || (u16)id == 0xFFFF))
-			ret = MMCE_RESULT_WRONGDEVICE;
+		if ((ret = MMCE_GetDeviceID(0, &id)) == MMCE_RESULT_READY && (u16)id < 0x0101)
+			ret = MMCE_RESULT_VERSION;
 	}
 	return ret == MMCE_RESULT_READY;
 }
@@ -447,8 +447,8 @@ bool deviceHandler_FAT_test_mcp_b() {
 	if (ret == MMCE_RESULT_READY) {
 		u32 id;
 
-		if ((ret = MMCE_GetDeviceID(1, &id)) == MMCE_RESULT_READY && ((id << 16) == EXI_MEMCARDPRO || (u16)id < 0x0101 || (u16)id == 0xFFFF))
-			ret = MMCE_RESULT_WRONGDEVICE;
+		if ((ret = MMCE_GetDeviceID(1, &id)) == MMCE_RESULT_READY && (u16)id < 0x0101)
+			ret = MMCE_RESULT_VERSION;
 	}
 	return ret == MMCE_RESULT_READY;
 }
@@ -458,8 +458,8 @@ bool deviceHandler_FAT_test_mcp_c() {
 	if (ret == MMCE_RESULT_READY) {
 		u32 id;
 
-		if ((ret = MMCE_GetDeviceID(2, &id)) == MMCE_RESULT_READY && ((id << 16) == EXI_MEMCARDPRO || (u16)id < 0x0101 || (u16)id == 0xFFFF))
-			ret = MMCE_RESULT_WRONGDEVICE;
+		if ((ret = MMCE_GetDeviceID(2, &id)) == MMCE_RESULT_READY && (u16)id < 0x0101)
+			ret = MMCE_RESULT_VERSION;
 	}
 	return ret == MMCE_RESULT_READY;
 }

@@ -28,6 +28,7 @@ Swiss aims to be an all-in-one homebrew utility for the Nintendo GameCube.
 - [GC Loader](https://www.gc-forever.com/wiki/index.php?title=GCLoader) or CUBEODE
 - [FlippyDrive](https://www.gc-forever.com/wiki/index.php?title=FlippyDrive)
 - [KunaiGC](https://github.com/KunaiGC/KunaiGC) flash memory
+- [FlipperMCE](https://flippermce.github.io/) or GCMCE
 
 **Can emulate the following devices**
 - Processor Interface

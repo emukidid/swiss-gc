@@ -527,7 +527,10 @@ bool deviceHandler_CARD_test_a() {
 	if (ret == CARD_ERROR_READY) {
 		u32 id;
 
-		if (MMCE_GetDeviceID(CARD_SLOTA, &id) == MMCE_RESULT_READY)
+		ret = MMCE_GetDeviceID(CARD_SLOTA, &id);
+
+		if ((ret == MMCE_RESULT_VERSION && (id << 16) == EXI_MEMCARDPRO) ||
+			ret == MMCE_RESULT_READY)
 			__device_card_a.hwName = "MemCard PRO GC";
 		else
 			__device_card_a.hwName = "Memory Card";
@@ -541,7 +544,10 @@ bool deviceHandler_CARD_test_b() {
 	if (ret == CARD_ERROR_READY) {
 		u32 id;
 
-		if (MMCE_GetDeviceID(CARD_SLOTB, &id) == MMCE_RESULT_READY)
+		ret = MMCE_GetDeviceID(CARD_SLOTB, &id);
+
+		if ((ret == MMCE_RESULT_VERSION && (id << 16) == EXI_MEMCARDPRO) ||
+			ret == MMCE_RESULT_READY)
 			__device_card_b.hwName = "MemCard PRO GC";
 		else
 			__device_card_b.hwName = "Memory Card";
