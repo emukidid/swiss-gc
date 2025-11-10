@@ -144,6 +144,8 @@ void ARAMRunStub(void)
 	char *p;
 	char *s = (char *) ARAMStub;
 
+	install_code(1);	// Must happen here because libOGC likes to write over all exception handlers.
+
 	/*** Round length to 32 bytes ***/
 	if (_len & 0x1f) _len = (_len & ~0x1f) + 0x20;
 
@@ -173,11 +175,11 @@ void ARAMRun(u32 entrypoint, u32 dst, u32 src, u32 len)
 	_dst = dst | 0x80000000;
 	_src = src;
 	_len = len;
-	
+
 	/*** Shutdown libOGC ***/
 	DrawShutdown();
-	SYS_ResetSystem(SYS_SHUTDOWN, 0, 0);
-	install_code(1);	// Must happen here because libOGC likes to write over all exception handlers.
+	SYS_ResetSystem(SYS_SHUTDOWN, 0, FALSE);
+
 	/*** Shutdown all threads and exit to this method ***/
 	__lwp_thread_stopmultitasking(ARAMRunStub);
 }

@@ -170,11 +170,27 @@ int install_code(int final)
 	void *patchLocation = NULL;
 	const void *patch = NULL; u32 patchSize = 0;
 	
-	// Reload Stub
-	if (!top_addr) {
-		u32 size = SYS_GetPhysicalMemSize();
-		*(u32 *)0x80000034 = (u32)MEM_PHYSICAL_TO_K0(size);
-		*(u32 *)0x800000F0 = size;
+	if (final) {
+		if (!top_addr) {
+			u32 size = SYS_GetPhysicalMemSize();
+			*(u32 *)0x80000034 = (u32)MEM_PHYSICAL_TO_K0(size);
+			*(u32 *)0x800000F0 = size;
+		} else {
+			for (u32 i = 0x100; i <= 0x900; i += 0x100) {
+				if (i == 0x300) {
+					((u32 *)&VAR_AREA[i])[0] = 0x48000002 | ((u32)DSI_EXCEPTION_VECTOR & 0x03FFFFFC);
+					((u32 *)&VAR_AREA[i])[1] = 0x4C000064;
+				} else
+					*(u32 *)&VAR_AREA[i] = 0x4C000064;
+			}
+			memcpy((void *)0x80000000, VAR_AREA, sizeof(VAR_AREA));
+			DCFlushRangeNoSync((void *)0x80000000, sizeof(VAR_AREA));
+			ICInvalidateRange((void *)0x80000000, sizeof(VAR_AREA));
+			_sync();
+			if (top_addr != 0x81800000)
+				mtspr(DABR, 0x800000E8 | 0b110);
+			mtspr(EAR, 0x8000000C);
+		}
 		return 1;
 	}
 	// IDE-EXI
@@ -467,32 +483,15 @@ int install_code(int final)
 		}
 		print_debug("Installing Patch for FlippyDrive\n");
 	}
-	if (!final) {
-		print_debug("Space for patch remaining: %i\n", top_addr - LO_RESERVE);
-		print_debug("Space taken by vars/video patches: %i\n", HI_RESERVE - top_addr);
-		if (top_addr < LO_RESERVE + patchSize ||
-			top_addr < 0x80001800)
-			return 0;
-		patchLocation = Calc_Address(NULL, PATCH_OTHER, LO_RESERVE);
-		memcpy(patchLocation, patch, patchSize);
-		DCFlushRange(patchLocation, patchSize);
-		ICInvalidateRange(patchLocation, patchSize);
-	} else {
-		for (u32 i = 0x100; i <= 0x900; i += 0x100) {
-			if (i == 0x300) {
-				((u32 *)&VAR_AREA[i])[0] = 0x48000002 | ((u32)DSI_EXCEPTION_VECTOR & 0x03FFFFFC);
-				((u32 *)&VAR_AREA[i])[1] = 0x4C000064;
-			} else
-				*(u32 *)&VAR_AREA[i] = 0x4C000064;
-		}
-		memcpy((void *)0x80000000, VAR_AREA, sizeof(VAR_AREA));
-		DCFlushRangeNoSync((void *)0x80000000, sizeof(VAR_AREA));
-		ICInvalidateRange((void *)0x80000000, sizeof(VAR_AREA));
-		_sync();
-		if (top_addr != 0x81800000)
-			mtspr(DABR, 0x800000E8 | 0b110);
-		mtspr(EAR, 0x8000000C);
-	}
+	print_debug("Space for patch remaining: %i\n", top_addr - LO_RESERVE);
+	print_debug("Space taken by vars/video patches: %i\n", HI_RESERVE - top_addr);
+	if (top_addr < LO_RESERVE + patchSize ||
+		top_addr < 0x80001800)
+		return 0;
+	patchLocation = Calc_Address(NULL, PATCH_OTHER, LO_RESERVE);
+	memcpy(patchLocation, patch, patchSize);
+	DCFlushRange(patchLocation, patchSize);
+	ICInvalidateRange(patchLocation, patchSize);
 	return 1;
 }
 
