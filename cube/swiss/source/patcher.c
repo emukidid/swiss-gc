@@ -1056,7 +1056,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		{ 67, 13, 4, 21, 6, 9, NULL, 0, "ClearArena" },
 		{ 74, 17, 7, 21, 6, 9, NULL, 0, "ClearArena" }
 	};
-	FuncPattern OSInitSigs[30] = {
+	FuncPattern OSInitSigs[31] = {
 		{ 200,  79, 12, 34, 22,  9, NULL, 0, "OSInitD" },
 		{ 201,  79, 12, 35, 22,  9, NULL, 0, "OSInitD" },
 		{ 202,  79, 12, 36, 22,  9, NULL, 0, "OSInitD" },
@@ -1082,6 +1082,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 		{ 212,  75, 19, 37, 26,  8, NULL, 0, "OSInit" },
 		{ 230,  80, 20, 42, 25,  8, NULL, 0, "OSInit" },
 		{ 238,  84, 20, 42, 27,  8, NULL, 0, "OSInit" },
+		{ 220,  72, 17, 42, 27,  8, NULL, 0, "OSInit" },
 		{ 222,  74, 17, 43, 27,  8, NULL, 0, "OSInit" },
 		{ 277,  90, 20, 63, 30, 15, NULL, 0, "OSInit" },	// SN Systems ProDG
 		{ 246,  83, 17, 50, 32, 10, NULL, 0, "OSInit" },
@@ -2331,11 +2332,27 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i +  91, length, &__OSSetInterruptHandlerSigs[1]) &&
 							findx_pattern(data, dataType, i + 176, length, &OSGetArenaHiSigs[1]) &&
 							findx_pattern(data, dataType, i + 178, length, &OSGetArenaLoSigs[1]) &&
+							findx_pattern(data, dataType, i + 191, length, &ClearArenaSigs[4]) &&
+							findx_pattern(data, dataType, i + 192, length, &OSEnableInterruptsSig))
+							OSInitSigs[j].offsetFoundAt = i;
+						break;
+					case 26:
+						if (findx_pattern(data, dataType, i +  15, length, &__OSGetSystemTimeSigs[1]) &&
+							findx_pattern(data, dataType, i +  18, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i +  59, length, &OSSetArenaLoSig) &&
+							findx_pattern(data, dataType, i +  74, length, &OSSetArenaLoSig) &&
+							findx_pattern(data, dataType, i +  82, length, &OSSetArenaHiSig) &&
+							findx_pattern(data, dataType, i +  83, length, &OSExceptionInitSigs[2]) &&
+							findx_pattern(data, dataType, i +  84, length, &__OSInitSystemCallSigs[1]) &&
+							findx_pattern(data, dataType, i +  87, length, &__OSInterruptInitSigs[1]) &&
+							findx_pattern(data, dataType, i +  91, length, &__OSSetInterruptHandlerSigs[1]) &&
+							findx_pattern(data, dataType, i + 176, length, &OSGetArenaHiSigs[1]) &&
+							findx_pattern(data, dataType, i + 178, length, &OSGetArenaLoSigs[1]) &&
 							findx_pattern(data, dataType, i + 193, length, &ClearArenaSigs[4]) &&
 							findx_pattern(data, dataType, i + 194, length, &OSEnableInterruptsSig))
 							OSInitSigs[j].offsetFoundAt = i;
 						break;
-					case 26:
+					case 27:
 						if (findx_pattern(data, dataType, i +  12, length, &__OSGetSystemTimeSigs[2]) &&
 							findx_pattern(data, dataType, i +  15, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i +  52, length, &OSSetArenaLoSig) &&
@@ -2366,7 +2383,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 247, length, &OSEnableInterruptsSig))
 							OSInitSigs[j].offsetFoundAt = i;
 						break;
-					case 27:
+					case 28:
 						if (findx_pattern(data, dataType, i +  15, length, &__OSGetSystemTimeSigs[1]) &&
 							findx_pattern(data, dataType, i +  18, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i +  71, length, &OSSetArenaLoSig) &&
@@ -2382,7 +2399,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 218, length, &OSEnableInterruptsSig))
 							OSInitSigs[j].offsetFoundAt = i;
 						break;
-					case 28:
+					case 29:
 						if (findx_pattern(data, dataType, i +  12, length, &__OSGetSystemTimeSigs[2]) &&
 							findx_pattern(data, dataType, i +  15, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i +  64, length, &OSSetArenaLoSig) &&
@@ -2413,7 +2430,7 @@ int Patch_Hypervisor(u32 *data, u32 length, int dataType)
 							findx_pattern(data, dataType, i + 272, length, &OSEnableInterruptsSig))
 							OSInitSigs[j].offsetFoundAt = i;
 						break;
-					case 29:
+					case 30:
 						if (findx_pattern(data, dataType, i +  15, length, &__OSGetSystemTimeSigs[1]) &&
 							findx_pattern(data, dataType, i +  18, length, &OSDisableInterruptsSig) &&
 							findx_pattern(data, dataType, i +  73, length, &OSSetArenaLoSig) &&
