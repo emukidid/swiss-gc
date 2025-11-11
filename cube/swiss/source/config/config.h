@@ -7,6 +7,7 @@ typedef struct {
 	char comment[128 + 1];
 	char status[32 + 1];
 	char region;
+	int gameLanguage;
 	int gameVMode;
 	int forceHScale;
 	short forceVOffset;

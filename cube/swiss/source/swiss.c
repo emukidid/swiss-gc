@@ -2400,7 +2400,7 @@ int check_game(file_handle *file, file_handle *file2, ExecutableFile *filesToPat
 		}
 		else if(!strncmp(gameID, "GHAP08", 6)) {
 			switch(swissSettings.sramLanguage) {
-				case SYS_LANG_ENGLISH:
+				default:
 					parse_gcm_add(file, filesToPatch, &numToPatch, "claire.rel");
 					parse_gcm_add(file, filesToPatch, &numToPatch, "leon.rel");
 					break;
@@ -2420,7 +2420,7 @@ int check_game(file_handle *file, file_handle *file2, ExecutableFile *filesToPat
 					parse_gcm_add(file, filesToPatch, &numToPatch, "claire_i.rel");
 					parse_gcm_add(file, filesToPatch, &numToPatch, "leon_i.rel");
 					break;
-				default:
+				case SYS_LANG_DUTCH:
 					parse_gcm_add(file, filesToPatch, &numToPatch, "claire.rel");
 					parse_gcm_add(file, filesToPatch, &numToPatch, "claire_f.rel");
 					parse_gcm_add(file, filesToPatch, &numToPatch, "claire_g.rel");
@@ -2436,7 +2436,7 @@ int check_game(file_handle *file, file_handle *file2, ExecutableFile *filesToPat
 		}
 		else if(!strncmp(gameID, "GLEP08", 6)) {
 			switch(swissSettings.sramLanguage) {
-				case SYS_LANG_ENGLISH:
+				default:
 					parse_gcm_add(file, filesToPatch, &numToPatch, "eng.rel");
 					break;
 				case SYS_LANG_GERMAN:
@@ -2451,7 +2451,7 @@ int check_game(file_handle *file, file_handle *file2, ExecutableFile *filesToPat
 				case SYS_LANG_ITALIAN:
 					parse_gcm_add(file, filesToPatch, &numToPatch, "ita.rel");
 					break;
-				default:
+				case SYS_LANG_DUTCH:
 					parse_gcm_add(file, filesToPatch, &numToPatch, "eng.rel");
 					parse_gcm_add(file, filesToPatch, &numToPatch, "fra.rel");
 					parse_gcm_add(file, filesToPatch, &numToPatch, "ger.rel");

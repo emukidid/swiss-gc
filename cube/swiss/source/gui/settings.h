@@ -126,7 +126,8 @@ enum SETTINGS_GAME_DEFAULTS {
 #define PAGE_GAME_DEFAULTS_MAX (SET_PAGE_4_CANCEL)
 
 enum SETTINGS_GAME {
-	SET_FORCE_VIDEOMODE=0,
+	SET_GAME_LANG=0,
+	SET_FORCE_VIDEOMODE,
 	SET_HORIZ_SCALE,
 	SET_VERT_OFFSET,
 	SET_VERT_FILTER,
@@ -175,8 +176,8 @@ extern char *aveCompatStr[];
 extern char *fileBrowserStr[];
 extern char *bs2BootStr[];
 extern char *recentListLevelStr[];
-#define SRAM_LANG_MAX 8
-extern char *sramLang[];
+#define SRAM_LANGUAGE_MAX 8
+extern char *sramLanguageStr[];
 int show_settings(int page, int option, ConfigEntry *config);
 
 #endif

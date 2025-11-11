@@ -11517,24 +11517,27 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				// Force text encoding.
 				*(u32 *)(data + 0x8130B3E4 - 0x81300000 + 0x20) = 0x38600000 | ((swissSettings.fontEncode << 1) & 2);
 				
-				// Force English language, the hard way.
-				*(s16 *)(data + 0x8130B40A - 0x81300000 + 0x20) = 10;
-				*(s16 *)(data + 0x8130B412 - 0x81300000 + 0x20) = 38;
-				*(s16 *)(data + 0x8130B416 - 0x81300000 + 0x20) = 39;
-				*(s16 *)(data + 0x8130B422 - 0x81300000 + 0x20) = 15;
-				*(s16 *)(data + 0x8130B42E - 0x81300000 + 0x20) = 7;
-				*(s16 *)(data + 0x8130B43A - 0x81300000 + 0x20) = 1;
-				*(s16 *)(data + 0x8130B446 - 0x81300000 + 0x20) = 4;
-				*(s16 *)(data + 0x8130B44E - 0x81300000 + 0x20) = 45;
-				*(s16 *)(data + 0x8130B452 - 0x81300000 + 0x20) = 46;
-				*(s16 *)(data + 0x8130B45A - 0x81300000 + 0x20) = 42;
-				*(s16 *)(data + 0x8130B45E - 0x81300000 + 0x20) = 40;
-				*(s16 *)(data + 0x8130B466 - 0x81300000 + 0x20) = 43;
-				*(s16 *)(data + 0x8130B476 - 0x81300000 + 0x20) = 31;
-				*(s16 *)(data + 0x8130B47E - 0x81300000 + 0x20) = 29;
-				*(s16 *)(data + 0x8130B482 - 0x81300000 + 0x20) = 30;
-				*(s16 *)(data + 0x8130B48E - 0x81300000 + 0x20) = 80;
+				*(u32 *)(data + 0x8130B3F8 - 0x81300000 + 0x20) = 0x38000000 | ((swissSettings.fontEncode << 1) & 2);
 				
+				if (swissSettings.sramLanguage != SYS_LANG_JAPANESE) {
+					// Force English language, the hard way.
+					*(s16 *)(data + 0x8130B40A - 0x81300000 + 0x20) = 10;
+					*(s16 *)(data + 0x8130B412 - 0x81300000 + 0x20) = 38;
+					*(s16 *)(data + 0x8130B416 - 0x81300000 + 0x20) = 39;
+					*(s16 *)(data + 0x8130B422 - 0x81300000 + 0x20) = 15;
+					*(s16 *)(data + 0x8130B42E - 0x81300000 + 0x20) = 7;
+					*(s16 *)(data + 0x8130B43A - 0x81300000 + 0x20) = 1;
+					*(s16 *)(data + 0x8130B446 - 0x81300000 + 0x20) = 4;
+					*(s16 *)(data + 0x8130B44E - 0x81300000 + 0x20) = 45;
+					*(s16 *)(data + 0x8130B452 - 0x81300000 + 0x20) = 46;
+					*(s16 *)(data + 0x8130B45A - 0x81300000 + 0x20) = 42;
+					*(s16 *)(data + 0x8130B45E - 0x81300000 + 0x20) = 40;
+					*(s16 *)(data + 0x8130B466 - 0x81300000 + 0x20) = 43;
+					*(s16 *)(data + 0x8130B476 - 0x81300000 + 0x20) = 31;
+					*(s16 *)(data + 0x8130B47E - 0x81300000 + 0x20) = 29;
+					*(s16 *)(data + 0x8130B482 - 0x81300000 + 0x20) = 30;
+					*(s16 *)(data + 0x8130B48E - 0x81300000 + 0x20) = 80;
+				}
 				if (getTVFormat() == VI_PAL) {
 					// Fix logo animation speed.
 					*(s16 *)(data + 0x8130E8B2 - 0x81300000 + 0x20) = 8;
@@ -11581,24 +11584,27 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				// Force text encoding.
 				*(u32 *)(data + 0x8130CBA4 - 0x81300000 + 0x20) = 0x38600000 | ((swissSettings.fontEncode << 1) & 2);
 				
-				// Force English language, the hard way.
-				*(s16 *)(data + 0x8130CBCA - 0x81300000 + 0x20) = 10;
-				*(s16 *)(data + 0x8130CBD2 - 0x81300000 + 0x20) = 38;
-				*(s16 *)(data + 0x8130CBD6 - 0x81300000 + 0x20) = 39;
-				*(s16 *)(data + 0x8130CBE2 - 0x81300000 + 0x20) = 15;
-				*(s16 *)(data + 0x8130CBEE - 0x81300000 + 0x20) = 7;
-				*(s16 *)(data + 0x8130CBFA - 0x81300000 + 0x20) = 1;
-				*(s16 *)(data + 0x8130CC06 - 0x81300000 + 0x20) = 4;
-				*(s16 *)(data + 0x8130CC0E - 0x81300000 + 0x20) = 45;
-				*(s16 *)(data + 0x8130CC12 - 0x81300000 + 0x20) = 46;
-				*(s16 *)(data + 0x8130CC1A - 0x81300000 + 0x20) = 42;
-				*(s16 *)(data + 0x8130CC1E - 0x81300000 + 0x20) = 40;
-				*(s16 *)(data + 0x8130CC26 - 0x81300000 + 0x20) = 43;
-				*(s16 *)(data + 0x8130CC36 - 0x81300000 + 0x20) = 31;
-				*(s16 *)(data + 0x8130CC3E - 0x81300000 + 0x20) = 29;
-				*(s16 *)(data + 0x8130CC42 - 0x81300000 + 0x20) = 30;
-				*(s16 *)(data + 0x8130CC4E - 0x81300000 + 0x20) = 80;
+				*(u32 *)(data + 0x8130CBB8 - 0x81300000 + 0x20) = 0x38000000 | ((swissSettings.fontEncode << 1) & 2);
 				
+				if (swissSettings.sramLanguage != SYS_LANG_JAPANESE) {
+					// Force English language, the hard way.
+					*(s16 *)(data + 0x8130CBCA - 0x81300000 + 0x20) = 10;
+					*(s16 *)(data + 0x8130CBD2 - 0x81300000 + 0x20) = 38;
+					*(s16 *)(data + 0x8130CBD6 - 0x81300000 + 0x20) = 39;
+					*(s16 *)(data + 0x8130CBE2 - 0x81300000 + 0x20) = 15;
+					*(s16 *)(data + 0x8130CBEE - 0x81300000 + 0x20) = 7;
+					*(s16 *)(data + 0x8130CBFA - 0x81300000 + 0x20) = 1;
+					*(s16 *)(data + 0x8130CC06 - 0x81300000 + 0x20) = 4;
+					*(s16 *)(data + 0x8130CC0E - 0x81300000 + 0x20) = 45;
+					*(s16 *)(data + 0x8130CC12 - 0x81300000 + 0x20) = 46;
+					*(s16 *)(data + 0x8130CC1A - 0x81300000 + 0x20) = 42;
+					*(s16 *)(data + 0x8130CC1E - 0x81300000 + 0x20) = 40;
+					*(s16 *)(data + 0x8130CC26 - 0x81300000 + 0x20) = 43;
+					*(s16 *)(data + 0x8130CC36 - 0x81300000 + 0x20) = 31;
+					*(s16 *)(data + 0x8130CC3E - 0x81300000 + 0x20) = 29;
+					*(s16 *)(data + 0x8130CC42 - 0x81300000 + 0x20) = 30;
+					*(s16 *)(data + 0x8130CC4E - 0x81300000 + 0x20) = 80;
+				}
 				if (getTVFormat() == VI_PAL) {
 					// Fix logo animation speed.
 					*(s16 *)(data + 0x81310072 - 0x81300000 + 0x20) = 8;
@@ -11649,24 +11655,27 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				// Force text encoding.
 				*(u32 *)(data + 0x8130CE60 - 0x81300000 + 0x20) = 0x38600000 | ((swissSettings.fontEncode << 1) & 2);
 				
-				// Force English language, the hard way.
-				*(s16 *)(data + 0x8130CE86 - 0x81300000 + 0x20) = 10;
-				*(s16 *)(data + 0x8130CE8E - 0x81300000 + 0x20) = 38;
-				*(s16 *)(data + 0x8130CE92 - 0x81300000 + 0x20) = 39;
-				*(s16 *)(data + 0x8130CE9E - 0x81300000 + 0x20) = 15;
-				*(s16 *)(data + 0x8130CEAA - 0x81300000 + 0x20) = 7;
-				*(s16 *)(data + 0x8130CEB6 - 0x81300000 + 0x20) = 1;
-				*(s16 *)(data + 0x8130CEC2 - 0x81300000 + 0x20) = 4;
-				*(s16 *)(data + 0x8130CECA - 0x81300000 + 0x20) = 45;
-				*(s16 *)(data + 0x8130CECE - 0x81300000 + 0x20) = 46;
-				*(s16 *)(data + 0x8130CED6 - 0x81300000 + 0x20) = 42;
-				*(s16 *)(data + 0x8130CEDA - 0x81300000 + 0x20) = 40;
-				*(s16 *)(data + 0x8130CEE2 - 0x81300000 + 0x20) = 43;
-				*(s16 *)(data + 0x8130CEF2 - 0x81300000 + 0x20) = 31;
-				*(s16 *)(data + 0x8130CEFA - 0x81300000 + 0x20) = 29;
-				*(s16 *)(data + 0x8130CEFE - 0x81300000 + 0x20) = 30;
-				*(s16 *)(data + 0x8130CF0A - 0x81300000 + 0x20) = 80;
+				*(u32 *)(data + 0x8130CE74 - 0x81300000 + 0x20) = 0x38000000 | ((swissSettings.fontEncode << 1) & 2);
 				
+				if (swissSettings.sramLanguage != SYS_LANG_JAPANESE) {
+					// Force English language, the hard way.
+					*(s16 *)(data + 0x8130CE86 - 0x81300000 + 0x20) = 10;
+					*(s16 *)(data + 0x8130CE8E - 0x81300000 + 0x20) = 38;
+					*(s16 *)(data + 0x8130CE92 - 0x81300000 + 0x20) = 39;
+					*(s16 *)(data + 0x8130CE9E - 0x81300000 + 0x20) = 15;
+					*(s16 *)(data + 0x8130CEAA - 0x81300000 + 0x20) = 7;
+					*(s16 *)(data + 0x8130CEB6 - 0x81300000 + 0x20) = 1;
+					*(s16 *)(data + 0x8130CEC2 - 0x81300000 + 0x20) = 4;
+					*(s16 *)(data + 0x8130CECA - 0x81300000 + 0x20) = 45;
+					*(s16 *)(data + 0x8130CECE - 0x81300000 + 0x20) = 46;
+					*(s16 *)(data + 0x8130CED6 - 0x81300000 + 0x20) = 42;
+					*(s16 *)(data + 0x8130CEDA - 0x81300000 + 0x20) = 40;
+					*(s16 *)(data + 0x8130CEE2 - 0x81300000 + 0x20) = 43;
+					*(s16 *)(data + 0x8130CEF2 - 0x81300000 + 0x20) = 31;
+					*(s16 *)(data + 0x8130CEFA - 0x81300000 + 0x20) = 29;
+					*(s16 *)(data + 0x8130CEFE - 0x81300000 + 0x20) = 30;
+					*(s16 *)(data + 0x8130CF0A - 0x81300000 + 0x20) = 80;
+				}
 				if (getTVFormat() == VI_PAL) {
 					// Fix logo animation speed.
 					*(s16 *)(data + 0x8131032E - 0x81300000 + 0x20) = 8;
@@ -11711,24 +11720,27 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				// Force text encoding.
 				*(u32 *)(data + 0x8130B55C - 0x81300000 + 0x20) = 0x38600000 | ((swissSettings.fontEncode << 1) & 2);
 				
-				// Force English language, the hard way.
-				*(s16 *)(data + 0x8130B592 - 0x81300000 + 0x20) = 38;
-				*(s16 *)(data + 0x8130B5B2 - 0x81300000 + 0x20) = 10;
-				*(s16 *)(data + 0x8130B5BA - 0x81300000 + 0x20) = 39;
-				*(s16 *)(data + 0x8130B5BE - 0x81300000 + 0x20) = 15;
-				*(s16 *)(data + 0x8130B5C6 - 0x81300000 + 0x20) = 7;
-				*(s16 *)(data + 0x8130B5CA - 0x81300000 + 0x20) = 1;
-				*(s16 *)(data + 0x8130B5D2 - 0x81300000 + 0x20) = 4;
-				*(s16 *)(data + 0x8130B5D6 - 0x81300000 + 0x20) = 45;
-				*(s16 *)(data + 0x8130B5DE - 0x81300000 + 0x20) = 46;
-				*(s16 *)(data + 0x8130B5E2 - 0x81300000 + 0x20) = 42;
-				*(s16 *)(data + 0x8130B5EA - 0x81300000 + 0x20) = 40;
-				*(s16 *)(data + 0x8130B5EE - 0x81300000 + 0x20) = 43;
-				*(s16 *)(data + 0x8130B602 - 0x81300000 + 0x20) = 31;
-				*(s16 *)(data + 0x8130B606 - 0x81300000 + 0x20) = 29;
-				*(s16 *)(data + 0x8130B60E - 0x81300000 + 0x20) = 30;
-				*(s16 *)(data + 0x8130B61A - 0x81300000 + 0x20) = 80;
+				*(u32 *)(data + 0x8130B580 - 0x81300000 + 0x20) = 0x38000000 | ((swissSettings.fontEncode << 1) & 2);
 				
+				if (swissSettings.sramLanguage != SYS_LANG_JAPANESE) {
+					// Force English language, the hard way.
+					*(s16 *)(data + 0x8130B592 - 0x81300000 + 0x20) = 38;
+					*(s16 *)(data + 0x8130B5B2 - 0x81300000 + 0x20) = 10;
+					*(s16 *)(data + 0x8130B5BA - 0x81300000 + 0x20) = 39;
+					*(s16 *)(data + 0x8130B5BE - 0x81300000 + 0x20) = 15;
+					*(s16 *)(data + 0x8130B5C6 - 0x81300000 + 0x20) = 7;
+					*(s16 *)(data + 0x8130B5CA - 0x81300000 + 0x20) = 1;
+					*(s16 *)(data + 0x8130B5D2 - 0x81300000 + 0x20) = 4;
+					*(s16 *)(data + 0x8130B5D6 - 0x81300000 + 0x20) = 45;
+					*(s16 *)(data + 0x8130B5DE - 0x81300000 + 0x20) = 46;
+					*(s16 *)(data + 0x8130B5E2 - 0x81300000 + 0x20) = 42;
+					*(s16 *)(data + 0x8130B5EA - 0x81300000 + 0x20) = 40;
+					*(s16 *)(data + 0x8130B5EE - 0x81300000 + 0x20) = 43;
+					*(s16 *)(data + 0x8130B602 - 0x81300000 + 0x20) = 31;
+					*(s16 *)(data + 0x8130B606 - 0x81300000 + 0x20) = 29;
+					*(s16 *)(data + 0x8130B60E - 0x81300000 + 0x20) = 30;
+					*(s16 *)(data + 0x8130B61A - 0x81300000 + 0x20) = 80;
+				}
 				if (getTVFormat() == VI_PAL) {
 					// Fix logo animation speed.
 					*(s16 *)(data + 0x8130EAAA - 0x81300000 + 0x20) = 8;
@@ -11906,24 +11918,27 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				// Force text encoding.
 				*(u32 *)(data + 0x8130DBFC - 0x81300000 + 0x20) = 0x38600000 | ((swissSettings.fontEncode << 1) & 2);
 				
-				// Force English language, the hard way.
-				*(s16 *)(data + 0x8130DC32 - 0x81300000 + 0x20) = 38;
-				*(s16 *)(data + 0x8130DC52 - 0x81300000 + 0x20) = 10;
-				*(s16 *)(data + 0x8130DC5A - 0x81300000 + 0x20) = 39;
-				*(s16 *)(data + 0x8130DC5E - 0x81300000 + 0x20) = 15;
-				*(s16 *)(data + 0x8130DC66 - 0x81300000 + 0x20) = 7;
-				*(s16 *)(data + 0x8130DC6A - 0x81300000 + 0x20) = 1;
-				*(s16 *)(data + 0x8130DC72 - 0x81300000 + 0x20) = 4;
-				*(s16 *)(data + 0x8130DC76 - 0x81300000 + 0x20) = 45;
-				*(s16 *)(data + 0x8130DC7E - 0x81300000 + 0x20) = 46;
-				*(s16 *)(data + 0x8130DC82 - 0x81300000 + 0x20) = 42;
-				*(s16 *)(data + 0x8130DC8A - 0x81300000 + 0x20) = 40;
-				*(s16 *)(data + 0x8130DC8E - 0x81300000 + 0x20) = 43;
-				*(s16 *)(data + 0x8130DCA2 - 0x81300000 + 0x20) = 31;
-				*(s16 *)(data + 0x8130DCA6 - 0x81300000 + 0x20) = 29;
-				*(s16 *)(data + 0x8130DCAE - 0x81300000 + 0x20) = 30;
-				*(s16 *)(data + 0x8130DCBA - 0x81300000 + 0x20) = 80;
+				*(u32 *)(data + 0x8130DC20 - 0x81300000 + 0x20) = 0x38000000 | ((swissSettings.fontEncode << 1) & 2);
 				
+				if (swissSettings.sramLanguage != SYS_LANG_JAPANESE) {
+					// Force English language, the hard way.
+					*(s16 *)(data + 0x8130DC32 - 0x81300000 + 0x20) = 38;
+					*(s16 *)(data + 0x8130DC52 - 0x81300000 + 0x20) = 10;
+					*(s16 *)(data + 0x8130DC5A - 0x81300000 + 0x20) = 39;
+					*(s16 *)(data + 0x8130DC5E - 0x81300000 + 0x20) = 15;
+					*(s16 *)(data + 0x8130DC66 - 0x81300000 + 0x20) = 7;
+					*(s16 *)(data + 0x8130DC6A - 0x81300000 + 0x20) = 1;
+					*(s16 *)(data + 0x8130DC72 - 0x81300000 + 0x20) = 4;
+					*(s16 *)(data + 0x8130DC76 - 0x81300000 + 0x20) = 45;
+					*(s16 *)(data + 0x8130DC7E - 0x81300000 + 0x20) = 46;
+					*(s16 *)(data + 0x8130DC82 - 0x81300000 + 0x20) = 42;
+					*(s16 *)(data + 0x8130DC8A - 0x81300000 + 0x20) = 40;
+					*(s16 *)(data + 0x8130DC8E - 0x81300000 + 0x20) = 43;
+					*(s16 *)(data + 0x8130DCA2 - 0x81300000 + 0x20) = 31;
+					*(s16 *)(data + 0x8130DCA6 - 0x81300000 + 0x20) = 29;
+					*(s16 *)(data + 0x8130DCAE - 0x81300000 + 0x20) = 30;
+					*(s16 *)(data + 0x8130DCBA - 0x81300000 + 0x20) = 80;
+				}
 				if (getTVFormat() == VI_PAL) {
 					// Fix logo animation speed.
 					*(s16 *)(data + 0x8131114A - 0x81300000 + 0x20) = 8;
@@ -11966,24 +11981,27 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				// Force text encoding.
 				*(u32 *)(data + 0x8130B8D0 - 0x81300000 + 0x20) = 0x38600000 | ((swissSettings.fontEncode << 1) & 2);
 				
-				// Force English language, the hard way.
-				*(s16 *)(data + 0x8130B906 - 0x81300000 + 0x20) = 38;
-				*(s16 *)(data + 0x8130B926 - 0x81300000 + 0x20) = 10;
-				*(s16 *)(data + 0x8130B92E - 0x81300000 + 0x20) = 39;
-				*(s16 *)(data + 0x8130B932 - 0x81300000 + 0x20) = 15;
-				*(s16 *)(data + 0x8130B93A - 0x81300000 + 0x20) = 7;
-				*(s16 *)(data + 0x8130B93E - 0x81300000 + 0x20) = 1;
-				*(s16 *)(data + 0x8130B946 - 0x81300000 + 0x20) = 4;
-				*(s16 *)(data + 0x8130B94A - 0x81300000 + 0x20) = 45;
-				*(s16 *)(data + 0x8130B952 - 0x81300000 + 0x20) = 46;
-				*(s16 *)(data + 0x8130B956 - 0x81300000 + 0x20) = 42;
-				*(s16 *)(data + 0x8130B95E - 0x81300000 + 0x20) = 40;
-				*(s16 *)(data + 0x8130B962 - 0x81300000 + 0x20) = 43;
-				*(s16 *)(data + 0x8130B976 - 0x81300000 + 0x20) = 31;
-				*(s16 *)(data + 0x8130B97A - 0x81300000 + 0x20) = 29;
-				*(s16 *)(data + 0x8130B982 - 0x81300000 + 0x20) = 30;
-				*(s16 *)(data + 0x8130B98E - 0x81300000 + 0x20) = 80;
+				*(u32 *)(data + 0x8130B8F4 - 0x81300000 + 0x20) = 0x38000000 | ((swissSettings.fontEncode << 1) & 2);
 				
+				if (swissSettings.sramLanguage != SYS_LANG_JAPANESE) {
+					// Force English language, the hard way.
+					*(s16 *)(data + 0x8130B906 - 0x81300000 + 0x20) = 38;
+					*(s16 *)(data + 0x8130B926 - 0x81300000 + 0x20) = 10;
+					*(s16 *)(data + 0x8130B92E - 0x81300000 + 0x20) = 39;
+					*(s16 *)(data + 0x8130B932 - 0x81300000 + 0x20) = 15;
+					*(s16 *)(data + 0x8130B93A - 0x81300000 + 0x20) = 7;
+					*(s16 *)(data + 0x8130B93E - 0x81300000 + 0x20) = 1;
+					*(s16 *)(data + 0x8130B946 - 0x81300000 + 0x20) = 4;
+					*(s16 *)(data + 0x8130B94A - 0x81300000 + 0x20) = 45;
+					*(s16 *)(data + 0x8130B952 - 0x81300000 + 0x20) = 46;
+					*(s16 *)(data + 0x8130B956 - 0x81300000 + 0x20) = 42;
+					*(s16 *)(data + 0x8130B95E - 0x81300000 + 0x20) = 40;
+					*(s16 *)(data + 0x8130B962 - 0x81300000 + 0x20) = 43;
+					*(s16 *)(data + 0x8130B976 - 0x81300000 + 0x20) = 31;
+					*(s16 *)(data + 0x8130B97A - 0x81300000 + 0x20) = 29;
+					*(s16 *)(data + 0x8130B982 - 0x81300000 + 0x20) = 30;
+					*(s16 *)(data + 0x8130B98E - 0x81300000 + 0x20) = 80;
+				}
 				if (getTVFormat() == VI_PAL) {
 					// Fix logo animation speed.
 					*(s16 *)(data + 0x8130EE1E - 0x81300000 + 0x20) = 8;
@@ -12028,24 +12046,27 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				// Force text encoding.
 				*(u32 *)(data + 0x8130B8E8 - 0x81300000 + 0x20) = 0x38600000 | ((swissSettings.fontEncode << 1) & 2);
 				
-				// Force English language, the hard way.
-				*(s16 *)(data + 0x8130B91E - 0x81300000 + 0x20) = 38;
-				*(s16 *)(data + 0x8130B93E - 0x81300000 + 0x20) = 10;
-				*(s16 *)(data + 0x8130B946 - 0x81300000 + 0x20) = 39;
-				*(s16 *)(data + 0x8130B94A - 0x81300000 + 0x20) = 15;
-				*(s16 *)(data + 0x8130B952 - 0x81300000 + 0x20) = 7;
-				*(s16 *)(data + 0x8130B956 - 0x81300000 + 0x20) = 1;
-				*(s16 *)(data + 0x8130B95E - 0x81300000 + 0x20) = 4;
-				*(s16 *)(data + 0x8130B962 - 0x81300000 + 0x20) = 45;
-				*(s16 *)(data + 0x8130B96A - 0x81300000 + 0x20) = 46;
-				*(s16 *)(data + 0x8130B96E - 0x81300000 + 0x20) = 42;
-				*(s16 *)(data + 0x8130B976 - 0x81300000 + 0x20) = 40;
-				*(s16 *)(data + 0x8130B97A - 0x81300000 + 0x20) = 43;
-				*(s16 *)(data + 0x8130B98E - 0x81300000 + 0x20) = 31;
-				*(s16 *)(data + 0x8130B992 - 0x81300000 + 0x20) = 29;
-				*(s16 *)(data + 0x8130B99A - 0x81300000 + 0x20) = 30;
-				*(s16 *)(data + 0x8130B9A6 - 0x81300000 + 0x20) = 80;
+				*(u32 *)(data + 0x8130B90C - 0x81300000 + 0x20) = 0x38000000 | ((swissSettings.fontEncode << 1) & 2);
 				
+				if (swissSettings.sramLanguage != SYS_LANG_JAPANESE) {
+					// Force English language, the hard way.
+					*(s16 *)(data + 0x8130B91E - 0x81300000 + 0x20) = 38;
+					*(s16 *)(data + 0x8130B93E - 0x81300000 + 0x20) = 10;
+					*(s16 *)(data + 0x8130B946 - 0x81300000 + 0x20) = 39;
+					*(s16 *)(data + 0x8130B94A - 0x81300000 + 0x20) = 15;
+					*(s16 *)(data + 0x8130B952 - 0x81300000 + 0x20) = 7;
+					*(s16 *)(data + 0x8130B956 - 0x81300000 + 0x20) = 1;
+					*(s16 *)(data + 0x8130B95E - 0x81300000 + 0x20) = 4;
+					*(s16 *)(data + 0x8130B962 - 0x81300000 + 0x20) = 45;
+					*(s16 *)(data + 0x8130B96A - 0x81300000 + 0x20) = 46;
+					*(s16 *)(data + 0x8130B96E - 0x81300000 + 0x20) = 42;
+					*(s16 *)(data + 0x8130B976 - 0x81300000 + 0x20) = 40;
+					*(s16 *)(data + 0x8130B97A - 0x81300000 + 0x20) = 43;
+					*(s16 *)(data + 0x8130B98E - 0x81300000 + 0x20) = 31;
+					*(s16 *)(data + 0x8130B992 - 0x81300000 + 0x20) = 29;
+					*(s16 *)(data + 0x8130B99A - 0x81300000 + 0x20) = 30;
+					*(s16 *)(data + 0x8130B9A6 - 0x81300000 + 0x20) = 80;
+				}
 				if (getTVFormat() == VI_PAL) {
 					// Fix logo animation speed.
 					*(s16 *)(data + 0x8130EE36 - 0x81300000 + 0x20) = 8;
@@ -12505,6 +12526,17 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 			case 2298208:
 				// Fix race condition with ARAM DMA transfer.
 				*(u32 *)(data + 0x8015110C - 0x80006760 + 0x2620) = 0x60000000;
+				
+				print_debug("Patched:[%.6s]\n", gameID);
+				patched++;
+				break;
+		}
+	} else if (!strncmp(gameID, "GMSP01", 6) && dataType == PATCH_DOL) {
+		switch (length) {
+			case 4083072:
+				// Force system language.
+				*(u32 *)(data + 0x80289B4C - 0x80005600 + 0x2540) = 0x38600000 | (swissSettings.sramLanguage & 0xFFFF);
+				*(u32 *)(data + 0x80289B9C - 0x80005600 + 0x2540) = 0x38600000 | (swissSettings.sramLanguage & 0xFFFF);
 				
 				print_debug("Patched:[%.6s]\n", gameID);
 				patched++;

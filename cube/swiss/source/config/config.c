@@ -149,7 +149,7 @@ int config_update_global(bool checkConfigDevice) {
 	fprintf(fp, "System Boot Mode=%s\r\n", swissSettings.sramBoot ? "Production":"Default");
 	fprintf(fp, "System Sound=%s\r\n", swissSettings.sramStereo ? "Stereo":"Mono");
 	fprintf(fp, "Screen Position=%+hi\r\n", swissSettings.sramHOffset);
-	fprintf(fp, "System Language=%s\r\n", sramLang[swissSettings.sramLanguage]);
+	fprintf(fp, "System Language=%s\r\n", sramLanguageStr[swissSettings.sramLanguage]);
 	fprintf(fp, "Swiss Video Mode=%s\r\n", uiVModeStr[swissSettings.uiVMode]);
 	fprintf(fp, "Enable USB Gecko=%s\r\n", enableUSBGeckoStr[swissSettings.enableUSBGecko]);
 	fprintf(fp, "Wait for USB Gecko=%s\r\n", swissSettings.waitForUSBGecko ? "Yes":"No");
@@ -279,6 +279,7 @@ int config_update_game(ConfigEntry *entry, ConfigEntry *defaults, bool checkConf
 	fprintf(fp, "Name=%.64s\r\n", entry->game_name);
 	fprintf(fp, "Comment=%.128s\r\n", entry->comment);
 	fprintf(fp, "Status=%.32s\r\n", entry->status);
+	if(entry->gameLanguage != defaults->gameLanguage) fprintf(fp, "Game Language=%s\r\n", sramLanguageStr[entry->gameLanguage]);
 	if(entry->gameVMode != defaults->gameVMode) fprintf(fp, "Force Video Mode=%s\r\n", gameVModeStr[entry->gameVMode]);
 	if(entry->forceHScale != defaults->forceHScale) fprintf(fp, "Force Horizontal Scale=%s\r\n", forceHScaleStr[entry->forceHScale]);
 	if(entry->forceVOffset != defaults->forceVOffset) fprintf(fp, "Force Vertical Offset=%+hi\r\n", entry->forceVOffset);
@@ -323,6 +324,7 @@ static char emulateEthernetEntries[][4] = {"DPSJ", "GHEE", "GHEJ", "GKYE", "GKYJ
 void config_defaults(ConfigEntry *entry) {
 	strcpy(entry->comment, "No Comment");
 	strcpy(entry->status, "Unknown");
+	entry->gameLanguage = SRAM_LANGUAGE_MAX;
 	entry->gameVMode = entry->region == 'P' ? swissSettings.gameVModePal : swissSettings.gameVModeNtsc;
 	entry->forceHScale = swissSettings.forceHScale;
 	entry->forceVOffset = swissSettings.forceVOffset;
@@ -815,8 +817,8 @@ void config_parse_global(char *configData) {
 					swissSettings.sramHOffset = atoi(value);
 				}
 				else if(!strcmp("System Language", name)) {
-					for(int i = 0; i < SRAM_LANG_MAX; i++) {
-						if(!strcmp(sramLang[i], value)) {
+					for(int i = 0; i < SRAM_LANGUAGE_MAX; i++) {
+						if(!strcmp(sramLanguageStr[i], value)) {
 							swissSettings.sramLanguage = i;
 							break;
 						}
@@ -1087,6 +1089,14 @@ void config_parse_game(char *configData, ConfigEntry *entry) {
 				else if(!strcmp("Status", name)) {
 					strncpy(entry->status, value, 32);
 				}
+				else if(!strcmp("Game Language", name)) {
+					for(int i = 0; i < 9; i++) {
+						if(!strcmp(sramLanguageStr[i], value)) {
+							entry->gameLanguage = i;
+							break;
+						}
+					}
+				}
 				else if(!strcmp("Force Video Mode", name)) {
 					for(int i = 0; i < 15; i++) {
 						if(!strcmp(gameVModeStr[i], value)) {
@@ -1337,8 +1347,13 @@ void config_load_current(ConfigEntry *entry) {
 	else if(!strchr("A?", entry->region))
 		swissSettings.sram60Hz = 0;
 	
-	if(!strchr("PA?", entry->region))
+	if(!strchr("PA?", entry->region) && in_range(swissSettings.sramLanguage, SYS_LANG_ENGLISH, SYS_LANG_DUTCH))
 		swissSettings.sramLanguage = SYS_LANG_ENGLISH;
+	
+	if(in_range(entry->gameLanguage, SYS_LANG_ENGLISH, SYS_LANG_ENGLISH_US)) {
+		swissSettings.sramLanguage = entry->gameLanguage;
+		swissSettings.fontEncode = entry->gameLanguage == SYS_LANG_JAPANESE ? SYS_FONTENC_SJIS : SYS_FONTENC_ANSI;
+	}
 	
 	if(entry->region == 'P')
 		swissSettings.sramVideo = SYS_VIDEO_PAL;

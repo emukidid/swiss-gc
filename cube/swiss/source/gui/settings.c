@@ -49,7 +49,7 @@ char *igrTypeStr[] = {"Disabled", "Reboot", "Apploader"};
 char *aveCompatStr[] = {"AVE N-DOL", "AVE P-DOL", "CMPV-DOL", "GCDigital", "GCVideo", "AVE-RVL"};
 char *fileBrowserStr[] = {"Standard", "Fullwidth", "Carousel"};
 char *bs2BootStr[] = {"No", "Yes", "Sound 1", "Sound 2"};
-char *sramLang[] = {"English", "German", "French", "Spanish", "Italian", "Dutch", "Japanese", "English (US)"};
+char *sramLanguageStr[] = {"English", "German", "French", "Spanish", "Italian", "Dutch", "Japanese", "English (US)", "Default"};
 char *recentListLevelStr[] = {"Off", "Lazy", "On"};
 
 static char *tooltips_global[PAGE_GLOBAL_MAX+1] = {
@@ -140,7 +140,7 @@ char* get_tooltip(int page_num, int option) {
 		textPtr = tooltips_game[option];
 	}
 	else if(page_num == PAGE_GAME) {
-		textPtr = tooltips_game[option+1];
+		textPtr = tooltips_game[option];
 	}
 	return textPtr;
 }
@@ -240,7 +240,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 			drawSettingEntryString(page, &page_y_ofs, "System Sound:", swissSettings.sramStereo ? "Stereo" : "Mono", option == SET_SYS_SOUND, true);
 			sprintf(sramHOffsetStr, "%+hi", swissSettings.sramHOffset);
 			drawSettingEntryString(page, &page_y_ofs, "Screen Position:", sramHOffsetStr, option == SET_SCREEN_POS, true);
-			drawSettingEntryString(page, &page_y_ofs, "System Language:", sramLang[swissSettings.sramLanguage], option == SET_SYS_LANG, true);
+			drawSettingEntryString(page, &page_y_ofs, "System Language:", sramLanguageStr[swissSettings.sramLanguage], option == SET_SYS_LANG, true);
 			drawSettingEntryString(page, &page_y_ofs, "Configuration Device:", getConfigDeviceName(&swissSettings), option == SET_CONFIG_DEV, true);
 			sprintf(uiVModeStr, "%s%s", getVideoModeString(getVideoModeFromSwissSetting(swissSettings.uiVMode)), swissSettings.uiVMode == 0 ? " (Auto) " : "");
 			drawSettingEntryString(page, &page_y_ofs, "Swiss Video Mode:", uiVModeStr, option == SET_SWISS_VIDEOMODE, true);
@@ -368,7 +368,8 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 			bool enabledHypervisor = devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->features & FEAT_HYPERVISOR);
 			bool enabledCleanBoot = devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->location & LOC_DVD_CONNECTOR);
 			bool rt4kEnable = is_rt4k_alive();
-			if(option < SET_SWAP_CAMERA) {
+			if(option < SET_INVERT_CAMERA) {
+				drawSettingEntryString(page, &page_y_ofs, "Game Language:", sramLanguageStr[gameConfig->gameLanguage], option == SET_GAME_LANG, true);
 				drawSettingEntryString(page, &page_y_ofs, "Force Video Mode:", gameVModeStr[gameConfig->gameVMode], option == SET_FORCE_VIDEOMODE, enabledVideoPatches);
 				drawSettingEntryString(page, &page_y_ofs, "Force Horizontal Scale:", forceHScaleStr[gameConfig->forceHScale], option == SET_HORIZ_SCALE, enabledVideoPatches);
 				sprintf(forceVOffsetStr, "%+hi", gameConfig->forceVOffset);
@@ -380,8 +381,8 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 				drawSettingEntryBoolean(page, &page_y_ofs, "Force Anisotropic Filter:", gameConfig->forceAnisotropy, option == SET_ANISO_FILTER, true);
 				drawSettingEntryString(page, &page_y_ofs, "Force Widescreen:", forceWidescreenStr[gameConfig->forceWidescreen], option == SET_WIDESCREEN, true);
 				drawSettingEntryString(page, &page_y_ofs, "Force Polling Rate:", forcePollRateStr[gameConfig->forcePollRate], option == SET_POLL_RATE, true);
-				drawSettingEntryString(page, &page_y_ofs, "Invert Camera Stick:", invertCStickStr[gameConfig->invertCStick], option == SET_INVERT_CAMERA, true);
 			} else {
+				drawSettingEntryString(page, &page_y_ofs, "Invert Camera Stick:", invertCStickStr[gameConfig->invertCStick], option == SET_INVERT_CAMERA, true);
 				drawSettingEntryString(page, &page_y_ofs, "Swap Camera Stick:", swapCStickStr[gameConfig->swapCStick], option == SET_SWAP_CAMERA, true);
 				sprintf(triggerLevelStr, "%hhu", gameConfig->triggerLevel);
 				drawSettingEntryString(page, &page_y_ofs, "Digital Trigger Level:", triggerLevelStr, option == SET_TRIGGER_LEVEL, true);
@@ -397,7 +398,8 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 		}
 		else {
 			// Just draw the defaults again
-			if(option < SET_SWAP_CAMERA) {
+			if(option < SET_INVERT_CAMERA) {
+				drawSettingEntryString(page, &page_y_ofs, "Game Language:", sramLanguageStr[SRAM_LANGUAGE_MAX], option == SET_GAME_LANG, false);
 				drawSettingEntryString(page, &page_y_ofs, "Force Video Mode:", gameVModeStr[swissSettings.gameVMode], option == SET_FORCE_VIDEOMODE, false);
 				drawSettingEntryString(page, &page_y_ofs, "Force Horizontal Scale:", forceHScaleStr[swissSettings.forceHScale], option == SET_HORIZ_SCALE, false);
 				sprintf(forceVOffsetStr, "%+hi", swissSettings.forceVOffset);
@@ -409,8 +411,8 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 				drawSettingEntryBoolean(page, &page_y_ofs, "Force Anisotropic Filter:", swissSettings.forceAnisotropy, option == SET_ANISO_FILTER, false);
 				drawSettingEntryString(page, &page_y_ofs, "Force Widescreen:", forceWidescreenStr[swissSettings.forceWidescreen], option == SET_WIDESCREEN, false);
 				drawSettingEntryString(page, &page_y_ofs, "Force Polling Rate:", forcePollRateStr[swissSettings.forcePollRate], option == SET_POLL_RATE, false);
-				drawSettingEntryString(page, &page_y_ofs, "Invert Camera Stick:", invertCStickStr[swissSettings.invertCStick], option == SET_INVERT_CAMERA, false);
 			} else {
+				drawSettingEntryString(page, &page_y_ofs, "Invert Camera Stick:", invertCStickStr[swissSettings.invertCStick], option == SET_INVERT_CAMERA, false);
 				drawSettingEntryString(page, &page_y_ofs, "Swap Camera Stick:", swapCStickStr[swissSettings.swapCStick], option == SET_SWAP_CAMERA, false);
 				sprintf(triggerLevelStr, "%hhu", swissSettings.triggerLevel);
 				drawSettingEntryString(page, &page_y_ofs, "Digital Trigger Level:", triggerLevelStr, option == SET_TRIGGER_LEVEL, false);
@@ -454,7 +456,7 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 			break;
 			case SET_SYS_LANG:
 				swissSettings.sramLanguage += direction;
-				swissSettings.sramLanguage = ((s8)swissSettings.sramLanguage + SRAM_LANG_MAX) % SRAM_LANG_MAX;
+				swissSettings.sramLanguage = ((s8)swissSettings.sramLanguage + SRAM_LANGUAGE_MAX) % SRAM_LANGUAGE_MAX;
 			break;
 			case SET_CONFIG_DEV:
 			{
@@ -862,6 +864,10 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 	}
 	else if(page == PAGE_GAME && gameConfig != NULL && !gameConfig->forceCleanBoot) {
 		switch(option) {
+			case SET_GAME_LANG:
+				gameConfig->gameLanguage += direction;
+				gameConfig->gameLanguage = (gameConfig->gameLanguage + 9) % 9;
+			break;
 			case SET_FORCE_VIDEOMODE:
 				if(swissSettings.disableVideoPatches < 2) {
 					gameConfig->gameVMode += direction;
