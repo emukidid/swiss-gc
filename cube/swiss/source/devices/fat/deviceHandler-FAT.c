@@ -431,35 +431,59 @@ bool deviceHandler_FAT_test_sd_c() {
 	return ret;
 }
 bool deviceHandler_FAT_test_mcp_a() {
-	int ret;
+	if (MMCE_IsAttached(0))
+		return true;
+
+	s32 ret;
 	while ((ret = MMCE_ProbeEx(0)) == MMCE_RESULT_BUSY);
 	if (ret == MMCE_RESULT_READY) {
 		u32 id;
+		u8 mode;
 
 		if ((ret = MMCE_GetDeviceID(0, &id)) == MMCE_RESULT_READY && (u16)id < 0x0101)
 			ret = MMCE_RESULT_VERSION;
+		if (ret == MMCE_RESULT_READY)
+			ret = MMCE_GetAccessMode(0, &mode);
+		if (ret == MMCE_RESULT_READY && mode != MMCE_MODE_READONLY)
+			MMCE_SetAccessMode(0, MMCE_MODE_READONLY);
 	}
 	return ret == MMCE_RESULT_READY;
 }
 bool deviceHandler_FAT_test_mcp_b() {
-	int ret;
+	if (MMCE_IsAttached(1))
+		return true;
+
+	s32 ret;
 	while ((ret = MMCE_ProbeEx(1)) == MMCE_RESULT_BUSY);
 	if (ret == MMCE_RESULT_READY) {
 		u32 id;
+		u8 mode;
 
 		if ((ret = MMCE_GetDeviceID(1, &id)) == MMCE_RESULT_READY && (u16)id < 0x0101)
 			ret = MMCE_RESULT_VERSION;
+		if (ret == MMCE_RESULT_READY)
+			ret = MMCE_GetAccessMode(1, &mode);
+		if (ret == MMCE_RESULT_READY && mode != MMCE_MODE_READONLY)
+			MMCE_SetAccessMode(1, MMCE_MODE_READONLY);
 	}
 	return ret == MMCE_RESULT_READY;
 }
 bool deviceHandler_FAT_test_mcp_c() {
-	int ret;
+	if (MMCE_IsAttached(2))
+		return true;
+
+	s32 ret;
 	while ((ret = MMCE_ProbeEx(2)) == MMCE_RESULT_BUSY);
 	if (ret == MMCE_RESULT_READY) {
 		u32 id;
+		u8 mode;
 
 		if ((ret = MMCE_GetDeviceID(2, &id)) == MMCE_RESULT_READY && (u16)id < 0x0101)
 			ret = MMCE_RESULT_VERSION;
+		if (ret == MMCE_RESULT_READY)
+			ret = MMCE_GetAccessMode(2, &mode);
+		if (ret == MMCE_RESULT_READY && mode != MMCE_MODE_READONLY)
+			MMCE_SetAccessMode(2, MMCE_MODE_READONLY);
 	}
 	return ret == MMCE_RESULT_READY;
 }

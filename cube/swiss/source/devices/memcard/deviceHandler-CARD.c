@@ -522,7 +522,7 @@ s32 deviceHandler_CARD_closeFile(file_handle* file) {
 }
 
 bool deviceHandler_CARD_test_a() {
-	int ret;
+	s32 ret;
 	while ((ret = CARD_ProbeEx(CARD_SLOTA, NULL, NULL)) == CARD_ERROR_BUSY);
 	if (ret == CARD_ERROR_READY) {
 		u32 id;
@@ -539,7 +539,7 @@ bool deviceHandler_CARD_test_a() {
 }
 
 bool deviceHandler_CARD_test_b() {
-	int ret;
+	s32 ret;
 	while ((ret = CARD_ProbeEx(CARD_SLOTB, NULL, NULL)) == CARD_ERROR_BUSY);
 	if (ret == CARD_ERROR_READY) {
 		u32 id;
