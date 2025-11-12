@@ -50,7 +50,7 @@ typedef struct uiDrawObj {
 enum TextureId
 {
 	TEX_BACKDROP=0,
-	TEX_BANNER,
+	TEX_SWISS,
 	TEX_GCDVDSMALL,
 	TEX_SDSMALL,
 	TEX_HDD,

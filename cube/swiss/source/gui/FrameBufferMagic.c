@@ -38,6 +38,7 @@ GXTexObj backdropTexObj;
 GXTlutObj backdropTlutObj;
 GXTexObj backdropIndTexObj;
 GXTexObj bannerMaskTexObj;
+GXTexObj swissTexObj;
 GXTexObj gcdvdsmallTexObj;
 GXTexObj sdsmallTexObj;
 GXTlutObj sdsmallTlutObj;
@@ -335,6 +336,7 @@ static void init_textures()
 	TPL_GetTexture(&imagesTPL, backdrop_ind, &backdropIndTexObj);
 	GX_InitTexObjUserData(&backdropIndTexObj, &backdropTexObj);
 	TPL_GetTexture(&imagesTPL, banner_mask, &bannerMaskTexObj);
+	TPL_GetTexture(&imagesTPL, swissimg, &swissTexObj);
 	TPL_GetTexture(&imagesTPL, gcdvdsmall, &gcdvdsmallTexObj);
 	TPL_GetTextureCI(&imagesTPL, sdsmall, &sdsmallTexObj, &sdsmallTlutObj, GX_TLUT0);
 	GX_InitTexObjUserData(&sdsmallTexObj, &sdsmallTlutObj);
@@ -516,6 +518,9 @@ static void _DrawImageNow(int textureId, int x, int y, int width, int height, in
 				indTexObj = &backdropIndTexObj;
 				ss = 640; ts = 480;
 			}
+			break;
+		case TEX_SWISS:
+			texObj = &swissTexObj;
 			break;
 		case TEX_GCDVDSMALL:
 			texObj = &gcdvdsmallTexObj;
@@ -1492,9 +1497,12 @@ static void _DrawTitleBar(uiDrawObj_t *evt) {
 	
 	_DrawSimpleBox(19, 17, 602, 62, 0, fillColor, noColor);
 	
-	drawString(40, 28, "Swiss v0.6", 1.5f, false, defaultColor);
-	sprintf(fbTextBuffer, "commit: %s rev: %s", GIT_COMMIT, GIT_REVISION);
-	drawString(412, 50, fbTextBuffer, 0.55f, false, defaultColor);
+	_DrawImageNow(TEX_SWISS, 36, 32, 96, 32, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
+	drawString(142, 33, "for GameCube", 0.55f, false, defaultColor);
+	drawString(142, 50, "version 0.6", 0.55f, false, defaultColor);
+	
+	sprintf(fbTextBuffer, "commit: %s \267 revision: %s", GIT_COMMIT, GIT_REVISION);
+	drawString(374, 50, fbTextBuffer, 0.55f, false, defaultColor);
 	
 	s8 cputemp = SYS_GetCoreTemperature();
 	if(cputemp >= 0) {
