@@ -417,10 +417,10 @@ static void ELFMinMax(Elf32_Ehdr *ehdr, Elf32_Phdr *phdr)
   {
     if (phdr[i].p_type == PT_LOAD && phdr[i].p_filesz)
     {
-      if (phdr[i].p_vaddr < minaddress)
-        minaddress = phdr[i].p_vaddr;
-      if ((phdr[i].p_vaddr + phdr[i].p_filesz) > maxaddress)
-        maxaddress = phdr[i].p_vaddr + phdr[i].p_filesz;
+      if (phdr[i].p_paddr < minaddress)
+        minaddress = phdr[i].p_paddr;
+      if ((phdr[i].p_paddr + phdr[i].p_filesz) > maxaddress)
+        maxaddress = phdr[i].p_paddr + phdr[i].p_filesz;
     }
   }
 }
@@ -460,10 +460,10 @@ int ELFtoARAM(unsigned char *elf, char *argz, size_t argz_len)
   {
     if (phdr[i].p_type == PT_LOAD && phdr[i].p_filesz)
     {
-      if (ehdr->e_entry >= phdr[i].p_vaddr &&
-          ehdr->e_entry < (phdr[i].p_vaddr + phdr[i].p_filesz))
+      if (ehdr->e_entry >= phdr[i].p_paddr &&
+          ehdr->e_entry < (phdr[i].p_paddr + phdr[i].p_filesz))
       {
-        u32 *entrypoint = (u32 *) (elf + (ehdr->e_entry - phdr[i].p_vaddr) + phdr[i].p_offset);
+        u32 *entrypoint = (u32 *) (elf + (ehdr->e_entry - phdr[i].p_paddr) + phdr[i].p_offset);
 
         if (entrypoint[1] != ARGV_MAGIC)
         {
@@ -476,7 +476,7 @@ int ELFtoARAM(unsigned char *elf, char *argz, size_t argz_len)
         }
       }
 
-      ARAMPut(elf + phdr[i].p_offset, (char *) ((phdr[i].p_vaddr - minaddress) + ARAMSTART), phdr[i].p_filesz);
+      ARAMPut(elf + phdr[i].p_offset, (char *) ((phdr[i].p_paddr - minaddress) + ARAMSTART), phdr[i].p_filesz);
     }
   }
 

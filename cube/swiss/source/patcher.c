@@ -17597,8 +17597,21 @@ int Patch_ExecutableFile(void **buffer, u32 *sizeToRead, const char *gameID, int
 	
 	patched = patch(data, length, gameID, type);
 	
-	if (type == PATCH_DOL)
-		length = DOLSizeFix(data);
+	switch (type) {
+		case PATCH_DOL:
+			length = DOLSizeFix(data);
+			break;
+		case PATCH_ELF:
+			if (valid_elf_image(data)) {
+				Elf32_Ehdr *ehdr = data;
+				Elf32_Phdr *phdr = data + ehdr->e_phoff;
+				
+				for (i = 0; i < ehdr->e_phnum; i++)
+					if (phdr[i].p_type == PT_LOAD)
+						phdr[i].p_paddr = phdr[i].p_vaddr;
+			}
+			break;
+	}
 	
 	return patched;
 }
