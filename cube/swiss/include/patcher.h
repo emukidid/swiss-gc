@@ -71,6 +71,12 @@ typedef struct FuncPattern
 #include "flippy_w5500_eth_bin.h"
 #include "flippy_w6100_eth_bin.h"
 #include "flippy_w6300_eth_bin.h"
+#include "mmce_bin.h"
+#include "mmce_card_bin.h"
+#include "mmce_enc28j60_eth_bin.h"
+#include "mmce_w5500_eth_bin.h"
+#include "mmce_w6100_eth_bin.h"
+#include "mmce_w6300_eth_bin.h"
 
 /* SDK patches */
 #include "backwards_memcpy_bin.h"
