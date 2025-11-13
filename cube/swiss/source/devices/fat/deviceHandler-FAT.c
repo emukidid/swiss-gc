@@ -523,6 +523,20 @@ u32 deviceHandler_FAT_emulated_ata() {
 		return EMU_READ | EMU_BUS_ARBITER;
 }
 
+u32 deviceHandler_FAT_emulated_mmce() {
+	if ((swissSettings.emulateAudioStream == 1 && swissSettings.audioStreaming) ||
+		swissSettings.emulateAudioStream > 1)
+		return EMU_READ | EMU_AUDIO_STREAMING;
+	else if (swissSettings.emulateReadSpeed)
+		return EMU_READ | EMU_READ_SPEED;
+	else if (swissSettings.emulateEthernet && (devices[DEVICE_CUR]->emulable & EMU_ETHERNET))
+		return EMU_READ | EMU_ETHERNET | EMU_NO_PAUSING;
+	else if (swissSettings.emulateMemoryCard)
+		return EMU_READ | EMU_MEMCARD;
+	else
+		return EMU_READ;
+}
+
 char* deviceHandler_FAT_status(file_handle* file) {
 	switch(file->status) {
 		case FR_OK:			/* (0) Function succeeded */
@@ -817,7 +831,7 @@ DEVICEHANDLER_INTERFACE __device_mcp_a = {
 	.deviceName = "MMCE - Slot A",
 	.deviceDescription = "Supported File System(s): FAT16, FAT32, exFAT",
 	.deviceTexture = {TEX_SDSMALL, 59, 78, 64, 80},
-	.features = FEAT_READ|FEAT_WRITE|FEAT_BOOT_DEVICE|FEAT_CONFIG_DEVICE|FEAT_AUTOLOAD_DOL|FEAT_THREAD_SAFE,
+	.features = FEAT_READ|FEAT_WRITE|FEAT_BOOT_GCM|FEAT_BOOT_DEVICE|FEAT_CONFIG_DEVICE|FEAT_AUTOLOAD_DOL|FEAT_THREAD_SAFE|FEAT_PATCHES,
 	.location = LOC_MEMCARD_SLOT_A,
 	.initial = &initial_MCP_A,
 	.test = deviceHandler_FAT_test_mcp_a,
@@ -835,6 +849,8 @@ DEVICEHANDLER_INTERFACE __device_mcp_a = {
 	.hideFile = deviceHandler_FAT_hideFile,
 	.deinit = deviceHandler_FAT_deinit,
 	.status = deviceHandler_FAT_status,
+	.emulated = deviceHandler_FAT_emulated_mmce,
+	.setupFile = deviceHandler_FAT_setupFile,
 };
 
 DEVICEHANDLER_INTERFACE __device_mcp_b = {
@@ -843,7 +859,7 @@ DEVICEHANDLER_INTERFACE __device_mcp_b = {
 	.deviceName = "MMCE - Slot B",
 	.deviceDescription = "Supported File System(s): FAT16, FAT32, exFAT",
 	.deviceTexture = {TEX_SDSMALL, 59, 78, 64, 80},
-	.features = FEAT_READ|FEAT_WRITE|FEAT_BOOT_DEVICE|FEAT_CONFIG_DEVICE|FEAT_AUTOLOAD_DOL|FEAT_THREAD_SAFE,
+	.features = FEAT_READ|FEAT_WRITE|FEAT_BOOT_GCM|FEAT_BOOT_DEVICE|FEAT_CONFIG_DEVICE|FEAT_AUTOLOAD_DOL|FEAT_THREAD_SAFE|FEAT_PATCHES,
 	.location = LOC_MEMCARD_SLOT_B,
 	.initial = &initial_MCP_B,
 	.test = deviceHandler_FAT_test_mcp_b,
@@ -861,6 +877,8 @@ DEVICEHANDLER_INTERFACE __device_mcp_b = {
 	.hideFile = deviceHandler_FAT_hideFile,
 	.deinit = deviceHandler_FAT_deinit,
 	.status = deviceHandler_FAT_status,
+	.emulated = deviceHandler_FAT_emulated_mmce,
+	.setupFile = deviceHandler_FAT_setupFile,
 };
 
 DEVICEHANDLER_INTERFACE __device_mcp_c = {
@@ -869,7 +887,7 @@ DEVICEHANDLER_INTERFACE __device_mcp_c = {
 	.deviceName = "MMCE - Serial Port 2",
 	.deviceDescription = "Supported File System(s): FAT16, FAT32, exFAT",
 	.deviceTexture = {TEX_SDSMALL, 59, 78, 64, 80},
-	.features = FEAT_READ|FEAT_WRITE|FEAT_BOOT_DEVICE|FEAT_CONFIG_DEVICE|FEAT_AUTOLOAD_DOL|FEAT_THREAD_SAFE,
+	.features = FEAT_READ|FEAT_WRITE|FEAT_BOOT_GCM|FEAT_BOOT_DEVICE|FEAT_CONFIG_DEVICE|FEAT_AUTOLOAD_DOL|FEAT_THREAD_SAFE|FEAT_PATCHES,
 	.location = LOC_SERIAL_PORT_2,
 	.initial = &initial_MCP_C,
 	.test = deviceHandler_FAT_test_mcp_c,
@@ -887,4 +905,6 @@ DEVICEHANDLER_INTERFACE __device_mcp_c = {
 	.hideFile = deviceHandler_FAT_hideFile,
 	.deinit = deviceHandler_FAT_deinit,
 	.status = deviceHandler_FAT_status,
+	.emulated = deviceHandler_FAT_emulated_mmce,
+	.setupFile = deviceHandler_FAT_setupFile,
 };

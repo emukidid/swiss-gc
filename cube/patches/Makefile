@@ -12,7 +12,7 @@ DEST    = ../swiss/source/patches
 DISASM    = disassembly
 
 .NOTPARALLEL:
-all: clean codehandler cpatches stub sdpatch ideexipatch dvdpatch usbgeckopatch wkfpatch fsppatch gcloaderpatch flippypatch
+all: clean codehandler cpatches stub sdpatch ideexipatch dvdpatch usbgeckopatch wkfpatch fsppatch gcloaderpatch flippypatch mmcepatch
 
 stub: stub.bin
 sdpatch: sd-v1.bin sd-v1.card.bin sd-v1.dtk.bin sd-v1.eth.bin sd-v2.bin sd-v2.card.bin sd-v2.dtk.bin sd-v2.eth.bin
@@ -23,6 +23,7 @@ wkfpatch: wkf.bin wkf.card.bin wkf.dtk.bin
 fsppatch: fsp.bin fsp.dtk.bin fsp.eth.bin
 gcloaderpatch: gcloader-v1.bin gcloader-v1.card.bin gcloader-v2.bin gcloader-v2.card.bin gcloader-v2.dtk.bin gcloader-v2.eth.bin
 flippypatch: flippy.bin flippy.card.bin flippy.eth.bin
+mmcepatch: mmce.bin mmce.card.bin mmce.dtk.bin mmce.eth.bin
 
 clean:
 	@rm -f *.bin *.elf *.o
@@ -900,4 +901,105 @@ flippy.eth.bin:
 	@$(BIN2S) -H $(DEST)/flippy_w5500_eth_bin.h flippy-w5500.eth.bin > $(DEST)/flippy-w5500.eth.bin.s
 	@$(BIN2S) -H $(DEST)/flippy_w6100_eth_bin.h flippy-w6100.eth.bin > $(DEST)/flippy-w6100.eth.bin.s
 	@$(BIN2S) -H $(DEST)/flippy_w6300_eth_bin.h flippy-w6300.eth.bin > $(DEST)/flippy-w6300.eth.bin.s
+	@rm -f *.bin *.elf *.o
+
+
+mmce.bin:
+	@echo Building MMCE Patch ...
+	@$(CC) -Os $(OPTS) -c base/base.S
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ
+	@$(CC) -Os $(OPTS) -c base/emulator_dvd.c -DREAD_SPEED_TIER=2
+	@$(CC) -Os $(OPTS) -c base/DVDMath.c
+	@$(CC) -Os $(OPTS) -c base/frag.c
+	@$(CC) -Os $(OPTS) -c base/interrupt.c -DIRQ_MASK=0b00000000011011011000000000000000
+	@$(CC) -Os $(OPTS) -c base/ipl.c
+	@$(CC) -Os $(OPTS) -c base/blockdevice.c -DASYNC_READ -DDVD_MATH
+	@$(CC) -Os $(OPTS) -c mmce/mmce.c -DWRITE=0  -DDMA_READ=1
+	@$(CC) -Os $(OPTS) -c usbgecko/uart.c
+	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
+	@$(CC) -Os $(OPTS) -c base/memcpy.S
+	@$(CC) -Os $(OPTS) -c base/floor.S
+	@$(CC) -Os $(OPTS) -c base/sqrt.S
+	@$(CC) -Os $(OPTS) -o mmce.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_dvd.o DVDMath.o frag.o interrupt.o ipl.o blockdevice.o mmce.o uart.o os.o memcpy.o floor.o sqrt.o
+	@mkdir -p $(DISASM)
+	@$(OBJDUMP) -D mmce.elf > $(DISASM)/mmce.txt
+	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents mmce.elf mmce.bin
+	@$(BIN2S) -H $(DEST)/mmce_bin.h mmce.bin > $(DEST)/mmce.bin.s
+	@rm -f *.bin *.elf *.o
+
+mmce.card.bin:
+	@echo Building MMCE Patch + CARD ...
+	@$(CC) -Os $(OPTS) -c base/base.S
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DCARD_EMULATOR
+	@$(CC) -Os $(OPTS) -c base/emulator_card.c -DASYNC_READ
+	@$(CC) -Os $(OPTS) -c base/frag.c
+	@$(CC) -Os $(OPTS) -c base/interrupt.c -DIRQ_MASK=0b00000000001001001000000000000000
+	@$(CC) -Os $(OPTS) -c base/ipl.c
+	@$(CC) -Os $(OPTS) -c base/blockdevice.c -DASYNC_READ
+	@$(CC) -Os $(OPTS) -c mmce/mmce.c -DQUEUE_SIZE=4  -DDMA_READ=1
+	@$(CC) -Os $(OPTS) -c usbgecko/uart.c
+	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
+	@$(CC) -Os $(OPTS) -c base/memcpy.S
+	@$(CC) -Os $(OPTS) -o mmce.card.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_card.o frag.o interrupt.o ipl.o blockdevice.o uart.o os.o memcpy.o mmce.o
+	@mkdir -p $(DISASM)
+	@$(OBJDUMP) -D mmce.card.elf > $(DISASM)/mmce.card.txt
+	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents mmce.card.elf mmce.card.bin
+	@$(BIN2S) -H $(DEST)/mmce_card_bin.h mmce.card.bin > $(DEST)/mmce.card.bin.s
+	@rm -f *.bin *.elf *.o
+
+mmce.dtk.bin:
+	@echo Building MMCE Patch + DTK ...
+	@$(CC) -Os $(OPTS) -c base/base.S
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DDTK
+	@$(CC) -Os $(OPTS) -c base/audio.c
+	@$(CC) -Os $(OPTS) -c base/fifo.c
+	@$(CC) -Os $(OPTS) -c base/frag.c
+	@$(CC) -Os $(OPTS) -c base/interrupt.c -DIRQ_MASK=0b00000000001001000000000000000000
+	@$(CC) -Os $(OPTS) -c base/ipl.c
+	@$(CC) -Os $(OPTS) -c base/blockdevice.c -DASYNC_READ -DDTK
+	@$(CC) -Os $(OPTS) -c mmce/mmce.c -DQUEUE_SIZE=3 -DWRITE=0  -DDMA_READ=1
+	@$(CC) -Os $(OPTS) -c usbgecko/uart.c
+	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
+	@$(CC) -Os $(OPTS) -c base/memcpy.S
+	@$(CC) -Os $(OPTS) -o mmce.dtk.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o audio.o fifo.o frag.o interrupt.o ipl.o blockdevice.o uart.o os.o memcpy.o mmce.o
+	@mkdir -p $(DISASM)
+	@$(OBJDUMP) -D mmce.dtk.elf > $(DISASM)/mmce.dtk.txt
+	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents mmce.dtk.elf mmce.dtk.bin
+	@$(BIN2S) -H $(DEST)/mmce_dtk_bin.h mmce.dtk.bin > $(DEST)/mmce.dtk.bin.s
+	@rm -f *.bin *.elf *.o
+
+mmce.eth.bin:
+	@echo Building MMCE Patch + ETH ...
+	@$(CC) -Os $(OPTS) -c base/base.S
+	@$(CC) -Os $(OPTS) -c base/emulator.c -DASYNC_READ -DBBA -DETH_EMULATOR -DNO_VIDEO
+	@$(CC) -Os $(OPTS) -c base/emulator_eth.c
+	@$(CC) -Os $(OPTS) -c base/frag.c
+	@$(CC) -Os $(OPTS) -c base/interrupt.c -DIRQ_MASK=0b00000000011011010000000001000000
+	@$(CC) -Os $(OPTS) -c base/ipl.c
+	@$(CC) -Os $(OPTS) -c base/blockdevice.c -DASYNC_READ
+	@$(CC) -Os $(OPTS) -c mmce/mmce.c -DDMA_READ=0 -DISR_READ=1 -DWRITE=0
+	@$(CC) -Os $(OPTS) -c bba/enc28j60.c
+	@$(CC) -Os $(OPTS) -c bba/w5500.c
+	@$(CC) -Os $(OPTS) -c bba/w6100.c
+	@$(CC) -Os $(OPTS) -c bba/w6300.c
+	@$(CC) -Os $(OPTS) -c usbgecko/uart.c
+	@$(CC) -Os $(OPTS) -c base/dolphin/os.c
+	@$(CC) -Os $(OPTS) -c base/memcpy.S
+	@$(CC) -Os $(OPTS) -o mmce-enc28j60.eth.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_eth.o frag.o interrupt.o ipl.o blockdevice.o enc28j60.o uart.o os.o memcpy.o mmce.o
+	@$(CC) -Os $(OPTS) -o mmce-w5500.eth.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_eth.o frag.o interrupt.o ipl.o blockdevice.o w5500.o uart.o os.o memcpy.o mmce.o
+	@$(CC) -Os $(OPTS) -o mmce-w6100.eth.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_eth.o frag.o interrupt.o ipl.o blockdevice.o w6100.o uart.o os.o memcpy.o mmce.o
+	@$(CC) -Os $(OPTS) -o mmce-w6300.eth.elf -T base/base.ld -T base/common.ld -T base/dolphin/os.ld base.o emulator.o emulator_eth.o frag.o interrupt.o ipl.o blockdevice.o w6300.o uart.o os.o memcpy.o mmce.o
+	@mkdir -p $(DISASM)
+	@$(OBJDUMP) -D mmce-enc28j60.eth.elf > $(DISASM)/mmce-enc28j60.eth.txt
+	@$(OBJDUMP) -D mmce-w5500.eth.elf > $(DISASM)/mmce-w5500.eth.txt
+	@$(OBJDUMP) -D mmce-w6100.eth.elf > $(DISASM)/mmce-w6100.eth.txt
+	@$(OBJDUMP) -D mmce-w6300.eth.elf > $(DISASM)/mmce-w6300.eth.txt
+	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents mmce-enc28j60.eth.elf mmce-enc28j60.eth.bin
+	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents mmce-w5500.eth.elf mmce-w5500.eth.bin
+	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents mmce-w6100.eth.elf mmce-w6100.eth.bin
+	@$(OBJCOPY) -O binary --set-section-flags .bss.*=alloc,load,contents mmce-w6300.eth.elf mmce-w6300.eth.bin
+	@$(BIN2S) -H $(DEST)/mmce_enc28j60_eth_bin.h mmce-enc28j60.eth.bin > $(DEST)/mmce-enc28j60.eth.bin.s
+	@$(BIN2S) -H $(DEST)/mmce_w5500_eth_bin.h mmce-w5500.eth.bin > $(DEST)/mmce-w5500.eth.bin.s
+	@$(BIN2S) -H $(DEST)/mmce_w6100_eth_bin.h mmce-w6100.eth.bin > $(DEST)/mmce-w6100.eth.bin.s
+	@$(BIN2S) -H $(DEST)/mmce_w6300_eth_bin.h mmce-w6300.eth.bin > $(DEST)/mmce-w6300.eth.bin.s
 	@rm -f *.bin *.elf *.o

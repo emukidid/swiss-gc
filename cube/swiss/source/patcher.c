@@ -482,6 +482,41 @@ int install_code(int final)
 				return 0;
 		}
 		print_debug("Installing Patch for FlippyDrive\n");
+	} 
+	// MMCE
+	else if(devices[DEVICE_CUR] == &__device_mcp_a || devices[DEVICE_CUR] == &__device_mcp_b || devices[DEVICE_CUR] == &__device_mcp_c) {
+		switch (devices[DEVICE_CUR]->emulated()) {
+			case EMU_NONE:
+				break;
+			case EMU_READ:
+			case EMU_READ | EMU_READ_SPEED:
+				patch     = mmce_bin;
+				patchSize = mmce_bin_size;
+				break;
+			case EMU_READ | EMU_MEMCARD:
+				patch     = mmce_card_bin;
+				patchSize = mmce_card_bin_size;
+				break;
+			case EMU_READ | EMU_ETHERNET | EMU_NO_PAUSING:
+				if (!strcmp(bba_device_str, "ENC28J60")) {
+					patch     = mmce_enc28j60_eth_bin;
+					patchSize = mmce_enc28j60_eth_bin_size;
+				} else if (!strcmp(bba_device_str, "WIZnet W5500")) {
+					patch     = mmce_w5500_eth_bin;
+					patchSize = mmce_w5500_eth_bin_size;
+				} else if (!strcmp(bba_device_str, "WIZnet W6100")) {
+					patch     = mmce_w6100_eth_bin;
+					patchSize = mmce_w6100_eth_bin_size;
+				} else if (!strcmp(bba_device_str, "WIZnet W6300")) {
+					patch     = mmce_w6300_eth_bin;
+					patchSize = mmce_w6300_eth_bin_size;
+				} else
+					return 0;
+				break;
+			default:
+				return 0;
+		}
+		print_debug("Installing Patch for MMCE\n");
 	}
 	print_debug("Space for patch remaining: %i\n", top_addr - LO_RESERVE);
 	print_debug("Space taken by vars/video patches: %i\n", HI_RESERVE - top_addr);
