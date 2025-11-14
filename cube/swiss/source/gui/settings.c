@@ -45,16 +45,18 @@ char *disableVideoPatchesStr[] = {"None", "Game", "All"};
 char *emulateAudioStreamStr[] = {"Off", "Auto", "On"};
 char *emulateReadSpeedStr[] = {"No", "Yes", "Wii"};
 char *disableMemoryCardStr[] = {"No", "Slot A", "Slot B"};
+char *sramLanguageStr[] = {"English", "German", "French", "Spanish", "Italian", "Dutch", "Japanese", "English (US)", "Default"};
+char *sramVideoStr[] = {"NTSC", "PAL", "PAL-M"};
 char *igrTypeStr[] = {"Disabled", "Reboot", "Apploader"};
 char *aveCompatStr[] = {"AVE N-DOL", "AVE P-DOL", "CMPV-DOL", "GCDigital", "GCVideo", "AVE-RVL"};
 char *fileBrowserStr[] = {"Standard", "Fullwidth", "Carousel"};
 char *bs2BootStr[] = {"No", "Yes", "Sound 1", "Sound 2"};
-char *sramLanguageStr[] = {"English", "German", "French", "Spanish", "Italian", "Dutch", "Japanese", "English (US)", "Default"};
 char *recentListLevelStr[] = {"Off", "Lazy", "On"};
 
 static char *tooltips_global[PAGE_GLOBAL_MAX+1] = {
 	"System Boot Mode:\n\nSets development or production mode on development hardware.\nOn retail hardware with GC Loader or PicoLoader, the default\nskips the GameCube logo screen.",
 	"System Sound:\n\nSets the default audio output type used by most games",
+	"System Video:\n\nIntended to select between NTSC and PAL-M on DOL-002(BRA)",
 	"Screen Position:\n\nAdjusts the horizontal screen position in games",
 	"System Language:\n\nSystem language used in games, primarily multi-5 PAL games",
 	"Configuration Device:\n\nThe device that Swiss will use to load and save swiss.ini from.\nThis setting is stored in SRAM and will remain on reboot.",
@@ -231,13 +233,15 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 		int scrollBarTabHeight = (int)((float)scrollBarHeight/(float)SET_PAGE_1_NEXT);
 		DrawAddChild(page, DrawVertScrollBar(getVideoMode()->fbWidth-45, page_y_ofs, 25, scrollBarHeight, (float)((float)option/(float)(SET_PAGE_1_NEXT-1)),scrollBarTabHeight));
 		DrawAddChild(page, DrawLabel(page_x_ofs_key, 65, "Global Settings (1/5):"));
+		bool tvEnable = swissSettings.aveCompat != AVE_RVL_COMPAT;
 		bool dvdEnable = deviceHandler_getDeviceAvailable(&__device_dvd);
 		bool dtvEnable = !in_range(swissSettings.aveCompat, AVE_N_DOL_COMPAT, AVE_P_DOL_COMPAT);
 		bool rt4kEnable = in_range(swissSettings.aveCompat, GCDIGITAL_COMPAT, GCVIDEO_COMPAT);
 		// TODO settings to a new typedef that ties type etc all together, then draw a "page" of these rather than this at some point.
-		if(option < SET_FLATTEN_DIR) {
+		if(option < SET_HIDE_UNK) {
 			drawSettingEntryString(page, &page_y_ofs, "System Boot Mode:", swissSettings.sramBoot ? "Production" : "Default", option == SET_SYS_BOOTMODE, true);
 			drawSettingEntryString(page, &page_y_ofs, "System Sound:", swissSettings.sramStereo ? "Stereo" : "Mono", option == SET_SYS_SOUND, true);
+			drawSettingEntryString(page, &page_y_ofs, "System Video:", sramVideoStr[swissSettings.sramVideo], option == SET_SYS_VIDEO, tvEnable);
 			sprintf(sramHOffsetStr, "%+hi", swissSettings.sramHOffset);
 			drawSettingEntryString(page, &page_y_ofs, "Screen Position:", sramHOffsetStr, option == SET_SCREEN_POS, true);
 			drawSettingEntryString(page, &page_y_ofs, "System Language:", sramLanguageStr[swissSettings.sramLanguage], option == SET_SYS_LANG, true);
@@ -248,8 +252,8 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 			drawSettingEntryBoolean(page, &page_y_ofs, "File Management:", swissSettings.enableFileManagement, option == SET_FILE_MGMT, true);
 			drawSettingEntryString(page, &page_y_ofs, "Recent List:", recentListLevelStr[swissSettings.recentListLevel], option == SET_RECENT_LIST, true);
 			drawSettingEntryBoolean(page, &page_y_ofs, "Show hidden files:", swissSettings.showHiddenFiles, option == SET_SHOW_HIDDEN, true);
-			drawSettingEntryBoolean(page, &page_y_ofs, "Hide unknown file types:", swissSettings.hideUnknownFileTypes, option == SET_HIDE_UNK, true);
 		} else {
+			drawSettingEntryBoolean(page, &page_y_ofs, "Hide unknown file types:", swissSettings.hideUnknownFileTypes, option == SET_HIDE_UNK, true);
 			drawSettingEntryString(page, &page_y_ofs, "Flatten directory:", swissSettings.flattenDir, option == SET_FLATTEN_DIR, true);
 			drawSettingEntryBoolean(page, &page_y_ofs, "Init DVD Drive at startup:", swissSettings.initDVDDriveAtStart, option == SET_INIT_DRIVE, dvdEnable);
 			drawSettingEntryBoolean(page, &page_y_ofs, "Stop DVD Drive motor:", swissSettings.stopMotor, option == SET_STOP_MOTOR, dvdEnable);
@@ -443,6 +447,12 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 			case SET_SYS_SOUND:
 				swissSettings.sramStereo ^= SYS_SOUND_STEREO;
 			break;
+			case SET_SYS_VIDEO:
+				if(swissSettings.aveCompat != AVE_RVL_COMPAT) {
+					swissSettings.sramVideo += direction;
+					swissSettings.sramVideo = ((s8)swissSettings.sramVideo + 3) % 3;
+				}
+			break;
 			case SET_SCREEN_POS:
 				if(in_range(swissSettings.aveCompat, GCDIGITAL_COMPAT, GCVIDEO_COMPAT)) {
 					swissSettings.sramHOffset /= 2;
@@ -572,6 +582,7 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 			break;
 		}
 		switch(option) {
+			case SET_SYS_VIDEO:
 			case SET_SWISS_VIDEOMODE:
 			case SET_AVE_COMPAT:
 			case SET_FORCE_DTVSTATUS:

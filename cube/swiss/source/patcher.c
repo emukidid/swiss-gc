@@ -174,6 +174,7 @@ int install_code(int final)
 		if (!top_addr) {
 			u32 size = SYS_GetPhysicalMemSize();
 			*(u32 *)0x80000034 = (u32)MEM_PHYSICAL_TO_K0(size);
+			*(u32 *)0x800000CC = VIDEO_GetCurrentTvMode();
 			*(u32 *)0x800000F0 = size;
 		} else {
 			for (u32 i = 0x100; i <= 0x900; i += 0x100) {

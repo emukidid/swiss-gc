@@ -23,6 +23,7 @@ enum PAGES {
 enum SETTINGS_GLOBAL {
 	SET_SYS_BOOTMODE=0,
 	SET_SYS_SOUND,
+	SET_SYS_VIDEO,
 	SET_SCREEN_POS,
 	SET_SYS_LANG,
 	SET_CONFIG_DEV,
@@ -171,13 +172,15 @@ extern char *disableVideoPatchesStr[];
 extern char *emulateAudioStreamStr[];
 extern char *emulateReadSpeedStr[];
 extern char *disableMemoryCardStr[];
+#define SRAM_LANGUAGE_MAX 8
+extern char *sramLanguageStr[];
+extern char *sramVideoStr[];
 extern char *igrTypeStr[];
 extern char *aveCompatStr[];
 extern char *fileBrowserStr[];
 extern char *bs2BootStr[];
 extern char *recentListLevelStr[];
-#define SRAM_LANGUAGE_MAX 8
-extern char *sramLanguageStr[];
+
 int show_settings(int page, int option, ConfigEntry *config);
 
 #endif

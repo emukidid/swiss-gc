@@ -148,6 +148,7 @@ int config_update_global(bool checkConfigDevice) {
 	fprintf(fp, "SD/IDE Speed=%s\r\n", swissSettings.exiSpeed ? "32MHz":"16MHz");
 	fprintf(fp, "System Boot Mode=%s\r\n", swissSettings.sramBoot ? "Production":"Default");
 	fprintf(fp, "System Sound=%s\r\n", swissSettings.sramStereo ? "Stereo":"Mono");
+	fprintf(fp, "System Video=%s\r\n", sramVideoStr[swissSettings.sramVideo]);
 	fprintf(fp, "Screen Position=%+hi\r\n", swissSettings.sramHOffset);
 	fprintf(fp, "System Language=%s\r\n", sramLanguageStr[swissSettings.sramLanguage]);
 	fprintf(fp, "Swiss Video Mode=%s\r\n", uiVModeStr[swissSettings.uiVMode]);
@@ -812,6 +813,14 @@ void config_parse_global(char *configData) {
 				}
 				else if(!strcmp("System Sound", name)) {
 					swissSettings.sramStereo = !strcmp("Stereo", value) ? SYS_SOUND_STEREO : SYS_SOUND_MONO;
+				}
+				else if(!strcmp("System Video", name) && swissSettings.aveCompat != AVE_RVL_COMPAT) {
+					for(int i = 0; i < 3; i++) {
+						if(!strcmp(sramVideoStr[i], value)) {
+							swissSettings.sramVideo = i;
+							break;
+						}
+					}
 				}
 				else if(!strcmp("Screen Position", name)) {
 					swissSettings.sramHOffset = atoi(value);
