@@ -233,8 +233,7 @@ void setVideoMode(GXRModeObj *m) {
 	VIDEO_SetPostRetraceCallback (ProperScanPADS);
 	VIDEO_SetBlack (false);
 	VIDEO_Flush ();
-	VIDEO_WaitVSync ();
-	VIDEO_WaitVSync ();
+	VIDEO_WaitForFlush ();
 	
 	// init GX
 	GX_Init (gp_fifo, DEFAULT_FIFO_SIZE);
@@ -263,7 +262,7 @@ void unsetVideoMode() {
 	VIDEO_SetPostRetraceCallback (NULL);
 	VIDEO_SetBlack (!swissSettings.forceVideoActive);
 	VIDEO_Flush ();
-	VIDEO_WaitVSync ();
+	VIDEO_WaitForFlush ();
 	
 	vmode = NULL;
 }

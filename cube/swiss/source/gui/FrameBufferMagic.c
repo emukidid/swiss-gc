@@ -2221,7 +2221,7 @@ static void *videoUpdate(void *videoEventQueue) {
 		VIDEO_SetNextFramebuffer(xfb[whichfb]);
 		VIDEO_ConfigurePan(0, 0, width, height);
 		VIDEO_Flush();
-		VIDEO_WaitVSync();
+		VIDEO_WaitForFlush();
 	}
 	return NULL;
 }
