@@ -233,7 +233,7 @@ int findCheats(bool silent) {
 		print_debug("Looking for cheats file @ [%s]\n", cheatsFile->name);
 
 		deviceHandler_setStatEnabled(0);
-		devices[DEVICE_CHEATS]->init(cheatsFile);
+		devices[DEVICE_CHEATS]->init(devices[DEVICE_CHEATS]->initial);
 		ensure_path(DEVICE_CHEATS, "swiss", NULL, true);
 		ensure_path(DEVICE_CHEATS, "swiss/cheats", "cheats", false);	// TODO kill this off in our next major release.
 		if(devices[DEVICE_CHEATS]->readFile(cheatsFile, &testBuffer, 8) != 8) {
@@ -246,7 +246,7 @@ int findCheats(bool silent) {
 				concatf_path(cheatsFile->name, devices[DEVICE_CHEATS]->initial->name, "swiss/cheats/%.6s.txt", trimmedGameId);
 				print_debug("Looking for cheats file @[%s]\n", cheatsFile->name);
 
-				devices[DEVICE_CHEATS]->init(cheatsFile);
+				devices[DEVICE_CHEATS]->init(devices[DEVICE_CHEATS]->initial);
 				ensure_path(DEVICE_CHEATS, "swiss", NULL, true);
 				ensure_path(DEVICE_CHEATS, "swiss/cheats", "cheats", false);	// TODO kill this off in our next major release.
 				if(devices[DEVICE_CHEATS]->readFile(cheatsFile, &testBuffer, 8) != 8) {
@@ -258,7 +258,7 @@ int findCheats(bool silent) {
 				concatf_path(cheatsFile->name, devices[DEVICE_CHEATS]->initial->name, "swiss/cheats/%.6s.txt", trimmedGameId);
 				print_debug("Looking for cheats file @[%s]\n", cheatsFile->name);
 
-				devices[DEVICE_CHEATS]->init(cheatsFile);
+				devices[DEVICE_CHEATS]->init(devices[DEVICE_CHEATS]->initial);
 				ensure_path(DEVICE_CHEATS, "swiss", NULL, true);
 				ensure_path(DEVICE_CHEATS, "swiss/cheats", "cheats", false);	// TODO kill this off in our next major release.
 				if(devices[DEVICE_CHEATS]->readFile(cheatsFile, &testBuffer, 8) != 8) {
