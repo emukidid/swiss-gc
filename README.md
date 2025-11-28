@@ -35,7 +35,7 @@ Swiss aims to be an all-in-one homebrew utility for the Nintendo GameCube.
 - DVD Interface
 	- Optical Disc Drive
 - External Expansion Interface
-	- Broadband Adapter via [ENC28J60](https://www.microchip.com/en-us/product/enc28j60), [W5500](https://wiznet.io/products/iethernet-chips/w5500), [W6100](https://wiznet.io/products/iethernet-chips/w6100) or [W6300](https://wiznet.io/products/iethernet-chips/w6300)
+	- Broadband Adapter via [ENC28J60](https://www.microchip.com/en-us/product/enc28j60), [W5500](https://wiznet.io/products/ethernet-chips/w5500), [W6100](https://wiznet.io/products/ethernet-chips/w6100) or [W6300](https://wiznet.io/products/ethernet-chips/w6300)
 	- Memory Cards via SD Cards
 - Audio Streaming Interface
 
