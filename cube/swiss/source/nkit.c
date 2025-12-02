@@ -152,6 +152,7 @@ static const struct {
 	{ "apploader.img", /* 2002/04/10       */  113536, 0xBBF3FF7C1A14AA59 },
 	{ "apploader.img", /* 2002/04/10       */  113536, 0xDC2A278D4F92A68C },
 	{ "apploader.img", /* 2002/09/05       */  116512, 0x42C07D59E1227D14 },
+	{ "apploader.img", /* 2002/09/05       */  116512, 0x4E907A28728D421A },
 	{ "apploader.img", /* 2002/09/05       */  116512, 0x6587E6A4F9663BB7 },
 	{ "apploader.img", /* 2002/09/05       */  116512, 0xA607D68783177BA3 },
 	{ "apploader.img", /* 2002/09/05       */  116512, 0xE0A70AC76B355E02 },
@@ -184,7 +185,7 @@ static const struct {
 	{ "apploader.img", /* 2024/09/14       */  113536, 0xBECA9866ECE7A957 },
 	{ "apploader.img", /* 2024/09/17       */  113536, 0x623687789597750B },
 	{ "apploader.img", /* 2025/07/10       */  113536, 0xED22F838A52EABC5 },
-#define NKIT_FIRM_COUNT (FIRM_COUNT + 126)
+#define NKIT_FIRM_COUNT (FIRM_COUNT + 127)
 	{ "240p Test Suite (World) (v1.04) (Program) (Aftermarket) (Unl).dol",        2301384, 0x71BCDBA149B3AAAF },
 	{ "240p Test Suite (World) (v1.06) (Program) (Aftermarket) (Unl).dol",         930560, 0x7EB7DDDAF5105457 },
 	{ "240p Test Suite (World) (v1.07) (Program) (Aftermarket) (Unl).dol",         932032, 0x4DAB8540272CCBD5 },
@@ -2363,6 +2364,8 @@ static const struct {
 	{{ "GC6E01\x00\x00" }, false, 0xE5, 0x6BC0, 0x338AEC48, 0xF0545D33E55E53A1,  654622720,  +805355520, {  182785616,  +805353180, 6496, 0x719C }, "Pokémon Colosseum" },
 	{{ "GCCE01\x00\x00" }, false, 0x13, 0xF223, 0xD466236E, 0x89D01E6E0E49A121, 1329932288,  +130045952, {  570366340,      +30392, 6496, 0x6BE6 }, "Final Fantasy Crystal Chronicles: Single Player Upgrade" },
 	{{ "GCREBM\x00\x00" }, false, 0xA7, 0x9EF5, 0x00FFED74, 0x34BF21CA529D0E02,   10774528,  +105123840, {      17736,         +24, 6496, 0x65EB }, "Xeno Crisis" },
+	{{ "GD5JB2\x00\x00" }, true,  0x49, 0x6440, 0x382C043E, 0x10D31372560E0AAA, 1023129600,  +436848640, { 1023122892,          +0, 6496, 0x1CF2 }, "Dragon Drive: D-Masters Shot" },
+	{{ "GD5JB2\x00\x00" }, true,  0x6A, 0x6440, 0xD0EB8A56, 0x10D31372560E0AAA, 1023129600,          +0, { 1023122892,          +0, 6496, 0x1CF2 }, "Dragon Drive: D-Masters Shot" },
 	{{ "GDEE71\x00\x00" }, false, 0x65, 0xC228, 0xC2C80167, 0x616D2EAD3B11D74F, 1358307328,  +101670912, {  914092380,       +7536, 6496, 0x2D5A }, "Baldur's Gate: Dark Alliance" },
 	{{ "GDPJAF\x00\x00" }, false, 0x85, 0x5BBF, 0xEEAD97CB, 0xF5236848D65E4FF3,  913614848,  +546363392, {  542371948,  +546337144, 6496, 0x7780 }, "Mr. Driller: Drill Land" },
 	{{ "GEAE8P\x00\x00" }, false, 0x16, 0x4329, 0x22E6FE4B, 0x776C0A056378855A, 1421514752,   +38463488, { 1206244016,   +36660560, 6496, 0x51AD }, "Skies of Arcadia: Legends Maeson" },
@@ -2509,7 +2512,7 @@ static const struct {
 	{{ "SG4JDA\x00\x00" }, true,  0x52, 0xF019, 0x4BB4830A, 0x3645CAE26589C220, 1272594432,  +187383808, { 1272587604,  +187384140, 6496, 0x015D }, "Naruto: Clash of Ninja 4" },
 	{{ "SG4JDA\x00\x00" }, true,  0x9D, 0xB3B3, 0x424A4760, 0x38394EDF8E58393A, 1261602816,  +198375424, { 1261594344,  +198377400, 6496, 0x015D }, "Naruto: Clash of Ninja 4" },
 	{{ "TESTNA\x00\x00" }, false, 0xD2, 0x0C28, 0x6254FB97, 0xAA2E5EDD0EF81992,   26834944,       -1658, {         ~0,          +0,    0, 0xFFFF }, "Dodger Demo" },
-#define VALID_GCM_COUNT (REDUMP_COUNT + 231)
+#define VALID_GCM_COUNT (REDUMP_COUNT + 233)
 	{{ "101E01\x00\x05" }, true,  0x88, 0xB6FD, 0x4BB518CD, 0x27CFAD706924A030, 1435949056,   +24029184, {         ~0,          +0,    0, 0xFFFF }, "Hontai Kensa Disc DOL-USA" },
 	{{ "101E01\x00\x05" }, true,  0xC6, 0xB6FD, 0x4BB518CD, 0x27CFAD706924A030, 1435949056,   +24029184, {         ~0,          +0,    0, 0xFFFF }, "Hontai Kensa Disc DOL-USA" },
 	{{ "101J01\x00\x03" }, true,  0x67, 0xA361, 0x1A7B7608, 0x6E2DA2E062EF73BA, 1459453952,     +524288, {         ~0,          +0,    0, 0xFFFF }, "Hontai Kensa Disc DOL" },
