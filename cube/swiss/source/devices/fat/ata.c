@@ -141,20 +141,16 @@ static inline void ata_read_buffer(int chn, u32 *dst)
 	EXI_ImmEx(chn,&dat,4,EXI_WRITE);
 	if(_ideexi_version == IDE_EXI_V1) {
 		// IDE_EXI_V1, select / deselect for every 4 bytes
-		EXI_Deselect(chn);
-		EXI_Unlock(chn);
+		EXI_DeselectEx(chn);
 		u32 i = 0;
 		u32 *ptr = dst;
 		for(i = 0; i < dwords; i++) {
-			EXI_LockEx(chn,dev);
-			EXI_Select(chn,dev,swissSettings.exiSpeed ? EXI_SPEED32MHZ:EXI_SPEED16MHZ);
+			EXI_SelectEx(chn,dev,swissSettings.exiSpeed ? EXI_SPEED32MHZ:EXI_SPEED16MHZ);
 			EXI_ImmEx(chn,ptr,4,EXI_READ);
+			EXI_DeselectEx(chn);
 			ptr++;
-			EXI_Deselect(chn);
-			EXI_Unlock(chn);
 		}
-		EXI_LockEx(chn,dev);
-		EXI_Select(chn,dev,swissSettings.exiSpeed ? EXI_SPEED32MHZ:EXI_SPEED16MHZ);
+		EXI_SelectEx(chn,dev,swissSettings.exiSpeed ? EXI_SPEED32MHZ:EXI_SPEED16MHZ);
 		EXI_ImmEx(chn,&dat,4,EXI_READ);
 		EXI_Deselect(chn);
 		EXI_Unlock(chn);
