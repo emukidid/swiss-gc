@@ -324,6 +324,7 @@ int main(int argc, char *argv[])
 		}
 	}
 	config_parse_args(argc, argv);
+	config_update_environ();
 	
 	// Swiss video mode force
 	GXRModeObj *forcedMode = getVideoModeFromSwissSetting(swissSettings.uiVMode);

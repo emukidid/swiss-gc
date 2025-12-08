@@ -1078,7 +1078,7 @@ int show_settings(int page, int option, ConfigEntry *config) {
 				VIDEO_SetAdjustingValues(swissSettings.sramHOffset, 0);
 				updateSRAM(&swissSettings, true);
 				// Update environment
-				setenv("AVE", aveCompatStr[swissSettings.aveCompat], 1);
+				config_update_environ();
 				// Update our .ini (in memory)
 				if(config != NULL) {
 					config_defaults(&tempConfig);

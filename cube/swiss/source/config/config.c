@@ -564,7 +564,6 @@ void config_parse_legacy(char *configData, void (*progress_indicator)(char*, int
 				else if(!strcmp("AVECompat", name)) {
 					for(int i = 0; i < AVE_COMPAT_MAX; i++) {
 						if(!strcmp(aveCompatStr[i], value)) {
-							setenv("AVE", aveCompatStr[i], 1);
 							swissSettings.aveCompat = i;
 							break;
 						}
@@ -926,7 +925,6 @@ void config_parse_global(char *configData) {
 				else if(!strcmp("AVECompat", name)) {
 					for(int i = 0; i < AVE_COMPAT_MAX; i++) {
 						if(!strcmp(aveCompatStr[i], value)) {
-							setenv("AVE", aveCompatStr[i], 1);
 							swissSettings.aveCompat = i;
 							break;
 						}
@@ -1321,6 +1319,28 @@ void config_init_environ() {
 	value = getenv("FLIPPYDRIVE");
 	if(value != NULL) {
 		swissSettings.hasFlippyDrive = !!atoi(value);
+	}
+	value = getenv("USBGECKO_CHANNEL");
+	if(value != NULL) {
+		swissSettings.enableUSBGecko = USBGECKO_MEMCARD_SLOT_A + atoi(value);
+	}
+	value = getenv("USBGECKO_SAFE");
+	if(value != NULL) {
+		swissSettings.waitForUSBGecko = !!atoi(value);
+	}
+}
+
+void config_update_environ() {
+	setenv("AVE", aveCompatStr[swissSettings.aveCompat], 1);
+	
+	if(swissSettings.enableUSBGecko) {
+		sprintf(txtbuffer, "USBGECKO_CHANNEL=%i", swissSettings.enableUSBGecko - USBGECKO_MEMCARD_SLOT_A);
+		putenv(txtbuffer);
+		sprintf(txtbuffer, "USBGECKO_SAFE=%i", swissSettings.waitForUSBGecko);
+		putenv(txtbuffer);
+	} else {
+		unsetenv("USBGECKO_CHANNEL");
+		unsetenv("USBGECKO_SAFE");
 	}
 }
 
