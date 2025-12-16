@@ -272,6 +272,7 @@ static const struct {
 	{{ "301E01\x00\x00" }, true,  0x83, 0x2291, 0xBE031BBE, 0x7AB7116BCF31F77C,  220121088, +1239857152, {  152535040, +1239842816, 6496, 0x1086 }, "Nintendo GameCube Service Disc Version 1.0/03" },
 	{{ "BOER51\x00\x00" }, false, 0xC8, 0xFA3E, 0x70BE6BAE, 0x33379E7CF4001A79, 1301760000,  +158218240, {  193123256,      +32136, 6496, 0x34EC }, "Burnout" },
 	{{ "D23J01\x00\x00" }, true,  0x75, 0x54F8, 0x385BDC6A, 0x0565886A07B73EEE, 1310650368,  +149327872, {  584824840,  +149335704, 6496, 0x51A7 }, "Game Taikai Yuushou Kinen: Tokusei SmaBro DX Movie Disc" },
+	{{ "D24J01\x00\x00" }, true,  0x80, 0xBFF3, 0x0DD683CE, 0x414B1A6F96A6694C,  517310464,  +942667776, {    6171064,  +942652648, 6496, 0xE8A2 }, "SmaBro DX Event-you Disc" },
 	{{ "D29J01\x00\x00" }, true,  0xC8, 0x944D, 0x87E9B682, 0xBA59F1A3D46EC35C,  967475200,  +492503040, {  473567348,  +492492332, 6496, 0x91C4 }, "Gekkan Nintendo Tentou Demo 2002.5.1" },
 	{{ "D32J01\x00\x00" }, true,  0xD9, 0x264C, 0x8C63ED7D, 0x40112DE6CDA8F156, 1017810944,  +442167296, {  688658456,  +442125960, 6496, 0x6C95 }, "Gekkan Nintendo Tentou Demo 2002.6.1" },
 	{{ "D33J01\x00\x00" }, true,  0xD9, 0xED1C, 0x86DACAB6, 0x494DCCBEDC286160, 1442138112,   +17840128, {  920004864,   +17849108, 6496, 0x72C1 }, "Gekkan Nintendo Tentou Demo 2002.7.1" },
@@ -2278,7 +2279,7 @@ static const struct {
 	{{ "UGPP01\x00\x01" }, false, 0x2A, 0x6D4F, 0x5ECD9681, 0x4E9244DEFB94F10C,    5079040, +1454899200, {    2317764,       +8764, 8096, 0x8972 }, "Game Boy Player Start-Up Disc" },
 	{{ "UGPP01\x00\x02" }, false, 0x3A, 0xCA50, 0x1E26380C, 0x483B4CE794041533,    5079040, +1454899200, {    2317764,       +8764, 8096, 0x8972 }, "Game Boy Player Start-Up Disc" },
 	{{ "XXXXXX\x00\x01" }, false, 0x83, 0x7056, 0x5995AC59, 0x5CBC3D9F00D75112, 1287913472,  +172064768, {         ~0,          +0,    0, 0xFFFF }, "LEGO Super Soccer Adventure" },
-#define REDUMP_COUNT (2015)
+#define REDUMP_COUNT (2016)
 	{{"00\0E01\x00\x00" }, false, 0x8B, 0x42A2, 0x499CF1AB, 0xC1BAC83BFBED3EDB,   31170560, +1428807680, {    7795364,      +23900, 6496, 0xBBEA }, "Nintendo Developer Demo" },
 	{{"00\0E01\x00\x00" }, false, 0xD9, 0x21CF, 0xBF114CB3, 0xC1BAC83BFBED3EDB,   31170560, +1428807680, {    7795364,      +23900, 6496, 0xBBEA }, "Nintendo Developer Demo" },
 	{{ "060J01\x00\x00" }, true,  0x7E, 0x27AC, 0x94C088DF, 0x55221BF909AB54CC,  171485184, +1288493056, {     238648, +1288483336, 6496, 0xFD76 }, "Diag Ver 3.1.1" },
@@ -2526,6 +2527,8 @@ static const struct {
 	{{ "102P01\x00\x07" }, true,  0x78, 0x44BE, 0xC3103545, 0xD6169C112BBD3349, 1450627072,    +9351168, {  122951084,    +1278164, 6496, 0x19E5 }, "Aging Disc DOL-PAL" },
 	{{ "301E01\x00\x00" }, true,  0x91, 0x2291, 0xBE031BBE, 0x7AB7116BCF31F77C,  206022656, +1253955584, {  140151696, +1252226160, 6496, 0x1086 }, "Nintendo GameCube Service Disc Version 1.0/03" },
 	{{ "327E01\x00\x00" }, false, 0x3A, 0x7406, 0xAF7E5D39, 0x1A5F0EA47A582D7E, 1457711104,    +2267136, { 1457702716,    +2269028, 6496, 0x3591 }, "Memory Card Utility Program" },
+	{{ "D24J01\x00\x00" }, true,  0xB7, 0xBFF3, 0x0DD683CE, 0x414B1A6F96A6694C, 1460045824,      -67584, {  948856488,      -32776, 6496, 0xE8A2 }, "SmaBro DX Event-you Disc" },
+	{{ "D24J01\x00\x00" }, true,  0xED, 0xBFF3, 0x0DD683CE, 0x414B1A6F96A6694C, 1460045824,      -67584, {  948856488,      -32776, 6496, 0xE8A2 }, "SmaBro DX Event-you Disc" },
 	{{ "D47J01\x00\x00" }, true,  0x4E, 0x6310, 0x3F9F3D4B, 0x923519E310698F55, 1284571136,  +175407104, { 1133822460,  +175425176, 6496, 0x08C2 }, "Gekkan Nintendo Tentou Demo 2003.2.1" },
 	{{ "D4BU01\x00\x00" }, false, 0x62, 0x21A2, 0x1D369CDA, 0x172A5451FAED68F4,  856571904,  +603406336, {  854933060,  +603407196, 8096, 0xBD28 }, "Resident Evil 4" },
 	{{ "D65E01\x00\x00" }, true,  0x50, 0x3C38, 0x052A45B7, 0x88BC5142ECB15EEA,  994826240,  +465152000, {  240898724,  +464819196, 6496, 0xCDB7 }, "Interactive Multi-Game Demo Disc Version 28" },
@@ -2584,7 +2587,7 @@ static const struct {
 	{{ "RELSAB\x00\x00" }, false, 0xAC, 0xBA9E, 0x1D74AD4A, 0x1A5F0EA47A582D7E, 1455841280,    +4136960, {         ~0,          +0,    0, 0xFFFF }, "Memory Card Utility Program" },
 	{{ "RELSAB\x00\x00" }, true,  0x44, 0xFCCE, 0x146E4A5A, 0x1E9563341CFB48F4, 1459947520,      +30720, { 1193673280,          +0, 6496, 0x8F7A }, "Summoner: The Prophecy" },
 	{{ "RELSAB\x00\x00" }, true,  0xD6, 0xD9CE, 0x16D7BCCE, 0xB64ADF7A4E8423B8, 1459978240,          +0, { 1193214528,          +0, 6496, 0x1458 }, "Summoner: The Prophecy" },
-#define TOTAL_GCM_COUNT (VALID_GCM_COUNT + 71)
+#define TOTAL_GCM_COUNT (VALID_GCM_COUNT + 73)
 };
 
 uint8_t fletcher8(const void *buffer, size_t size)
