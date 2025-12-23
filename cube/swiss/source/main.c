@@ -123,6 +123,13 @@ void Initialise(void)
 	SYS_SetVideoMode(swissSettings.sramVideo);
 	swissSettings.fontEncode = SYS_GetFontEncoding();
 
+	if(swissSettings.sramLanguage == SYS_LANG_ENGLISH) {
+		if(swissSettings.sramVideo == SYS_VIDEO_NTSC)
+			swissSettings.sramLanguage = swissSettings.fontEncode == SYS_FONTENC_SJIS ? SYS_LANG_JAPANESE : SYS_LANG_ENGLISH_US;
+		else if(swissSettings.sramVideo == SYS_VIDEO_MPAL)
+			swissSettings.sramLanguage = SYS_LANG_ENGLISH_US;
+	}
+
 	GXRModeObj *vmode = getVideoMode();
 	DrawInit(vmode, swissSettings.cubebootInvoked);
 }

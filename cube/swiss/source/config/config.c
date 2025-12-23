@@ -99,7 +99,7 @@ char* config_file_read(char* filename) {
 	file_handle *configFile = (file_handle*)calloc(1, sizeof(file_handle));
 	concat_path(configFile->name, devices[DEVICE_CONFIG]->initial->name, filename);
 	print_debug("config_file_read: looking for %s\n", configFile->name);
-	if(!devices[DEVICE_CONFIG]->statFile(configFile)) {
+	if(!devices[DEVICE_CONFIG]->statFile(configFile) && configFile->size) {
 		readBuffer = (char*)calloc(1, configFile->size + 1);
 		if (readBuffer) {
 			print_debug("config_file_read: reading %i byte file\n", configFile->size);
