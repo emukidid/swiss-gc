@@ -1,4 +1,5 @@
 #include <argz.h>
+#include <langinfo.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -1298,6 +1299,8 @@ int config_init(void (*progress_indicator)(char*, int, int)) {
 	return res;
 }
 
+static char *sramLanguageEnvStr[] = {"en_GB", "de_DE", "fr_FR", "es_ES", "it_IT", "nl_NL", "ja_JP", "en_US"};
+
 void config_init_environ() {
 	char *value;
 	value = getenv("AVE");
@@ -1311,7 +1314,19 @@ void config_init_environ() {
 			}
 		}
 	}
-	
+	value = getenv("LANG");
+	if(value == NULL || *value == '\0') {
+		sprintf(txtbuffer, "LANG=%s.%s", sramLanguageEnvStr[swissSettings.sramLanguage], nl_langinfo(CODESET));
+		putenv(txtbuffer);
+	} else {
+		char *dot = strchrnul(value, '.');
+		for(int i = 0; i < SRAM_LANGUAGE_MAX; i++) {
+			if(!strncmp(sramLanguageEnvStr[i], value, dot - value)) {
+				swissSettings.sramLanguage = i;
+				break;
+			}
+		}
+	}
 	value = getenv("CUBEBOOT");
 	if(value != NULL) {
 		swissSettings.cubebootInvoked = !!atoi(value);
@@ -1332,6 +1347,8 @@ void config_init_environ() {
 
 void config_update_environ() {
 	setenv("AVE", aveCompatStr[swissSettings.aveCompat], 1);
+	sprintf(txtbuffer, "LANG=%s.%s", sramLanguageEnvStr[swissSettings.sramLanguage], nl_langinfo(CODESET));
+	putenv(txtbuffer);
 	
 	if(swissSettings.enableUSBGecko) {
 		sprintf(txtbuffer, "USBGECKO_CHANNEL=%i", swissSettings.enableUSBGecko - USBGECKO_MEMCARD_SLOT_A);
