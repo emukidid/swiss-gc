@@ -65,8 +65,7 @@ void CheckStatus(s32 chan, PADStatus *status)
 	u8 igr_type = *VAR_IGR_TYPE;
 
 	if (igr_type != IGR_OFF) {
-		if ((status->button & PAD_COMBO_EXIT1) == PAD_COMBO_EXIT1 ||
-			(status->button & PAD_COMBO_EXIT2) == PAD_COMBO_EXIT2) {
+		if ((status->button & PAD_COMBO_EXIT) == PAD_COMBO_EXIT) {
 			if (OSResetSystem) {
 				*VAR_DRIVE_FLAGS |= 0b0010;
 				*VAR_IGR_TYPE = IGR_OFF;
