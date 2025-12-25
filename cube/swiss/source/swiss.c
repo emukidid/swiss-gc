@@ -2858,7 +2858,7 @@ void menu_loop()
 			curMenuLocation=ON_OPTIONS;
 			curSelection=0; curMenuSelection=0;
 			scanFiles();
-			if(getCurrentDirEntryCount()<1) { devices[DEVICE_CUR]->deinit(devices[DEVICE_CUR]->initial); needsDeviceChange=1; break;}
+			if(getCurrentDirEntryCount()<=0) { devices[DEVICE_CUR]->deinit(devices[DEVICE_CUR]->initial); needsDeviceChange=1; break;}
 			needsRefresh = 0;
 			curMenuLocation = ON_FILLIST;
 			DrawUpdateMenuButtons((curMenuLocation == ON_OPTIONS) ? curMenuSelection : MENU_NOSELECT);

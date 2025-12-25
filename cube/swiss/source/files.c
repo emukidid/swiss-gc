@@ -94,6 +94,13 @@ void scanFiles() {
 			}
 		}
 	}
+	if(curDirEntryCount > 0) {
+		char *pwd = getenv("PWD");
+		if(pwd) setenv("OLDPWD", pwd, 1);
+		pwd = getExternalPath(curDir.name);
+		if(pwd) setenv("PWD", pwd, 1);
+		free(pwd);
+	}
 	print_debug("Found %i entries\n",curDirEntryCount);
 	sortedDirEntryCount = sortFiles(curDirEntries, curDirEntryCount, &sortedDirEntries);
 	for(int i = 0; i < sortedDirEntryCount; i++) {
