@@ -2008,6 +2008,7 @@ static const struct {
 	{{ "GUPE8P\x00\x00" }, false, 0xA0, 0xCD07, 0xF582CF1E, 0x88D6C86BE328207C, 1362565120,   +97413120, {  471429212,      +27392, 6496, 0x72C2 }, "Shadow the Hedgehog" },
 	{{ "GUPJ8P\x00\x00" }, false, 0xA2, 0x022B, 0x529BAA3A, 0x70A512ADF460014E, 1383862272,   +76115968, {  471468172,      +25824, 6496, 0xB744 }, "Shadow the Hedgehog" },
 	{{ "GUPP8P\x00\x00" }, false, 0x14, 0x9A3D, 0xDB7D8CD9, 0x11CE6FC29F8047E1, 1362610176,   +97368064, {  471470120,      +23264, 8096, 0x5C5A }, "Shadow the Hedgehog" },
+	{{ "GUPP8P\x00\x00" }, false, 0x49, 0xA5F4, 0xDBF1A4FE, 0x8B2965CA37DE0F4C, 1384206336,   +75771904, {  489414316,      +19372, 8096, 0x386E }, "Shadow the Hedgehog" },
 	{{ "GUSE7F\x00\x00" }, true,  0x67, 0xD55D, 0x6CDF5761, 0x740D111CC48B4B92,  849780736,  +610197504, {  498765476,     +163840, 6496, 0x6D79 }, "Universal Studios Theme Park Adventure" },
 	{{ "GUSJ28\x00\x00" }, true,  0xE0, 0x8E63, 0x9C1BC747, 0xBC552197800FF499,  833183744,  +626794496, {  498200316,     +163840, 6496, 0x0F1C }, "Universal Studios Japan Adventure" },
 	{{ "GUSP7F\x00\x00" }, true,  0x98, 0x6F25, 0x8A739C2B, 0x056B6AD76CD91E37,  840755200,  +619223040, {  494341836,     +131072, 6496, 0x827C }, "Universal Studios Theme Park Adventure" },
@@ -2279,7 +2280,7 @@ static const struct {
 	{{ "UGPP01\x00\x01" }, false, 0x2A, 0x6D4F, 0x5ECD9681, 0x4E9244DEFB94F10C,    5079040, +1454899200, {    2317764,       +8764, 8096, 0x8972 }, "Game Boy Player Start-Up Disc" },
 	{{ "UGPP01\x00\x02" }, false, 0x3A, 0xCA50, 0x1E26380C, 0x483B4CE794041533,    5079040, +1454899200, {    2317764,       +8764, 8096, 0x8972 }, "Game Boy Player Start-Up Disc" },
 	{{ "XXXXXX\x00\x01" }, false, 0x83, 0x7056, 0x5995AC59, 0x5CBC3D9F00D75112, 1287913472,  +172064768, {         ~0,          +0,    0, 0xFFFF }, "LEGO Super Soccer Adventure" },
-#define REDUMP_COUNT (2016)
+#define REDUMP_COUNT (2017)
 	{{"00\0E01\x00\x00" }, false, 0x8B, 0x42A2, 0x499CF1AB, 0xC1BAC83BFBED3EDB,   31170560, +1428807680, {    7795364,      +23900, 6496, 0xBBEA }, "Nintendo Developer Demo" },
 	{{"00\0E01\x00\x00" }, false, 0xD9, 0x21CF, 0xBF114CB3, 0xC1BAC83BFBED3EDB,   31170560, +1428807680, {    7795364,      +23900, 6496, 0xBBEA }, "Nintendo Developer Demo" },
 	{{ "060J01\x00\x00" }, true,  0x7E, 0x27AC, 0x94C088DF, 0x55221BF909AB54CC,  171485184, +1288493056, {     238648, +1288483336, 6496, 0xFD76 }, "Diag Ver 3.1.1" },
@@ -2290,6 +2291,8 @@ static const struct {
 	{{ "G2TP52\x00\x00" }, false, 0x10, 0xEFEC, 0xEE959C7E, 0xA6DF308D2E6E85D7, 1459955712,      +22528, { 1018210520,          +0, 6496, 0x2179 }, "Memory Card Utility Program" },
 	{{ "G2TP52\x00\x00" }, false, 0x40, 0xEFEC, 0x0C20DB86, 0xA6DF308D2E6E85D7, 1459980288,       -2048, { 1018210520,          +0, 6496, 0x2A86 }, "Memory Card Utility Program" },
 	{{ "G2XJ8P\x00\x00" }, false, 0x78, 0x4354, 0x54945C2F, 0x9D241F84F310A2E0, 1360922624,   +99055616, {    2200740,   +98952028, 6496, 0x3FC1 }, "Sonic Gems Collection" },
+	{{ "G2XP8P\x00\x00" }, false, 0x7B, 0x5143, 0x49522DFA, 0x81E8B693E0E23CAA, 1369686016,   +90292224, {    2202104,      +26120, 6496, 0xA3ED }, "Sonic Gems Collection" },
+	{{ "G2XP8P\x00\x00" }, false, 0x86, 0x434D, 0x6AD50045, 0x135C8B05240BBED7, 1362450432,   +97527808, {    2201600,      +26624, 6496, 0xA3ED }, "Sonic Gems Collection" },
 	{{ "G3EP51\x00\x00" }, true,  0x34, 0x80D0, 0x6F0DFACE, 0x4B8AC78E5081B62E,  459536384, +1000441856, {   87327232,    +2793404, 6496, 0x0649 }, "XGIII: Extreme G Racing" },
 	{{ "G3EP51\x00\x00" }, true,  0x68, 0x80D0, 0x395187D3, 0x4B8AC78E5081B62E,  459601920,  +188680192, {   87327232,    +2793404, 6496, 0x0649 }, "XGIII: Extreme G Racing" },
 	{{ "G4BE08\x10\x00" }, false, 0xD6, 0xAC60, 0xF42C8796, 0x74B4EC020FDC7489, 1391001600,   +68976640, {    3678236,   +67028612, 6496, 0xE6BE }, "Resident Evil 4" },
@@ -2302,6 +2305,8 @@ static const struct {
 	{{ "G9SE8P\x00\x00" }, false, 0xC9, 0x2452, 0x9570B84D, 0x4B02F2707E61E294, 1187868672,  +272109568, {         ~0,          +0,    0, 0xFFFF }, "Sonic Heroes" },
 	{{ "G9SE8P\x00\x00" }, false, 0xD6, 0xEC9A, 0x4F1E87EB, 0x4C0530E96FCF1607, 1285890048,   +91774976, {  575774080,   +73228928, 6496, 0x7CBD }, "Sonic Heroes" },
 	{{ "G9SE8P\x00\x03" }, false, 0xC7, 0x1E76, 0x82D09071, 0x0768710ADFC73862, 1245077504,  +214900736, {  441842048,  +214466732, 6496, 0x7CBD }, "Sonic Heroes" },
+	{{ "G9SJ8P\x00\x00" }, false, 0x1C, 0x984A, 0x031F4578, 0x9083F84BE57F56E1,  278956032, +1181022208, {         ~0,          +0,    0, 0xFFFF }, "Shadow the Hedgehog" },
+	{{ "G9SJ8P\x00\x00" }, false, 0xB5, 0x984A, 0xF9E050D2, 0x9083F84BE57F56E1,  279472128,  +901126144, {         ~0,          +0,    0, 0xFFFF }, "Shadow the Hedgehog" },
 	{{ "G9SJ8P\x00\x00" }, false, 0xB6, 0xC0D7, 0xE291DD98, 0xEF8BF465DC6C831C, 1459310592,     +667648, {  614910892,     +245764, 6496, 0x2336 }, "Sonic Heroes" },
 	{{ "GAAJ08\x00\x00" }, false, 0xE8, 0x59B5, 0xCFF85DC4, 0x8FB84CC1BD034EF2,  431874048, +1028104192, {  431866960, +1028104784, 6496, 0x3F32 }, "Disney's Hide & Sneak" },
 	{{ "GAEE01\x00\x00" }, false, 0x35, 0xFBDD, 0x4766503F, 0x436691A998882797,   29786112, +1430192128, {   29137112, +1430187816, 6496, 0x1129 }, "Animal Forest e+" },
@@ -2513,7 +2518,7 @@ static const struct {
 	{{ "SG4JDA\x00\x00" }, true,  0x52, 0xF019, 0x4BB4830A, 0x3645CAE26589C220, 1272594432,  +187383808, { 1272587604,  +187384140, 6496, 0x015D }, "Naruto: Clash of Ninja 4" },
 	{{ "SG4JDA\x00\x00" }, true,  0x9D, 0xB3B3, 0x424A4760, 0x38394EDF8E58393A, 1261602816,  +198375424, { 1261594344,  +198377400, 6496, 0x015D }, "Naruto: Clash of Ninja 4" },
 	{{ "TESTNA\x00\x00" }, false, 0xD2, 0x0C28, 0x6254FB97, 0xAA2E5EDD0EF81992,   26834944,       -1658, {         ~0,          +0,    0, 0xFFFF }, "Dodger Demo" },
-#define VALID_GCM_COUNT (REDUMP_COUNT + 233)
+#define VALID_GCM_COUNT (REDUMP_COUNT + 237)
 	{{ "101E01\x00\x05" }, true,  0x88, 0xB6FD, 0x4BB518CD, 0x27CFAD706924A030, 1435949056,   +24029184, {         ~0,          +0,    0, 0xFFFF }, "Hontai Kensa Disc DOL-USA" },
 	{{ "101E01\x00\x05" }, true,  0xC6, 0xB6FD, 0x4BB518CD, 0x27CFAD706924A030, 1435949056,   +24029184, {         ~0,          +0,    0, 0xFFFF }, "Hontai Kensa Disc DOL-USA" },
 	{{ "101J01\x00\x03" }, true,  0x67, 0xA361, 0x1A7B7608, 0x6E2DA2E062EF73BA, 1459453952,     +524288, {         ~0,          +0,    0, 0xFFFF }, "Hontai Kensa Disc DOL" },
