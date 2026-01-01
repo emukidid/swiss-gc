@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2020-2025, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2020-2026, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -1481,7 +1481,7 @@ static const struct {
 	{{ "GNHE5d\x00\x00" }, false, 0x2C, 0x3E90, 0x0E8BB8D0, 0xCB5D5096FE9FD4E8,    2045952, +1457932288, {      94248,       +4056, 6496, 0xB20B }, "Advance Game Port" },
 	{{ "GNHE5d\x00\x00" }, false, 0x2C, 0xCCBB, 0x11A23CFC, 0x9D96DC5BD2CAB822,    3047424, +1456930816, {      94248,       +4056, 6496, 0x4C9F }, "Action Replay for GameCube" },
 	{{ "GNHE5d\x00\x00" }, false, 0x2D, 0xCCBB, 0x20410C84, 0xFD841AF194632025,     968704, +1459009536, {      94248,       +4056, 6496, 0xB8A4 }, "Action Replay Ultimate Codes for Use with Wario World" },
-	{{ "GNHE5d\x00\x00" }, false, 0x2E, 0xCCBB, 0x2E098A57, 0xED61A06E328BCADC,     929792, +1459048448, {      94248,       +4056, 6496, 0x71DF }, "CD avec les Codes Exclusifs et inédits pour le Jeu Metroid Prime" },
+	{{ "GNHE5d\x00\x00" }, false, 0x2E, 0xCCBB, 0x2E098A57, 0xED61A06E328BCADC,     929792, +1459048448, {      94248,       +4056, 6496, 0x71DF }, "CD avec les codes exclusifs et inédits pour le jeu Metroid Prime" },
 	{{ "GNHE5d\x00\x00" }, false, 0x30, 0xCCBB, 0x534963A9, 0x4C74370EF6241C47,     630784, +1459347456, {      94248,       +4056, 6496, 0x1F49 }, "SD Media Launcher for GameCube / Wii" },
 	{{ "GNHE5d\x00\x00" }, false, 0x32, 0xCCBB, 0xF788D099, 0x20C822BDDEB80BC7,    1245184, +1458733056, {      94248,       +4056, 6496, 0x08F2 }, "Ultimate Codes for Use with Tom Clancy's Splinter Cell" },
 	{{ "GNHE5d\x00\x00" }, false, 0x33, 0xCCBB, 0xC7E200F3, 0x2B7A18F78F0474B8,    2117632, +1457860608, {      94248,       +4056, 6496, 0x3A76 }, "Action Replay Ultimate Cheats für Enter the Matrix" },

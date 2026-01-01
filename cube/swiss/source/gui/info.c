@@ -237,7 +237,7 @@ uiDrawObj_t * info_draw_page(int page_num) {
 	else if(page_num == 2) {
 		DrawAddChild(container, DrawLabel(30, 55, "Version Info (3/4):"));
 		DrawAddChild(container, DrawStyledLabel(640/2, 115, "Swiss version 0.6", 1.0f, true, defaultColor));
-		DrawAddChild(container, DrawStyledLabel(640/2, 140, "by emu_kidid & Extrems, 2025", 0.75f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 140, "by emu_kidid & Extrems, 2026", 0.75f, true, defaultColor));
 		sprintf(topStr, "Commit %s; Revision %s", GIT_COMMIT, GIT_REVISION);
 		DrawAddChild(container, DrawStyledLabel(640/2, 165, topStr, 0.75f, true, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(640/2, 190, "Built with " _V_STRING, 0.64f, true, defaultColor));
