@@ -2042,7 +2042,7 @@ void load_game() {
 				DrawDispose(msgBox);
 				goto exit;
 			}
-			else {
+			else if(!is_recent_entry(curFile.name)) {
 				DrawDispose(msgBox);
 				msgBox = DrawPublish(DrawMessageBox(D_WARN, "File is a bad dump, but may be playable.\nPlease attempt recovery using NKit."));
 				sleep(5);

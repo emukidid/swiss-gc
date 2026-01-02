@@ -270,6 +270,17 @@ bool update_recent() {
 	return true;
 }
 
+bool is_recent_entry(char *entry) {
+	if(swissSettings.recentListLevel > 0) {
+		for(int i = 0; i < RECENT_MAX; i++) {
+			if(!strcmp(swissSettings.recent[i], entry)) {
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
 int find_existing_entry(char *entry, bool load) {
 	// get the device handler for it
 	DEVICEHANDLER_INTERFACE *entryDevice = getDeviceFromPath(entry);

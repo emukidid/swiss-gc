@@ -21,6 +21,7 @@ char *stripInvalidChars(char *str);
 void load_auto_dol(int argc, char *argv[]);
 void print_debug(const char *fmt, ...);
 bool update_recent();
+bool is_recent_entry(char *entry);
 int find_existing_entry(char *entry, bool load);
 bool deleteFileOrDir(file_handle* entry);
 int formatBytes(char *string, off_t count, blksize_t blocksize, bool metric);
