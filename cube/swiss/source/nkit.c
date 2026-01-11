@@ -392,6 +392,7 @@ static const struct {
 	{{ "DBSJ8P\x00\x00" }, false, 0xD3, 0x68BC, 0xE90CBB5B, 0xCBDF8D7A0E60FF21,  102094848, +1357883392, {   72510572, +1357883412, 6496, 0x2B92 }, "Beach Spikers: Virtua Beach Volleyball" },
 	{{ "DBZJ08\x00\x00" }, false, 0xC4, 0xD256, 0xC089501E, 0x7B2D4B3C56410254,  801167360,  +658810880, {  765615848,      +26144, 6496, 0x37C0 }, "Biohazard Zero: Trial Edition" },
 	{{ "DCEP41\x00\x00" }, false, 0xD2, 0x935C, 0xCE53A492, 0x7D729C0442EB90CD,   51871744, +1408106496, {    3248260,      +28540, 6496, 0xE72D }, "Tom Clancy's Splinter Cell" },
+	{{ "DDPJ01\x00\x00" }, false, 0x36, 0x5AED, 0xFBE5427E, 0x82B62B61CB4EB33B,  917639168,  +542339072, {    2108136,       +2424, 6496, 0x4F0F }, "Mr. Driller: Drill Land Event-you Disc" },
 	{{ "DEOJ08\x00\x00" }, false, 0x8C, 0xB56A, 0xFFF31CF8, 0x7D5991E98E141D5D,  418557952, +1041420288, {   36950600,       +9172, 6496, 0x2F3B }, "Capcom vs. SNK 2 EO" },
 	{{ "DEZP8P\x00\x00" }, false, 0x36, 0x3FB2, 0x097DA801, 0xDC83BF86B6AB678A,  387362816, +1072615424, {  357034728, +1072617304, 8096, 0x9B40 }, "Billy Hatcher and the Giant Egg" },
 	{{ "DFIJ13\x00\x00" }, false, 0x32, 0x46CD, 0x7BDC7837, 0x564B21524D7D6551, 1311358976,  +148619264, { 1311351652,     +110200, 6496, 0x6371 }, "2002 FIFA World Cup" },
@@ -2281,7 +2282,7 @@ static const struct {
 	{{ "UGPP01\x00\x01" }, false, 0x2A, 0x6D4F, 0x5ECD9681, 0x4E9244DEFB94F10C,    5079040, +1454899200, {    2317764,       +8764, 8096, 0x8972 }, "Game Boy Player Start-Up Disc" },
 	{{ "UGPP01\x00\x02" }, false, 0x3A, 0xCA50, 0x1E26380C, 0x483B4CE794041533,    5079040, +1454899200, {    2317764,       +8764, 8096, 0x8972 }, "Game Boy Player Start-Up Disc" },
 	{{ "XXXXXX\x00\x01" }, false, 0x83, 0x7056, 0x5995AC59, 0x5CBC3D9F00D75112, 1287913472,  +172064768, {         ~0,          +0,    0, 0xFFFF }, "LEGO Super Soccer Adventure" },
-#define REDUMP_COUNT (2018)
+#define REDUMP_COUNT (2019)
 	{{"00\0E01\x00\x00" }, false, 0x8B, 0x42A2, 0x499CF1AB, 0xC1BAC83BFBED3EDB,   31170560, +1428807680, {    7795364,      +23900, 6496, 0xBBEA }, "Nintendo Developer Demo" },
 	{{"00\0E01\x00\x00" }, false, 0xD9, 0x21CF, 0xBF114CB3, 0xC1BAC83BFBED3EDB,   31170560, +1428807680, {    7795364,      +23900, 6496, 0xBBEA }, "Nintendo Developer Demo" },
 	{{ "060J01\x00\x00" }, true,  0x7E, 0x27AC, 0x94C088DF, 0x55221BF909AB54CC,  171485184, +1288493056, {     238648, +1288483336, 6496, 0xFD76 }, "Diag Ver 3.1.1" },
