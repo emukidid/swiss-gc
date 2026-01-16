@@ -7,13 +7,13 @@
 #include <string.h>
 #include <unistd.h>
 #include <malloc.h>
+#include <ogc/aram.h>
 #include "deviceHandler.h"
 #include "deviceHandler-FAT.h"
 #include "gui/FrameBufferMagic.h"
 #include "gui/IPLFontWrite.h"
 #include "swiss.h"
 #include "main.h"
-#include "aram.h"
 
 file_handle initial_ARAM = {
 	.name     = "ram:/",
@@ -46,6 +46,7 @@ DEVICEHANDLER_INTERFACE __device_aram = {
 	.deviceDescription = "Supported File System(s): FAT16, FAT32, exFAT",
 	.deviceTexture = {TEX_SYSTEM, 75, 48, 76, 48},
 	.features = FEAT_READ|FEAT_WRITE|FEAT_THREAD_SAFE,
+	.quirks = QUIRK_NO_DEINIT,
 	.location = LOC_HSP,
 	.initial = &initial_ARAM,
 	.test = deviceHandler_ARAM_test,

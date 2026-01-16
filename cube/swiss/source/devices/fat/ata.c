@@ -690,7 +690,7 @@ DISC_INTERFACE __io_ataa = {
 	(FN_MEDIUM_WRITESECTORS)&__ataa_writeSectors,
 	(FN_MEDIUM_CLEARSTATUS)&__ataa_clearStatus,
 	(FN_MEDIUM_SHUTDOWN)&__ataa_shutdown,
-	0x1000000000000,
+	~0,
 	512
 } ;
 DISC_INTERFACE __io_atab = {
@@ -702,7 +702,7 @@ DISC_INTERFACE __io_atab = {
 	(FN_MEDIUM_WRITESECTORS)&__atab_writeSectors,
 	(FN_MEDIUM_CLEARSTATUS)&__atab_clearStatus,
 	(FN_MEDIUM_SHUTDOWN)&__atab_shutdown,
-	0x1000000000000,
+	~0,
 	512
 } ;
 DISC_INTERFACE __io_atac = {
@@ -714,6 +714,6 @@ DISC_INTERFACE __io_atac = {
 	(FN_MEDIUM_WRITESECTORS)&__atac_writeSectors,
 	(FN_MEDIUM_CLEARSTATUS)&__atac_clearStatus,
 	(FN_MEDIUM_SHUTDOWN)&__atac_shutdown,
-	0x1000000000000,
+	~0,
 	512
 } ;

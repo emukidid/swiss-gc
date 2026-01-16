@@ -15,7 +15,7 @@
 #include "ata.h"
 #include "wkf.h"
 #include <ogc/dvd.h>
-#include "aram.h"
+#include <ogc/aram.h>
 #include <dvm.h>
 
 static DISC_INTERFACE *iface[FF_VOLUMES] = {&__io_gcsda, &__io_gcsdb, &__io_gcsd2, &__io_mmcea, &__io_mmceb, &__io_mmce2, &__io_ataa, &__io_atab, &__io_atac, &__io_wkf, &__io_gcode, &__io_aram};
@@ -146,7 +146,7 @@ DRESULT disk_ioctl (
 
 		case GET_SECTOR_COUNT:
 			*(LBA_t*)buff = disc[pdrv]->num_sectors;
-			res = RES_OK;
+			res = ~disc[pdrv]->num_sectors != 0 ? RES_OK : RES_ERROR;
 			break;
 
 		case GET_SECTOR_SIZE:
