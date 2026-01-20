@@ -33,9 +33,9 @@ static void *net_thread_func(void *arg)
 	}
 
 	net_initialized = 1;
-	strcpy(swissSettings.bbaLocalIp, inet_ntoa(bba_localip));
+	inet_ntoa_r(bba_localip, swissSettings.bbaLocalIp, sizeof(swissSettings.bbaLocalIp));
 	swissSettings.bbaNetmask = bba_netmask.s_addr ? (32 - __builtin_ctz(bba_netmask.s_addr)) : 0;
-	strcpy(swissSettings.bbaGateway, inet_ntoa(bba_gateway));
+	inet_ntoa_r(bba_gateway, swissSettings.bbaGateway, sizeof(swissSettings.bbaGateway));
 
 	char ifname[4];
 	if (if_indextoname(1, ifname)) {

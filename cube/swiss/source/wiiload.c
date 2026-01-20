@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2014-2025, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2014-2026, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -28,6 +28,7 @@
 #include "aram/sidestep.h"
 #include "bba.h"
 #include "elf.h"
+#include "gui/FrameBufferMagic.h"
 #include "patcher.h"
 #include "swiss.h"
 #include "wiiload.h"
@@ -42,6 +43,7 @@ typedef struct {
 
 typedef int wiiload_read_function_t(int, void *, size_t);
 
+static lwp_t main_thread = LWP_THREAD_NULL;
 static lwp_t tcp_thread = LWP_THREAD_NULL;
 static lwp_t usb_thread = LWP_THREAD_NULL;
 
@@ -93,7 +95,7 @@ static int usb_read(int chn, void *buf, size_t size)
 	return usb_recvbuffer_safe_ex(chn, buf, size, 65536);
 }
 
-static void *wiiload_read(int sd, size_t insize, size_t outsize, wiiload_read_function_t read)
+static void *wiiload_read(int sd, size_t insize, size_t outsize, wiiload_read_function_t read, uiDrawObj_t *progress)
 {
 	Byte inbuf[4096];
 	z_stream zstream = {0};
@@ -118,6 +120,8 @@ static void *wiiload_read(int sd, size_t insize, size_t outsize, wiiload_read_fu
 		zstream.avail_in = ret;
 		ret = inflate(&zstream, Z_NO_FLUSH);
 		if (ret < 0) goto fail;
+
+		DrawUpdateProgressBar(progress, pos * 100 / insize);
 	}
 
 	inflateEnd(&zstream);
@@ -145,7 +149,7 @@ fail:
 	return NULL;
 }
 
-static void wiiload_handler(int sd, wiiload_read_function_t read)
+static void wiiload_handler(int sd, wiiload_read_function_t read, const char *message)
 {
 	wiiload_header_t header;
 
@@ -157,8 +161,10 @@ static void wiiload_handler(int sd, wiiload_read_function_t read)
 		return;
 
 	int priority = LWP_SetThreadPriority(LWP_THREAD_NULL, LWP_PRIO_NORMAL);
+	LWP_SuspendThread(main_thread);
 
-	void *buffer = wiiload_read(sd, header.deflate_size, header.inflate_size, read);
+	uiDrawObj_t *progress = DrawPublish(DrawProgressBar(false, 0, message));
+	void *buffer = wiiload_read(sd, header.deflate_size, header.inflate_size, read, progress);
 	void *args = wiiload_read_args(sd, header.args_size, read);
 
 	if (buffer) {
@@ -174,7 +180,9 @@ static void wiiload_handler(int sd, wiiload_read_function_t read)
 
 	free(args);
 	free(buffer);
+	DrawDispose(progress);
 
+	LWP_ResumeThread(main_thread);
 	LWP_SetThreadPriority(LWP_THREAD_NULL, priority);
 }
 
@@ -200,7 +208,12 @@ static void *tcp_thread_func(void *arg)
 			wiiload.cl.sd = net_accept(wiiload.sv.sd, &wiiload.cl.sa, &addrlen);
 
 			if (wiiload.cl.sd != INVALID_SOCKET) {
-				wiiload_handler(wiiload.cl.sd, tcp_read);
+				char addrstr[16];
+				char *message = NULL;
+				asprintf(&message, "Receiving from %s:%hu", inet_ntoa_r(wiiload.cl.sin.sin_addr, addrstr, sizeof(addrstr)), wiiload.cl.sin.sin_port);
+				wiiload_handler(wiiload.cl.sd, tcp_read, message);
+				free(message);
+
 				net_close(wiiload.cl.sd);
 				wiiload.cl.sd = INVALID_SOCKET;
 			}
@@ -219,7 +232,7 @@ static void *usb_thread_func(void *arg)
 		int chn = *(int *)arg - USBGECKO_MEMCARD_SLOT_A;
 
 		if (usb_isgeckoalive(chn) && usb_checkrecv(chn)) {
-			wiiload_handler(chn, usb_read);
+			wiiload_handler(chn, usb_read, "Receiving over USB Gecko");
 			usb_flush(chn);
 		}
 
@@ -227,6 +240,12 @@ static void *usb_thread_func(void *arg)
 	}
 
 	return NULL;
+}
+
+__attribute((constructor))
+static void init_wiiload(void)
+{
+	main_thread = LWP_GetSelf();
 }
 
 void init_wiiload_tcp_thread(void)
