@@ -22,6 +22,7 @@
 #include <network.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 #include <zlib.h>
