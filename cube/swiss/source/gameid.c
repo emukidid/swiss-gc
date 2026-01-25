@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2022-2025, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2022-2026, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -88,6 +88,9 @@ void gameID_early_set(const DiskHeader *header)
 		if (ret < 0) continue;
 		ret = MMCE_SetDiskInfo(chan, header->GameName);
 		if (ret < 0) continue;
+
+		if (chan == EXI_CHANNEL_0)
+			swissSettings.emulateMemoryCard = 0;
 	}
 }
 
