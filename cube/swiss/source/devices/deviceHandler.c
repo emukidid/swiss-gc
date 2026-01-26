@@ -323,8 +323,8 @@ FILE* openFileStream(file_handle *file) {
 		return NULL;
 	}
 	return funopen((const void *)file,
-		(int (*)(void *, char *, int))file->device->readFile,
-		(int (*)(void *, const char *, int))NULL,
+		(int (*)(void *, char *, size_t))file->device->readFile,
+		(int (*)(void *, const char *, size_t))NULL,
 		(fpos_t (*)(void *, fpos_t, int))file->device->seekFile,
 		(int (*)(void *))file->device->closeFile);
 }

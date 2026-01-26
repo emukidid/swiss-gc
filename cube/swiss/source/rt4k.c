@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2024-2025, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2024-2026, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -38,12 +38,12 @@ static struct {
 	.nodelay = 1,
 };
 
-static int rt4k_read(void *s, char *data, int size)
+static int rt4k_read(void *s, char *data, size_t size)
 {
 	return net_read(*(int *)s, data, size);
 }
 
-static int rt4k_write(void *s, const char *data, int size)
+static int rt4k_write(void *s, const char *data, size_t size)
 {
 	return net_write(*(int *)s, data, size);
 }
