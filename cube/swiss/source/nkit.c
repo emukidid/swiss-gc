@@ -209,6 +209,7 @@ static const struct {
 	{ "cleanrip-gc.dol",                      1859168, 0xB27D4814753386EF },
 	{ "cleanrip-gc.dol",                      1901888, 0x690543D39FC7E9F1 },
 	{ "cleanrip-gc.dol",                      1929280, 0xE526065DAA036D2A },
+	{ "cleanrip-gc.dol",                      2049560, 0xBD13E8CEB0C99B9A },
 	{ "gcars.dol",                              69636, 0x080AEA94ED7A6252 },
 	{ "gcars.dol",                             224336, 0x57942F559BD5E065 },
 	{ "gcars.dol",                             225108, 0x1C8D121AB4A008FA },
@@ -219,7 +220,7 @@ static const struct {
 	{ "gcars.dol",                             231028, 0x7BC79D067E2E9B25 },
 	{ "gcars.dol",                             234836, 0x06607E83075D8B8E },
 	{ "gcars.dol",                             255308, 0x55D21F77483E5838 },
-#define TOTAL_DOL_COUNT (VALID_DOL_COUNT + 19)
+#define TOTAL_DOL_COUNT (VALID_DOL_COUNT + 20)
 };
 
 static const dvddiskid NDDEMO = {
@@ -399,8 +400,8 @@ static const struct {
 	{{ "DFSJ13\x00\x00" }, false, 0x67, 0x9E10, 0x1B8A38DF, 0xF4B5773C928E207A, 1173227520,  +286750720, { 1170843900,      +59128, 6496, 0xF9A7 }, "FIFA 2002: Road to FIFA World Cup" },
 	{{ "DGAJB2\x00\x00" }, true,  0x97, 0x5F59, 0x05458FAD, 0xEC3C56AA5A9CDE26,  716726272,  +743251968, {  716719748,  +743251996, 6496, 0x81D4 }, "Kidou Senshi Gundam: Senshi-tachi no Kiseki" },
 	{{ "DKNJ01\x00\x00" }, false, 0x50, 0xBAC0, 0x915156C6, 0xB5E976D396698FBF,  894486528,  +565491712, {  885347632,    +1125388, 6496, 0x53F0 }, "Kinnikuman Nisei: Shinsedai Choujin vs. Densetsu Choujin Event-you Disc" },
-	{{ "DLSE64\x00\x00" }, true,  0x31, 0x9B82, 0x1621D87A, 0x0EF434C4F59AA81D, 1007726592,  +452251648, {  369815476,  +451573484, 6496, 0xCC14 }, "Star Wars: Rogue Squadron III: Rebel Strike" },
-	{{ "DLSP64\x00\x00" }, true,  0x4A, 0xB5CA, 0x3657BA07, 0xDCEEF3970A1C9674,  687478784,  +772499456, {  404997056,  +772481952, 6496, 0xCC14 }, "Star Wars: Rogue Squadron III: Rebel Strike" },
+	{{ "DLSE64\x00\x00" }, true,  0x31, 0x9B82, 0x1621D87A, 0x0EF434C4F59AA81D, 1007726592,  +452251648, {  369815476,  +451573484, 6496, 0xCC14 }, "Star Wars: Rogue Squadron III: Rebel Strike: Limited Edition Preview Disc" },
+	{{ "DLSP64\x00\x00" }, true,  0x4A, 0xB5CA, 0x3657BA07, 0xDCEEF3970A1C9674,  687478784,  +772499456, {  404997056,  +772481952, 6496, 0xCC14 }, "Star Wars: Rogue Squadron III: Rebel Strike: Limited Edition Preview Disc" },
 	{{ "DM2J8P\x00\x00" }, true,  0x96, 0x6274, 0xA589AF5A, 0x0D2CD0B64E89D021, 1004939264,  +455038976, {   79151836,  +455021220, 6496, 0x4FD6 }, "Super Monkey Ball 2" },
 	{{ "DMPJ01\x00\x00" }, false, 0x8D, 0x7F50, 0x4D3A81A8, 0x142AFDDC93390CCF,  149059584, +1310918656, {  100753916,      +44108, 6496, 0xE31B }, "Mario Party 4 Event-you Disc" },
 	{{ "DMTJ18\x00\x00" }, false, 0x23, 0xBD99, 0x9F17E51E, 0x6D3DED5E273755FA,  284680192, +1175298048, {    3779884,      +21204, 6496, 0x4C34 }, "Disney's Magical Park" },
