@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2020-2024, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2020-2026, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -50,6 +50,13 @@ startup:
 	icbi	r0, r3
 	cmplwi	r3, 0x1700
 	blt		1b
+
+	lis		r0, 0x4C00
+	ori		r0, r0, 0x0064
+	stwu	r0, 0x0C00 - 0x1700 (r3)
+	dcbst	r0, r3
+	sync
+	icbi	r0, r3
 
 	li		r0, 0
 	li		sp, 0x3000

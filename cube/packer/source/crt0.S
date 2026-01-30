@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2012-2025, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2012-2026, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -133,6 +133,13 @@ premain:
 	icbi	0, r3
 	cmplwi	r3, 0x1700
 	blt		1b
+
+	lis		r0, 0x4C00
+	ori		r0, r0, 0x0064
+	stwu	r0, 0x0C00 - 0x1700 (r3)
+	dcbst	0, r3
+	sync
+	icbi	0, r3
 
 	lis		r3, 0xE000
 	li		r0, 16384 / 32
