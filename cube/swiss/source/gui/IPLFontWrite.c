@@ -97,28 +97,32 @@ void drawString(int x, int y, char *string, float scale, bool centered, GXColor 
 		return;
 	}
 	drawFontInit();
+	Mtx GXmodelView2D;
+	int strWidth = 0;
+	int strHeight = font->cell_height;
 	if(centered)
 	{
-		int strWidth = 0;
-		int strHeight = font->cell_height * scale;
 		char* string_work = string;
 		while(*string_work)
 		{
 			unsigned char c = *string_work;
-			strWidth += SYS_GetFontWidth(c) * scale;
+			strWidth += SYS_GetFontWidth(c) - 1;
 			string_work++;
 		}
-		x = (int) x - strWidth/2;
-		y = (int) y - strHeight/2;
 	}
+	guMtxTrans(GXmodelView2D, -strWidth/2, -strHeight/2, 0);
+	guMtxScaleApply(GXmodelView2D, GXmodelView2D, scale, scale, 1);
+	guMtxTransApply(GXmodelView2D, GXmodelView2D, x, y, 0);
+	GX_LoadPosMtxImm(GXmodelView2D,GX_PNMTX0);
+	x = 0; y = 0;
 
 	while (*string)
 	{
 		unsigned char c = *string;
 		if(c == '\n') break;
 		void *image;
-		s32 xpos, ypos, width;
-		SYS_GetFontTexture(c, &image, &xpos, &ypos, &width);
+		int s0, t0, width;
+		SYS_GetFontTexture(c, &image, &s0, &t0, &width);
 		if (GX_GetTexObjData(&fontTexObj) != (void *)MEM_VIRTUAL_TO_PHYSICAL(image)) {
 			GX_InitTexObjData(&fontTexObj, image);
 			GX_LoadTexObj(&fontTexObj, GX_TEXMAP0);
@@ -128,17 +132,13 @@ void drawString(int x, int y, char *string, float scale, bool centered, GXColor 
 		for (i=0; i<4; i++) {
 			int s = (i & 1) ^ ((i & 2) >> 1) ? width : 1;
 			int t = (i & 2) ? font->cell_height : 1;
-			int s0 = xpos + s;
-			int t0 = ypos + t;
-			s = (int) s * scale;
-			t = (int) t * scale;
 			GX_Position2s16(x + s, y + t);
 			GX_Color4u8(fontColor.r, fontColor.g, fontColor.b, fontColor.a);
-			GX_TexCoord2s16(s0, t0);
+			GX_TexCoord2s16(s0 + s, t0 + t);
 		}
 		GX_End();
 
-		x += width * scale;
+		x += width - 1;
 		string++;
 	}
 }
@@ -149,20 +149,24 @@ void drawStringWithCaret(int x, int y, char *string, float scale, bool centered,
 		string = "";
 	}
 	drawFontInit();
+	Mtx GXmodelView2D;
+	int strWidth = 0;
+	int strHeight = font->cell_height;
 	if(centered)
 	{
-		int strWidth = 0;
-		int strHeight = font->cell_height * scale;
 		char* string_work = string;
 		while(*string_work)
 		{
 			unsigned char c = *string_work;
-			strWidth += SYS_GetFontWidth(c) * scale;
+			strWidth += SYS_GetFontWidth(c) - 1;
 			string_work++;
 		}
-		x = (int) x - strWidth/2;
-		y = (int) y - strHeight/2;
 	}
+	guMtxTrans(GXmodelView2D, -strWidth/2, -strHeight/2, 0);
+	guMtxScaleApply(GXmodelView2D, GXmodelView2D, scale, scale, 1);
+	guMtxTransApply(GXmodelView2D, GXmodelView2D, x, y, 0);
+	GX_LoadPosMtxImm(GXmodelView2D,GX_PNMTX0);
+	x = 0; y = 0;
 
 	int pos = 0;
 	while (*string || pos <= caretPosition)
@@ -173,8 +177,8 @@ void drawStringWithCaret(int x, int y, char *string, float scale, bool centered,
 		}
 		if(c == '\n') break;
 		void *image;
-		s32 xpos, ypos, width;
-		SYS_GetFontTexture(c, &image, &xpos, &ypos, &width);
+		int s0, t0, width;
+		SYS_GetFontTexture(c, &image, &s0, &t0, &width);
 		if (GX_GetTexObjData(&fontTexObj) != (void *)MEM_VIRTUAL_TO_PHYSICAL(image)) {
 			GX_InitTexObjData(&fontTexObj, image);
 			GX_LoadTexObj(&fontTexObj, GX_TEXMAP0);
@@ -184,20 +188,16 @@ void drawStringWithCaret(int x, int y, char *string, float scale, bool centered,
 		for (i=0; i<4; i++) {
 			int s = (i & 1) ^ ((i & 2) >> 1) ? width : 1;
 			int t = (i & 2) ? font->cell_height : 1;
-			int s0 = xpos + s;
-			int t0 = ypos + t;
-			s = (int) s * scale;
-			t = (int) t * scale;
 			GX_Position2s16(x + s, y + t);
 			if(pos == caretPosition)
 				GX_Color4u8(caretColor.r, caretColor.g, caretColor.b, caretColor.a);
 			else
 				GX_Color4u8(fontColor.r, fontColor.g, fontColor.b, fontColor.a);
-			GX_TexCoord2s16(s0, t0);
+			GX_TexCoord2s16(s0 + s, t0 + t);
 		}
 		GX_End();
 
-		x += width * scale;
+		x += width - 1;
 		if(pos != caretPosition)
 			string++;
 		pos++;
@@ -213,13 +213,12 @@ int GetCharsThatFitInWidth(char *string, int max, float scale)
 	while(*string_work)
 	{
 		unsigned char c = *string_work;
-		strWidth += SYS_GetFontWidth(c) * scale;
+		strWidth += SYS_GetFontWidth(c) - 1;
 		string_work++;
-		if(strWidth < max) {
+		if(strWidth * scale <= max) {
 			charCount++;
-		}
-		else {
-			return charCount-4;
+		} else {
+			return charCount-3;
 		}
 	}
 	return charCount;
@@ -232,23 +231,32 @@ void drawStringEllipsis(int x, int y, char *string, float scale, bool centered, 
 		return;
 	}
 	drawFontInit();
+	Mtx GXmodelView2D;
+	if(rotateVertical) {
+		guMtxRotDeg(GXmodelView2D, 'z', -90);
+	} else {
+		guMtxIdentity(GXmodelView2D);
+	}
+	int strWidth = 0;
+	int strHeight = font->cell_height;
 	if(centered)
 	{
-		int strWidth = 0;
-		int strHeight = font->cell_height * scale;
 		char* string_work = string;
 		while(*string_work)
 		{
 			unsigned char c = *string_work;
-			strWidth += SYS_GetFontWidth(c) * scale;
+			strWidth += SYS_GetFontWidth(c) - 1;
 			string_work++;
 		}
-		x = (int) x - strWidth/2;
-		y = (int) y - strHeight/2;
 	}
+	guMtxApplyTrans(GXmodelView2D, GXmodelView2D, -strWidth/2, -strHeight/2, 0);
+	guMtxScaleApply(GXmodelView2D, GXmodelView2D, scale, scale, 1);
+	guMtxTransApply(GXmodelView2D, GXmodelView2D, x, y, 0);
+	GX_LoadPosMtxImm(GXmodelView2D,GX_PNMTX0);
+	x = 0; y = 0;
 
 	int len = strlen(string);
-	int chars_to_draw = GetCharsThatFitInWidth(string, maxSize-12, scale);
+	int chars_to_draw = GetCharsThatFitInWidth(string, maxSize, scale);
 	int dots_to_write = 0;
 	while (*string || dots_to_write)
 	{
@@ -262,8 +270,8 @@ void drawStringEllipsis(int x, int y, char *string, float scale, bool centered, 
 		}
 		if(c == '\n') break;
 		void *image;
-		s32 xpos, ypos, width;
-		SYS_GetFontTexture(c, &image, &xpos, &ypos, &width);
+		int s0, t0, width;
+		SYS_GetFontTexture(c, &image, &s0, &t0, &width);
 		if (GX_GetTexObjData(&fontTexObj) != (void *)MEM_VIRTUAL_TO_PHYSICAL(image)) {
 			GX_InitTexObjData(&fontTexObj, image);
 			GX_LoadTexObj(&fontTexObj, GX_TEXMAP0);
@@ -273,30 +281,16 @@ void drawStringEllipsis(int x, int y, char *string, float scale, bool centered, 
 		for (i=0; i<4; i++) {
 			int s = (i & 1) ^ ((i & 2) >> 1) ? width : 1;
 			int t = (i & 2) ? font->cell_height : 1;
-			int s0 = xpos + s;
-			int t0 = ypos + t;
-			s = (int) s * scale;
-			t = (int) t * scale;
-			if(rotateVertical) {
-				GX_Position2s16(x + t, y - s);
-			} else {
-				GX_Position2s16(x + s, y + t);
-			}
+			GX_Position2s16(x + s, y + t);
 			GX_Color4u8(fontColor.r, fontColor.g, fontColor.b, fontColor.a);
-			GX_TexCoord2s16(s0, t0);
+			GX_TexCoord2s16(s0 + s, t0 + t);
 		}
 		GX_End();
 
-		if(rotateVertical) {
-			y -= width * scale;
-		} else {
-			x += width * scale;
-		}
-
+		x += width - 1;
 		string++;
 		len--;
 		chars_to_draw--;
-		maxSize -= width * scale;
 		
 		// check if we've started (or about to start) our ellipses abbreviation
 		if(len > 0 && chars_to_draw == 0) {
@@ -316,12 +310,11 @@ int GetFontHeight(float scale)
 int GetTextSizeInPixels(char *string)
 {
 	int strWidth = 0;
-	float scale = 1.0f;
 	char* string_work = string;
 	while(*string_work)
 	{
 		unsigned char c = *string_work;
-		strWidth += SYS_GetFontWidth(c) * scale;
+		strWidth += SYS_GetFontWidth(c) - 1;
 		string_work++;
 	}
 	return strWidth;
@@ -334,7 +327,7 @@ float GetTextScaleToFitInWidth(char *string, int width) {
 	{
 		unsigned char c = *string_work;
 		if(c == '\n') break;
-		strWidth += SYS_GetFontWidth(c);
+		strWidth += SYS_GetFontWidth(c) - 1;
 		string_work++;
 	}
 	return width>strWidth ? 1.0f : (float)((float)width/(float)strWidth);
@@ -344,4 +337,3 @@ float GetTextScaleToFitInWidthWithMax(char *string, int width, float max) {
 	float scale = GetTextScaleToFitInWidth(string, width);
 	return max < scale ? max:scale;
 }
-

@@ -214,7 +214,7 @@ void select_recent_entry() {
 	uiDrawObj_t *container = NULL;
 	while(1) {
 		uiDrawObj_t *newPanel = DrawEmptyBox(30,fileListBase-30, getVideoMode()->fbWidth-30, 380);
-		DrawAddChild(newPanel, DrawLabel(45, fileListBase-30, "Recent:"));
+		DrawAddChild(newPanel, DrawLabel(45, fileListBase-18, "Recent:"));
 		for(i = 0; i < RECENT_MAX; i++) {
 			if(swissSettings.recent[i][0] == 0) {
 				max = i;
@@ -266,7 +266,7 @@ void drawFiles(file_handle** directory, int num_files, uiDrawObj_t *containerPan
 		// Draw which directory we're in
 		sprintf(txtbuffer, "%s", getDevicePath(&curDir.name[0]));
 		float scale = GetTextScaleToFitInWidthWithMax(txtbuffer, ((getVideoMode()->fbWidth-150)-20), .85);
-		DrawAddChild(containerPanel, DrawStyledLabel(150, 80, txtbuffer, scale, false, defaultColor));
+		DrawAddChild(containerPanel, DrawStyledLabel(150, 90, txtbuffer, scale, false, defaultColor));
 		if(!strcmp(&swissSettings.autoload[0], &curDir.name[0])
 		|| !fnmatch(&swissSettings.autoload[0], &curDir.name[0], FNM_PATHNAME)) {
 			DrawAddChild(containerPanel, DrawImage(TEX_STAR, ((getVideoMode()->fbWidth-30)-16), 80, 16, 16, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0));
@@ -440,7 +440,7 @@ void drawCurrentDeviceCarousel(uiDrawObj_t *containerPanel) {
 	uiDrawObj_t *bgBox = DrawTransparentBox(30, 395, getVideoMode()->fbWidth-30, 420);
 	DrawAddChild(containerPanel, bgBox);
 	// Device name
-	uiDrawObj_t *devNameLabel = DrawStyledLabel(50, 400, devices[DEVICE_CUR]->deviceName, 0.5f, false, defaultColor);
+	uiDrawObj_t *devNameLabel = DrawStyledLabel(50, 406, devices[DEVICE_CUR]->deviceName, 0.5f, false, defaultColor);
 	DrawAddChild(containerPanel, devNameLabel);
 	
 	device_info *info = devices[DEVICE_CUR]->info(devices[DEVICE_CUR]->initial);
@@ -460,7 +460,7 @@ void drawCurrentDeviceCarousel(uiDrawObj_t *containerPanel) {
 	}
 	
 	int starting_pos = getVideoMode()->fbWidth-50-GetTextSizeInPixels(txtbuffer)*0.5;
-	uiDrawObj_t *devInfoLabel = DrawStyledLabel(starting_pos, 400, txtbuffer, 0.5f, false, defaultColor);
+	uiDrawObj_t *devInfoLabel = DrawStyledLabel(starting_pos, 406, txtbuffer, 0.5f, false, defaultColor);
 	DrawAddChild(containerPanel, devInfoLabel);
 }
 
@@ -474,7 +474,7 @@ void drawFilesCarousel(file_handle** directory, int num_files, uiDrawObj_t *cont
 		// Draw which directory we're in
 		sprintf(txtbuffer, "%s", getDevicePath(&curDir.name[0]));
 		float scale = GetTextScaleToFitInWidthWithMax(txtbuffer, (getVideoMode()->fbWidth-60), .85);
-		DrawAddChild(containerPanel, DrawStyledLabel(30, 80, txtbuffer, scale, false, defaultColor));
+		DrawAddChild(containerPanel, DrawStyledLabel(30, 90, txtbuffer, scale, false, defaultColor));
 		if(!strcmp(&swissSettings.autoload[0], &curDir.name[0])
 		|| !fnmatch(&swissSettings.autoload[0], &curDir.name[0], FNM_PATHNAME)) {
 			DrawAddChild(containerPanel, DrawImage(TEX_STAR, ((getVideoMode()->fbWidth-30)-16), 80, 16, 16, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0));
@@ -686,7 +686,7 @@ void drawFilesFullwidth(file_handle** directory, int num_files, uiDrawObj_t *con
 		// Draw which directory we're in
 		sprintf(txtbuffer, "%s", getDevicePath(&curDir.name[0]));
 		float scale = GetTextScaleToFitInWidthWithMax(txtbuffer, (getVideoMode()->fbWidth-60), .85);
-		DrawAddChild(containerPanel, DrawStyledLabel(30, 80, txtbuffer, scale, false, defaultColor));
+		DrawAddChild(containerPanel, DrawStyledLabel(30, 90, txtbuffer, scale, false, defaultColor));
 		if(!strcmp(&swissSettings.autoload[0], &curDir.name[0])
 		|| !fnmatch(&swissSettings.autoload[0], &curDir.name[0], FNM_PATHNAME)) {
 			DrawAddChild(containerPanel, DrawImage(TEX_STAR, ((getVideoMode()->fbWidth-30)-16), 80, 16, 16, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0));
@@ -877,7 +877,7 @@ bool select_dest_dir(file_handle* initial, file_handle* selection)
 			scrollBarTabHeight = (int)((float)scrollBarHeight/(float)num_files);
 		}
 		uiDrawObj_t* tempBox = DrawEmptyBox(20,40, getVideoMode()->fbWidth-20, 450);
-		DrawAddChild(tempBox, DrawLabel(50, 55, "Enter directory and press X"));
+		DrawAddChild(tempBox, DrawLabel(50, 67, "Enter directory and press X"));
 		i = MIN(MAX(0,idx-FILES_PER_PAGE/2),MAX(0,num_files-FILES_PER_PAGE));
 		max = MIN(num_files, MAX(idx+FILES_PER_PAGE/2,FILES_PER_PAGE));
 		if(num_files > FILES_PER_PAGE)
@@ -977,7 +977,7 @@ ExecutableFile* select_alt_dol(ExecutableFile *filesToPatch, int num_files) {
 	uiDrawObj_t *container = NULL;
 	while(1) {
 		uiDrawObj_t *newPanel = DrawEmptyBox(20,fileListBase-30, getVideoMode()->fbWidth-20, 340);
-		DrawAddChild(newPanel, DrawLabel(50, fileListBase-30, "Select DOL or Press B to boot normally"));
+		DrawAddChild(newPanel, DrawLabel(50, fileListBase-18, "Select DOL or Press B to boot normally"));
 		i = MIN(MAX(0,idx-(page/2)),MAX(0,num_files-page));
 		max = MIN(num_files, MAX(idx+(page/2),page));
 		if(num_files > page)
@@ -2679,9 +2679,9 @@ void select_device(int type)
 		uiDrawObj_t *selectLabel = DrawStyledLabel(640/2, 195
 													, type == DEVICE_DEST ? "Destination Device" : "Device Selection"
 													, 1.0f, true, defaultColor);
-		uiDrawObj_t *fwdLabel = DrawLabel(530, 270, "\233");
-		uiDrawObj_t *backLabel = DrawLabel(100, 270, "\213");
-		uiDrawObj_t *showAllLabel = DrawStyledLabel(20, 400, "(Z) Show all devices", 0.65f, false, showAllDevices ? defaultColor:deSelectedColor);
+		uiDrawObj_t *fwdLabel = DrawLabel(530, 282, "\233");
+		uiDrawObj_t *backLabel = DrawLabel(100, 282, "\213");
+		uiDrawObj_t *showAllLabel = DrawStyledLabel(20, 407, "(Z) Show all devices", 0.65f, false, showAllDevices ? defaultColor:deSelectedColor);
 		DrawAddChild(deviceSelectBox, selectLabel);
 		DrawAddChild(deviceSelectBox, fwdLabel);
 		DrawAddChild(deviceSelectBox, backLabel);
@@ -2718,16 +2718,16 @@ void select_device(int type)
 		}
 		// Memory card port devices, allow for speed selection
 		if(allDevices[curDevice]->features & FEAT_EXI_SPEED) {
-			uiDrawObj_t *exiOptionsLabel = DrawStyledLabel(getVideoMode()->fbWidth-190, 400, "(X) EXI Options", 0.65f, false, inAdvanced ? defaultColor:deSelectedColor);
+			uiDrawObj_t *exiOptionsLabel = DrawStyledLabel(getVideoMode()->fbWidth-190, 407, "(X) EXI Options", 0.65f, false, inAdvanced ? defaultColor:deSelectedColor);
 			DrawAddChild(deviceSelectBox, exiOptionsLabel);
 			if(inAdvanced) {
 				// Draw speed selection if advanced menu is showing.
-				uiDrawObj_t *exiSpeedLabel = DrawStyledLabel(getVideoMode()->fbWidth-160, 385, swissSettings.exiSpeed ? "Speed: 32 MHz":"Speed: 16 MHz", 0.65f, false, defaultColor);
+				uiDrawObj_t *exiSpeedLabel = DrawStyledLabel(getVideoMode()->fbWidth-161, 392, swissSettings.exiSpeed ? "Speed: 32 MHz":"Speed: 16 MHz", 0.65f, false, defaultColor);
 				DrawAddChild(deviceSelectBox, exiSpeedLabel);
 			}
 		}
 		if(allDevices[curDevice]->details) {
-			uiDrawObj_t *deviceDetailLabel = DrawStyledLabel(20, 385, "(Y) Show device details", 0.65f, false, deSelectedColor);
+			uiDrawObj_t *deviceDetailLabel = DrawStyledLabel(20, 392, "(Y) Show device details", 0.65f, false, deSelectedColor);
 			DrawAddChild(deviceSelectBox, deviceDetailLabel);
 		}
 		DrawPublish(deviceSelectBox);

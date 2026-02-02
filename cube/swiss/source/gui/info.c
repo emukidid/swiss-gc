@@ -90,7 +90,7 @@ uiDrawObj_t * info_draw_page(int page_num) {
 	
 	// System Info (Page 1/4)
 	if(!page_num) {
-		DrawAddChild(container, DrawLabel(30, 55, "System Info (1/4):"));
+		DrawAddChild(container, DrawLabel(30, 67, "System Info (1/4):"));
 		// Model
 		DrawAddChild(container, DrawStyledLabel(640/2, 90, (char*)"MODEL", 0.65f, true, defaultColor));
 		if((SYS_GetConsoleType() & SYS_CONSOLE_MASK) == SYS_CONSOLE_DEVELOPMENT) {
@@ -216,7 +216,7 @@ uiDrawObj_t * info_draw_page(int page_num) {
 		DrawAddChild(container, DrawStyledLabel(640/2, 386, topStr, 0.75f, true, defaultColor));
 	}
 	else if(page_num == 1) {
-		DrawAddChild(container, DrawLabel(30, 55, "Device Info (2/4):"));
+		DrawAddChild(container, DrawLabel(30, 67, "Device Info (2/4):"));
 		DrawAddChild(container, DrawStyledLabel(640/2, 90, (char*)"SLOT-A", 0.65f, true, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(640/2, 106, getDeviceInfoString(LOC_MEMCARD_SLOT_A), 0.75f, true, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(640/2, 130, (char*)"SLOT-B", 0.65f, true, defaultColor));
@@ -235,7 +235,7 @@ uiDrawObj_t * info_draw_page(int page_num) {
 		DrawAddChild(container, DrawStyledLabel(640/2, 386, (char*)(devices[DEVICE_CONFIG] != NULL ? devices[DEVICE_CONFIG]->deviceName : "None"), 0.75f, true, defaultColor));
 	}
 	else if(page_num == 2) {
-		DrawAddChild(container, DrawLabel(30, 55, "Version Info (3/4):"));
+		DrawAddChild(container, DrawLabel(30, 67, "Version Info (3/4):"));
 		DrawAddChild(container, DrawStyledLabel(640/2, 115, "Swiss version 0.6", 1.0f, true, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(640/2, 140, "by emu_kidid & Extrems, 2026", 0.75f, true, defaultColor));
 		sprintf(topStr, "Commit %s; Revision %s", GIT_COMMIT, GIT_REVISION);
@@ -248,7 +248,7 @@ uiDrawObj_t * info_draw_page(int page_num) {
 		DrawAddChild(container, DrawStyledLabel(640/2, 378, "Visit us on IRC at EFnet/#gc-forever", 0.75f, true, defaultColor));
 	}
 	else if(page_num == 3) {
-		DrawAddChild(container, DrawLabel(30, 55, "Greetings (4/4):"));
+		DrawAddChild(container, DrawLabel(30, 67, "Greetings (4/4):"));
 		DrawAddChild(container, DrawStyledLabel(640/2, 90, "Current patreon supporters", 0.75f, true, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(640/2, 114, "Borg Number One (a.k.a. Steven Weiser), Roman Antonacci, 8BitMods,", 0.60f, true, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(640/2, 134, "CastleMania Ryan, Dan Kunz, Fernando Avelino, HakanaiSeishin, Haymose,", 0.60f, true, defaultColor));
@@ -264,10 +264,10 @@ uiDrawObj_t * info_draw_page(int page_num) {
 		DrawAddChild(container, DrawStyledLabel(640/2, 330, "...and a big thanks to YOU, for using Swiss!", 0.75f, true, defaultColor));
 	}
 	if(page_num != 3) {
-		DrawAddChild(container, DrawLabel(530, 400, "\233"));
+		DrawAddChild(container, DrawLabel(530, 410, "\233"));
 	}
 	if(page_num != 0) {
-		DrawAddChild(container, DrawLabel(100, 400, "\213"));
+		DrawAddChild(container, DrawLabel(100, 410, "\213"));
 	}
 	DrawAddChild(container, DrawStyledLabel(640/2, 410, "Press A or B to return", 1.0f, true, defaultColor));
 	return container;

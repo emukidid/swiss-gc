@@ -68,7 +68,7 @@ static char *tooltips_global[PAGE_GLOBAL_MAX+1] = {
 	"Hide unknown file types:\n\nDisabled - Show all files (default)\nEnabled - Swiss will hide unknown file types from being displayed\n\nKnown file types are:\n GameCube Executables (.bin/.dol/.elf)\n Disc images (.gcm/.iso/.nkit.iso/.tgc)\n MP3 Music (.mp3)\n WASP/WKF Flash files (.fzn)\n GameCube Memory Card Files (.gci/.gcs/.sav)\n GameCube Executables with parameters appended (.dol+cli)",
 	"Flatten directory:\n\nFlattens a directory structure matching a glob pattern.",
 	"Init DVD Drive at startup:\n\nDisabled - Leave it as-is (default)\nEnabled - Deassert reset signal when Swiss starts\n\nThis is necessary for the eject button to function on the\nPanasonic Q when Swiss is used as IPL replacement.",
-	"Stop DVD Drive motor:\n\nDisabled - Leave it as-is (default)\nEnabled - Stop the disc from spinning when Swiss starts\n\nThis option is mostly for users booting from game save\nexploits where the disc will already be spinning.",
+	"Stop DVD Drive motor:\n\nDisabled - Leave it as-is (default)\nEnabled - Stop the disc from spinning when Swiss starts\n\nThis option is mostly for users booting from game save exploits\nwhere the disc will already be spinning.",
 	"Configure Audio Buffer:\n\nOff - Disable audio streaming\nAuto - Enable audio streaming if the disc is known to use it\nOn - Enable audio streaming if the disc asks for it (default)\n\nThe audio buffer consumes a large portion of the GameCube\ndisc drive's read-ahead cache, lengthening load times.",
 	"SD/IDE-EXI Speed:\n\nThe clock speed to try using on the EXI bus for SD cards and\nIDE-EXI devices. 32 MHz may not work with some SD cards or\nSD card adapters.",
 	"AVE Compatibility:\n\nSets the compatibility mode for the used audio/video encoder.\n\nAVE N-DOL - Output PAL as NTSC 50\nAVE P-DOL - Disable progressive scan mode\nCMPV-DOL - Enable 1080i & 540p\nGCDigital - Apply input filtering in OSD\nGCVideo - Apply general workarounds for GCVideo (default)\nAVE-RVL - Support 960i & 1152i without WiiVideo",
@@ -90,7 +90,7 @@ static char *tooltips_game_global[PAGE_GAME_GLOBAL_MAX+1] = {
 	NULL,
 	"Force Video Active:\n\nA workaround for GCVideo-DVI firmware version series 3.0,\nrendered obsolete by 3.1 and later.",
 	NULL,
-	"Pause for resolution change:\n\nWhen enabled, a change in active video resolution will pause\nthe game for 2 seconds.",
+	"Pause for resolution change:\n\nWhen enabled, a change in active video resolution will pause the\ngame for 2 seconds.",
 	"Auto-load cheats:\n\nIf enabled, and a cheats file for a particular game is found\ne.g. /swiss/cheats/GPOP8D.txt (on a compatible device)\nthen all previously enabled cheats will be re-enabled",
 	"WiiRD debugging:\n\nDisabled - Boot as normal (default)\nEnabled - This will start a game with the WiiRD debugger enabled & paused\n\nThe WiiRD debugger takes up more memory and can cause issues."
 };
@@ -111,11 +111,11 @@ static char *tooltips_game[PAGE_GAME_DEFAULTS_MAX+1] = {
 	"Swap Camera Stick:\n\nNo - Leave C Stick as-is (default)\nX - Swap X-axis of the C Stick with the Control Stick\nY - Swap Y-axis of the C Stick with the Control Stick\nX&Y - Swap both axes of the C Stick with the Control Stick",
 	"Digital Trigger Level:\n\nSets the threshold where the L/R Button is fully pressed.",
 	"Emulate Audio Streaming:\n\nAudio streaming is a hardware feature that allows a compressed\naudio track to be played in the background by the disc drive.\n\nEmulation is necessary for devices not attached to the\nDVD Interface, or for those not implementing it regardless.",
-	"Emulate Read Speed:\n\nNo - Start transfer immediately (default)\nYes - Delay transfer to simulate the GameCube disc drive\nWii - Delay transfer to simulate the Wii disc drive\n\nThis is necessary to avoid programming mistakes obfuscated\nby the original medium, or for speedrunning.",
-	"Emulate Broadband Adapter:\n\nOnly available with the File Service Protocol or an initialised\nETH2GC/GCNET module, where memory constraints permit.\n\nPackets not destined for the hypervisor are forwarded to\nthe virtual MAC. The virtual MAC address is the same as\nthe physical MAC. The physical MAC/PHY retain their\nconfiguration from Swiss, including link speed.",
-	"Disable Memory Card:\n\nSome games misbehave when unexpected devices are present\nin the memory card slots. When selected, the device will be\nhidden from the game if present at boot time.",
+	"Emulate Read Speed:\n\nNo - Start transfer immediately (default)\nYes - Delay transfer to simulate the GameCube disc drive\nWii - Delay transfer to simulate the Wii disc drive\n\nThis is necessary to avoid programming mistakes obfuscated by\nthe original medium, or for speedrunning.",
+	"Emulate Broadband Adapter:\n\nOnly available with the File Service Protocol or an initialised\nETH2GC/GCNET module, where memory constraints permit.\n\nPackets not destined for the hypervisor are forwarded to the\nvirtual MAC. The virtual MAC address is the same as the\nphysical MAC. The physical MAC/PHY retain their configuration\nfrom Swiss, including link speed.",
+	"Disable Memory Card:\n\nSome games misbehave when unexpected devices are present in\nthe memory card slots. When selected, the device will be hidden\nfrom the game if present at boot time.",
 	"Disable Hypervisor:\n\nDisables all features and bugfixes relying upon the hypervisor,\nalong with prepatching and patch persistence.\n\nOnly available to devices attached to the DVD Interface.",
-	"Prefer Clean Boot:\n\nWhen enabled, the GameCube will be reset and the game\nbooted through normal processes with no changes applied.\nRegion restrictions may be applicable.\n\nOnly available to devices attached to the DVD Interface.",
+	"Prefer Clean Boot:\n\nWhen enabled, the GameCube will be reset and the game booted\nthrough normal processes with no changes applied.\nRegion restrictions may be applicable.\n\nOnly available to devices attached to the DVD Interface.",
 	"RetroTINK-4K Profile:\n\nPresses a profile button through a configured ser2net TCP\nconnection to the RetroTINK-4K's serial port."
 };
 
@@ -149,7 +149,7 @@ char* get_tooltip(int page_num, int option) {
 
 void add_tooltip_label(uiDrawObj_t* page, int page_num, int option) {
 	if(get_tooltip(page_num, option)) {
-		DrawAddChild(page, DrawFadingLabel(484, 54, "Press (Y) for help", 0.65f));
+		DrawAddChild(page, DrawFadingLabel(484, 61, "Press (Y) for help", 0.65f));
 	}
 }
 
@@ -225,14 +225,14 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 	DrawAddChild(page, DrawSelectableButton(320, page_saveexit_y, -1, 455, "Discard & Exit", option ==  settings_count_pp[page_num] ? B_SELECTED:B_NOSELECT));
 	isNavOption = isNavOption || (option >= settings_count_pp[page_num]-1);
 	
-	int page_y_ofs = 110;
+	int page_y_ofs = 119;
 	// Page specific buttons
 	if(page_num == PAGE_GLOBAL) {
 		int settings_per_page = 10;
 		int scrollBarHeight = 90+(settings_per_page*20);
 		int scrollBarTabHeight = (int)((float)scrollBarHeight/(float)SET_PAGE_1_NEXT);
-		DrawAddChild(page, DrawVertScrollBar(getVideoMode()->fbWidth-45, page_y_ofs, 25, scrollBarHeight, (float)((float)option/(float)(SET_PAGE_1_NEXT-1)),scrollBarTabHeight));
-		DrawAddChild(page, DrawLabel(page_x_ofs_key, 65, "Global Settings (1/5):"));
+		DrawAddChild(page, DrawVertScrollBar(getVideoMode()->fbWidth-45, 110, 25, scrollBarHeight, (float)((float)option/(float)(SET_PAGE_1_NEXT-1)),scrollBarTabHeight));
+		DrawAddChild(page, DrawLabel(page_x_ofs_key, 77, "Global Settings (1/5):"));
 		bool tvEnable = swissSettings.aveCompat != AVE_RVL_COMPAT;
 		bool dvdEnable = deviceHandler_getDeviceAvailable(&__device_dvd);
 		bool dtvEnable = !in_range(swissSettings.aveCompat, AVE_N_DOL_COMPAT, AVE_P_DOL_COMPAT);
@@ -270,8 +270,8 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 		int settings_per_page = 10;
 		int scrollBarHeight = 90+(settings_per_page*20);
 		int scrollBarTabHeight = (int)((float)scrollBarHeight/(float)SET_PAGE_2_BACK);
-		DrawAddChild(page, DrawVertScrollBar(getVideoMode()->fbWidth-45, page_y_ofs, 25, scrollBarHeight, (float)((float)option/(float)(SET_PAGE_2_BACK-1)),scrollBarTabHeight));
-		DrawAddChild(page, DrawLabel(page_x_ofs_key, 65, "Network Settings (2/5):"));
+		DrawAddChild(page, DrawVertScrollBar(getVideoMode()->fbWidth-45, 110, 25, scrollBarHeight, (float)((float)option/(float)(SET_PAGE_2_BACK-1)),scrollBarTabHeight));
+		DrawAddChild(page, DrawLabel(page_x_ofs_key, 77, "Network Settings (2/5):"));
 		bool netEnable = net_initialized || bba_exists(LOC_ANY);
 		// TODO settings to a new typedef that ties type etc all together, then draw a "page" of these rather than this at some point.
 		if(option < SET_FTP_USER) {
@@ -299,7 +299,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 		}
 	}
 	else if(page_num == PAGE_GAME_GLOBAL) {
-		DrawAddChild(page, DrawLabel(page_x_ofs_key, 65, "Global Game Settings (3/5):"));
+		DrawAddChild(page, DrawLabel(page_x_ofs_key, 77, "Global Game Settings (3/5):"));
 		bool enabledVideoPatches = swissSettings.disableVideoPatches < 2;
 		bool emulatedMemoryCard = devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->emulable & EMU_MEMCARD);
 		bool enabledHypervisor = devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->features & FEAT_HYPERVISOR);
@@ -320,8 +320,8 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 		int settings_per_page = 10;
 		int scrollBarHeight = 90+(settings_per_page*20);
 		int scrollBarTabHeight = (int)((float)scrollBarHeight/(float)SET_PAGE_4_BACK);
-		DrawAddChild(page, DrawVertScrollBar(getVideoMode()->fbWidth-45, page_y_ofs, 25, scrollBarHeight, (float)((float)option/(float)(SET_PAGE_4_BACK-1)),scrollBarTabHeight));
-		DrawAddChild(page, DrawLabel(page_x_ofs_key, 65, "Default Game Settings (4/5):"));
+		DrawAddChild(page, DrawVertScrollBar(getVideoMode()->fbWidth-45, 110, 25, scrollBarHeight, (float)((float)option/(float)(SET_PAGE_4_BACK-1)),scrollBarTabHeight));
+		DrawAddChild(page, DrawLabel(page_x_ofs_key, 77, "Default Game Settings (4/5):"));
 		bool enabledVideoPatches = swissSettings.disableVideoPatches < 2;
 		bool emulatedAudioStream = devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->emulable & EMU_AUDIO_STREAMING);
 		bool emulatedReadSpeed = devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->emulable & EMU_READ_SPEED);
@@ -361,8 +361,8 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 		int settings_per_page = 10;
 		int scrollBarHeight = 90+(settings_per_page*20);
 		int scrollBarTabHeight = (int)((float)scrollBarHeight/(float)SET_PAGE_5_BACK);
-		DrawAddChild(page, DrawVertScrollBar(getVideoMode()->fbWidth-45, page_y_ofs, 25, scrollBarHeight, (float)((float)option/(float)(SET_PAGE_5_BACK-1)),scrollBarTabHeight));
-		DrawAddChild(page, DrawLabel(page_x_ofs_key, 65, "Current Game Settings (5/5):"));
+		DrawAddChild(page, DrawVertScrollBar(getVideoMode()->fbWidth-45, 110, 25, scrollBarHeight, (float)((float)option/(float)(SET_PAGE_5_BACK-1)),scrollBarTabHeight));
+		DrawAddChild(page, DrawLabel(page_x_ofs_key, 77, "Current Game Settings (5/5):"));
 		bool enabledGamePatches = gameConfig != NULL && !gameConfig->forceCleanBoot;
 		if(enabledGamePatches) {
 			bool enabledVideoPatches = swissSettings.disableVideoPatches < 2;

@@ -757,7 +757,7 @@ static void _DrawProgressBar(uiDrawObj_t *evt) {
 		GX_InvalidateTexAll();
 		GX_LoadTexObj(&loadingTexObj, GX_TEXMAP0);
 		_drawRect(x-8, y-8, 16, 16, 0, loadingColor, (float) (numSegments)/8, (float) (numSegments+1)/8, 0.0f, 1.0f);
-		drawString(x+38, y, "Loading\205", 0.55f, true, loadingColor);
+		drawString(x+8, y, "Loading\205", 0.55f, false, loadingColor);
 		return;
 	}
 	_DrawSimpleBox( x1, y1, x2-x1, y2-y1, 0, fillColor, borderColor);		
@@ -898,7 +898,6 @@ static void _DrawSelectableButton(uiDrawObj_t *evt) {
 	
 	int borderSize = 4;
 	//determine length of the text ourselves if x2 == -1
-	x1 = (x2 == -1) ? x1+2:x1;
 	x2 = (x2 == -1) ? GetTextSizeInPixels(data->msg)+x1+(borderSize*2)+6 : x2;
 	//Draw Text and backfill (if selected)
 	if(data->mode==B_SELECTED) {
@@ -909,14 +908,14 @@ static void _DrawSelectableButton(uiDrawObj_t *evt) {
 	}
 	
 	if(data->msg) {
-		float scale = GetTextScaleToFitInWidth(data->msg, (x2-x1)-(borderSize*2));
+		float scale = GetTextScaleToFitInWidth(data->msg, (x2-x1)-(borderSize*2)-6);
 		// Adjust font when we can't fit vertically too
 		int availHeight = data->y2 - data->y1 - 4;
 		if(GetFontHeight(scale) > availHeight) {
 			int fullHeight = GetFontHeight(1.0f);
 			scale = (float)availHeight / (float)fullHeight;
 		}
-		drawString(data->x1 + borderSize+3, data->y1+2, data->msg, scale, false, defaultColor);
+		drawString(data->x1 + borderSize+3, data->y1+(data->y2-data->y1)/2, data->msg, scale, false, defaultColor);
 	}
 }
 
@@ -962,8 +961,8 @@ static void _DrawTooltip(uiDrawObj_t *evt) {
 		strPtr = data->tooltip;
 		int curLine = 0;
 		while(numLines) {
-			float scale = GetTextScaleToFitInWidthWithMax(strPtr, (tooltipX2-tooltipX1)-(borderSize*2), 0.75f);
-			drawString(tooltipX1 + borderSize+3, tooltipY1+2+(curLine*25), strPtr, scale, false, borderColorTT);
+			float scale = GetTextScaleToFitInWidthWithMax(strPtr, (tooltipX2-tooltipX1)-(borderSize*2)-6, 0.75f);
+			drawString(tooltipX1 + borderSize+3, tooltipY1+11+(curLine*25), strPtr, scale, false, borderColorTT);
 			numLines--;
 			curLine++;
 			// Increment to the next line if we have one.
@@ -1167,7 +1166,7 @@ static void _DrawFileBrowserButton(uiDrawObj_t *evt) {
 			}
 			// Region
 			if(file->meta && file->meta->regionTexObj) {
-				drawString(data->x2 - borderSize - 83, data->y2-(borderSize+46), "Region:", 0.45f, false, defaultColor);
+				drawString(data->x2 - borderSize - 83, data->y2-(borderSize+41), "Region: ", 0.45f, false, defaultColor);
 				drawInit();
 				_DrawTexObjNow(file->meta->regionTexObj, data->x2 - 44, data->y2-(borderSize+50), 32, 20, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
 			}
@@ -1191,8 +1190,8 @@ static void _DrawFileBrowserButton(uiDrawObj_t *evt) {
 				else {
 					formatBytes(stpcpy(fbTextBuffer, "Size: "), file->size, 0, !(file->device->location & LOC_SYSTEM));
 				}
-				drawString(data->x2 - (borderSize + (GetTextSizeInPixels(fbTextBuffer)*0.45f)), 
-					data->y2-(borderSize+24), fbTextBuffer, 0.45f, false, defaultColor);
+				drawString(data->x2 - ((borderSize+8) + (GetTextSizeInPixels(fbTextBuffer)*0.45f)),
+					data->y2-(borderSize+19), fbTextBuffer, 0.45f, false, defaultColor);
 			}
 		}
 		else {
@@ -1237,7 +1236,7 @@ static void _DrawFileBrowserButton(uiDrawObj_t *evt) {
 				}
 			}
 			// fullGameName displays some titles with incorrect encoding, use displayName instead
-			drawStringEllipsis(data->x1 + (data->x2-data->x1)/2 - GetFontHeight(0.5f)/2, data->y2-bnr_width-5-borderSize, data->displayName, 0.5f, false, defaultColor, true, (data->y2-bnr_width-5-borderSize) - (data->y1 + (borderSize*2)));
+			drawStringEllipsis(data->x1 + (data->x2-data->x1)/2, data->y2-bnr_width-5-borderSize, data->displayName, 0.5f, false, defaultColor, true, (data->y2-bnr_width-5-borderSize) - (data->y1 + (borderSize*2)));
 		}
 	}
 	else {
@@ -1292,10 +1291,10 @@ static void _DrawFileBrowserButton(uiDrawObj_t *evt) {
 
 		// fullGameName displays some titles with incorrect encoding, use displayName instead
 		if(data->mode == B_SELECTED) {
-			float scale = GetTextScaleToFitInWidthWithMax(data->displayName, (data->x2-data->x1-96-40)-(borderSize*2), 0.6f);
-			drawString(data->x1 + borderSize+8+96, data->y1+(data->y2-data->y1)/2-GetFontHeight(scale)/2, data->displayName, scale, false, defaultColor);
+			float scale = GetTextScaleToFitInWidthWithMax(data->displayName, (data->x2-data->x1-8-96-39)-(borderSize*2), 0.6f);
+			drawString(data->x1 + borderSize+8+96, data->y1+(data->y2-data->y1)/2, data->displayName, scale, false, defaultColor);
 		} else {
-			drawStringEllipsis(data->x1 + borderSize+8+96, data->y1+(data->y2-data->y1)/2-GetFontHeight(0.6f)/2, data->displayName, 0.6f, false, defaultColor, false, (data->x2-data->x1-96-40)-(borderSize*2));
+			drawStringEllipsis(data->x1 + borderSize+8+96, data->y1+(data->y2-data->y1)/2, data->displayName, 0.6f, false, defaultColor, false, (data->x2-data->x1-8-96-39)-(borderSize*2));
 		}
 		
 		// Print specific stats
@@ -1313,8 +1312,8 @@ static void _DrawFileBrowserButton(uiDrawObj_t *evt) {
 			else {
 				formatBytes(fbTextBuffer, file->size, 0, !(file->device->location & LOC_SYSTEM));
 			}
-			drawString(data->x2 - ((borderSize) + (GetTextSizeInPixels(fbTextBuffer)*0.45)), 
-				data->y1+borderSize+21, fbTextBuffer, 0.45f, false, defaultColor);
+			drawString(data->x2 - ((borderSize+3) + (GetTextSizeInPixels(fbTextBuffer)*0.45f)),
+				data->y1+borderSize+26, fbTextBuffer, 0.45f, false, defaultColor);
 		}
 	}
 }
@@ -1498,21 +1497,21 @@ static void _DrawTitleBar(uiDrawObj_t *evt) {
 	_DrawSimpleBox(19, 17, 602, 62, 0, fillColor, noColor);
 	
 	_DrawImageNow(TEX_SWISS, 36, 32, 96, 32, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
-	drawString(142, 33, "for GameCube", 0.55f, false, defaultColor);
-	drawString(142, 50, "version 0.6", 0.55f, false, defaultColor);
+	drawString(142, 39, "for GameCube", 0.55f, false, defaultColor);
+	drawString(142, 56, "version 0.6", 0.55f, false, defaultColor);
 	
 	sprintf(fbTextBuffer, "commit: %s \267 revision: %s", GIT_COMMIT, GIT_REVISION);
-	drawString(374, 50, fbTextBuffer, 0.55f, false, defaultColor);
+	drawString(getVideoMode()->fbWidth-36-GetTextSizeInPixels(fbTextBuffer)*0.55f, 56, fbTextBuffer, 0.55f, false, defaultColor);
 	
 	s8 cputemp = SYS_GetCoreTemperature();
 	if(cputemp >= 0) {
 		sprintf(fbTextBuffer, "%i\260C", cputemp);
-		drawString(395, 33, fbTextBuffer, 0.55f, false, defaultColor);
+		drawString(getVideoMode()->fbWidth-233, 39, fbTextBuffer, 0.55f, true, defaultColor);
 	}
 	time_t curtime;
 	if(time(&curtime) != (time_t)-1) {
 		strftime(fbTextBuffer, sizeof(fbTextBuffer), "%Y-%m-%d \267 %H:%M:%S", localtime(&curtime));
-		drawString(439, 33, fbTextBuffer, 0.55f, false, defaultColor);
+		drawString(getVideoMode()->fbWidth-36-GetTextSizeInPixels(fbTextBuffer)*0.55f, 39, fbTextBuffer, 0.55f, false, defaultColor);
 	}
 }
 
@@ -1644,18 +1643,18 @@ static uiDrawObj_t* drawParameterForArgsSelector(Parameter *param, int x, int y,
 	if(selected) DrawAddChild(container, DrawTransparentBox( x+chkWidth+gapWidth, y, getVideoMode()->fbWidth-52, y+30));
 	DrawAddChild(container, DrawImage(param->enable ? TEX_CHECKED:TEX_UNCHECKED, x, y, 32, 32, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0));
 	// Draw the parameter Name
-	DrawAddChild(container, DrawStyledLabel(x+chkWidth+gapWidth+5, y+4, name, GetTextScaleToFitInWidth(name, nameWidth-10), false, fontColor));
+	DrawAddChild(container, DrawStyledLabel(x+chkWidth+gapWidth+5, y+15, name, GetTextScaleToFitInWidth(name, nameWidth-10), false, fontColor));
 	// If enabled, draw arrows indicating where in the param list we are
 	if(selected && param->enable && param->num_values > 1) {
 		if(param->currentValueIdx != 0) {
-			DrawAddChild(container, DrawStyledLabel(x+(chkWidth+nameWidth+(gapWidth*4)), y+5, "\213", .8f, false, defaultColor));
+			DrawAddChild(container, DrawStyledLabel(x+(chkWidth+nameWidth+(gapWidth*4)), y+15, "\213", .8f, false, defaultColor));
 		}
 		if(param->currentValueIdx != param->num_values-1) {
-			DrawAddChild(container, DrawStyledLabel(x+(chkWidth+nameWidth+paramWidth+(gapWidth*7)), y+5, "\233", .8f, false, defaultColor));
+			DrawAddChild(container, DrawStyledLabel(x+(chkWidth+nameWidth+paramWidth+(gapWidth*7)), y+15, "\233", .8f, false, defaultColor));
 		}
 	}
 	// Draw the current value
-	DrawAddChild(container, DrawStyledLabel(x+chkWidth+nameWidth+(gapWidth*6), y+2, selValue, GetTextScaleToFitInWidth(selValue, paramWidth), false, fontColor));
+	DrawAddChild(container, DrawStyledLabel(x+chkWidth+nameWidth+(gapWidth*6), y+15, selValue, GetTextScaleToFitInWidth(selValue, paramWidth), false, fontColor));
 	return container;
 }
 
@@ -1670,7 +1669,7 @@ void DrawArgsSelector(const char *fileName) {
 	while(1) {
 		uiDrawObj_t *newPanel = DrawEmptyBox(20,60, getVideoMode()->fbWidth-20, 460);
 		sprintf(txtbuffer, "%s Parameters:", fileName);
-		DrawAddChild(newPanel, DrawStyledLabel(25, 62, txtbuffer, GetTextScaleToFitInWidth(txtbuffer, getVideoMode()->fbWidth-50), false, defaultColor));
+		DrawAddChild(newPanel, DrawStyledLabel(25, 74, txtbuffer, GetTextScaleToFitInWidth(txtbuffer, getVideoMode()->fbWidth-50), false, defaultColor));
 
 		int i = 0, j = 0;
 		int current_view_start = MIN(MAX(0,param_selection-params_per_page/2),MAX(0,params->num_params-params_per_page));
@@ -1684,9 +1683,9 @@ void DrawArgsSelector(const char *fileName) {
 		}
 		// Write about the default if there is any
 		DrawAddChild(newPanel, DrawTransparentBox( 35, 350, getVideoMode()->fbWidth-35, 400));
-		DrawAddChild(newPanel, DrawStyledLabel(33, 345, "Default values will be used by the DOL being loaded if a", 0.8f, false, defaultColor));
-		DrawAddChild(newPanel, DrawStyledLabel(33, 365, "parameter is not enabled. Please check the documentation", 0.8f, false, defaultColor));
-		DrawAddChild(newPanel, DrawStyledLabel(33, 385, "for this DOL if you are unsure of the default values.", 0.8f, false, defaultColor));
+		DrawAddChild(newPanel, DrawStyledLabel(33, 354, "Default values will be used by the DOL being loaded if a", 0.8f, false, defaultColor));
+		DrawAddChild(newPanel, DrawStyledLabel(33, 374, "parameter is not enabled. Please check the documentation", 0.8f, false, defaultColor));
+		DrawAddChild(newPanel, DrawStyledLabel(33, 394, "for this DOL if you are unsure of the default values.", 0.8f, false, defaultColor));
 		DrawAddChild(newPanel, DrawStyledLabel(640/2, 440, "(A) Toggle Param \267 (Start) Load the DOL", 1.0f, true, defaultColor));
 		
 		if(container) {
@@ -1735,7 +1734,7 @@ static uiDrawObj_t* drawCheatForCheatsSelector(CheatEntry *cheat, int x, int y, 
 	DrawAddChild(container, DrawImage(cheat->enabled ? TEX_CHECKED:TEX_UNCHECKED, x, y, 32, 32, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0));
 	if(selected) DrawAddChild(container, DrawTransparentBox( x+chkWidth+gapWidth, y, getVideoMode()->fbWidth-52, y+30));
 	// Draw the cheat Name
-	DrawAddChild(container, DrawStyledLabel(x+chkWidth+gapWidth+5, y+4, name, GetTextScaleToFitInWidth(name, nameWidth-10), false, fontColor));
+	DrawAddChild(container, DrawStyledLabel(x+chkWidth+gapWidth+5, y+15, name, GetTextScaleToFitInWidth(name, nameWidth-10), false, fontColor));
 	return container;
 }
 
@@ -1750,7 +1749,7 @@ void DrawCheatsSelector(const char *fileName) {
 	while(1) {
 		uiDrawObj_t *newPanel = DrawEmptyBox(20,60, getVideoMode()->fbWidth-20, 460);
 		sprintf(txtbuffer, "%s Cheats:", fileName);
-		DrawAddChild(newPanel, DrawStyledLabel(25, 62, txtbuffer, GetTextScaleToFitInWidth(txtbuffer, getVideoMode()->fbWidth-50), false, defaultColor));
+		DrawAddChild(newPanel, DrawStyledLabel(25, 74, txtbuffer, GetTextScaleToFitInWidth(txtbuffer, getVideoMode()->fbWidth-50), false, defaultColor));
 
 		int i = 0, j = 0;
 		int current_view_start = MIN(MAX(0,cheat_selection-cheats_per_page/2),MAX(0,cheats->num_cheats-cheats_per_page));
@@ -1768,13 +1767,13 @@ void DrawCheatsSelector(const char *fileName) {
 		float percent = (((float)getEnabledCheatsSize() / (float)kenobi_get_maxsize()) * 100.0f);
 		sprintf(txtbuffer, "Space taken by cheats: %i/%i bytes (%.1f%% free)"
 			, getEnabledCheatsSize(), kenobi_get_maxsize(), 100.0f-percent);
-		DrawAddChild(newPanel, DrawStyledLabel(33, 345, txtbuffer, 0.8f, false, defaultColor));
+		DrawAddChild(newPanel, DrawStyledLabel(33, 354, txtbuffer, 0.8f, false, defaultColor));
 		
 		sprintf(txtbuffer, "Enabled: %i Total: %i", getEnabledCheatsCount(), cheats->num_cheats);
-		DrawAddChild(newPanel, DrawStyledLabel(33, 370, txtbuffer, 0.8f, false, defaultColor));
+		DrawAddChild(newPanel, DrawStyledLabel(33, 379, txtbuffer, 0.8f, false, defaultColor));
 		
 		sprintf(txtbuffer, "WiiRD Debug %s", swissSettings.wiirdDebug ? "Enabled":"Disabled");
-		DrawAddChild(newPanel, DrawStyledLabel(33, 395, txtbuffer, 0.8f, false, defaultColor));
+		DrawAddChild(newPanel, DrawStyledLabel(33, 404, txtbuffer, 0.8f, false, defaultColor));
 		DrawAddChild(newPanel, DrawStyledLabel(640/2, 440, "(A) Toggle Cheat \267 (X) WiiRD Debug \267 (B) Return", 0.9f, true, defaultColor));
 
 		if(container) {
@@ -1964,7 +1963,7 @@ void DrawGetTextEntry(int mode, const char *label, void *src, int size) {
 		uiDrawObj_t *newPanel = DrawEmptyBox(20,60, getVideoMode()->fbWidth-20, 440);
 		DrawAddChild(newPanel, DrawEmptyBox(20,60, getVideoMode()->fbWidth-20, 440));
 		sprintf(txtbuffer, "%s - Please enter a value", label);
-		DrawAddChild(newPanel, DrawStyledLabel(25, 62, txtbuffer, GetTextScaleToFitInWidth(txtbuffer, getVideoMode()->fbWidth-50), false, defaultColor));
+		DrawAddChild(newPanel, DrawStyledLabel(25, 74, txtbuffer, GetTextScaleToFitInWidth(txtbuffer, getVideoMode()->fbWidth-50), false, defaultColor));
 
 		// Draw the text entry box (TODO: mask chars if the mode says to do so)
 		DrawAddChild(newPanel, DrawEmptyBox(40, 100, getVideoMode()->fbWidth-40, 140));
@@ -1979,7 +1978,7 @@ void DrawGetTextEntry(int mode, const char *label, void *src, int size) {
 				(mode & ENTRYMODE_FILE ? txt_mode_file_chars_upper : txt_mode_chars_upper);
 			sprintf(txtbuffer, "Press X to change to [%s], current mode is [%s]",
 													txt_modes_str[(cur_txt_mode + 1 >= num_txt_modes ? 0 : cur_txt_mode + 1)], txt_modes_str[cur_txt_mode]);
-			DrawAddChild(newPanel, DrawStyledLabel(25, 420, txtbuffer, 0.65f, false, defaultColor));
+			DrawAddChild(newPanel, DrawStyledLabel(25, 427, txtbuffer, 0.65f, false, defaultColor));
 		}
 		
 		// Draw the grid
