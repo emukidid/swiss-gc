@@ -13,6 +13,7 @@ void wait_network();
 bool init_network();
 void init_network_async();
 u32 bba_exists(u32 location);
+bool bba_requires_init();
 const char *bba_address_str();
 
 #endif

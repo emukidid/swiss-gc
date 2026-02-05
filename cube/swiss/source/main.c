@@ -346,8 +346,7 @@ int main(int argc, char *argv[])
 	VIDEO_SetAdjustingValues(swissSettings.sramHOffset, 0);
 	updateSRAM(&swissSettings, true);
 	
-	swissSettings.initNetworkAtStart |= !!bba_exists(LOC_MEMCARD_SLOT_A | LOC_MEMCARD_SLOT_B | LOC_SERIAL_PORT_2);
-	if(swissSettings.initNetworkAtStart) {
+	if(swissSettings.initNetworkAtStart |= bba_requires_init()) {
 		// Start up the BBA if it exists
 		init_network_async();
 	}

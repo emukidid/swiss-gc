@@ -156,6 +156,16 @@ u32 bba_exists(u32 location)
 	return LOC_UNK;
 }
 
+bool bba_requires_init(void)
+{
+	u32 location = bba_exists(LOC_ANY), id;
+
+	if (location == LOC_SERIAL_PORT_1 && EXI_GetID(EXI_CHANNEL_0, EXI_DEVICE_2, &id))
+		return id != EXI_MX98730EC_ID;
+
+	return location != LOC_UNK;
+}
+
 const char *bba_address_str(void)
 {
 	static char string[18];
