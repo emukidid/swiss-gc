@@ -130,8 +130,8 @@ void drawString(int x, int y, char *string, float scale, int align, GXColor font
 		int i;
 		GX_Begin(GX_QUADS, GX_VTXFMT1, 4);
 		for (i=0; i<4; i++) {
-			int s = (i & 1) ^ ((i & 2) >> 1) ? width : 1;
-			int t = (i & 2) ? font->cell_height : 1;
+			int s = (i & 1) ^ ((i & 2) >> 1) ? width : 0;
+			int t = (i & 2) ? font->cell_height : 0;
 			GX_Position2s16(x + s, y + t);
 			GX_Color4u8(fontColor.r, fontColor.g, fontColor.b, fontColor.a);
 			GX_TexCoord2s16(s0 + s, t0 + t);
@@ -186,8 +186,8 @@ void drawStringWithCaret(int x, int y, char *string, float scale, int align, GXC
 		int i;
 		GX_Begin(GX_QUADS, GX_VTXFMT1, 4);
 		for (i=0; i<4; i++) {
-			int s = (i & 1) ^ ((i & 2) >> 1) ? width : 1;
-			int t = (i & 2) ? font->cell_height : 1;
+			int s = (i & 1) ^ ((i & 2) >> 1) ? width : 0;
+			int t = (i & 2) ? font->cell_height : 0;
 			GX_Position2s16(x + s, y + t);
 			if(pos == caretPosition)
 				GX_Color4u8(caretColor.r, caretColor.g, caretColor.b, caretColor.a);
@@ -279,8 +279,8 @@ void drawStringEllipsis(int x, int y, char *string, float scale, int align, GXCo
 		int i;
 		GX_Begin(GX_QUADS, GX_VTXFMT1, 4);
 		for (i=0; i<4; i++) {
-			int s = (i & 1) ^ ((i & 2) >> 1) ? width : 1;
-			int t = (i & 2) ? font->cell_height : 1;
+			int s = (i & 1) ^ ((i & 2) >> 1) ? width : 0;
+			int t = (i & 2) ? font->cell_height : 0;
 			GX_Position2s16(x + s, y + t);
 			GX_Color4u8(fontColor.r, fontColor.g, fontColor.b, fontColor.a);
 			GX_TexCoord2s16(s0 + s, t0 + t);
