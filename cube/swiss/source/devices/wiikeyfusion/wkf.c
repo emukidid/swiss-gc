@@ -281,11 +281,11 @@ void wkfCheckSwitches() {
 		{
 			uiDrawObj_t* warning = DrawContainer();
 			print_debug("Invalid Switch config detected: [0x%08X]\n", wkfReadSpecial3());
-			DrawAddChild(warning, DrawStyledLabel(640/2, 200, "*** WKF / WASP WARNING ***", 1.5f, true, defaultColor));
+			DrawAddChild(warning, DrawStyledLabel(640/2, 200, "*** WKF / WASP WARNING ***", 1.5f, ALIGN_CENTER, defaultColor));
 			sprintf(txtbuffer,"Invalid WKF/WASP Switch config detected: [0x%08X]", wkfReadSpecial3());
-			DrawAddChild(warning, DrawStyledLabel(640/2, 250, txtbuffer, 0.75f, true, defaultColor));
-			DrawAddChild(warning, DrawStyledLabel(640/2, 280, "This will cause slowdown in games!", 0.8f, true, defaultColor));
-			DrawAddChild(warning, DrawStyledLabel(640/2, 310, "Please set SW3 & SW4 to ON to fix this", 0.8f, true, defaultColor));
+			DrawAddChild(warning, DrawStyledLabel(640/2, 250, txtbuffer, 0.75f, ALIGN_CENTER, defaultColor));
+			DrawAddChild(warning, DrawStyledLabel(640/2, 280, "This will cause slowdown in games!", 0.8f, ALIGN_CENTER, defaultColor));
+			DrawAddChild(warning, DrawStyledLabel(640/2, 310, "Please set SW3 & SW4 to ON to fix this", 0.8f, ALIGN_CENTER, defaultColor));
 			DrawPublish(warning);
 			sleep(5);
 			DrawDispose(warning);

@@ -21,19 +21,19 @@ s32 mp3Reader(void *cbdata, void *dst, s32 size) {
 uiDrawObj_t* updatescreen_mp3(file_handle *file, int state, int numFiles, int curMP3) {
 	uiDrawObj_t* player = DrawEmptyBox(10,100, getVideoMode()->fbWidth-10, 400);
 	sprintf(txtbuffer, "%s -  Volume (%i%%)", (state == PLAYER_PAUSE ? "Paused":"Playing"), (int)(((float)volume/(float)256)*100));
-	DrawAddChild(player, DrawStyledLabel(640/2, 130, txtbuffer, 1.0f, true, defaultColor));
+	DrawAddChild(player, DrawStyledLabel(640/2, 130, txtbuffer, 1.0f, ALIGN_CENTER, defaultColor));
 	sprintf(txtbuffer, "(%i/%i) %s",curMP3, numFiles,getRelativeName(file->name));
 	float scale = GetTextScaleToFitInWidth(txtbuffer, getVideoMode()->fbWidth-10-10);
-	DrawAddChild(player, DrawStyledLabel(640/2, 160, txtbuffer, scale, true, defaultColor));
+	DrawAddChild(player, DrawStyledLabel(640/2, 160, txtbuffer, scale, ALIGN_CENTER, defaultColor));
 	memset(txtbuffer, 0, 256);
 	sprintf(txtbuffer, "------------------------------");
 	float percentPlayed = (float)(((float)file->offset / (float)file->size) * 30);
 	txtbuffer[(int)percentPlayed] = '*';
-	DrawAddChild(player, DrawStyledLabel(640/2, 210, txtbuffer, 1.0f, true, defaultColor));
-	DrawAddChild(player, DrawStyledLabel(640/2, 300, "(<-) Rewind (->) Forward (X) Vol+ (Y) Vol-", 1.0f, true, defaultColor));
-	DrawAddChild(player, DrawStyledLabel(640/2, 330, "(B) Stop (L) Prev (R) Next (Start) Pause", 1.0f, true, defaultColor));
+	DrawAddChild(player, DrawStyledLabel(640/2, 210, txtbuffer, 1.0f, ALIGN_CENTER, defaultColor));
+	DrawAddChild(player, DrawStyledLabel(640/2, 300, "(<-) Rewind (->) Forward (X) Vol+ (Y) Vol-", 1.0f, ALIGN_CENTER, defaultColor));
+	DrawAddChild(player, DrawStyledLabel(640/2, 330, "(B) Stop (L) Prev (R) Next (Start) Pause", 1.0f, ALIGN_CENTER, defaultColor));
 	sprintf(txtbuffer, "Shuffle is currently %s press (Z) to toggle", (useShuffle ? "on":"off"));
-	DrawAddChild(player, DrawStyledLabel(640/2, 360, txtbuffer, 1.0f, true, defaultColor));
+	DrawAddChild(player, DrawStyledLabel(640/2, 360, txtbuffer, 1.0f, ALIGN_CENTER, defaultColor));
 	return player;
 }
 

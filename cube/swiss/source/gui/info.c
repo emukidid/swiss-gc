@@ -92,7 +92,7 @@ uiDrawObj_t * info_draw_page(int page_num) {
 	if(!page_num) {
 		DrawAddChild(container, DrawLabel(30, 67, "System Info (1/4):"));
 		// Model
-		DrawAddChild(container, DrawStyledLabel(640/2, 90, (char*)"MODEL", 0.65f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 90, (char*)"MODEL", 0.65f, ALIGN_CENTER, defaultColor));
 		if((SYS_GetConsoleType() & SYS_CONSOLE_MASK) == SYS_CONSOLE_DEVELOPMENT) {
 			if(*DVDDeviceCode == 0x8201) {
 				strcpy(topStr, "NPDP-GDEV (GCT-0100)");
@@ -147,9 +147,9 @@ uiDrawObj_t * info_draw_page(int page_num) {
 		else {
 			strcpy(topStr, "Nintendo Wii");
 		}
-		DrawAddChild(container, DrawStyledLabel(640/2, 106, topStr, 0.75f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 106, topStr, 0.75f, ALIGN_CENTER, defaultColor));
 		// IPL version string
-		DrawAddChild(container, DrawStyledLabel(640/2, 130, (char*)"IPL VERSION", 0.65f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 130, (char*)"IPL VERSION", 0.65f, ALIGN_CENTER, defaultColor));
 		if(!strncmp(IPLInfo, "(C) ", 4)) {
 			if((SYS_GetConsoleType() & SYS_CONSOLE_MASK) == SYS_CONSOLE_RETAIL) {
 				sprintf(topStr, "%.*s", 0x11, IPLInfo[0x55] ? &IPLInfo[0x55] : "NTSC Revision 1.0");
@@ -161,17 +161,17 @@ uiDrawObj_t * info_draw_page(int page_num) {
 		else {
 			strcpy(topStr, "Dummy");
 		}
-		DrawAddChild(container, DrawStyledLabel(640/2, 146, topStr, 0.75f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 146, topStr, 0.75f, ALIGN_CENTER, defaultColor));
 		
-		DrawAddChild(container, DrawStyledLabel(640/2, 170, (char*)"VIDEO MODE", 0.65f, true, defaultColor));
-		DrawAddChild(container, DrawStyledLabel(640/2, 186, getVideoModeString(getVideoMode()), 0.75f, true, defaultColor));
-		DrawAddChild(container, DrawStyledLabel(640/2, 210, (char*)"AUDIO", 0.65f, true, defaultColor));
-		DrawAddChild(container, DrawStyledLabel(640/2, 226, (char*)(swissSettings.sramStereo ? "Stereo" : "Mono"), 0.75f, true, defaultColor));
-		DrawAddChild(container, DrawStyledLabel(640/2, 250, (char*)"LANGUAGE", 0.65f, true, defaultColor));
-		DrawAddChild(container, DrawStyledLabel(640/2, 266, (char*)(sramLanguageStr[swissSettings.sramLanguage]), 0.75f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 170, (char*)"VIDEO MODE", 0.65f, ALIGN_CENTER, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 186, getVideoModeString(getVideoMode()), 0.75f, ALIGN_CENTER, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 210, (char*)"AUDIO", 0.65f, ALIGN_CENTER, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 226, (char*)(swissSettings.sramStereo ? "Stereo" : "Mono"), 0.75f, ALIGN_CENTER, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 250, (char*)"LANGUAGE", 0.65f, ALIGN_CENTER, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 266, (char*)(sramLanguageStr[swissSettings.sramLanguage]), 0.75f, ALIGN_CENTER, defaultColor));
 
 		// GC 00083214, 00083410
-		DrawAddChild(container, DrawStyledLabel(640/2, 290, (char*)"CPU PVR", 0.65f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 290, (char*)"CPU PVR", 0.65f, ALIGN_CENTER, defaultColor));
 		u32 coreMHz = SYS_GetCoreFrequency() / 1000000;
 		u32 pvr = mfpvr();
 		if((pvr & 0xFFFFF000) == 0x00083000) {
@@ -193,13 +193,13 @@ uiDrawObj_t * info_draw_page(int page_num) {
 		else {
 			sprintf(topStr, "Unknown (0x%08X)", pvr);
 		}
-		DrawAddChild(container, DrawStyledLabel(640/2, 306, topStr, 0.75f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 306, topStr, 0.75f, ALIGN_CENTER, defaultColor));
 		
-		DrawAddChild(container, DrawStyledLabel(640/2, 330, (char*)"CPU ECID", 0.65f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 330, (char*)"CPU ECID", 0.65f, ALIGN_CENTER, defaultColor));
 		sprintf(topStr,"%08X:%08X:%08X:%08X",mfspr(ECID0),mfspr(ECID1),mfspr(ECID2),mfspr(ECID3));
-		DrawAddChild(container, DrawStyledLabel(640/2, 346, topStr, 0.75f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 346, topStr, 0.75f, ALIGN_CENTER, defaultColor));
 		
-		DrawAddChild(container, DrawStyledLabel(640/2, 370, (char*)"SYSTEM-ON-CHIP", 0.65f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 370, (char*)"SYSTEM-ON-CHIP", 0.65f, ALIGN_CENTER, defaultColor));
 		u32 busMHz = SYS_GetBusFrequency() / 1000000;
 		u32 chipId = ((vu32*)0xCC003000)[11];
 		if((chipId & 0xFFFFFFF) == 0x46500B1) {
@@ -213,55 +213,55 @@ uiDrawObj_t * info_draw_page(int page_num) {
 		else {
 			sprintf(topStr, "Unknown (0x%08X)", chipId);
 		}
-		DrawAddChild(container, DrawStyledLabel(640/2, 386, topStr, 0.75f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 386, topStr, 0.75f, ALIGN_CENTER, defaultColor));
 	}
 	else if(page_num == 1) {
 		DrawAddChild(container, DrawLabel(30, 67, "Device Info (2/4):"));
-		DrawAddChild(container, DrawStyledLabel(640/2, 90, (char*)"SLOT-A", 0.65f, true, defaultColor));
-		DrawAddChild(container, DrawStyledLabel(640/2, 106, getDeviceInfoString(LOC_MEMCARD_SLOT_A), 0.75f, true, defaultColor));
-		DrawAddChild(container, DrawStyledLabel(640/2, 130, (char*)"SLOT-B", 0.65f, true, defaultColor));
-		DrawAddChild(container, DrawStyledLabel(640/2, 146, getDeviceInfoString(LOC_MEMCARD_SLOT_B), 0.75f, true, defaultColor));
-		DrawAddChild(container, DrawStyledLabel(640/2, 170, (char*)"SERIAL PORT 1", 0.65f, true, defaultColor));
-		DrawAddChild(container, DrawStyledLabel(640/2, 186, getDeviceInfoString(LOC_SERIAL_PORT_1), 0.75f, true, defaultColor));
-		DrawAddChild(container, DrawStyledLabel(640/2, 210, (char*)"SERIAL PORT 2", 0.65f, true, defaultColor));
-		DrawAddChild(container, DrawStyledLabel(640/2, 226, getDeviceInfoString(LOC_SERIAL_PORT_2), 0.75f, true, defaultColor));
-		DrawAddChild(container, DrawStyledLabel(640/2, 250, (char*)"DVD INTERFACE", 0.65f, true, defaultColor));
-		DrawAddChild(container, DrawStyledLabel(640/2, 266, getDeviceInfoString(LOC_DVD_CONNECTOR), 0.75f, true, defaultColor));
-		DrawAddChild(container, DrawStyledLabel(640/2, 290, (char*)"PROGRESSIVE VIDEO", 0.65f, true, defaultColor));
-		DrawAddChild(container, DrawStyledLabel(640/2, 306, (char*)(getDTVStatus() ? getRawDTVStatus() ? "Enabled" : "Forced" : "Disabled"), 0.75f, true, defaultColor));
-		DrawAddChild(container, DrawStyledLabel(640/2, 330, (char*)"CURRENT DEVICE", 0.65f, true, defaultColor));
-		DrawAddChild(container, DrawStyledLabel(640/2, 346, (char*)(devices[DEVICE_CUR] != NULL ? devices[DEVICE_CUR]->deviceName : "None"), 0.75f, true, defaultColor));
-		DrawAddChild(container, DrawStyledLabel(640/2, 370, (char*)"CONFIGURATION DEVICE", 0.65f, true, defaultColor));
-		DrawAddChild(container, DrawStyledLabel(640/2, 386, (char*)(devices[DEVICE_CONFIG] != NULL ? devices[DEVICE_CONFIG]->deviceName : "None"), 0.75f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 90, (char*)"SLOT-A", 0.65f, ALIGN_CENTER, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 106, getDeviceInfoString(LOC_MEMCARD_SLOT_A), 0.75f, ALIGN_CENTER, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 130, (char*)"SLOT-B", 0.65f, ALIGN_CENTER, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 146, getDeviceInfoString(LOC_MEMCARD_SLOT_B), 0.75f, ALIGN_CENTER, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 170, (char*)"SERIAL PORT 1", 0.65f, ALIGN_CENTER, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 186, getDeviceInfoString(LOC_SERIAL_PORT_1), 0.75f, ALIGN_CENTER, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 210, (char*)"SERIAL PORT 2", 0.65f, ALIGN_CENTER, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 226, getDeviceInfoString(LOC_SERIAL_PORT_2), 0.75f, ALIGN_CENTER, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 250, (char*)"DVD INTERFACE", 0.65f, ALIGN_CENTER, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 266, getDeviceInfoString(LOC_DVD_CONNECTOR), 0.75f, ALIGN_CENTER, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 290, (char*)"PROGRESSIVE VIDEO", 0.65f, ALIGN_CENTER, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 306, (char*)(getDTVStatus() ? getRawDTVStatus() ? "Enabled" : "Forced" : "Disabled"), 0.75f, ALIGN_CENTER, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 330, (char*)"CURRENT DEVICE", 0.65f, ALIGN_CENTER, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 346, (char*)(devices[DEVICE_CUR] != NULL ? devices[DEVICE_CUR]->deviceName : "None"), 0.75f, ALIGN_CENTER, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 370, (char*)"CONFIGURATION DEVICE", 0.65f, ALIGN_CENTER, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 386, (char*)(devices[DEVICE_CONFIG] != NULL ? devices[DEVICE_CONFIG]->deviceName : "None"), 0.75f, ALIGN_CENTER, defaultColor));
 	}
 	else if(page_num == 2) {
 		DrawAddChild(container, DrawLabel(30, 67, "Version Info (3/4):"));
-		DrawAddChild(container, DrawStyledLabel(640/2, 115, "Swiss version 0.6", 1.0f, true, defaultColor));
-		DrawAddChild(container, DrawStyledLabel(640/2, 140, "by emu_kidid & Extrems, 2026", 0.75f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 115, "Swiss version 0.6", 1.0f, ALIGN_CENTER, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 140, "by emu_kidid & Extrems, 2026", 0.75f, ALIGN_CENTER, defaultColor));
 		sprintf(topStr, "Commit %s; Revision %s", GIT_COMMIT, GIT_REVISION);
-		DrawAddChild(container, DrawStyledLabel(640/2, 165, topStr, 0.75f, true, defaultColor));
-		DrawAddChild(container, DrawStyledLabel(640/2, 190, "Built with " _V_STRING, 0.64f, true, defaultColor));
-		DrawAddChild(container, DrawStyledLabel(640/2, 240, "Source/Updates/Issues", 0.75f, true, defaultColor));
-		DrawAddChild(container, DrawStyledLabel(640/2, 264, "github.com/emukidid/swiss-gc", 0.64f, true, defaultColor));
-		DrawAddChild(container, DrawStyledLabel(640/2, 310, "Web/Support", 0.75f, true, defaultColor));
-		DrawAddChild(container, DrawStyledLabel(640/2, 334, "www.gc-forever.com", 0.64f, true, defaultColor));
-		DrawAddChild(container, DrawStyledLabel(640/2, 378, "Visit us on IRC at EFnet/#gc-forever", 0.75f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 165, topStr, 0.75f, ALIGN_CENTER, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 190, "Built with " _V_STRING, 0.64f, ALIGN_CENTER, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 240, "Source/Updates/Issues", 0.75f, ALIGN_CENTER, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 264, "github.com/emukidid/swiss-gc", 0.64f, ALIGN_CENTER, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 310, "Web/Support", 0.75f, ALIGN_CENTER, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 334, "www.gc-forever.com", 0.64f, ALIGN_CENTER, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 378, "Visit us on IRC at EFnet/#gc-forever", 0.75f, ALIGN_CENTER, defaultColor));
 	}
 	else if(page_num == 3) {
 		DrawAddChild(container, DrawLabel(30, 67, "Greetings (4/4):"));
-		DrawAddChild(container, DrawStyledLabel(640/2, 90, "Current patreon supporters", 0.75f, true, defaultColor));
-		DrawAddChild(container, DrawStyledLabel(640/2, 114, "Borg Number One (a.k.a. Steven Weiser), Roman Antonacci, 8BitMods,", 0.60f, true, defaultColor));
-		DrawAddChild(container, DrawStyledLabel(640/2, 134, "CastleMania Ryan, Dan Kunz, Fernando Avelino, HakanaiSeishin, Haymose,", 0.60f, true, defaultColor));
-		DrawAddChild(container, DrawStyledLabel(640/2, 154, "Alex Mitchell, badsector, Jeffrey Pierce, Jon Moon, kevin,", 0.60f, true, defaultColor));
-		DrawAddChild(container, DrawStyledLabel(640/2, 174, "Kory, Marlon, silversteel, William Fowler", 0.60f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 90, "Current patreon supporters", 0.75f, ALIGN_CENTER, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 114, "Borg Number One (a.k.a. Steven Weiser), Roman Antonacci, 8BitMods,", 0.60f, ALIGN_CENTER, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 134, "CastleMania Ryan, Dan Kunz, Fernando Avelino, HakanaiSeishin, Haymose,", 0.60f, ALIGN_CENTER, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 154, "Alex Mitchell, badsector, Jeffrey Pierce, Jon Moon, kevin,", 0.60f, ALIGN_CENTER, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 174, "Kory, Marlon, silversteel, William Fowler", 0.60f, ALIGN_CENTER, defaultColor));
 
-		DrawAddChild(container, DrawStyledLabel(640/2, 210, "Historical Patreon supporters", 0.75f, true, defaultColor));
-		DrawAddChild(container, DrawStyledLabel(640/2, 234, "meneerbeer, SubElement, KirovAir, Cristofer Cruz,", 0.60f, true, defaultColor));
-		DrawAddChild(container, DrawStyledLabel(640/2, 254, "RamblingOkie, Lindh0lm154, finnyguy, CtPG", 0.60f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 210, "Historical Patreon supporters", 0.75f, ALIGN_CENTER, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 234, "meneerbeer, SubElement, KirovAir, Cristofer Cruz,", 0.60f, ALIGN_CENTER, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 254, "RamblingOkie, Lindh0lm154, finnyguy, CtPG", 0.60f, ALIGN_CENTER, defaultColor));
 
-		DrawAddChild(container, DrawStyledLabel(640/2, 290, "Extra Greetz: FIX94, megalomaniac, sepp256, novenary", 0.60f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 290, "Extra Greetz: FIX94, megalomaniac, sepp256, novenary", 0.60f, ALIGN_CENTER, defaultColor));
 		
-		DrawAddChild(container, DrawStyledLabel(640/2, 330, "...and a big thanks to YOU, for using Swiss!", 0.75f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 330, "...and a big thanks to YOU, for using Swiss!", 0.75f, ALIGN_CENTER, defaultColor));
 	}
 	if(page_num != 3) {
 		DrawAddChild(container, DrawLabel(530, 410, "\233"));
@@ -269,7 +269,7 @@ uiDrawObj_t * info_draw_page(int page_num) {
 	if(page_num != 0) {
 		DrawAddChild(container, DrawLabel(100, 410, "\213"));
 	}
-	DrawAddChild(container, DrawStyledLabel(640/2, 410, "Press A or B to return", 1.0f, true, defaultColor));
+	DrawAddChild(container, DrawStyledLabel(640/2, 410, "Press A or B to return", 1.0f, ALIGN_CENTER, defaultColor));
 	return container;
 }
 

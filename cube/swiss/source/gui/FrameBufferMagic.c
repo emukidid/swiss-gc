@@ -157,7 +157,7 @@ typedef struct drawStyledLabelEvent {
 	int y;
 	char *string;
 	float size;
-	bool centered;
+	int align;
 	GXColor color;
 	int fadingDirection;
 	bool showCaret;
@@ -757,7 +757,7 @@ static void _DrawProgressBar(uiDrawObj_t *evt) {
 		GX_InvalidateTexAll();
 		GX_LoadTexObj(&loadingTexObj, GX_TEXMAP0);
 		_drawRect(x-8, y-8, 16, 16, 0, loadingColor, (float) (numSegments)/8, (float) (numSegments+1)/8, 0.0f, 1.0f);
-		drawString(x+8, y, "Loading\205", 0.55f, false, loadingColor);
+		drawString(x+8, y, "Loading\205", 0.55f, ALIGN_LEFT, loadingColor);
 		return;
 	}
 	_DrawSimpleBox( x1, y1, x2-x1, y2-y1, 0, fillColor, borderColor);		
@@ -802,15 +802,15 @@ static void _DrawProgressBar(uiDrawObj_t *evt) {
 				(multiplier*data->percent), 20, 0, progressBarColor, noColor); 
 		sprintf(fbTextBuffer,"%d%%", data->percent);
 		bool displaySpeed = data->speed != 0;
-		drawString(displaySpeed ? (x1 + 80) : (640/2), middleY+30, fbTextBuffer, 1.0f, true, defaultColor);
+		drawString(displaySpeed ? (x1 + 80) : (640/2), middleY+30, fbTextBuffer, 1.0f, ALIGN_CENTER, defaultColor);
 		if(displaySpeed) {
 			formatBytes(fbTextBuffer, data->speed, 0, true);
 			strcat(fbTextBuffer, "/s");
-			drawString(x1 + 280, middleY+30, fbTextBuffer, 1.0f, true, defaultColor);
+			drawString(x1 + 280, middleY+30, fbTextBuffer, 1.0f, ALIGN_CENTER, defaultColor);
 			sprintf(fbTextBuffer,"Elapsed: %02i:%02i:%02i", data->timestart / 3600, (data->timestart / 60)%60,  data->timestart % 60);
-			drawString(x1 + 500, middleY+30, fbTextBuffer, 0.65f, true, defaultColor);
+			drawString(x1 + 500, middleY+30, fbTextBuffer, 0.65f, ALIGN_CENTER, defaultColor);
 			sprintf(fbTextBuffer,"Remain: %02i:%02i:%02i", data->timeremain / 3600, (data->timeremain / 60)%60,  data->timeremain % 60);
-			drawString(x1 + 500, middleY+45, fbTextBuffer, 0.65f, true, defaultColor);
+			drawString(x1 + 500, middleY+45, fbTextBuffer, 0.65f, ALIGN_CENTER, defaultColor);
 		}
 	}	
 }
@@ -831,7 +831,7 @@ uiDrawObj_t* DrawProgressBar(bool indeterminate, int percent, const char *messag
 		int y2 = ((480/2) + (PROGRESS_BOX_HEIGHT/2));
 		int middleY = (y2+y1)/2;
 		while(tok != NULL) {
-			DrawAddChild(event, DrawStyledLabel(640/2, middleY, tok, 1.0f, true, defaultColor));
+			DrawAddChild(event, DrawStyledLabel(640/2, middleY, tok, 1.0f, ALIGN_CENTER, defaultColor));
 			tok = strtok(NULL,"\n");
 			middleY+=24;
 		}
@@ -878,7 +878,7 @@ uiDrawObj_t* DrawMessageBox(int type, const char *msg)
 	int y2 = ((480/2) + (PROGRESS_BOX_HEIGHT/2));
 	int middleY = y2-y1 < 23 ? y1+3 : (y2+y1)/2-12;
 	while(tok != NULL) {
-		uiDrawObj_t *lineLabel = DrawStyledLabel(640/2, middleY, tok, 1.0f, true, defaultColor);
+		uiDrawObj_t *lineLabel = DrawStyledLabel(640/2, middleY, tok, 1.0f, ALIGN_CENTER, defaultColor);
 		tok = strtok(NULL,"\n");
 		middleY+=24;
 		DrawAddChild(event, lineLabel);
@@ -915,7 +915,7 @@ static void _DrawSelectableButton(uiDrawObj_t *evt) {
 			int fullHeight = GetFontHeight(1.0f);
 			scale = (float)availHeight / (float)fullHeight;
 		}
-		drawString(data->x1 + borderSize+3, data->y1+(data->y2-data->y1)/2, data->msg, scale, false, defaultColor);
+		drawString(data->x1+borderSize+3, data->y1+(data->y2-data->y1)/2, data->msg, scale, ALIGN_LEFT, defaultColor);
 	}
 }
 
@@ -962,7 +962,7 @@ static void _DrawTooltip(uiDrawObj_t *evt) {
 		int curLine = 0;
 		while(numLines) {
 			float scale = GetTextScaleToFitInWidthWithMax(strPtr, (tooltipX2-tooltipX1)-(borderSize*2)-6, 0.75f);
-			drawString(tooltipX1 + borderSize+3, tooltipY1+11+(curLine*25), strPtr, scale, false, borderColorTT);
+			drawString(tooltipX1+borderSize+3, tooltipY1+11+(curLine*25), strPtr, scale, ALIGN_LEFT, borderColorTT);
 			numLines--;
 			curLine++;
 			// Increment to the next line if we have one.
@@ -1000,7 +1000,7 @@ static void _DrawStyledLabel(uiDrawObj_t *evt) {
 			if(data->caretColor.a >= 255) { data->fadingDirection = -1; data->caretColor.a = 255; }
 			else if(data->caretColor.a <= 15) { data->fadingDirection = 1; data->caretColor.a = 0; }
 		}		
-		drawStringWithCaret(data->x, data->y, data->string, data->size, data->centered, data->color, data->caretPosition, data->caretColor);
+		drawStringWithCaret(data->x, data->y, data->string, data->size, data->align, data->color, data->caretPosition, data->caretColor);
 	}
 	else {
 		if(data->fadingDirection) {
@@ -1008,12 +1008,12 @@ static void _DrawStyledLabel(uiDrawObj_t *evt) {
 			if(data->color.a >= 255) data->fadingDirection = -1;
 			else if(data->color.a <= 15) data->fadingDirection = 1;
 		}
-		drawString(data->x, data->y, data->string, data->size, data->centered, data->color);
+		drawString(data->x, data->y, data->string, data->size, data->align, data->color);
 	}
 }
 
 // External
-uiDrawObj_t* DrawStyledLabel(int x, int y, const char *string, float size, bool centered, GXColor color)
+uiDrawObj_t* DrawStyledLabel(int x, int y, const char *string, float size, int align, GXColor color)
 {	
 	drawStyledLabelEvent_t *eventData = calloc(1, sizeof(drawStyledLabelEvent_t));
 	eventData->x = x;
@@ -1025,7 +1025,7 @@ uiDrawObj_t* DrawStyledLabel(int x, int y, const char *string, float size, bool 
 		eventData->string = NULL;
 	}
 	eventData->size = size;
-	eventData->centered = centered;
+	eventData->align = align;
 	eventData->color = color;
 	uiDrawObj_t *event = calloc(1, sizeof(uiDrawObj_t));
 	event->type = EV_STYLEDLABEL;
@@ -1034,9 +1034,9 @@ uiDrawObj_t* DrawStyledLabel(int x, int y, const char *string, float size, bool 
 }
 
 // External
-uiDrawObj_t* DrawStyledLabelWithCaret(int x, int y, const char *string, float size, bool centered, GXColor color, int caretPosition)
+uiDrawObj_t* DrawStyledLabelWithCaret(int x, int y, const char *string, float size, int align, GXColor color, int caretPosition)
 {	
-	uiDrawObj_t *event = DrawStyledLabel(x, y, string, size, centered, color);
+	uiDrawObj_t *event = DrawStyledLabel(x, y, string, size, align, color);
 	drawStyledLabelEvent_t *eventData = (drawStyledLabelEvent_t*)event->data;
 	eventData->caretPosition = caretPosition;
 	eventData->showCaret = true;
@@ -1058,7 +1058,7 @@ uiDrawObj_t* DrawLabel(int x, int y, const char *string)
 		eventData->string = NULL;
 	}
 	eventData->size = 1.0f;
-	eventData->centered = false;
+	eventData->align = ALIGN_LEFT;
 	eventData->color = defaultColor;
 	uiDrawObj_t *event = calloc(1, sizeof(uiDrawObj_t));
 	event->type = EV_STYLEDLABEL;
@@ -1079,7 +1079,7 @@ uiDrawObj_t* DrawFadingLabel(int x, int y, const char *string, float size)
 		eventData->string = NULL;
 	}
 	eventData->size = size;
-	eventData->centered = false;
+	eventData->align = ALIGN_LEFT;
 	eventData->color = (GXColor) {255, 255, 255, 0};
 	eventData->fadingDirection = 1;
 	uiDrawObj_t *event = calloc(1, sizeof(uiDrawObj_t));
@@ -1151,7 +1151,7 @@ static void _DrawFileBrowserButton(uiDrawObj_t *evt) {
 				// Company
 				sprintf(fbTextBuffer, "%.*s", BNR_FULL_TEXT_LEN, file->meta->bannerDesc.fullCompany);
 				float scale = GetTextScaleToFitInWidth(fbTextBuffer,(data->x2-data->x1)-(borderSize*2));
-				drawString(x_mid, data->y1+(borderSize*2)+40+bnr_height+20, fbTextBuffer, scale, true, defaultColor);
+				drawString(x_mid, data->y1+(borderSize*2)+40+bnr_height+20, fbTextBuffer, scale, ALIGN_CENTER, defaultColor);
 				
 				// Description
 				sprintf(fbTextBuffer, "%.*s", BNR_DESC_LEN, file->meta->bannerDesc.description);
@@ -1160,20 +1160,20 @@ static void _DrawFileBrowserButton(uiDrawObj_t *evt) {
 				int line = 0;
 				while ((tok = strtok_r (rest,"\r\n", &rest))) {
 					scale = GetTextScaleToFitInWidthWithMax(tok,(data->x2-data->x1)-(borderSize*2), !line ? 1.0f : scale);
-					drawString(x_mid, data->y1+(borderSize*2)+40+bnr_height+60+(line*scale*24), tok, scale, true, defaultColor);
+					drawString(x_mid, data->y1+(borderSize*2)+40+bnr_height+60+(line*scale*24), tok, scale, ALIGN_CENTER, defaultColor);
 					line++;
 				}
 			}
 			// Region
 			if(file->meta && file->meta->regionTexObj) {
-				drawString(data->x2 - borderSize - 83, data->y2-(borderSize+41), "Region: ", 0.45f, false, defaultColor);
+				drawString(data->x2 - 44, data->y2-(borderSize+41), "Region: ", 0.45f, ALIGN_RIGHT, defaultColor);
 				drawInit();
 				_DrawTexObjNow(file->meta->regionTexObj, data->x2 - 44, data->y2-(borderSize+50), 32, 20, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
 			}
 			
 			// fullGameName displays some titles with incorrect encoding, use displayName instead
 			float scale = GetTextScaleToFitInWidth(data->displayName, (data->x2-data->x1)-(borderSize*2));
-			drawString(x_mid, data->y1+(borderSize*2)+10, data->displayName, scale, true, defaultColor);
+			drawString(x_mid, data->y1+(borderSize*2)+10, data->displayName, scale, ALIGN_CENTER, defaultColor);
 			
 			// Print specific stats
 			if(file->fileType==IS_FILE) {
@@ -1190,8 +1190,7 @@ static void _DrawFileBrowserButton(uiDrawObj_t *evt) {
 				else {
 					formatBytes(stpcpy(fbTextBuffer, "Size: "), file->size, 0, !(file->device->location & LOC_SYSTEM));
 				}
-				drawString(data->x2 - ((borderSize+8) + (GetTextSizeInPixels(fbTextBuffer)*0.45f)),
-					data->y2-(borderSize+19), fbTextBuffer, 0.45f, false, defaultColor);
+				drawString(data->x2-(borderSize+8), data->y2-(borderSize+19), fbTextBuffer, 0.45f, ALIGN_RIGHT, defaultColor);
 			}
 		}
 		else {
@@ -1236,7 +1235,7 @@ static void _DrawFileBrowserButton(uiDrawObj_t *evt) {
 				}
 			}
 			// fullGameName displays some titles with incorrect encoding, use displayName instead
-			drawStringEllipsis(data->x1 + (data->x2-data->x1)/2, data->y2-bnr_width-5-borderSize, data->displayName, 0.5f, false, defaultColor, true, (data->y2-bnr_width-5-borderSize) - (data->y1 + (borderSize*2)));
+			drawStringEllipsis(data->x1+(data->x2-data->x1)/2, data->y2-bnr_width-5-borderSize, data->displayName, 0.5f, ALIGN_LEFT, defaultColor, true, (data->y2-bnr_width-5-borderSize) - (data->y1 + (borderSize*2)));
 		}
 	}
 	else {
@@ -1292,9 +1291,9 @@ static void _DrawFileBrowserButton(uiDrawObj_t *evt) {
 		// fullGameName displays some titles with incorrect encoding, use displayName instead
 		if(data->mode == B_SELECTED) {
 			float scale = GetTextScaleToFitInWidthWithMax(data->displayName, (data->x2-data->x1-8-96-39)-(borderSize*2), 0.6f);
-			drawString(data->x1 + borderSize+8+96, data->y1+(data->y2-data->y1)/2, data->displayName, scale, false, defaultColor);
+			drawString(data->x1+borderSize+8+96, data->y1+(data->y2-data->y1)/2, data->displayName, scale, ALIGN_LEFT, defaultColor);
 		} else {
-			drawStringEllipsis(data->x1 + borderSize+8+96, data->y1+(data->y2-data->y1)/2, data->displayName, 0.6f, false, defaultColor, false, (data->x2-data->x1-8-96-39)-(borderSize*2));
+			drawStringEllipsis(data->x1+borderSize+8+96, data->y1+(data->y2-data->y1)/2, data->displayName, 0.6f, ALIGN_LEFT, defaultColor, false, (data->x2-data->x1-8-96-39)-(borderSize*2));
 		}
 		
 		// Print specific stats
@@ -1312,8 +1311,7 @@ static void _DrawFileBrowserButton(uiDrawObj_t *evt) {
 			else {
 				formatBytes(fbTextBuffer, file->size, 0, !(file->device->location & LOC_SYSTEM));
 			}
-			drawString(data->x2 - ((borderSize+3) + (GetTextSizeInPixels(fbTextBuffer)*0.45f)),
-				data->y1+borderSize+26, fbTextBuffer, 0.45f, false, defaultColor);
+			drawString(data->x2-(borderSize+3), data->y1+borderSize+26, fbTextBuffer, 0.45f, ALIGN_RIGHT, defaultColor);
 		}
 	}
 }
@@ -1497,21 +1495,21 @@ static void _DrawTitleBar(uiDrawObj_t *evt) {
 	_DrawSimpleBox(19, 17, 602, 62, 0, fillColor, noColor);
 	
 	_DrawImageNow(TEX_SWISS, 36, 32, 96, 32, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
-	drawString(142, 39, "for GameCube", 0.55f, false, defaultColor);
-	drawString(142, 56, "version 0.6", 0.55f, false, defaultColor);
+	drawString(142, 39, "for GameCube", 0.55f, ALIGN_LEFT, defaultColor);
+	drawString(142, 56, "version 0.6", 0.55f, ALIGN_LEFT, defaultColor);
 	
 	sprintf(fbTextBuffer, "commit: %s \267 revision: %s", GIT_COMMIT, GIT_REVISION);
-	drawString(getVideoMode()->fbWidth-36-GetTextSizeInPixels(fbTextBuffer)*0.55f, 56, fbTextBuffer, 0.55f, false, defaultColor);
+	drawString(getVideoMode()->fbWidth-36, 56, fbTextBuffer, 0.55f, ALIGN_RIGHT, defaultColor);
 	
 	s8 cputemp = SYS_GetCoreTemperature();
 	if(cputemp >= 0) {
 		sprintf(fbTextBuffer, "%i\260C", cputemp);
-		drawString(getVideoMode()->fbWidth-233, 39, fbTextBuffer, 0.55f, true, defaultColor);
+		drawString(getVideoMode()->fbWidth-233, 39, fbTextBuffer, 0.55f, ALIGN_CENTER, defaultColor);
 	}
 	time_t curtime;
 	if(time(&curtime) != (time_t)-1) {
 		strftime(fbTextBuffer, sizeof(fbTextBuffer), "%Y-%m-%d \267 %H:%M:%S", localtime(&curtime));
-		drawString(getVideoMode()->fbWidth-36-GetTextSizeInPixels(fbTextBuffer)*0.55f, 39, fbTextBuffer, 0.55f, false, defaultColor);
+		drawString(getVideoMode()->fbWidth-36, 39, fbTextBuffer, 0.55f, ALIGN_RIGHT, defaultColor);
 	}
 }
 
@@ -1643,18 +1641,18 @@ static uiDrawObj_t* drawParameterForArgsSelector(Parameter *param, int x, int y,
 	if(selected) DrawAddChild(container, DrawTransparentBox( x+chkWidth+gapWidth, y, getVideoMode()->fbWidth-52, y+30));
 	DrawAddChild(container, DrawImage(param->enable ? TEX_CHECKED:TEX_UNCHECKED, x, y, 32, 32, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0));
 	// Draw the parameter Name
-	DrawAddChild(container, DrawStyledLabel(x+chkWidth+gapWidth+5, y+15, name, GetTextScaleToFitInWidth(name, nameWidth-10), false, fontColor));
+	DrawAddChild(container, DrawStyledLabel(x+chkWidth+gapWidth+5, y+15, name, GetTextScaleToFitInWidth(name, nameWidth-10), ALIGN_LEFT, fontColor));
 	// If enabled, draw arrows indicating where in the param list we are
 	if(selected && param->enable && param->num_values > 1) {
 		if(param->currentValueIdx != 0) {
-			DrawAddChild(container, DrawStyledLabel(x+(chkWidth+nameWidth+(gapWidth*4)), y+15, "\213", .8f, false, defaultColor));
+			DrawAddChild(container, DrawStyledLabel(x+(chkWidth+nameWidth+(gapWidth*4)), y+15, "\213", .8f, ALIGN_LEFT, defaultColor));
 		}
 		if(param->currentValueIdx != param->num_values-1) {
-			DrawAddChild(container, DrawStyledLabel(x+(chkWidth+nameWidth+paramWidth+(gapWidth*7)), y+15, "\233", .8f, false, defaultColor));
+			DrawAddChild(container, DrawStyledLabel(x+(chkWidth+nameWidth+paramWidth+(gapWidth*7)), y+15, "\233", .8f, ALIGN_LEFT, defaultColor));
 		}
 	}
 	// Draw the current value
-	DrawAddChild(container, DrawStyledLabel(x+chkWidth+nameWidth+(gapWidth*6), y+15, selValue, GetTextScaleToFitInWidth(selValue, paramWidth), false, fontColor));
+	DrawAddChild(container, DrawStyledLabel(x+chkWidth+nameWidth+(gapWidth*6), y+15, selValue, GetTextScaleToFitInWidth(selValue, paramWidth), ALIGN_LEFT, fontColor));
 	return container;
 }
 
@@ -1669,7 +1667,7 @@ void DrawArgsSelector(const char *fileName) {
 	while(1) {
 		uiDrawObj_t *newPanel = DrawEmptyBox(20,60, getVideoMode()->fbWidth-20, 460);
 		sprintf(txtbuffer, "%s Parameters:", fileName);
-		DrawAddChild(newPanel, DrawStyledLabel(25, 74, txtbuffer, GetTextScaleToFitInWidth(txtbuffer, getVideoMode()->fbWidth-50), false, defaultColor));
+		DrawAddChild(newPanel, DrawStyledLabel(25, 74, txtbuffer, GetTextScaleToFitInWidth(txtbuffer, getVideoMode()->fbWidth-50), ALIGN_LEFT, defaultColor));
 
 		int i = 0, j = 0;
 		int current_view_start = MIN(MAX(0,param_selection-params_per_page/2),MAX(0,params->num_params-params_per_page));
@@ -1683,10 +1681,10 @@ void DrawArgsSelector(const char *fileName) {
 		}
 		// Write about the default if there is any
 		DrawAddChild(newPanel, DrawTransparentBox( 35, 350, getVideoMode()->fbWidth-35, 400));
-		DrawAddChild(newPanel, DrawStyledLabel(33, 354, "Default values will be used by the DOL being loaded if a", 0.8f, false, defaultColor));
-		DrawAddChild(newPanel, DrawStyledLabel(33, 374, "parameter is not enabled. Please check the documentation", 0.8f, false, defaultColor));
-		DrawAddChild(newPanel, DrawStyledLabel(33, 394, "for this DOL if you are unsure of the default values.", 0.8f, false, defaultColor));
-		DrawAddChild(newPanel, DrawStyledLabel(640/2, 440, "(A) Toggle Param \267 (Start) Load the DOL", 1.0f, true, defaultColor));
+		DrawAddChild(newPanel, DrawStyledLabel(33, 354, "Default values will be used by the DOL being loaded if a", 0.8f, ALIGN_LEFT, defaultColor));
+		DrawAddChild(newPanel, DrawStyledLabel(33, 374, "parameter is not enabled. Please check the documentation", 0.8f, ALIGN_LEFT, defaultColor));
+		DrawAddChild(newPanel, DrawStyledLabel(33, 394, "for this DOL if you are unsure of the default values.", 0.8f, ALIGN_LEFT, defaultColor));
+		DrawAddChild(newPanel, DrawStyledLabel(640/2, 440, "(A) Toggle Param \267 (Start) Load the DOL", 1.0f, ALIGN_CENTER, defaultColor));
 		
 		if(container) {
 			DrawDispose(container);
@@ -1734,7 +1732,7 @@ static uiDrawObj_t* drawCheatForCheatsSelector(CheatEntry *cheat, int x, int y, 
 	DrawAddChild(container, DrawImage(cheat->enabled ? TEX_CHECKED:TEX_UNCHECKED, x, y, 32, 32, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0));
 	if(selected) DrawAddChild(container, DrawTransparentBox( x+chkWidth+gapWidth, y, getVideoMode()->fbWidth-52, y+30));
 	// Draw the cheat Name
-	DrawAddChild(container, DrawStyledLabel(x+chkWidth+gapWidth+5, y+15, name, GetTextScaleToFitInWidth(name, nameWidth-10), false, fontColor));
+	DrawAddChild(container, DrawStyledLabel(x+chkWidth+gapWidth+5, y+15, name, GetTextScaleToFitInWidth(name, nameWidth-10), ALIGN_LEFT, fontColor));
 	return container;
 }
 
@@ -1749,7 +1747,7 @@ void DrawCheatsSelector(const char *fileName) {
 	while(1) {
 		uiDrawObj_t *newPanel = DrawEmptyBox(20,60, getVideoMode()->fbWidth-20, 460);
 		sprintf(txtbuffer, "%s Cheats:", fileName);
-		DrawAddChild(newPanel, DrawStyledLabel(25, 74, txtbuffer, GetTextScaleToFitInWidth(txtbuffer, getVideoMode()->fbWidth-50), false, defaultColor));
+		DrawAddChild(newPanel, DrawStyledLabel(25, 74, txtbuffer, GetTextScaleToFitInWidth(txtbuffer, getVideoMode()->fbWidth-50), ALIGN_LEFT, defaultColor));
 
 		int i = 0, j = 0;
 		int current_view_start = MIN(MAX(0,cheat_selection-cheats_per_page/2),MAX(0,cheats->num_cheats-cheats_per_page));
@@ -1767,14 +1765,14 @@ void DrawCheatsSelector(const char *fileName) {
 		float percent = (((float)getEnabledCheatsSize() / (float)kenobi_get_maxsize()) * 100.0f);
 		sprintf(txtbuffer, "Space taken by cheats: %i/%i bytes (%.1f%% free)"
 			, getEnabledCheatsSize(), kenobi_get_maxsize(), 100.0f-percent);
-		DrawAddChild(newPanel, DrawStyledLabel(33, 354, txtbuffer, 0.8f, false, defaultColor));
+		DrawAddChild(newPanel, DrawStyledLabel(33, 354, txtbuffer, 0.8f, ALIGN_LEFT, defaultColor));
 		
 		sprintf(txtbuffer, "Enabled: %i Total: %i", getEnabledCheatsCount(), cheats->num_cheats);
-		DrawAddChild(newPanel, DrawStyledLabel(33, 379, txtbuffer, 0.8f, false, defaultColor));
+		DrawAddChild(newPanel, DrawStyledLabel(33, 379, txtbuffer, 0.8f, ALIGN_LEFT, defaultColor));
 		
 		sprintf(txtbuffer, "WiiRD Debug %s", swissSettings.wiirdDebug ? "Enabled":"Disabled");
-		DrawAddChild(newPanel, DrawStyledLabel(33, 404, txtbuffer, 0.8f, false, defaultColor));
-		DrawAddChild(newPanel, DrawStyledLabel(640/2, 440, "(A) Toggle Cheat \267 (X) WiiRD Debug \267 (B) Return", 0.9f, true, defaultColor));
+		DrawAddChild(newPanel, DrawStyledLabel(33, 404, txtbuffer, 0.8f, ALIGN_LEFT, defaultColor));
+		DrawAddChild(newPanel, DrawStyledLabel(640/2, 440, "(A) Toggle Cheat \267 (X) WiiRD Debug \267 (B) Return", 0.9f, ALIGN_CENTER, defaultColor));
 
 		if(container) {
 			DrawDispose(container);
@@ -1963,12 +1961,12 @@ void DrawGetTextEntry(int mode, const char *label, void *src, int size) {
 		uiDrawObj_t *newPanel = DrawEmptyBox(20,60, getVideoMode()->fbWidth-20, 440);
 		DrawAddChild(newPanel, DrawEmptyBox(20,60, getVideoMode()->fbWidth-20, 440));
 		sprintf(txtbuffer, "%s - Please enter a value", label);
-		DrawAddChild(newPanel, DrawStyledLabel(25, 74, txtbuffer, GetTextScaleToFitInWidth(txtbuffer, getVideoMode()->fbWidth-50), false, defaultColor));
+		DrawAddChild(newPanel, DrawStyledLabel(25, 74, txtbuffer, GetTextScaleToFitInWidth(txtbuffer, getVideoMode()->fbWidth-50), ALIGN_LEFT, defaultColor));
 
 		// Draw the text entry box (TODO: mask chars if the mode says to do so)
 		DrawAddChild(newPanel, DrawEmptyBox(40, 100, getVideoMode()->fbWidth-40, 140));
-		DrawAddChild(newPanel, DrawStyledLabelWithCaret(320, 120, text, GetTextScaleToFitInWidth(text, getVideoMode()->fbWidth-90), true, defaultColor, caret));
-		DrawAddChild(newPanel, DrawStyledLabel(320, 160, "(L/R) Cursor \267 (Start) Accept \267 (B) Discard", 0.75f, true, defaultColor));
+		DrawAddChild(newPanel, DrawStyledLabelWithCaret(320, 120, text, GetTextScaleToFitInWidth(text, getVideoMode()->fbWidth-90), ALIGN_CENTER, defaultColor, caret));
+		DrawAddChild(newPanel, DrawStyledLabel(320, 160, "(L/R) Cursor \267 (Start) Accept \267 (B) Discard", 0.75f, ALIGN_CENTER, defaultColor));
 
 		// Alphanumeric has a little "mode" hint at the bottom (upper/lower case set switching)
 		if(mode & ENTRYMODE_ALPHA) {
@@ -1978,7 +1976,7 @@ void DrawGetTextEntry(int mode, const char *label, void *src, int size) {
 				(mode & ENTRYMODE_FILE ? txt_mode_file_chars_upper : txt_mode_chars_upper);
 			sprintf(txtbuffer, "Press X to change to [%s], current mode is [%s]",
 													txt_modes_str[(cur_txt_mode + 1 >= num_txt_modes ? 0 : cur_txt_mode + 1)], txt_modes_str[cur_txt_mode]);
-			DrawAddChild(newPanel, DrawStyledLabel(25, 427, txtbuffer, 0.65f, false, defaultColor));
+			DrawAddChild(newPanel, DrawStyledLabel(25, 427, txtbuffer, 0.65f, ALIGN_LEFT, defaultColor));
 		}
 		
 		// Draw the grid
@@ -1996,7 +1994,7 @@ void DrawGetTextEntry(int mode, const char *label, void *src, int size) {
 					sprintf(txtbuffer, "%s", gridText[i] == '\a' ? "Space" : "(Y) Back");
 				else
 					sprintf(txtbuffer, "%c", gridText[i]);
-				DrawAddChild(newPanel, DrawStyledLabel(x+(button_width/2), y+(button_height/2), txtbuffer, fontSize, true, cur_col == dx && cur_row == dy ? defaultColor : deSelectedColor));
+				DrawAddChild(newPanel, DrawStyledLabel(x+(button_width/2), y+(button_height/2), txtbuffer, fontSize, ALIGN_CENTER, cur_col == dx && cur_row == dy ? defaultColor : deSelectedColor));
 				x += (grid_gap + button_width);
 				i++;
 			}

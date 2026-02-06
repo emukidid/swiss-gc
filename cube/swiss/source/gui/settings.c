@@ -155,10 +155,10 @@ void add_tooltip_label(uiDrawObj_t* page, int page_num, int option) {
 
 void drawSettingEntryString(uiDrawObj_t* page, int *y, char *label, char *key, bool selected, bool enabled) {
 	if(selected) {
-		DrawAddChild(page, DrawStyledLabel(20, *y, "\225", label_size, false, enabled ? defaultColor:deSelectedColor));
+		DrawAddChild(page, DrawStyledLabel(20, *y, "\225", label_size, ALIGN_LEFT, enabled ? defaultColor:deSelectedColor));
 	}
-	DrawAddChild(page, DrawStyledLabel(page_x_ofs_key, *y, label, label_size, false, enabled ? defaultColor:deSelectedColor));
-	DrawAddChild(page, DrawStyledLabel(page_x_ofs_val, *y, key, label_size, false, enabled && selected ? defaultColor:deSelectedColor));
+	DrawAddChild(page, DrawStyledLabel(page_x_ofs_key, *y, label, label_size, ALIGN_LEFT, enabled ? defaultColor:deSelectedColor));
+	DrawAddChild(page, DrawStyledLabel(page_x_ofs_val, *y, key, label_size, ALIGN_LEFT, enabled && selected ? defaultColor:deSelectedColor));
 	*y += page_y_line; 
 }
 

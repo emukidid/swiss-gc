@@ -91,7 +91,7 @@ void drawFontInit(void)
 	GX_SetCullMode (GX_CULL_NONE);
 }
 
-void drawString(int x, int y, char *string, float scale, bool centered, GXColor fontColor)
+void drawString(int x, int y, char *string, float scale, int align, GXColor fontColor)
 {
 	if(string == NULL) {
 		return;
@@ -100,7 +100,7 @@ void drawString(int x, int y, char *string, float scale, bool centered, GXColor 
 	Mtx GXmodelView2D;
 	int strWidth = 0;
 	int strHeight = font->cell_height;
-	if(centered)
+	if(align)
 	{
 		char* string_work = string;
 		while(*string_work)
@@ -110,7 +110,7 @@ void drawString(int x, int y, char *string, float scale, bool centered, GXColor 
 			string_work++;
 		}
 	}
-	guMtxTrans(GXmodelView2D, -strWidth/2, -strHeight/2, 0);
+	guMtxTrans(GXmodelView2D, -(align*strWidth)/2, -strHeight/2, 0);
 	guMtxScaleApply(GXmodelView2D, GXmodelView2D, scale, scale, 1);
 	guMtxTransApply(GXmodelView2D, GXmodelView2D, x, y, 0);
 	GX_LoadPosMtxImm(GXmodelView2D,GX_PNMTX0);
@@ -143,7 +143,7 @@ void drawString(int x, int y, char *string, float scale, bool centered, GXColor 
 	}
 }
 
-void drawStringWithCaret(int x, int y, char *string, float scale, bool centered, GXColor fontColor, int caretPosition, GXColor caretColor)
+void drawStringWithCaret(int x, int y, char *string, float scale, int align, GXColor fontColor, int caretPosition, GXColor caretColor)
 {
 	if(string == NULL) {
 		string = "";
@@ -152,7 +152,7 @@ void drawStringWithCaret(int x, int y, char *string, float scale, bool centered,
 	Mtx GXmodelView2D;
 	int strWidth = 0;
 	int strHeight = font->cell_height;
-	if(centered)
+	if(align)
 	{
 		char* string_work = string;
 		while(*string_work)
@@ -162,7 +162,7 @@ void drawStringWithCaret(int x, int y, char *string, float scale, bool centered,
 			string_work++;
 		}
 	}
-	guMtxTrans(GXmodelView2D, -strWidth/2, -strHeight/2, 0);
+	guMtxTrans(GXmodelView2D, -(align*strWidth)/2, -strHeight/2, 0);
 	guMtxScaleApply(GXmodelView2D, GXmodelView2D, scale, scale, 1);
 	guMtxTransApply(GXmodelView2D, GXmodelView2D, x, y, 0);
 	GX_LoadPosMtxImm(GXmodelView2D,GX_PNMTX0);
@@ -225,7 +225,7 @@ int GetCharsThatFitInWidth(char *string, int max, float scale)
 }
 
 // maxSize is how far we can draw, abbreviate with "..." if we're going to exceed it.
-void drawStringEllipsis(int x, int y, char *string, float scale, bool centered, GXColor fontColor, bool rotateVertical, int maxSize)
+void drawStringEllipsis(int x, int y, char *string, float scale, int align, GXColor fontColor, bool rotateVertical, int maxSize)
 {
 	if(string == NULL) {
 		return;
@@ -239,7 +239,7 @@ void drawStringEllipsis(int x, int y, char *string, float scale, bool centered, 
 	}
 	int strWidth = 0;
 	int strHeight = font->cell_height;
-	if(centered)
+	if(align)
 	{
 		char* string_work = string;
 		while(*string_work)
@@ -249,7 +249,7 @@ void drawStringEllipsis(int x, int y, char *string, float scale, bool centered, 
 			string_work++;
 		}
 	}
-	guMtxApplyTrans(GXmodelView2D, GXmodelView2D, -strWidth/2, -strHeight/2, 0);
+	guMtxApplyTrans(GXmodelView2D, GXmodelView2D, -(align*strWidth)/2, -strHeight/2, 0);
 	guMtxScaleApply(GXmodelView2D, GXmodelView2D, scale, scale, 1);
 	guMtxTransApply(GXmodelView2D, GXmodelView2D, x, y, 0);
 	GX_LoadPosMtxImm(GXmodelView2D,GX_PNMTX0);

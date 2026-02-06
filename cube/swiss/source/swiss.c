@@ -165,7 +165,7 @@ void drawCurrentDevice(uiDrawObj_t *containerPanel) {
 		sprintf(txtbuffer, "%s", "Hi Speed Port");
 	else
 		sprintf(txtbuffer, "%s", "Unknown");
-	uiDrawObj_t *devLocationLabel = DrawStyledLabel(30 + ((135-30) / 2), 195, txtbuffer, 0.65f, true, defaultColor);
+	uiDrawObj_t *devLocationLabel = DrawStyledLabel(30 + ((135-30) / 2), 195, txtbuffer, 0.65f, ALIGN_CENTER, defaultColor);
 	DrawAddChild(containerPanel, devLocationLabel);
 	
 	device_info *info = devices[DEVICE_CUR]->info(devices[DEVICE_CUR]->initial);
@@ -174,34 +174,34 @@ void drawCurrentDevice(uiDrawObj_t *containerPanel) {
 		DrawAddChild(containerPanel, devInfoBox);
 		
 		// Used space
-		uiDrawObj_t *devUsedLabel = DrawStyledLabel(83, 233, "Used:", 0.6f, true, defaultColor);
+		uiDrawObj_t *devUsedLabel = DrawStyledLabel(83, 233, "Used:", 0.6f, ALIGN_CENTER, defaultColor);
 		DrawAddChild(containerPanel, devUsedLabel);
 		formatBytes(txtbuffer, getCurrentDirSize(), 0, !(devices[DEVICE_CUR]->location & LOC_SYSTEM));
-		uiDrawObj_t *devUsedSizeLabel = DrawStyledLabel(83, 248, txtbuffer, 0.6f, true, defaultColor);
+		uiDrawObj_t *devUsedSizeLabel = DrawStyledLabel(83, 248, txtbuffer, 0.6f, ALIGN_CENTER, defaultColor);
 		DrawAddChild(containerPanel, devUsedSizeLabel);
 	} else {
 		uiDrawObj_t *devInfoBox = DrawTransparentBox(30, 225, 135, 330);	// Device size/extra info box
 		DrawAddChild(containerPanel, devInfoBox);
 		
 		// Total space
-		uiDrawObj_t *devTotalLabel = DrawStyledLabel(83, 233, "Total:", 0.6f, true, defaultColor);
+		uiDrawObj_t *devTotalLabel = DrawStyledLabel(83, 233, "Total:", 0.6f, ALIGN_CENTER, defaultColor);
 		DrawAddChild(containerPanel, devTotalLabel);
 		formatBytes(txtbuffer, info->totalSpace, 0, info->metric);
-		uiDrawObj_t *devTotalSizeLabel = DrawStyledLabel(83, 248, txtbuffer, 0.6f, true, defaultColor);
+		uiDrawObj_t *devTotalSizeLabel = DrawStyledLabel(83, 248, txtbuffer, 0.6f, ALIGN_CENTER, defaultColor);
 		DrawAddChild(containerPanel, devTotalSizeLabel);
 		
 		// Free space
-		uiDrawObj_t *devFreeLabel = DrawStyledLabel(83, 268, "Free:", 0.6f, true, defaultColor);
+		uiDrawObj_t *devFreeLabel = DrawStyledLabel(83, 268, "Free:", 0.6f, ALIGN_CENTER, defaultColor);
 		DrawAddChild(containerPanel, devFreeLabel);
 		formatBytes(txtbuffer, info->freeSpace, 0, info->metric);
-		uiDrawObj_t *devFreeSizeLabel = DrawStyledLabel(83, 283, txtbuffer, 0.6f, true, defaultColor);
+		uiDrawObj_t *devFreeSizeLabel = DrawStyledLabel(83, 283, txtbuffer, 0.6f, ALIGN_CENTER, defaultColor);
 		DrawAddChild(containerPanel, devFreeSizeLabel);
 		
 		// Used space
-		uiDrawObj_t *devUsedLabel = DrawStyledLabel(83, 303, "Used:", 0.6f, true, defaultColor);
+		uiDrawObj_t *devUsedLabel = DrawStyledLabel(83, 303, "Used:", 0.6f, ALIGN_CENTER, defaultColor);
 		DrawAddChild(containerPanel, devUsedLabel);
 		formatBytes(txtbuffer, info->totalSpace - info->freeSpace, 0, info->metric);
-		uiDrawObj_t *devUsedSizeLabel = DrawStyledLabel(83, 318, txtbuffer, 0.6f, true, defaultColor);
+		uiDrawObj_t *devUsedSizeLabel = DrawStyledLabel(83, 318, txtbuffer, 0.6f, ALIGN_CENTER, defaultColor);
 		DrawAddChild(containerPanel, devUsedSizeLabel);
 	}
 }
@@ -266,7 +266,7 @@ void drawFiles(file_handle** directory, int num_files, uiDrawObj_t *containerPan
 		// Draw which directory we're in
 		sprintf(txtbuffer, "%s", getDevicePath(&curDir.name[0]));
 		float scale = GetTextScaleToFitInWidthWithMax(txtbuffer, ((getVideoMode()->fbWidth-150)-20), .85);
-		DrawAddChild(containerPanel, DrawStyledLabel(150, 90, txtbuffer, scale, false, defaultColor));
+		DrawAddChild(containerPanel, DrawStyledLabel(150, 90, txtbuffer, scale, ALIGN_LEFT, defaultColor));
 		if(!strcmp(&swissSettings.autoload[0], &curDir.name[0])
 		|| !fnmatch(&swissSettings.autoload[0], &curDir.name[0], FNM_PATHNAME)) {
 			DrawAddChild(containerPanel, DrawImage(TEX_STAR, ((getVideoMode()->fbWidth-30)-16), 80, 16, 16, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0));
@@ -440,7 +440,7 @@ void drawCurrentDeviceCarousel(uiDrawObj_t *containerPanel) {
 	uiDrawObj_t *bgBox = DrawTransparentBox(30, 395, getVideoMode()->fbWidth-30, 420);
 	DrawAddChild(containerPanel, bgBox);
 	// Device name
-	uiDrawObj_t *devNameLabel = DrawStyledLabel(50, 406, devices[DEVICE_CUR]->deviceName, 0.5f, false, defaultColor);
+	uiDrawObj_t *devNameLabel = DrawStyledLabel(50, 406, devices[DEVICE_CUR]->deviceName, 0.5f, ALIGN_LEFT, defaultColor);
 	DrawAddChild(containerPanel, devNameLabel);
 	
 	device_info *info = devices[DEVICE_CUR]->info(devices[DEVICE_CUR]->initial);
@@ -459,8 +459,7 @@ void drawCurrentDeviceCarousel(uiDrawObj_t *containerPanel) {
 		textPtr += formatBytes(textPtr, info->totalSpace - info->freeSpace, 0, info->metric);
 	}
 	
-	int starting_pos = getVideoMode()->fbWidth-50-GetTextSizeInPixels(txtbuffer)*0.5;
-	uiDrawObj_t *devInfoLabel = DrawStyledLabel(starting_pos, 406, txtbuffer, 0.5f, false, defaultColor);
+	uiDrawObj_t *devInfoLabel = DrawStyledLabel(getVideoMode()->fbWidth-50, 406, txtbuffer, 0.5f, ALIGN_RIGHT, defaultColor);
 	DrawAddChild(containerPanel, devInfoLabel);
 }
 
@@ -474,7 +473,7 @@ void drawFilesCarousel(file_handle** directory, int num_files, uiDrawObj_t *cont
 		// Draw which directory we're in
 		sprintf(txtbuffer, "%s", getDevicePath(&curDir.name[0]));
 		float scale = GetTextScaleToFitInWidthWithMax(txtbuffer, (getVideoMode()->fbWidth-60), .85);
-		DrawAddChild(containerPanel, DrawStyledLabel(30, 90, txtbuffer, scale, false, defaultColor));
+		DrawAddChild(containerPanel, DrawStyledLabel(30, 90, txtbuffer, scale, ALIGN_LEFT, defaultColor));
 		if(!strcmp(&swissSettings.autoload[0], &curDir.name[0])
 		|| !fnmatch(&swissSettings.autoload[0], &curDir.name[0], FNM_PATHNAME)) {
 			DrawAddChild(containerPanel, DrawImage(TEX_STAR, ((getVideoMode()->fbWidth-30)-16), 80, 16, 16, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0));
@@ -686,7 +685,7 @@ void drawFilesFullwidth(file_handle** directory, int num_files, uiDrawObj_t *con
 		// Draw which directory we're in
 		sprintf(txtbuffer, "%s", getDevicePath(&curDir.name[0]));
 		float scale = GetTextScaleToFitInWidthWithMax(txtbuffer, (getVideoMode()->fbWidth-60), .85);
-		DrawAddChild(containerPanel, DrawStyledLabel(30, 90, txtbuffer, scale, false, defaultColor));
+		DrawAddChild(containerPanel, DrawStyledLabel(30, 90, txtbuffer, scale, ALIGN_LEFT, defaultColor));
 		if(!strcmp(&swissSettings.autoload[0], &curDir.name[0])
 		|| !fnmatch(&swissSettings.autoload[0], &curDir.name[0], FNM_PATHNAME)) {
 			DrawAddChild(containerPanel, DrawImage(TEX_STAR, ((getVideoMode()->fbWidth-30)-16), 80, 16, 16, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0));
@@ -1468,17 +1467,17 @@ bool manage_file() {
 	// Ask the user what they want to do with the selected entry
 	uiDrawObj_t* manageFileBox = DrawEmptyBox(10,150, getVideoMode()->fbWidth-10, 320);
 	sprintf(txtbuffer, "Manage %s:", isFile ? "File" : "Directory");
-	DrawAddChild(manageFileBox, DrawStyledLabel(640/2, 160, txtbuffer, 1.0f, true, defaultColor));
+	DrawAddChild(manageFileBox, DrawStyledLabel(640/2, 160, txtbuffer, 1.0f, ALIGN_CENTER, defaultColor));
 	float scale = GetTextScaleToFitInWidth(getRelativeName(curFile.name), getVideoMode()->fbWidth-10-10);
-	DrawAddChild(manageFileBox, DrawStyledLabel(640/2, 190, getRelativeName(curFile.name), scale, true, defaultColor));
+	DrawAddChild(manageFileBox, DrawStyledLabel(640/2, 190, getRelativeName(curFile.name), scale, ALIGN_CENTER, defaultColor));
 	sprintf(txtbuffer, "%s%s%s%s%s",
 					canCopy ? " (X) Copy " : "",
 					canMove ? " (Y) Move " : "",
 					canDelete ? " (Z) Delete " : "",
 					canRename ? " (R) Rename " : "",
 					canHide ? isHidden ? " (L) Unhide " : " (L) Hide " : "");
-	DrawAddChild(manageFileBox, DrawStyledLabel(640/2, 250, txtbuffer, GetTextScaleToFitInWidth(txtbuffer, getVideoMode()->fbWidth-10-10), true, defaultColor));
-	DrawAddChild(manageFileBox, DrawStyledLabel(640/2, 310, "Press an option to continue, or B to return", 1.0f, true, defaultColor));
+	DrawAddChild(manageFileBox, DrawStyledLabel(640/2, 250, txtbuffer, GetTextScaleToFitInWidth(txtbuffer, getVideoMode()->fbWidth-10-10), ALIGN_CENTER, defaultColor));
+	DrawAddChild(manageFileBox, DrawStyledLabel(640/2, 310, "Press an option to continue, or B to return", 1.0f, ALIGN_CENTER, defaultColor));
 	DrawPublish(manageFileBox);
 	u32 waitButtons = PAD_BUTTON_X|PAD_BUTTON_Y|PAD_BUTTON_B|PAD_TRIGGER_Z|PAD_TRIGGER_R|PAD_TRIGGER_L;
 	do {VIDEO_WaitVSync();} while (padsButtonsHeld() & waitButtons);
@@ -1633,11 +1632,11 @@ bool manage_file() {
 		if(devices[DEVICE_DEST]->readFile(destFile, NULL, 0) == 0) {
 			devices[DEVICE_DEST]->closeFile(destFile);
 			uiDrawObj_t* dupeBox = DrawEmptyBox(10,150, getVideoMode()->fbWidth-10, 350);
-			DrawAddChild(dupeBox, DrawStyledLabel(640/2, 160, "File exists:", 1.0f, true, defaultColor));
+			DrawAddChild(dupeBox, DrawStyledLabel(640/2, 160, "File exists:", 1.0f, ALIGN_CENTER, defaultColor));
 			float scale = GetTextScaleToFitInWidth(getRelativeName(curFile.name), getVideoMode()->fbWidth-10-10);
-			DrawAddChild(dupeBox, DrawStyledLabel(640/2, 200, getRelativeName(curFile.name), scale, true, defaultColor));
-			DrawAddChild(dupeBox, DrawStyledLabel(640/2, 230, "(A) Rename (Z) Overwrite", 1.0f, true, defaultColor));
-			DrawAddChild(dupeBox, DrawStyledLabel(640/2, 300, "Press an option to continue, or B to return", 1.0f, true, defaultColor));
+			DrawAddChild(dupeBox, DrawStyledLabel(640/2, 200, getRelativeName(curFile.name), scale, ALIGN_CENTER, defaultColor));
+			DrawAddChild(dupeBox, DrawStyledLabel(640/2, 230, "(A) Rename (Z) Overwrite", 1.0f, ALIGN_CENTER, defaultColor));
+			DrawAddChild(dupeBox, DrawStyledLabel(640/2, 300, "Press an option to continue, or B to return", 1.0f, ALIGN_CENTER, defaultColor));
 			DrawPublish(dupeBox);
 			while(padsButtonsHeld() & (PAD_BUTTON_A | PAD_TRIGGER_Z)) { VIDEO_WaitVSync (); }
 			while(1) {
@@ -2473,28 +2472,28 @@ uiDrawObj_t* draw_game_info() {
 
 	sprintf(txtbuffer, "%s", curFile.meta && curFile.meta->displayName ? curFile.meta->displayName : getRelativeName(curFile.name));
 	float scale = GetTextScaleToFitInWidth(txtbuffer,(getVideoMode()->fbWidth-78)-75);
-	DrawAddChild(container, DrawStyledLabel(640/2, 130, txtbuffer, scale, true, defaultColor));
+	DrawAddChild(container, DrawStyledLabel(640/2, 130, txtbuffer, scale, ALIGN_CENTER, defaultColor));
 
 	if(devices[DEVICE_CUR] == &__device_qoob) {
 		formatBytes(stpcpy(txtbuffer, "Size: "), curFile.size, 65536, false);
-		DrawAddChild(container, DrawStyledLabel(640/2, 160, txtbuffer, 0.8f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 160, txtbuffer, 0.8f, ALIGN_CENTER, defaultColor));
 		sprintf(txtbuffer,"Position on Flash: %08X",(u32)(curFile.fileBase&0xFFFFFFFF));
-		DrawAddChild(container, DrawStyledLabel(640/2, 180, txtbuffer, 0.8f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 180, txtbuffer, 0.8f, ALIGN_CENTER, defaultColor));
 	}
 	else if(devices[DEVICE_CUR] == &__device_wode) {
 		ISOInfo_t* isoInfo = (ISOInfo_t*)&curFile.other;
 		sprintf(txtbuffer,"Partition: %i, ISO: %i", isoInfo->iso_partition,isoInfo->iso_number);
-		DrawAddChild(container, DrawStyledLabel(640/2, 160, txtbuffer, 0.8f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 160, txtbuffer, 0.8f, ALIGN_CENTER, defaultColor));
 	}
 	else if(devices[DEVICE_CUR] == &__device_card_a || devices[DEVICE_CUR] == &__device_card_b) {
 		formatBytes(stpcpy(txtbuffer, "Size: "), curFile.size, 8192, false);
-		DrawAddChild(container, DrawStyledLabel(640/2, 160, txtbuffer, 0.8f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 160, txtbuffer, 0.8f, ALIGN_CENTER, defaultColor));
 		sprintf(txtbuffer,"Position on Card: %08X",curFile.offset);
-		DrawAddChild(container, DrawStyledLabel(640/2, 180, txtbuffer, 0.8f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 180, txtbuffer, 0.8f, ALIGN_CENTER, defaultColor));
 	}
 	else {
 		formatBytes(stpcpy(txtbuffer, "Size: "), curFile.size, 0, true);
-		DrawAddChild(container, DrawStyledLabel(640/2, 160, txtbuffer, 0.8f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 160, txtbuffer, 0.8f, ALIGN_CENTER, defaultColor));
 		if(curFile.meta) {
 			if(curFile.meta->banner)
 				DrawAddChild(container, DrawTexObj(&curFile.meta->bannerTexObj, 215, 240, 192, 64, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0));
@@ -2512,37 +2511,37 @@ uiDrawObj_t* draw_game_info() {
 			sprintf(txtbuffer, "%s", curFile.meta->bannerDesc.description);
 			rest = &txtbuffer[0]; 
 			while ((tok = strtok_r (rest,"\r\n", &rest))) {
-				DrawAddChild(container, DrawStyledLabel(640/2, 315+(line*minScale*24), tok, minScale, true, defaultColor));
+				DrawAddChild(container, DrawStyledLabel(640/2, 315+(line*minScale*24), tok, minScale, ALIGN_CENTER, defaultColor));
 				line++;
 			}
 		}
 	}
 	if(GCMDisk.DVDMagicWord == DVD_MAGIC) {
 		if(is_verifiable_disc(&GCMDisk)) {
-			DrawAddChild(container, DrawStyledLabel(640/2, 180, "(R) Verify", 0.6f, true, defaultColor));
+			DrawAddChild(container, DrawStyledLabel(640/2, 180, "(R) Verify", 0.6f, ALIGN_CENTER, defaultColor));
 		}
 		sprintf(txtbuffer, "Game ID: [%.6s] Audio Streaming: [%s]", (char*)&GCMDisk, GCMDisk.AudioStreaming ? swissSettings.audioStreaming ? "Enabled" : "Unused" : "Disabled");
-		DrawAddChild(container, DrawStyledLabel(640/2, 200, txtbuffer, 0.8f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 200, txtbuffer, 0.8f, ALIGN_CENTER, defaultColor));
 
 		if(GCMDisk.TotalDisc > 1) {
 			if(devices[DEVICE_CUR]->quirks & QUIRK_GCLOADER_NO_DISC_2) {
-				DrawAddChild(container, DrawStyledLabel(640/2, 220, "A firmware update is required.", 0.6f, true, defaultColor));
+				DrawAddChild(container, DrawStyledLabel(640/2, 220, "A firmware update is required.", 0.6f, ALIGN_CENTER, defaultColor));
 			}
 			else {
 				sprintf(txtbuffer, "Disc %i/%i [Found: %s]", GCMDisk.DiscID+1, GCMDisk.TotalDisc, meta_find_disc2(&curFile) ? "Yes":"No");
-				DrawAddChild(container, DrawStyledLabel(640/2, 220, txtbuffer, 0.6f, true, defaultColor));
+				DrawAddChild(container, DrawStyledLabel(640/2, 220, txtbuffer, 0.6f, ALIGN_CENTER, defaultColor));
 			}
 		}
 		else if(GCMDisk.CountryCode == 'E'
 			&& GCMDisk.RegionCode == 0) {
 			if(GCMDisk.Version > 0x30) {
 				sprintf(txtbuffer, "Revision %X", GCMDisk.Version - 0x30);
-				DrawAddChild(container, DrawStyledLabel(640/2, 220, txtbuffer, 0.6f, true, defaultColor));
+				DrawAddChild(container, DrawStyledLabel(640/2, 220, txtbuffer, 0.6f, ALIGN_CENTER, defaultColor));
 			}
 		}
 		else if(GCMDisk.Version) {
 			sprintf(txtbuffer, "Revision %X", GCMDisk.Version);
-			DrawAddChild(container, DrawStyledLabel(640/2, 220, txtbuffer, 0.6f, true, defaultColor));
+			DrawAddChild(container, DrawStyledLabel(640/2, 220, txtbuffer, 0.6f, ALIGN_CENTER, defaultColor));
 		}
 	}
 
@@ -2555,13 +2554,13 @@ uiDrawObj_t* draw_game_info() {
 		textPtr = stpcpy(textPtr, textPtr == txtbuffer ? "(L+A) Clean Boot":" \267 (L+A) Clean Boot");
 	}
 	if(textPtr != txtbuffer) {
-		DrawAddChild(container, DrawStyledLabel(640/2, 370, txtbuffer, 0.6f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 370, txtbuffer, 0.6f, ALIGN_CENTER, defaultColor));
 	}
 	if(devices[DEVICE_CUR] == &__device_wode) {
-		DrawAddChild(container, DrawStyledLabel(640/2, 390, "(X) Settings \267 (Y) Cheats \267 (A) Boot", 0.75f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 390, "(X) Settings \267 (Y) Cheats \267 (A) Boot", 0.75f, ALIGN_CENTER, defaultColor));
 	}
 	else {
-		DrawAddChild(container, DrawStyledLabel(640/2, 390, "(X) Settings \267 (Y) Cheats \267 (B) Exit \267 (A) Boot", 0.75f, true, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 390, "(X) Settings \267 (Y) Cheats \267 (B) Exit \267 (A) Boot", 0.75f, ALIGN_CENTER, defaultColor));
 	}
 	return container;
 }
@@ -2678,10 +2677,10 @@ void select_device(int type)
 		deviceSelectBox = DrawEmptyBox(20,190, getVideoMode()->fbWidth-20, 410);
 		uiDrawObj_t *selectLabel = DrawStyledLabel(640/2, 195
 													, type == DEVICE_DEST ? "Destination Device" : "Device Selection"
-													, 1.0f, true, defaultColor);
+													, 1.0f, ALIGN_CENTER, defaultColor);
 		uiDrawObj_t *fwdLabel = DrawLabel(530, 282, "\233");
 		uiDrawObj_t *backLabel = DrawLabel(100, 282, "\213");
-		uiDrawObj_t *showAllLabel = DrawStyledLabel(20, 407, "(Z) Show all devices", 0.65f, false, showAllDevices ? defaultColor:deSelectedColor);
+		uiDrawObj_t *showAllLabel = DrawStyledLabel(20, 407, "(Z) Show all devices", 0.65f, ALIGN_LEFT, showAllDevices ? defaultColor:deSelectedColor);
 		DrawAddChild(deviceSelectBox, selectLabel);
 		DrawAddChild(deviceSelectBox, fwdLabel);
 		DrawAddChild(deviceSelectBox, backLabel);
@@ -2707,27 +2706,27 @@ void select_device(int type)
 
 		textureImage *devImage = &allDevices[curDevice]->deviceTexture;
 		uiDrawObj_t *deviceImage = DrawImage(devImage->textureId, 640/2, 270-(devImage->realHeight/2), devImage->realWidth, devImage->realHeight, 0, 0.0f, 1.0f, 0.0f, 1.0f, 1);
-		uiDrawObj_t *deviceNameLabel = DrawStyledLabel(640/2, 330, (char*)allDevices[curDevice]->deviceName, 0.85f, true, defaultColor);
-		uiDrawObj_t *deviceDescLabel = DrawStyledLabel(640/2, 350, (char*)allDevices[curDevice]->deviceDescription, 0.65f, true, defaultColor);
+		uiDrawObj_t *deviceNameLabel = DrawStyledLabel(640/2, 330, (char*)allDevices[curDevice]->deviceName, 0.85f, ALIGN_CENTER, defaultColor);
+		uiDrawObj_t *deviceDescLabel = DrawStyledLabel(640/2, 350, (char*)allDevices[curDevice]->deviceDescription, 0.65f, ALIGN_CENTER, defaultColor);
 		DrawAddChild(deviceSelectBox, deviceImage);
 		DrawAddChild(deviceSelectBox, deviceNameLabel);
 		DrawAddChild(deviceSelectBox, deviceDescLabel);
 		if(allDevices[curDevice]->features & FEAT_BOOT_GCM) {
-			uiDrawObj_t *gameBootLabel = DrawStyledLabel(640/2, 365, (allDevices[curDevice]->features & FEAT_AUDIO_STREAMING) ? "Supports Game Boot & Audio Streaming":"Supports Game Boot", 0.65f, true, defaultColor);
+			uiDrawObj_t *gameBootLabel = DrawStyledLabel(640/2, 365, (allDevices[curDevice]->features & FEAT_AUDIO_STREAMING) ? "Supports Game Boot & Audio Streaming":"Supports Game Boot", 0.65f, ALIGN_CENTER, defaultColor);
 			DrawAddChild(deviceSelectBox, gameBootLabel);
 		}
 		// Memory card port devices, allow for speed selection
 		if(allDevices[curDevice]->features & FEAT_EXI_SPEED) {
-			uiDrawObj_t *exiOptionsLabel = DrawStyledLabel(getVideoMode()->fbWidth-190, 407, "(X) EXI Options", 0.65f, false, inAdvanced ? defaultColor:deSelectedColor);
+			uiDrawObj_t *exiOptionsLabel = DrawStyledLabel(getVideoMode()->fbWidth-190, 407, "(X) EXI Options", 0.65f, ALIGN_LEFT, inAdvanced ? defaultColor:deSelectedColor);
 			DrawAddChild(deviceSelectBox, exiOptionsLabel);
 			if(inAdvanced) {
 				// Draw speed selection if advanced menu is showing.
-				uiDrawObj_t *exiSpeedLabel = DrawStyledLabel(getVideoMode()->fbWidth-161, 392, swissSettings.exiSpeed ? "Speed: 32 MHz":"Speed: 16 MHz", 0.65f, false, defaultColor);
+				uiDrawObj_t *exiSpeedLabel = DrawStyledLabel(getVideoMode()->fbWidth-161, 392, swissSettings.exiSpeed ? "Speed: 32 MHz":"Speed: 16 MHz", 0.65f, ALIGN_LEFT, defaultColor);
 				DrawAddChild(deviceSelectBox, exiSpeedLabel);
 			}
 		}
 		if(allDevices[curDevice]->details) {
-			uiDrawObj_t *deviceDetailLabel = DrawStyledLabel(20, 392, "(Y) Show device details", 0.65f, false, deSelectedColor);
+			uiDrawObj_t *deviceDetailLabel = DrawStyledLabel(20, 392, "(Y) Show device details", 0.65f, ALIGN_LEFT, deSelectedColor);
 			DrawAddChild(deviceSelectBox, deviceDetailLabel);
 		}
 		DrawPublish(deviceSelectBox);
