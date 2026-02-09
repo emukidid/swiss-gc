@@ -229,11 +229,13 @@ void load_auto_dol(int argc, char *argv[]) {
 /* Print over USB Gecko if enabled */
 void print_debug(const char *fmt, ...)
 {
-	va_list arglist;
-	va_start(arglist, fmt);
-	SYS_EnableGecko(swissSettings.enableUSBGecko - USBGECKO_MEMCARD_SLOT_A, swissSettings.waitForUSBGecko);
-	SYS_Reportv(fmt, arglist);
-	va_end(arglist);
+	if (swissSettings.sramBoot == SYS_BOOT_DEVELOPMENT) {
+		va_list arglist;
+		va_start(arglist, fmt);
+		SYS_EnableGecko(swissSettings.enableUSBGecko - USBGECKO_MEMCARD_SLOT_A, swissSettings.waitForUSBGecko);
+		SYS_Reportv(fmt, arglist);
+		va_end(arglist);
+	}
 }
 
 /* Update recent list with a new entry. */
