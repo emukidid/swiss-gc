@@ -20,6 +20,16 @@
 #include "gcloader.h"
 #include "wkf.h"
 
+const float exiSpeeds[] = {
+	27.0f/32.0f,
+	27.0f/16.0f,
+	27.0f/8.0f,
+	27.0f/4.0f,
+	27.0f/2.0f,
+	27.0f/1.0f,
+	54.0f
+};
+
 char topStr[256];
 
 const char* getDeviceInfoString(u32 location) {
@@ -27,15 +37,15 @@ const char* getDeviceInfoString(u32 location) {
 	if(location == bba_exists(LOC_ANY)) {
 		s32 exi_speed;
 		if(getExiSpeedByLocation(location, &exi_speed)) {
-			sprintf(topStr, "%u MHz %s (%s)", 1 << exi_speed, getHwNameByLocation(location), bba_address_str());
+			sprintf(topStr, "%.3g MHz %s (%s)", exiSpeeds[exi_speed], getHwNameByLocation(location), bba_address_str());
 		}
 		else {
 			sprintf(topStr, "%s (%s)", getHwNameByLocation(location), bba_address_str());
 		}
 	}
 	else if(device == &__device_card_a || device == &__device_card_b) {
-		s32 exi_channel, mem_size, sector_size;
-		if(getExiDeviceByLocation(location, &exi_channel, NULL) && CARD_ProbeEx(exi_channel, &mem_size, &sector_size) == CARD_ERROR_READY) {
+		s32 slot, mem_size, sector_size;
+		if(getExiDeviceByLocation(location, &slot, NULL) && CARD_ProbeEx(slot, &mem_size, &sector_size) == CARD_ERROR_READY) {
 			sprintf(topStr, "%s %i", device->hwName, (mem_size << 20 >> 3) / sector_size - 5);
 		}
 		else {
@@ -70,9 +80,9 @@ const char* getDeviceInfoString(u32 location) {
 		}
 	}
 	else if(device == &__device_sd_a || device == &__device_sd_b || device == &__device_sd_c) {
-		s32 exi_channel;
-		if(getExiDeviceByLocation(location, &exi_channel, NULL)) {
-			sprintf(topStr, "%u MHz %s", 1 << sdgecko_getSpeed(exi_channel), device->hwName);
+		s32 slot;
+		if(getExiDeviceByLocation(location, &slot, NULL)) {
+			sprintf(topStr, "%.3g MHz %s", exiSpeeds[sdgecko_getSpeed(slot)], device->hwName);
 		}
 		else {
 			strcpy(topStr, device->hwName);

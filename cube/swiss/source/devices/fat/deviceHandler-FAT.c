@@ -18,6 +18,7 @@
 #include "gui/IPLFontWrite.h"
 #include "swiss.h"
 #include "main.h"
+#include "info.h"
 #include "ata.h"
 #include "patcher.h"
 #include "dvd.h"
@@ -569,15 +570,6 @@ char* deviceHandler_FAT_status(file_handle* file) {
 			return "Unknown error occurred";
 	}
 }
-
-static float exiSpeeds[] = {
-	27.0f/32.0f,
-	27.0f/16.0f,
-	27.0f/8.0f,
-	27.0f/4.0f,
-	27.0f/2.0f,
-	27.0f/1.0f
-};
 
 char* deviceHandler_FAT_details(file_handle* file) {
 	char* deviceDetails = NULL;

@@ -8,6 +8,8 @@
 #include <malloc.h>
 #include <gccore.h>
 
+extern const float exiSpeeds[];
+
 void show_info();
 
 #endif
