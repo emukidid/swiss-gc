@@ -2232,11 +2232,12 @@ void load_game() {
 	}
 
 	if(devices[DEVICE_CUR]->emulated() & EMU_ETHERNET) {
-		s32 exi_channel, exi_device, exi_interrupt;
+		s32 exi_channel, exi_device, exi_interrupt, exi_speed;
 		if(getExiDeviceByLocation(bba_location, &exi_channel, &exi_device) &&
-			getExiInterruptByLocation(bba_location, &exi_interrupt)) {
+			getExiInterruptByLocation(bba_location, &exi_interrupt) &&
+			getExiSpeedByLocation(bba_location, &exi_speed)) {
 			*(vu8*)VAR_EXI_SLOT = (*(vu8*)VAR_EXI_SLOT & 0x0F) | (((exi_device << 6) | (exi_channel << 4)) & 0xF0);
-			*(vu8*)VAR_EXI2_CPR = (exi_interrupt << 6) | ((1 << exi_device) << 3) | (exi_device == EXI_DEVICE_0 ? EXI_SPEED32MHZ : EXI_SPEED16MHZ);
+			*(vu8*)VAR_EXI2_CPR = (exi_interrupt << 6) | ((1 << exi_device) << 3) | exi_speed;
 			*(vu32**)VAR_EXI2_REGS = ((vu32(*)[5])0xCC006800)[exi_channel];
 		}
 	}

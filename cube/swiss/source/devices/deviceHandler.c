@@ -16,6 +16,7 @@
 #include "swiss.h"
 #include "patcher.h"
 #include "deviceHandler.h"
+#include "bba.h"
 #include "flippy.h"
 
 DEVICEHANDLER_INTERFACE* allDevices[MAX_DEVICES];	// All devices registered in Swiss
@@ -165,6 +166,17 @@ bool getExiInterruptByLocation(u32 location, s32 *chan) {
 		case LOC_SYSTEM:
 			if(chan) *chan = EXI_CHANNEL_MAX;
 			return true;
+	}
+	return false;
+}
+
+bool getExiSpeedByLocation(u32 location, s32 *freq) {
+	s32 chan, dev;
+	if(getExiDeviceByLocation(location, &chan, &dev)) {
+		if(location == bba_location) {
+			*freq = bba_exi_speed(chan, dev);
+			return true;
+		}
 	}
 	return false;
 }

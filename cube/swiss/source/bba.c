@@ -11,6 +11,11 @@
 #include "wiiload.h"
 #include "deviceHandler.h"
 
+static s32 MX98730EC_GetExiSpeed(s32 chan, s32 dev);
+static s32 ENC28J60_GetExiSpeed(s32 chan, s32 dev);
+extern s32 W5500_GetExiSpeed(s32 chan, s32 dev);
+extern s32 W6X00_GetExiSpeed(s32 chan, s32 dev);
+
 /* Network Globals */
 int net_initialized = 0;
 struct in_addr bba_localip;
@@ -18,6 +23,7 @@ struct in_addr bba_netmask;
 struct in_addr bba_gateway;
 const char *bba_device_str = "Broadband Adapter";
 u32 bba_location = LOC_UNK;
+s32 (*bba_exi_speed)(s32 chan, s32 dev) = NULL;
 
 static lwp_t net_thread = LWP_THREAD_NULL;
 
@@ -39,6 +45,13 @@ static void *net_thread_func(void *arg)
 
 	char ifname[4];
 	if (if_indextoname(1, ifname)) {
+		switch (ifname[0]) {
+			case 'e': bba_exi_speed = MX98730EC_GetExiSpeed; break;
+			case 'E': bba_exi_speed = ENC28J60_GetExiSpeed;  break;
+			case 'W': bba_exi_speed = W5500_GetExiSpeed;     break;
+			case 'w': bba_exi_speed = W6X00_GetExiSpeed;     break;
+		}
+
 		if (strchr("EWw", ifname[0])) {
 			switch (ifname[1]) {
 				case 'A': bba_location = LOC_MEMCARD_SLOT_A; break;
@@ -182,4 +195,17 @@ const char *bba_address_str(void)
 
 	sprintf(string, "%u.%u.%u.%u", ip4_addr1(&bba_localip), ip4_addr2(&bba_localip), ip4_addr3(&bba_localip), ip4_addr4(&bba_localip));
 	return string;
+}
+
+static s32 MX98730EC_GetExiSpeed(s32 chan, s32 dev)
+{
+	return EXI_SPEED32MHZ;
+}
+
+static s32 ENC28J60_GetExiSpeed(s32 chan, s32 dev)
+{
+	if (chan == EXI_CHANNEL_0 && dev == EXI_DEVICE_2)
+		return EXI_SPEED16MHZ;
+	else
+		return EXI_SPEED32MHZ;
 }

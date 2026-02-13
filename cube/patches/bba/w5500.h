@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2024-2025, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2024-2026, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -108,7 +108,9 @@ typedef enum {
 	W5500_UPORTR0,                             // Unreachable Port Register 0
 	W5500_UPORTR1,                             // Unreachable Port Register 1
 	W5500_PHYCFGR,                             // PHY Configuration Register
-	W5500_VERSIONR          = W5500_REG(0x39), // Chip Version Register
+	W5500_UNKNOWNR0         = W5500_REG(0x37), // Unknown Register 0
+	W5500_UNKNOWNR1,                           // Unknown Register 1
+	W5500_VERSIONR,                            // Chip Version Register
 
 #define W5500_S(n) \
 	W5500_S##n##_MR         = W5500_REG_S(n, Sn_MR),         \
@@ -169,6 +171,7 @@ typedef enum {
 	W5500_PSID              = W5500_REG(0x24), // PPPoE Session ID Register
 	W5500_PMRU              = W5500_REG(0x26), // PPPoE Maximum Receive Unit Register
 	W5500_UPORTR            = W5500_REG(0x2C), // Unreachable Port Register
+	W5500_UNKNOWNR          = W5500_REG(0x37), // Unknown Register
 
 #define W5500_S(n) \
 	W5500_S##n##_PORT       = W5500_REG_S(n, Sn_PORT),       \

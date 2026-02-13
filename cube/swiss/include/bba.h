@@ -8,6 +8,7 @@ extern struct in_addr bba_netmask;
 extern struct in_addr bba_gateway;
 extern const char *bba_device_str;
 extern u32 bba_location;
+extern s32 (*bba_exi_speed)(s32 chan, s32 dev);
 
 void wait_network();
 bool init_network();

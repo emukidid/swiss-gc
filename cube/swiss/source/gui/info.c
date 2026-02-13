@@ -25,7 +25,13 @@ char topStr[256];
 const char* getDeviceInfoString(u32 location) {
 	DEVICEHANDLER_INTERFACE *device = getDeviceByLocation(location);
 	if(location == bba_exists(LOC_ANY)) {
-		sprintf(topStr, "%s (%s)", getHwNameByLocation(location), bba_address_str());
+		s32 exi_speed;
+		if(getExiSpeedByLocation(location, &exi_speed)) {
+			sprintf(topStr, "%u MHz %s (%s)", 1 << exi_speed, getHwNameByLocation(location), bba_address_str());
+		}
+		else {
+			sprintf(topStr, "%s (%s)", getHwNameByLocation(location), bba_address_str());
+		}
 	}
 	else if(device == &__device_card_a || device == &__device_card_b) {
 		s32 exi_channel, mem_size, sector_size;
