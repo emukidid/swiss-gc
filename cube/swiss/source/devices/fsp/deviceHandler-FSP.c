@@ -226,19 +226,24 @@ s32 deviceHandler_FSP_init(file_handle* file) {
 		file->status = E_CHECKCONFIG;
 		return EFAULT;
 	}
+	fsp_session->timeout = 10000;
 	
-	u8 dirpro;
-	if(fsp_getpro(fsp_session, "swiss/patches", &dirpro) &&
-		fsp_getpro(fsp_session, "swiss", &dirpro) &&
-		fsp_getpro(fsp_session, "", &dirpro))
-		dirpro = 0;
+	u8 dirpro = 0;
+	int ret;
+	if ((ret = fsp_getpro(fsp_session, "swiss/patches", &dirpro)) == -1 && errno == ENOENT &&
+		(ret = fsp_getpro(fsp_session, "swiss", &dirpro)) == -1 && errno == ENOENT)
+		ret = fsp_getpro(fsp_session, "", &dirpro);
 	
-	if((dirpro & (FSP_DIR_MKDIR|FSP_DIR_ADD|FSP_DIR_DEL|FSP_DIR_GET)) == (FSP_DIR_MKDIR|FSP_DIR_ADD|FSP_DIR_DEL) ||
+	if (ret == -1 && errno != ENOENT) {
+		file->status = 0;
+		return errno;
+	}
+	
+	if ((dirpro & (FSP_DIR_MKDIR | FSP_DIR_ADD | FSP_DIR_DEL | FSP_DIR_GET)) == (FSP_DIR_MKDIR | FSP_DIR_ADD | FSP_DIR_DEL) ||
 		(dirpro & FSP_DIR_OWNER)) {
 		file->device->features |=  FEAT_PATCHES;
 		file->device->emulable |=  EMU_ETHERNET;
-	}
-	else {
+	} else {
 		file->device->features &= ~FEAT_PATCHES;
 		file->device->emulable &= ~EMU_ETHERNET;
 	}
