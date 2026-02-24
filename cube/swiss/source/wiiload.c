@@ -23,6 +23,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <zlib.h>
@@ -150,7 +151,7 @@ fail:
 	return NULL;
 }
 
-static void wiiload_handler(int sd, wiiload_read_function_t read, const char *message)
+static void wiiload_handler(int sd, wiiload_read_function_t read, const char *message, const char *host)
 {
 	wiiload_header_t header;
 
@@ -160,6 +161,8 @@ static void wiiload_handler(int sd, wiiload_read_function_t read, const char *me
 		return;
 	if (header.version != 5)
 		return;
+
+	setenv("WIILOAD", host, 1);
 
 	int priority = LWP_SetThreadPriority(LWP_THREAD_NULL, LWP_PRIO_NORMAL);
 	LWP_SuspendThread(main_thread);
@@ -209,10 +212,10 @@ static void *tcp_thread_func(void *arg)
 			wiiload.cl.sd = net_accept(wiiload.sv.sd, &wiiload.cl.sa, &addrlen);
 
 			if (wiiload.cl.sd != INVALID_SOCKET) {
-				char addrstr[16];
+				char addrstr[20] = "TCP:";
 				char *message = NULL;
-				asprintf(&message, "Receiving from %s:%hu", inet_ntoa_r(wiiload.cl.sin.sin_addr, addrstr, sizeof(addrstr)), wiiload.cl.sin.sin_port);
-				wiiload_handler(wiiload.cl.sd, tcp_read, message);
+				asprintf(&message, "Receiving from %s:%hu", inet_ntoa_r(wiiload.cl.sin.sin_addr, addrstr + strlen(addrstr), sizeof(addrstr) - strlen(addrstr)), wiiload.cl.sin.sin_port);
+				wiiload_handler(wiiload.cl.sd, tcp_read, message, addrstr);
 				free(message);
 
 				net_close(wiiload.cl.sd);
@@ -233,7 +236,7 @@ static void *usb_thread_func(void *arg)
 		int chn = *(int *)arg - USBGECKO_MEMCARD_SLOT_A;
 
 		if (usb_isgeckoalive(chn) && usb_checkrecv(chn)) {
-			wiiload_handler(chn, usb_read, "Receiving over USB Gecko");
+			wiiload_handler(chn, usb_read, "Receiving over USB Gecko", "USBGECKO");
 			usb_flush(chn);
 		}
 
