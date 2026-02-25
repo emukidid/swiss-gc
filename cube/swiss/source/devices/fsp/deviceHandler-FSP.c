@@ -227,6 +227,7 @@ s32 deviceHandler_FSP_init(file_handle* file) {
 		return EFAULT;
 	}
 	fsp_session->timeout = 10000;
+	fsp_session->maxdelay = 1000;
 	
 	u8 dirpro = 0;
 	int ret;
