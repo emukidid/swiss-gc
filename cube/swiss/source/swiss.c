@@ -1057,7 +1057,14 @@ void load_app(ExecutableFile *fileToPatch)
 				message = "Failed to read FST!";
 				goto fail_early;
 			}
-			adjust_tgc_fst((void*)fstAddr, fileToPatch->tgcBase, fileToPatch->tgcFileStartArea, fileToPatch->tgcFakeOffset);
+			if(devices[DEVICE_CUR] == &__device_dvd) {
+				adjust_tgc_fst((void*)fstAddr, fileToPatch->file->fileBase + fileToPatch->tgcBase, fileToPatch->tgcFileStartArea, fileToPatch->tgcFakeOffset);
+				*(vu32*)(VAR_AREA+0x30F4) = fileToPatch->file->fileBase + fileToPatch->tgcBase;
+			}
+			else {
+				adjust_tgc_fst((void*)fstAddr, fileToPatch->tgcBase, fileToPatch->tgcFileStartArea, fileToPatch->tgcFakeOffset);
+				*(vu32*)(VAR_AREA+0x30F4) = fileToPatch->tgcBase;
+			}
 			
 			// Copy bi2.bin (Disk Header Information) to just under the FST
 			u32 bi2Addr = (fstAddr-0x2000)&~31;
@@ -1072,7 +1079,6 @@ void load_app(ExecutableFile *fileToPatch)
 			*(vu32*)(VAR_AREA+0x0038) = fstAddr;								// FST Location in ram
 			*(vu32*)(VAR_AREA+0x003C) = fileToPatch->fstSize;					// FST Max Length
 			*(vu32*)(VAR_AREA+0x00F4) = bi2Addr;								// bi2.bin location
-			*(vu32*)(VAR_AREA+0x30F4) = fileToPatch->tgcBase;
 		}
 		else {
 			// Read FST to top of Main Memory (round to 32 byte boundary)
