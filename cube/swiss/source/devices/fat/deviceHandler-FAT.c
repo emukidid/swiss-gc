@@ -397,7 +397,12 @@ s32 deviceHandler_FAT_makeDir(file_handle* dir) {
 
 bool deviceHandler_FAT_test_sd_a() {
 	bool ret = sdgecko_isInitialized(0) || (__io_gcsda.startup(&__io_gcsda) && __io_gcsda.shutdown(&__io_gcsda));
-
+	if (ret) {
+		if (!strncmp(PRODUCT_NAME(0), "USBGC", 5))
+			__device_sd_a.hwName = "USB Dolphin";
+		else
+			__device_sd_a.hwName = "SD Card Adapter";
+	}
 	if (__io_gcsda.features & FEATURE_GAMECUBE_SLOTA) {
 		__device_sd_a.deviceName = "SD Card - Slot A";
 		__device_sd_a.location = LOC_MEMCARD_SLOT_A;
@@ -410,7 +415,9 @@ bool deviceHandler_FAT_test_sd_a() {
 bool deviceHandler_FAT_test_sd_b() {
 	bool ret = sdgecko_isInitialized(1) || (__io_gcsdb.startup(&__io_gcsdb) && __io_gcsdb.shutdown(&__io_gcsdb));
 	if (ret) {
-		if (sdgecko_getTransferMode(1) == CARDIO_TRANSFER_DMA)
+		if (!strncmp(PRODUCT_NAME(1), "USBGC", 5))
+			__device_sd_b.hwName = "USB Dolphin";
+		else if (sdgecko_getTransferMode(1) == CARDIO_TRANSFER_DMA)
 			__device_sd_b.hwName = "Semi-Passive SD Card Adapter";
 		else if (sdgecko_getDevice(1) == EXI_DEVICE_0)
 			__device_sd_b.hwName = "Passive SD Card Adapter";
@@ -422,7 +429,9 @@ bool deviceHandler_FAT_test_sd_b() {
 bool deviceHandler_FAT_test_sd_c() {
 	bool ret = sdgecko_isInitialized(2) || (__io_gcsd2.startup(&__io_gcsd2) && __io_gcsd2.shutdown(&__io_gcsd2));
 	if (ret) {
-		if (sdgecko_getTransferMode(2) == CARDIO_TRANSFER_DMA)
+		if (!strncmp(PRODUCT_NAME(2), "USBGC", 5))
+			__device_sd_c.hwName = "USB Dolphin";
+		else if (sdgecko_getTransferMode(2) == CARDIO_TRANSFER_DMA)
 			__device_sd_c.hwName = "Semi-Passive SD Card Adapter";
 		else if (sdgecko_getDevice(2) == EXI_DEVICE_0)
 			__device_sd_c.hwName = "Passive SD Card Adapter";
