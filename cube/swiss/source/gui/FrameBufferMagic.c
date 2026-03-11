@@ -62,6 +62,7 @@ GXTexObj btnsettingsTexObj;
 GXTexObj btninfoTexObj;
 GXTexObj btnrefreshTexObj;
 GXTexObj btnexitTexObj;
+GXTexObj btnmemcardTexObj;
 GXTexObj boxinnerTexObj;
 GXTexObj boxouterTexObj;
 GXTexObj ntscjTexObj;
@@ -360,6 +361,7 @@ static void init_textures()
 	TPL_GetTexture(&buttonsTPL, btninfo, &btninfoTexObj);
 	TPL_GetTexture(&buttonsTPL, btnrefresh, &btnrefreshTexObj);
 	TPL_GetTexture(&buttonsTPL, btnexit, &btnexitTexObj);
+	TPL_GetTexture(&buttonsTPL, btnmemcard, &btnmemcardTexObj);
 	TPL_GetTexture(&buttonsTPL, boxinner, &boxinnerTexObj);
 	TPL_GetTexture(&buttonsTPL, boxouter, &boxouterTexObj);
 	TPL_GetTexture(&imagesTPL, ntscjimg, &ntscjTexObj);
@@ -576,6 +578,9 @@ static void _DrawImageNow(int textureId, int x, int y, int width, int height, in
 			break;
 		case TEX_BTNEXIT:
 			texObj = &btnexitTexObj;
+			break;
+		case TEX_BTNMEMCARD:
+			texObj = &btnmemcardTexObj;
 			break;
 		case TEX_CHECKED:
 			texObj = &checkedTexObj; color = (GXColor) {0,128,0,255};
@@ -1533,19 +1538,20 @@ static void _DrawMenuButtons(uiDrawObj_t *evt) {
 	
 	// Highlight selected
 	int i;
-	for(i=0;i<5;i++)
+	for(i=0;i<MENU_MAX;i++)
 	{
-		if(data->selection==i) 
-			_DrawImageNow(TEX_BTNHILIGHT, 48+(i*119), 428, BTNHILIGHT_WIDTH, BTNHILIGHT_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
+		if(data->selection==i)
+			_DrawImageNow(TEX_BTNHILIGHT, 34+(i*98), 428, BTNHILIGHT_WIDTH, BTNHILIGHT_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
 	}
 
-	// Draw the buttons	
+	// Draw the buttons
 	drawInit();
-	_DrawImageNow(TEX_BTNDEVICE, 48+(0*119)+BTNDEVICE_X, 428+BTNDEVICE_Y, BTNDEVICE_WIDTH, BTNDEVICE_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
-	_DrawImageNow(TEX_BTNSETTINGS, 48+(1*119)+BTNSETTINGS_X, 428+BTNSETTINGS_Y, BTNSETTINGS_WIDTH, BTNSETTINGS_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
-	_DrawImageNow(TEX_BTNINFO, 48+(2*119)+BTNINFO_X, 428+BTNINFO_Y, BTNINFO_WIDTH, BTNINFO_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
-	_DrawImageNow(TEX_BTNREFRESH, 48+(3*119)+BTNREFRESH_X, 428+BTNREFRESH_Y, BTNREFRESH_WIDTH, BTNREFRESH_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
-	_DrawImageNow(TEX_BTNEXIT, 48+(4*119)+BTNEXIT_X, 428+BTNEXIT_Y, BTNEXIT_WIDTH, BTNEXIT_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
+	_DrawImageNow(TEX_BTNDEVICE, 34+(0*98)+BTNDEVICE_X, 428+BTNDEVICE_Y, BTNDEVICE_WIDTH, BTNDEVICE_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
+	_DrawImageNow(TEX_BTNSETTINGS, 34+(1*98)+BTNSETTINGS_X, 428+BTNSETTINGS_Y, BTNSETTINGS_WIDTH, BTNSETTINGS_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
+	_DrawImageNow(TEX_BTNINFO, 34+(2*98)+BTNINFO_X, 428+BTNINFO_Y, BTNINFO_WIDTH, BTNINFO_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
+	_DrawImageNow(TEX_BTNREFRESH, 34+(3*98)+BTNREFRESH_X, 428+BTNREFRESH_Y, BTNREFRESH_WIDTH, BTNREFRESH_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
+	_DrawImageNow(TEX_BTNMEMCARD, 34+(4*98)+BTNMEMCARD_X, 428+BTNMEMCARD_Y, BTNMEMCARD_WIDTH, BTNMEMCARD_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
+	_DrawImageNow(TEX_BTNEXIT, 34+(5*98)+BTNEXIT_X, 428+BTNEXIT_Y, BTNEXIT_WIDTH, BTNEXIT_HEIGHT, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
 }
 
 // External

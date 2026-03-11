@@ -27,13 +27,14 @@
 #define PROGRESS_BOX_BOTTOMLEFT 0
 #define PROGRESS_BOX_TOPRIGHT 1
 
-#define MENU_MAX 5
+#define MENU_MAX 6
 #define MENU_NOSELECT -1
 #define MENU_DEVICE 0
 #define MENU_SETTINGS 1
 #define MENU_INFO 2
 #define MENU_REFRESH 3
-#define MENU_EXIT 4
+#define MENU_MEMCARD 4
+#define MENU_EXIT 5
 
 #include "images_tpl.h"
 #include "images.h"
@@ -76,7 +77,8 @@ enum TextureId
 	TEX_FLIPPY,
 	TEX_GCNET,
 	TEX_GCODE,
-	TEX_KUNAIGC
+	TEX_KUNAIGC,
+	TEX_BTNMEMCARD
 };
 
 extern GXTexObj ntscjTexObj;
