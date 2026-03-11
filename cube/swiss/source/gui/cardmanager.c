@@ -485,7 +485,7 @@ static int card_manager_read_saves(int slot, card_entry *entries, int max_entrie
 				GCI *raw = (GCI *)(sysarea + blk * 8192 + entry_off);
 				if (memcmp(raw->gamecode, entries[i].gamecode, 4) == 0
 					&& memcmp(raw->company, entries[i].company, 2) == 0
-					&& memcmp(raw->filename, entries[i].filename, CARD_FILENAMELEN) == 0) {
+					&& strncmp(raw->filename, entries[i].filename, CARD_FILENAMELEN) == 0) {
 					entries[i].banner_fmt = raw->banner_fmt;
 					entries[i].icon_addr = raw->icon_addr;
 					entries[i].icon_fmt = raw->icon_fmt;
