@@ -35,36 +35,66 @@ typedef struct {
 } card_entry;
 
 // --- Logging ---
+// Uses Swiss device handler API (not fopen) since FAT devoptab isn't available
 
-static FILE *logfile = NULL;
+#define CM_LOG_MAX 16384
+static char cm_log_buf[CM_LOG_MAX];
+static int cm_log_len = 0;
+static DEVICEHANDLER_INTERFACE *cm_log_dev = NULL;
 
 static void cm_log_open(void) {
-	if (logfile) return;
-	if (devices[DEVICE_CONFIG] == NULL) return;
-	char logpath[PATHNAME_MAX];
-	concatf_path(logpath, devices[DEVICE_CONFIG]->initial->name, "cardmanager.log");
-	logfile = fopen(logpath, "a");
-	if (logfile) {
-		fprintf(logfile, "\n--- Card Manager session started ---\n");
-		fflush(logfile);
+	cm_log_len = 0;
+	cm_log_dev = devices[DEVICE_CONFIG] ? devices[DEVICE_CONFIG] :
+		devices[DEVICE_CUR] ? devices[DEVICE_CUR] : NULL;
+	if (cm_log_dev) {
+		cm_log_len += snprintf(cm_log_buf + cm_log_len, CM_LOG_MAX - cm_log_len,
+			"\n--- Card Manager session started ---\n");
 	}
 }
 
 static void cm_log(const char *fmt, ...) {
-	if (!logfile) return;
+	if (!cm_log_dev || cm_log_len >= CM_LOG_MAX - 1) return;
 	va_list args;
 	va_start(args, fmt);
-	vfprintf(logfile, fmt, args);
+	cm_log_len += vsnprintf(cm_log_buf + cm_log_len, CM_LOG_MAX - cm_log_len, fmt, args);
 	va_end(args);
-	fprintf(logfile, "\n");
-	fflush(logfile);
+	if (cm_log_len < CM_LOG_MAX - 1) {
+		cm_log_buf[cm_log_len++] = '\n';
+		cm_log_buf[cm_log_len] = '\0';
+	}
 }
 
 static void cm_log_close(void) {
-	if (!logfile) return;
-	fprintf(logfile, "--- Card Manager session ended ---\n");
-	fclose(logfile);
-	logfile = NULL;
+	if (!cm_log_dev || cm_log_len == 0) return;
+	cm_log_len += snprintf(cm_log_buf + cm_log_len, CM_LOG_MAX - cm_log_len,
+		"--- Card Manager session ended ---\n");
+
+	file_handle *logFile = calloc(1, sizeof(file_handle));
+	if (logFile) {
+		concat_path(logFile->name, cm_log_dev->initial->name, "cardmanager.log");
+		// Read existing content if present
+		char *existing = NULL;
+		u32 existing_len = 0;
+		if (!cm_log_dev->statFile(logFile) && logFile->size) {
+			existing = calloc(1, logFile->size);
+			if (existing) {
+				cm_log_dev->readFile(logFile, existing, logFile->size);
+				existing_len = logFile->size;
+			}
+			cm_log_dev->closeFile(logFile);
+		}
+		// Write combined content
+		cm_log_dev->deleteFile(logFile);
+		if (existing && existing_len) {
+			cm_log_dev->writeFile(logFile, existing, existing_len);
+		}
+		cm_log_dev->writeFile(logFile, cm_log_buf, cm_log_len);
+		cm_log_dev->closeFile(logFile);
+		free(existing);
+		free(logFile);
+	}
+	cm_log_dev = NULL;
+	cm_log_len = 0;
 }
 
 static void cm_log_card_info(int slot, s32 mem_size, s32 sector_size, int num_entries) {
