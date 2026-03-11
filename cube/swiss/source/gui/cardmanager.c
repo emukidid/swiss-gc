@@ -226,11 +226,58 @@ static uiDrawObj_t *card_manager_draw_page(int slot, card_entry *entries,
 		}
 	}
 
-	DrawAddChild(container, DrawStyledLabel(640 / 2, 400,
-		"D-Pad: Navigate  |  L/R: Switch Slot  |  B: Back",
-		0.55f, ALIGN_CENTER, defaultColor));
+	if (card_present && num_entries > 0) {
+		DrawAddChild(container, DrawStyledLabel(640 / 2, 400,
+			"D-Pad: Navigate  |  Z: Delete  |  L/R: Switch Slot  |  B: Back",
+			0.5f, ALIGN_CENTER, defaultColor));
+	}
+	else {
+		DrawAddChild(container, DrawStyledLabel(640 / 2, 400,
+			"L/R: Switch Slot  |  B: Back",
+			0.55f, ALIGN_CENTER, defaultColor));
+	}
 
 	return container;
+}
+
+// --- Delete ---
+
+static bool card_manager_confirm_delete(const char *filename) {
+	char msg[256];
+	sprintf(msg, "Delete \"%s\"?\n \nPress L + A to confirm, or B to cancel.", filename);
+	uiDrawObj_t *msgBox = DrawMessageBox(D_WARN, msg);
+	DrawPublish(msgBox);
+
+	bool confirmed = false;
+	while (1) {
+		u16 btns = padsButtonsHeld();
+		if ((btns & (PAD_BUTTON_A | PAD_TRIGGER_L)) == (PAD_BUTTON_A | PAD_TRIGGER_L)) {
+			confirmed = true;
+			break;
+		}
+		if (btns & PAD_BUTTON_B) break;
+		VIDEO_WaitVSync();
+	}
+	while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_TRIGGER_L | PAD_BUTTON_B)) {
+		VIDEO_WaitVSync();
+	}
+	DrawDispose(msgBox);
+	return confirmed;
+}
+
+static bool card_manager_delete_save(int slot, card_entry *entry) {
+	CARD_SetGamecode(entry->gamecode);
+	CARD_SetCompany(entry->company);
+	s32 ret = CARD_Delete(slot, entry->filename);
+	if (ret != CARD_ERROR_READY) {
+		uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL, "Delete failed.");
+		DrawPublish(msgBox);
+		while (!(padsButtonsHeld() & PAD_BUTTON_A)) { VIDEO_WaitVSync(); }
+		while (padsButtonsHeld() & PAD_BUTTON_A) { VIDEO_WaitVSync(); }
+		DrawDispose(msgBox);
+		return false;
+	}
+	return true;
 }
 
 // --- Card status polling ---
@@ -344,13 +391,34 @@ void show_card_manager(void) {
 			needs_reload = true;
 		}
 
+		if ((btns & PAD_TRIGGER_Z) && card_present && num_entries > 0) {
+			while (padsButtonsHeld() & PAD_TRIGGER_Z) { VIDEO_WaitVSync(); }
+			if (card_manager_confirm_delete(entries[cursor].filename)) {
+				cm_log("Deleting [%d] \"%s\" from Slot %c",
+					cursor, entries[cursor].filename,
+					slot == CARD_SLOTA ? 'A' : 'B');
+				if (card_manager_delete_save(slot, &entries[cursor])) {
+					cm_log("Delete successful");
+					needs_reload = true;
+				}
+				else {
+					cm_log("Delete failed");
+				}
+			}
+			else {
+				cm_log("Delete cancelled for \"%s\"", entries[cursor].filename);
+				needs_redraw = true;
+			}
+			continue;
+		}
+
 		if (btns & PAD_BUTTON_B)
 			break;
 
 		while (padsButtonsHeld() & (PAD_BUTTON_UP | PAD_BUTTON_DOWN |
 			PAD_BUTTON_LEFT | PAD_BUTTON_RIGHT |
 			PAD_BUTTON_A | PAD_BUTTON_B |
-			PAD_TRIGGER_L | PAD_TRIGGER_R)) {
+			PAD_TRIGGER_L | PAD_TRIGGER_R | PAD_TRIGGER_Z)) {
 			VIDEO_WaitVSync();
 		}
 	}
