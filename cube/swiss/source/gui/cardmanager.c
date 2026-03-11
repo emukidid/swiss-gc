@@ -18,11 +18,42 @@
 #include "main.h"
 #include "devices/memcard/deviceHandler-CARD.h"
 
-#define SAVES_PER_PAGE 10
-#define CARD_MANAGER_LIST_X 30
-#define CARD_MANAGER_LIST_Y 100
-#define CARD_MANAGER_ROW_HEIGHT 28
 #define CARD_POLL_INTERVAL 30
+#define ICON_SPEED_FAST_TICKS 4
+#define ICON_SPEED_MIDDLE_TICKS 8
+#define ICON_SPEED_SLOW_TICKS 12
+
+// Grid layout
+#define GRID_COLS 6
+#define GRID_CELL 42
+#define GRID_ROWS_VISIBLE 4
+#define GRID_ICON_SIZE 32
+
+// Dual-panel layout (640x480 screen)
+// NOTE: DrawEmptyColouredBox adds 10px border on large boxes, 3px on small.
+// Panel coords are the INNER content area; rendered box is 10px larger on each side.
+#define PANEL_OUTER_X 20
+#define PANEL_GAP 40
+#define PANEL_WIDTH 280
+#define PANEL_TOP_Y 96
+#define GRID_TOP_Y 114
+#define PANEL_BOTTOM_Y (GRID_TOP_Y + GRID_ROWS_VISIBLE * GRID_CELL + 2)
+#define DETAIL_TOP_Y (PANEL_BOTTOM_Y + 6)
+#define DETAIL_BANNER_W 96
+#define DETAIL_BANNER_H 32
+
+typedef struct {
+	u8 num_frames;
+	u8 anim_type;	// CARD_ANIM_LOOP or CARD_ANIM_BOUNCE
+	struct {
+		u8 *data;
+		u16 data_size;
+		u8 fmt;
+		u8 speed;
+		GXTexObj tex;
+		GXTlutObj tlut;
+	} frames[CARD_MAXICONS];
+} icon_anim;
 
 typedef struct {
 	char filename[CARD_FILENAMELEN + 1];
@@ -34,7 +65,53 @@ typedef struct {
 	u16 blocks;
 	u32 fileno;
 	u8 permissions;
+	u8 banner_fmt;
+	u32 icon_addr;
+	u16 icon_fmt;
+	u16 icon_speed;
+	u8 *banner;
+	u16 banner_size;
+	GXTexObj banner_tex;
+	GXTlutObj banner_tlut;
+	icon_anim *icon;
 } card_entry;
+
+typedef struct {
+	int slot;
+	card_entry entries[128];
+	int num_entries;
+	int cursor;
+	int scroll_row;
+	s32 mem_size;
+	s32 sector_size;
+	bool card_present;
+	bool has_animated_icons;
+	bool needs_reload;
+} cm_panel;
+
+// --- Flat rectangle drawing ---
+// DrawEmptyColouredBox adds 3-10px borders, making it unusable for thin lines.
+// Instead, use a tiny solid-color texture with DrawTexObj for pixel-exact rectangles.
+static u16 cm_flat_pixels[16] ATTRIBUTE_ALIGN(32);  // 4x4 RGB5A3
+static GXTexObj cm_flat_tex;
+static bool cm_flat_inited = false;
+
+static void cm_flat_init(void) {
+	if (cm_flat_inited) return;
+	// Fill with white, semi-transparent (RGB5A3: bit15=0 → ARGB3444)
+	// Alpha=5 (~71%), R=F, G=F, B=F → 0x5FFF
+	for (int i = 0; i < 16; i++)
+		cm_flat_pixels[i] = 0x5FFF;
+	DCFlushRange(cm_flat_pixels, sizeof(cm_flat_pixels));
+	GX_InitTexObj(&cm_flat_tex, cm_flat_pixels, 4, 4, GX_TF_RGB5A3, GX_CLAMP, GX_CLAMP, GX_FALSE);
+	GX_InitTexObjFilterMode(&cm_flat_tex, GX_LINEAR, GX_NEAR);
+	cm_flat_inited = true;
+}
+
+// Draw a flat semi-transparent white rectangle at exact pixel coordinates
+static uiDrawObj_t *cm_draw_rect(int x, int y, int w, int h) {
+	return DrawTexObj(&cm_flat_tex, x, y, w, h, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
+}
 
 // --- Logging ---
 // Uses Swiss device handler API (not fopen) since FAT devoptab isn't available
@@ -152,6 +229,227 @@ static void card_manager_read_comment(int slot, card_entry *entry) {
 	CARD_Close(&cardfile);
 }
 
+static void card_manager_read_graphics(int slot, card_entry *entry) {
+	if (entry->icon_addr == (u32)-1)
+		return;
+
+	CARD_SetGamecode(entry->gamecode);
+	CARD_SetCompany(entry->company);
+
+	card_file cardfile;
+	if (CARD_Open(slot, entry->filename, &cardfile) != CARD_ERROR_READY)
+		return;
+
+	// Compute offsets ourselves from raw GCI fields (bypass CARD_GetStatus bugs)
+	// Unpack per-frame format and speed from bitfields (2 bits each, 8 frames)
+	u8 ifmts[CARD_MAXICONS];
+	u8 ispeeds[CARD_MAXICONS];
+	int total_frames = 0;
+	int nicons_ci_shared = 0;
+	for (int i = 0; i < CARD_MAXICONS; i++) {
+		ispeeds[i] = (entry->icon_speed >> (2 * i)) & CARD_SPEED_MASK;
+		ifmts[i] = (entry->icon_fmt >> (2 * i)) & CARD_ICON_MASK;
+		if (ispeeds[i] == CARD_SPEED_END) {
+			ifmts[i] = CARD_ICON_NONE;  // speed=END forces format to NONE
+			break;
+		}
+		total_frames++;
+		if (ifmts[i] == CARD_ICON_CI) nicons_ci_shared++;
+	}
+
+	// Banner size
+	u8 bnr_fmt = entry->banner_fmt & CARD_BANNER_MASK;
+	u32 banner_size = 0;
+	if (bnr_fmt == CARD_BANNER_CI)
+		banner_size = CARD_BANNER_W * CARD_BANNER_H + 256 * 2;  // 3584
+	else if (bnr_fmt == CARD_BANNER_RGB)
+		banner_size = CARD_BANNER_W * CARD_BANNER_H * 2;  // 6144
+
+	// Compute icon pixel offsets (relative to icon_addr)
+	// Layout: [banner] [icon0 pixels] [icon1 pixels] ... [shared CI TLUT]
+	u32 icon_pixel_off[CARD_MAXICONS];
+	u32 icon_tlut_off[CARD_MAXICONS];
+	u32 accum = banner_size;
+	for (int i = 0; i < total_frames; i++) {
+		if (ifmts[i] == CARD_ICON_NONE) {
+			icon_pixel_off[i] = (u32)-1;
+			icon_tlut_off[i] = (u32)-1;
+			continue;
+		}
+		icon_pixel_off[i] = accum;
+		icon_tlut_off[i] = (u32)-1;
+		if (ifmts[i] == CARD_ICON_RGB) {
+			accum += CARD_ICON_W * CARD_ICON_H * 2;  // 2048
+		} else if (ifmts[i] == CARD_ICON_CI) {
+			accum += CARD_ICON_W * CARD_ICON_H;  // 1024 (shared TLUT at end)
+		} else {
+			// Format 3: CI with individual TLUT right after pixels
+			accum += CARD_ICON_W * CARD_ICON_H;  // 1024 pixels
+			icon_tlut_off[i] = accum;
+			accum += 256 * 2;  // 512 TLUT
+		}
+	}
+	// Shared CI TLUT comes after all icon pixel data
+	u32 shared_tlut_off = (u32)-1;
+	if (nicons_ci_shared > 0) {
+		shared_tlut_off = accum;
+		accum += 256 * 2;  // 512
+		// Point all CI shared frames to the shared TLUT
+		for (int i = 0; i < total_frames; i++) {
+			if (ifmts[i] == CARD_ICON_CI)
+				icon_tlut_off[i] = shared_tlut_off;
+		}
+	}
+
+	u32 total_size = accum;  // total graphics data from icon_addr
+	if (total_size == 0) {
+		CARD_Close(&cardfile);
+		return;
+	}
+
+	// Read all graphics data from card in sector-aligned chunks
+	u32 sector_offset = entry->icon_addr & ~(8192 - 1);
+	u32 off_in_sector = entry->icon_addr - sector_offset;
+	u32 read_len = (off_in_sector + total_size + 8191) & ~(8192 - 1);
+	// Don't exceed file size (read starts at sector_offset, not 0)
+	u32 max_read = entry->filesize > sector_offset ? entry->filesize - sector_offset : 0;
+	max_read &= ~(8192 - 1);
+	if (max_read == 0) max_read = 8192;
+	if (read_len > max_read) read_len = max_read;
+
+	u8 *buf = (u8 *)memalign(32, read_len);
+	if (!buf) {
+		CARD_Close(&cardfile);
+		return;
+	}
+
+	bool ok = true;
+	for (u32 off = 0; off < read_len; off += 8192) {
+		if (CARD_Read(&cardfile, buf + off, 8192, sector_offset + off) != CARD_ERROR_READY) {
+			ok = false;
+			break;
+		}
+	}
+	CARD_Close(&cardfile);
+
+	if (!ok) {
+		free(buf);
+		return;
+	}
+
+	u8 *gfx = buf + off_in_sector;  // pointer to start of graphics data at icon_addr
+	u32 avail = read_len - off_in_sector;
+	if (total_size > avail) total_size = avail;
+
+	// Extract banner
+	if (banner_size > 0 && banner_size <= total_size) {
+		entry->banner = (u8 *)memalign(32, banner_size);
+		if (entry->banner) {
+			memcpy(entry->banner, gfx, banner_size);
+			entry->banner_size = banner_size;
+			DCFlushRange(entry->banner, banner_size);
+			if (bnr_fmt == CARD_BANNER_CI) {
+				GX_InitTlutObj(&entry->banner_tlut, entry->banner + CARD_BANNER_W * CARD_BANNER_H, GX_TL_RGB5A3, 256);
+				GX_InitTexObjCI(&entry->banner_tex, entry->banner, CARD_BANNER_W, CARD_BANNER_H, GX_TF_CI8, GX_CLAMP, GX_CLAMP, GX_FALSE, GX_TLUT0);
+				GX_InitTexObjFilterMode(&entry->banner_tex, GX_LINEAR, GX_NEAR);
+				GX_InitTexObjUserData(&entry->banner_tex, &entry->banner_tlut);
+			} else {
+				GX_InitTexObj(&entry->banner_tex, entry->banner, CARD_BANNER_W, CARD_BANNER_H, GX_TF_RGB5A3, GX_CLAMP, GX_CLAMP, GX_FALSE);
+				GX_InitTexObjFilterMode(&entry->banner_tex, GX_LINEAR, GX_NEAR);
+			}
+		}
+	}
+
+	// Extract icon frames
+	// NONE-format frames mean "hold previous frame" — we store the frame index
+	// they should display as a mapping in the icon_anim structure.
+	if (total_frames > 0) {
+		entry->icon = calloc(1, sizeof(icon_anim));
+		if (entry->icon) {
+			entry->icon->anim_type = entry->banner_fmt & CARD_ANIM_MASK;
+			entry->icon->num_frames = total_frames;
+			int last_valid = -1;
+			for (int i = 0; i < total_frames; i++) {
+				entry->icon->frames[i].fmt = ifmts[i];
+				entry->icon->frames[i].speed = ispeeds[i];
+
+				if (ifmts[i] == CARD_ICON_NONE) {
+					// Hold previous frame: copy its texture references
+					if (last_valid >= 0) {
+						entry->icon->frames[i].data = entry->icon->frames[last_valid].data;
+						entry->icon->frames[i].data_size = 0;  // 0 = borrowed, don't free
+						entry->icon->frames[i].tex = entry->icon->frames[last_valid].tex;
+						entry->icon->frames[i].tlut = entry->icon->frames[last_valid].tlut;
+					}
+					continue;
+				}
+
+				u32 poff = icon_pixel_off[i];
+				u16 pix_size = (ifmts[i] == CARD_ICON_RGB)
+					? CARD_ICON_W * CARD_ICON_H * 2
+					: CARD_ICON_W * CARD_ICON_H;
+				bool has_tlut = (ifmts[i] != CARD_ICON_RGB && icon_tlut_off[i] != (u32)-1);
+				u16 tlut_size = has_tlut ? 256 * 2 : 0;
+				u16 alloc_size = pix_size + tlut_size;
+
+				// Bounds check
+				if (poff + pix_size > total_size) break;
+				if (has_tlut && icon_tlut_off[i] + tlut_size > total_size) break;
+
+				entry->icon->frames[i].data = (u8 *)memalign(32, alloc_size);
+				if (!entry->icon->frames[i].data) break;
+				entry->icon->frames[i].data_size = alloc_size;
+
+				memcpy(entry->icon->frames[i].data, gfx + poff, pix_size);
+				if (has_tlut)
+					memcpy(entry->icon->frames[i].data + pix_size, gfx + icon_tlut_off[i], tlut_size);
+				DCFlushRange(entry->icon->frames[i].data, alloc_size);
+
+				if (ifmts[i] == CARD_ICON_RGB) {
+					GX_InitTexObj(&entry->icon->frames[i].tex,
+						entry->icon->frames[i].data,
+						CARD_ICON_W, CARD_ICON_H, GX_TF_RGB5A3, GX_CLAMP, GX_CLAMP, GX_FALSE);
+				} else {
+					GX_InitTlutObj(&entry->icon->frames[i].tlut,
+						entry->icon->frames[i].data + pix_size, GX_TL_RGB5A3, 256);
+					GX_InitTexObjCI(&entry->icon->frames[i].tex,
+						entry->icon->frames[i].data,
+						CARD_ICON_W, CARD_ICON_H, GX_TF_CI8, GX_CLAMP, GX_CLAMP, GX_FALSE, GX_TLUT0);
+					GX_InitTexObjUserData(&entry->icon->frames[i].tex,
+						&entry->icon->frames[i].tlut);
+				}
+				GX_InitTexObjFilterMode(&entry->icon->frames[i].tex, GX_LINEAR, GX_NEAR);
+				last_valid = i;
+			}
+			// Check if we got at least one valid frame
+			if (last_valid < 0) {
+				free(entry->icon);
+				entry->icon = NULL;
+			}
+		}
+	}
+
+	free(buf);
+}
+
+static void card_manager_free_graphics(card_entry *entries, int count) {
+	for (int i = 0; i < count; i++) {
+		if (entries[i].banner) {
+			free(entries[i].banner);
+			entries[i].banner = NULL;
+		}
+		if (entries[i].icon) {
+			for (int f = 0; f < entries[i].icon->num_frames; f++) {
+				// data_size==0 means borrowed pointer (NONE frame), don't free
+				if (entries[i].icon->frames[f].data_size > 0)
+					free(entries[i].icon->frames[f].data);
+			}
+			free(entries[i].icon);
+			entries[i].icon = NULL;
+		}
+	}
+}
+
 static int card_manager_read_saves(int slot, card_entry *entries, int max_entries) {
 	int count = 0;
 	card_dir carddir;
@@ -177,9 +475,35 @@ static int card_manager_read_saves(int slot, card_entry *entries, int max_entrie
 		ret = CARD_FindNext(&carddir);
 	}
 
+	// Read banner_fmt and icon_addr from raw directory entries in sys_area
+	unsigned char *sysarea = get_card_sys_area(slot);
+	for (int i = 0; i < count; i++) {
+		entries[i].icon_addr = (u32)-1;
+		if (sysarea) {
+			u32 entry_off = entries[i].fileno * 64;
+			for (int blk = 0; blk < 5; blk++) {
+				GCI *raw = (GCI *)(sysarea + blk * 8192 + entry_off);
+				if (memcmp(raw->gamecode, entries[i].gamecode, 4) == 0
+					&& memcmp(raw->company, entries[i].company, 2) == 0
+					&& memcmp(raw->filename, entries[i].filename, CARD_FILENAMELEN) == 0) {
+					entries[i].banner_fmt = raw->banner_fmt;
+					entries[i].icon_addr = raw->icon_addr;
+					entries[i].icon_fmt = raw->icon_fmt;
+					entries[i].icon_speed = raw->icon_speed;
+					break;
+				}
+			}
+		}
+	}
+
 	// Read comment blocks for game names
 	for (int i = 0; i < count; i++) {
 		card_manager_read_comment(slot, &entries[i]);
+	}
+
+	// Read banner images
+	for (int i = 0; i < count; i++) {
+		card_manager_read_graphics(slot, &entries[i]);
 	}
 
 	return count;
@@ -188,112 +512,197 @@ static int card_manager_read_saves(int slot, card_entry *entries, int max_entrie
 // --- Drawing ---
 // Uses a single fixed-size container for all states to avoid pop-in/out
 
-static uiDrawObj_t *card_manager_draw_page(int slot, card_entry *entries,
-	int num_entries, int cursor, int scroll_offset,
-	s32 mem_size, s32 sector_size, bool card_present) {
-
-	uiDrawObj_t *container = DrawEmptyBox(20, 60, getVideoMode()->fbWidth - 20, 420);
-
-	// Title bar
-	char title[64];
-	if (card_present) {
-		int total_blocks = (mem_size << 20 >> 3) / sector_size - 5;
-		int used_blocks = 0;
-		for (int i = 0; i < num_entries; i++) {
-			used_blocks += entries[i].blocks;
+static int icon_anim_get_frame(icon_anim *icon, u32 tick) {
+	if (!icon || icon->num_frames <= 1) return 0;
+	// Calculate total ticks per animation cycle
+	u32 total_ticks = 0;
+	for (int i = 0; i < icon->num_frames; i++) {
+		switch (icon->frames[i].speed) {
+			case CARD_SPEED_FAST:   total_ticks += ICON_SPEED_FAST_TICKS; break;
+			case CARD_SPEED_MIDDLE: total_ticks += ICON_SPEED_MIDDLE_TICKS; break;
+			case CARD_SPEED_SLOW:   total_ticks += ICON_SPEED_SLOW_TICKS; break;
+			default: total_ticks += ICON_SPEED_MIDDLE_TICKS; break;
 		}
-		int free_blocks = total_blocks - used_blocks;
-		sprintf(title, "Memory Card  Slot %c  -  %d/%d blocks free",
-			slot == CARD_SLOTA ? 'A' : 'B', free_blocks, total_blocks);
 	}
-	else {
-		sprintf(title, "Memory Card  Slot %c", slot == CARD_SLOTA ? 'A' : 'B');
+	if (total_ticks == 0) return 0;
+	u32 cycle_ticks = (icon->anim_type & CARD_ANIM_BOUNCE)
+		? total_ticks * 2 - 2  // bounce: 0,1,2,...,N-1,N-2,...,1
+		: total_ticks;
+	u32 pos = tick % cycle_ticks;
+	// Map position to frame
+	bool reverse = false;
+	if ((icon->anim_type & CARD_ANIM_BOUNCE) && pos >= total_ticks) {
+		pos = cycle_ticks - pos;
+		reverse = true;
 	}
-	DrawAddChild(container, DrawStyledLabel(640 / 2, 68, title, 0.7f, ALIGN_CENTER, defaultColor));
-
-	if (!card_present) {
-		DrawAddChild(container, DrawStyledLabel(640 / 2, 240, "Insert a memory card...", 0.75f, ALIGN_CENTER, defaultColor));
+	(void)reverse;
+	u32 accum = 0;
+	for (int i = 0; i < icon->num_frames; i++) {
+		u32 dur;
+		switch (icon->frames[i].speed) {
+			case CARD_SPEED_FAST:   dur = ICON_SPEED_FAST_TICKS; break;
+			case CARD_SPEED_MIDDLE: dur = ICON_SPEED_MIDDLE_TICKS; break;
+			case CARD_SPEED_SLOW:   dur = ICON_SPEED_SLOW_TICKS; break;
+			default: dur = ICON_SPEED_MIDDLE_TICKS; break;
+		}
+		accum += dur;
+		if (pos < accum) return i;
 	}
-	else if (num_entries == 0) {
-		DrawAddChild(container, DrawStyledLabel(640 / 2, 240, "No saves found", 0.75f, ALIGN_CENTER, defaultColor));
+	return 0;
+}
+
+static void card_manager_draw_panel(uiDrawObj_t *container, cm_panel *panel,
+	int px, int pw, bool active, u32 anim_tick) {
+
+	// Header
+	char header[64];
+	if (panel->card_present) {
+		int total = (panel->mem_size << 20 >> 3) / panel->sector_size - 5;
+		int used = 0;
+		for (int i = 0; i < panel->num_entries; i++) used += panel->entries[i].blocks;
+		sprintf(header, "Slot %c  %d/%d free",
+			panel->slot == CARD_SLOTA ? 'A' : 'B', total - used, total);
+	} else {
+		sprintf(header, "Slot %c", panel->slot == CARD_SLOTA ? 'A' : 'B');
 	}
-	else {
-		// Column headers
-		GXColor headerColor = (GXColor){180, 180, 180, 255};
-		DrawAddChild(container, DrawStyledLabel(CARD_MANAGER_LIST_X, 88, "Game", 0.55f, ALIGN_LEFT, headerColor));
-		DrawAddChild(container, DrawStyledLabel(380, 88, "Code", 0.55f, ALIGN_LEFT, headerColor));
-		DrawAddChild(container, DrawStyledLabel(440, 88, "Blocks", 0.55f, ALIGN_LEFT, headerColor));
-		DrawAddChild(container, DrawStyledLabel(530, 88, "Size", 0.55f, ALIGN_LEFT, headerColor));
+	GXColor hdr_color = active ? defaultColor : (GXColor){160, 160, 160, 255};
+	DrawAddChild(container, DrawStyledLabel(px + pw / 2, PANEL_TOP_Y + 8, header,
+		0.55f, ALIGN_CENTER, hdr_color));
 
-		int visible = num_entries - scroll_offset;
-		if (visible > SAVES_PER_PAGE) visible = SAVES_PER_PAGE;
+	// Panel border (1px outline, always visible)
+	DrawAddChild(container, cm_draw_rect(px, PANEL_TOP_Y, pw, 1));                          // top
+	DrawAddChild(container, cm_draw_rect(px, PANEL_BOTTOM_Y, pw, 1));                       // bottom
+	DrawAddChild(container, cm_draw_rect(px, PANEL_TOP_Y, 1, PANEL_BOTTOM_Y - PANEL_TOP_Y)); // left
+	DrawAddChild(container, cm_draw_rect(px + pw - 1, PANEL_TOP_Y, 1, PANEL_BOTTOM_Y - PANEL_TOP_Y)); // right
 
-		for (int i = 0; i < visible; i++) {
-			int entry_idx = scroll_offset + i;
-			int row_y = CARD_MANAGER_LIST_Y + (i * CARD_MANAGER_ROW_HEIGHT);
-			// Font renderer centers text vertically on the Y coordinate,
-			// so place at the row's vertical midpoint
-			int text_y = row_y + CARD_MANAGER_ROW_HEIGHT / 2;
-			GXColor color = (entry_idx == cursor) ?
-				(GXColor){96, 107, 164, 255} : defaultColor;
+	if (!panel->card_present) {
+		DrawAddChild(container, DrawStyledLabel(px + pw / 2, GRID_TOP_Y + 60,
+			"No Card", 0.65f, ALIGN_CENTER, (GXColor){140, 140, 140, 255}));
+		return;
+	}
+	if (panel->num_entries == 0) {
+		DrawAddChild(container, DrawStyledLabel(px + pw / 2, GRID_TOP_Y + 60,
+			"Empty", 0.65f, ALIGN_CENTER, (GXColor){140, 140, 140, 255}));
+		return;
+	}
 
-			if (entry_idx == cursor) {
-				DrawAddChild(container, DrawEmptyColouredBox(
-					CARD_MANAGER_LIST_X - 4, row_y,
-					getVideoMode()->fbWidth - 44, row_y + CARD_MANAGER_ROW_HEIGHT,
-					(GXColor){96, 107, 164, 80}));
+	// Icon grid
+	int grid_x = px + (pw - GRID_COLS * GRID_CELL) / 2;
+	for (int row = 0; row < GRID_ROWS_VISIBLE; row++) {
+		for (int col = 0; col < GRID_COLS; col++) {
+			int idx = (panel->scroll_row + row) * GRID_COLS + col;
+			if (idx >= panel->num_entries) break;
+
+			int cx = grid_x + col * GRID_CELL;
+			int cy = GRID_TOP_Y + row * GRID_CELL;
+			int ix = cx + (GRID_CELL - GRID_ICON_SIZE) / 2;
+			int iy = cy + (GRID_CELL - GRID_ICON_SIZE) / 2;
+
+			// Selection highlight (1px border, pixel-exact via cm_draw_rect)
+			if (active && idx == panel->cursor) {
+				int sx = ix - 2, sy = iy - 2;
+				int sw = GRID_ICON_SIZE + 4, sh = GRID_ICON_SIZE + 4;
+				DrawAddChild(container, cm_draw_rect(sx, sy, sw, 1));       // top
+				DrawAddChild(container, cm_draw_rect(sx, sy + sh - 1, sw, 1)); // bottom
+				DrawAddChild(container, cm_draw_rect(sx, sy, 1, sh));       // left
+				DrawAddChild(container, cm_draw_rect(sx + sw - 1, sy, 1, sh)); // right
 			}
 
-			// Show game name if available, otherwise filename
-			const char *display_name = entries[entry_idx].game_name[0] ?
-				entries[entry_idx].game_name : entries[entry_idx].filename;
-			DrawAddChild(container, DrawStyledLabel(
-				CARD_MANAGER_LIST_X, text_y,
-				display_name,
-				0.6f, ALIGN_LEFT, color));
-
-			DrawAddChild(container, DrawStyledLabel(
-				380, text_y,
-				entries[entry_idx].gamecode,
-				0.6f, ALIGN_LEFT, color));
-
-			char blocks_str[16];
-			sprintf(blocks_str, "%d", entries[entry_idx].blocks);
-			DrawAddChild(container, DrawStyledLabel(
-				440, text_y, blocks_str,
-				0.6f, ALIGN_LEFT, color));
-
-			char size_str[16];
-			sprintf(size_str, "%dK", entries[entry_idx].filesize / 1024);
-			DrawAddChild(container, DrawStyledLabel(
-				530, text_y, size_str,
-				0.6f, ALIGN_LEFT, color));
-		}
-
-		if (num_entries > SAVES_PER_PAGE) {
-			float scroll_pct = (float)scroll_offset / (float)(num_entries - SAVES_PER_PAGE);
-			DrawAddChild(container, DrawVertScrollBar(
-				getVideoMode()->fbWidth - 35, CARD_MANAGER_LIST_Y,
-				10, SAVES_PER_PAGE * CARD_MANAGER_ROW_HEIGHT,
-				scroll_pct, 30));
+			// Draw icon (animated)
+			card_entry *e = &panel->entries[idx];
+			if (e->icon && e->icon->num_frames > 0) {
+				int frame = icon_anim_get_frame(e->icon, anim_tick);
+				if (e->icon->frames[frame].data) {
+					DrawAddChild(container, DrawTexObj(&e->icon->frames[frame].tex,
+						ix, iy, GRID_ICON_SIZE, GRID_ICON_SIZE,
+						0, 0.0f, 1.0f, 0.0f, 1.0f, 0));
+				}
+			} else if (e->banner) {
+				// Fallback: show banner cropped to square
+				DrawAddChild(container, DrawTexObj(&e->banner_tex,
+					ix, iy, GRID_ICON_SIZE, GRID_ICON_SIZE,
+					0, 0.33f, 0.67f, 0.0f, 1.0f, 0));
+			}
 		}
 	}
 
-	if (card_present && num_entries > 0) {
-		DrawAddChild(container, DrawStyledLabel(640 / 2, 395,
-			"A: Export  |  X: Import  |  Z: Delete  |  L/R: Slot  |  B: Back",
-			0.45f, ALIGN_CENTER, defaultColor));
+	// Scroll indicator
+	int total_rows = (panel->num_entries + GRID_COLS - 1) / GRID_COLS;
+	if (total_rows > GRID_ROWS_VISIBLE) {
+		float pct = (float)panel->scroll_row / (float)(total_rows - GRID_ROWS_VISIBLE);
+		DrawAddChild(container, DrawVertScrollBar(
+			px + pw - 10, GRID_TOP_Y, 6,
+			GRID_ROWS_VISIBLE * GRID_CELL, pct, 16));
 	}
-	else if (card_present) {
-		DrawAddChild(container, DrawStyledLabel(640 / 2, 400,
-			"X: Import  |  L/R: Switch Slot  |  B: Back",
-			0.5f, ALIGN_CENTER, defaultColor));
+
+}
+
+static void card_manager_draw_detail(uiDrawObj_t *container, card_entry *sel) {
+	int dx = PANEL_OUTER_X + 10;
+	int dy = DETAIL_TOP_Y;
+	int detail_w = 640 - 2 * PANEL_OUTER_X - 20;
+
+	// Separator line spanning full width
+	DrawAddChild(container, cm_draw_rect(PANEL_OUTER_X + 4, dy - 4,
+		640 - 2 * PANEL_OUTER_X - 8, 1));
+
+	// Banner on the right
+	int text_w = detail_w;
+	if (sel->banner) {
+		int bx = 640 - PANEL_OUTER_X - DETAIL_BANNER_W - 10;
+		DrawAddChild(container, DrawTexObj(&sel->banner_tex,
+			bx, dy, DETAIL_BANNER_W, DETAIL_BANNER_H,
+			0, 0.0f, 1.0f, 0.0f, 1.0f, 0));
+		text_w = detail_w - DETAIL_BANNER_W - 16;
 	}
-	else {
-		DrawAddChild(container, DrawStyledLabel(640 / 2, 400,
-			"L/R: Switch Slot  |  B: Back",
-			0.55f, ALIGN_CENTER, defaultColor));
+
+	// Title (larger font)
+	char *name = sel->game_name[0] ? sel->game_name : sel->filename;
+	float name_scale = GetTextScaleToFitInWidthWithMax(name, text_w, 0.65f);
+	DrawAddChild(container, DrawStyledLabel(dx, dy + 6, name,
+		name_scale, ALIGN_LEFT, defaultColor));
+
+	// Stats line
+	char stats[64];
+	snprintf(stats, sizeof(stats), "%s  %d blocks  %dK",
+		sel->gamecode, sel->blocks, sel->filesize / 1024);
+	DrawAddChild(container, DrawStyledLabel(dx, dy + 22, stats,
+		0.5f, ALIGN_LEFT, (GXColor){160, 160, 160, 255}));
+}
+
+static uiDrawObj_t *card_manager_draw(cm_panel *left, cm_panel *right,
+	int active_panel, u32 anim_tick) {
+
+	// Detail area height depends on whether there's a selection
+	cm_panel *active_p = active_panel == 0 ? left : right;
+	bool has_sel = active_p->card_present && active_p->num_entries > 0 &&
+		active_p->cursor >= 0 && active_p->cursor < active_p->num_entries;
+	int bottom_y = has_sel ? DETAIL_TOP_Y + 40 : PANEL_BOTTOM_Y + 4;
+
+	uiDrawObj_t *container = DrawEmptyBox(PANEL_OUTER_X, 74,
+		640 - PANEL_OUTER_X, bottom_y + 22);
+
+	// Title
+	DrawAddChild(container, DrawStyledLabel(640 / 2, 84,
+		"Memory Card Manager", 0.6f, ALIGN_CENTER, defaultColor));
+
+	int left_x = PANEL_OUTER_X + 2;
+	int right_x = PANEL_OUTER_X + PANEL_WIDTH + PANEL_GAP;
+
+	card_manager_draw_panel(container, left, left_x, PANEL_WIDTH,
+		active_panel == 0, anim_tick);
+	card_manager_draw_panel(container, right, right_x, PANEL_WIDTH,
+		active_panel == 1, anim_tick);
+
+	// Shared detail area below both panels
+	if (has_sel) {
+		card_manager_draw_detail(container, &active_p->entries[active_p->cursor]);
 	}
+
+	// Button hints
+	DrawAddChild(container, DrawStyledLabel(640 / 2, bottom_y + 12,
+		"A: Export  X: Import  Z: Delete  L/R: Switch  B: Back",
+		0.4f, ALIGN_CENTER, (GXColor){160, 160, 160, 255}));
 
 	return container;
 }
@@ -1026,61 +1435,120 @@ static bool card_manager_check_status(int slot, bool was_present) {
 	return is_present != was_present;
 }
 
+// --- Panel helpers ---
+
+static void cm_panel_load(cm_panel *panel) {
+	panel->num_entries = 0;
+	panel->cursor = 0;
+	panel->scroll_row = 0;
+	panel->mem_size = 0;
+	panel->sector_size = 0;
+	panel->card_present = false;
+	panel->has_animated_icons = false;
+
+	cm_log("Loading Slot %c...", panel->slot == CARD_SLOTA ? 'A' : 'B');
+
+	s32 ret = initialize_card(panel->slot);
+	if (ret == CARD_ERROR_READY) {
+		CARD_ProbeEx(panel->slot, &panel->mem_size, &panel->sector_size);
+		panel->num_entries = card_manager_read_saves(panel->slot, panel->entries, 128);
+		panel->card_present = true;
+		cm_log_card_info(panel->slot, panel->mem_size, panel->sector_size, panel->num_entries);
+		for (int i = 0; i < panel->num_entries; i++) {
+			cm_log_entry(i, &panel->entries[i]);
+		}
+		for (int i = 0; i < panel->num_entries; i++) {
+			if (panel->entries[i].icon && panel->entries[i].icon->num_frames > 1) {
+				panel->has_animated_icons = true;
+				break;
+			}
+		}
+	}
+	else {
+		cm_log("No card detected in Slot %c (error=%d)",
+			panel->slot == CARD_SLOTA ? 'A' : 'B', (int)ret);
+	}
+	panel->needs_reload = false;
+}
+
+static void cm_panel_navigate(cm_panel *panel, u16 btns) {
+	if (panel->num_entries == 0) return;
+	int cx = panel->cursor % GRID_COLS;
+	int cy = panel->cursor / GRID_COLS;
+	int total_rows = (panel->num_entries + GRID_COLS - 1) / GRID_COLS;
+
+	if (btns & PAD_BUTTON_UP) {
+		if (cy > 0) {
+			panel->cursor -= GRID_COLS;
+		}
+	}
+	if (btns & PAD_BUTTON_DOWN) {
+		if (cy < total_rows - 1) {
+			int new_cursor = panel->cursor + GRID_COLS;
+			panel->cursor = (new_cursor < panel->num_entries) ? new_cursor : panel->num_entries - 1;
+		}
+	}
+	if (btns & PAD_BUTTON_LEFT) {
+		if (panel->cursor > 0) panel->cursor--;
+	}
+	if (btns & PAD_BUTTON_RIGHT) {
+		if (panel->cursor < panel->num_entries - 1) panel->cursor++;
+	}
+
+	// Update scroll to keep cursor visible
+	cy = panel->cursor / GRID_COLS;
+	if (cy < panel->scroll_row)
+		panel->scroll_row = cy;
+	if (cy >= panel->scroll_row + GRID_ROWS_VISIBLE)
+		panel->scroll_row = cy - GRID_ROWS_VISIBLE + 1;
+}
+
 // --- Main loop ---
 
 void show_card_manager(void) {
-	int slot = CARD_SLOTA;
-	int cursor = 0;
-	int scroll_offset = 0;
-	card_entry entries[128];
-	int num_entries = 0;
-	s32 mem_size = 0, sector_size = 0;
-	bool needs_reload = true;
+	cm_panel *panels[2];
+	panels[0] = calloc(1, sizeof(cm_panel));
+	panels[1] = calloc(1, sizeof(cm_panel));
+	if (!panels[0] || !panels[1]) {
+		free(panels[0]);
+		free(panels[1]);
+		return;
+	}
+	panels[0]->slot = CARD_SLOTA;
+	panels[0]->needs_reload = true;
+	panels[1]->slot = CARD_SLOTB;
+	panels[1]->needs_reload = true;
+
+	int active = 0;
 	bool needs_redraw = false;
-	bool card_present = false;
 	int poll_counter = 0;
+	u32 anim_tick = 0;
 	uiDrawObj_t *pagePanel = NULL;
 
+	cm_flat_init();
 	cm_log_open();
-	cm_log("Opened card manager, starting on Slot A");
+	cm_log("Opened card manager (dual-panel)");
 
 	// Wait for A button release
 	while (padsButtonsHeld() & PAD_BUTTON_A) { VIDEO_WaitVSync(); }
 
 	while (1) {
-		if (needs_reload) {
-			num_entries = 0;
-			cursor = 0;
-			scroll_offset = 0;
-			mem_size = 0;
-			sector_size = 0;
-			card_present = false;
-
-			cm_log("Loading Slot %c...", slot == CARD_SLOTA ? 'A' : 'B');
-
-			s32 ret = initialize_card(slot);
-			if (ret == CARD_ERROR_READY) {
-				CARD_ProbeEx(slot, &mem_size, &sector_size);
-				num_entries = card_manager_read_saves(slot, entries, 128);
-				card_present = true;
-				cm_log_card_info(slot, mem_size, sector_size, num_entries);
-				for (int i = 0; i < num_entries; i++) {
-					cm_log_entry(i, &entries[i]);
+		// Reload any panel that needs it
+		for (int p = 0; p < 2; p++) {
+			if (panels[p]->needs_reload) {
+				if (pagePanel) {
+					DrawDispose(pagePanel);
+					pagePanel = NULL;
 				}
+				card_manager_free_graphics(panels[p]->entries, panels[p]->num_entries);
+				cm_panel_load(panels[p]);
+				needs_redraw = true;
 			}
-			else {
-				cm_log("No card detected (error=%d)", (int)ret);
-			}
-			needs_reload = false;
-			needs_redraw = true;
-			poll_counter = 0;
 		}
 
-		if (needs_redraw) {
-			uiDrawObj_t *newPanel = card_manager_draw_page(slot, entries,
-				num_entries, cursor, scroll_offset,
-				mem_size, sector_size, card_present);
-
+		bool has_anim = panels[0]->has_animated_icons || panels[1]->has_animated_icons;
+		if (needs_redraw || has_anim) {
+			uiDrawObj_t *newPanel = card_manager_draw(panels[0], panels[1], active, anim_tick);
 			if (pagePanel) DrawDispose(pagePanel);
 			pagePanel = newPanel;
 			DrawPublish(pagePanel);
@@ -1088,63 +1556,63 @@ void show_card_manager(void) {
 		}
 
 		VIDEO_WaitVSync();
+		anim_tick++;
 
-		// Poll card status periodically
+		// Poll both slots for hotswap
 		poll_counter++;
 		if (poll_counter >= CARD_POLL_INTERVAL) {
 			poll_counter = 0;
-			if (card_manager_check_status(slot, card_present)) {
-				cm_log("Card %s in Slot %c",
-					card_present ? "removed" : "inserted",
-					slot == CARD_SLOTA ? 'A' : 'B');
-				needs_reload = true;
-				continue;
+			for (int p = 0; p < 2; p++) {
+				if (card_manager_check_status(panels[p]->slot, panels[p]->card_present)) {
+					cm_log("Card %s in Slot %c",
+						panels[p]->card_present ? "removed" : "inserted",
+						panels[p]->slot == CARD_SLOTA ? 'A' : 'B');
+					panels[p]->needs_reload = true;
+				}
 			}
+			if (panels[0]->needs_reload || panels[1]->needs_reload)
+				continue;
 		}
 
 		u16 btns = padsButtonsHeld();
 		if (!btns) continue;
 
-		if ((btns & PAD_BUTTON_UP) && cursor > 0) {
-			cursor--;
-			if (cursor < scroll_offset)
-				scroll_offset = cursor;
-			needs_redraw = true;
-		}
-		if ((btns & PAD_BUTTON_DOWN) && cursor < num_entries - 1) {
-			cursor++;
-			if (cursor >= scroll_offset + SAVES_PER_PAGE)
-				scroll_offset = cursor - SAVES_PER_PAGE + 1;
+		cm_panel *ap = panels[active];
+
+		// Grid navigation
+		if (btns & (PAD_BUTTON_UP | PAD_BUTTON_DOWN | PAD_BUTTON_LEFT | PAD_BUTTON_RIGHT)) {
+			cm_panel_navigate(ap, btns);
 			needs_redraw = true;
 		}
 
-		if ((btns & PAD_TRIGGER_L) && slot != CARD_SLOTA) {
-			slot = CARD_SLOTA;
-			cm_log("Switched to Slot A");
-			needs_reload = true;
+		// Switch active panel
+		if ((btns & PAD_TRIGGER_L) && active != 0) {
+			active = 0;
+			needs_redraw = true;
 		}
-		if ((btns & PAD_TRIGGER_R) && slot != CARD_SLOTB) {
-			slot = CARD_SLOTB;
-			cm_log("Switched to Slot B");
-			needs_reload = true;
+		if ((btns & PAD_TRIGGER_R) && active != 1) {
+			active = 1;
+			needs_redraw = true;
 		}
 
-		if ((btns & PAD_BUTTON_A) && card_present && num_entries > 0) {
+		// Export
+		if ((btns & PAD_BUTTON_A) && ap->card_present && ap->num_entries > 0) {
 			while (padsButtonsHeld() & PAD_BUTTON_A) { VIDEO_WaitVSync(); }
+			card_entry *sel = &ap->entries[ap->cursor];
 			cm_log("Exporting [%d] \"%s\" from Slot %c",
-				cursor, entries[cursor].filename,
-				slot == CARD_SLOTA ? 'A' : 'B');
-			if (card_manager_export_save(slot, &entries[cursor], sector_size)) {
+				ap->cursor, sel->filename,
+				ap->slot == CARD_SLOTA ? 'A' : 'B');
+			if (card_manager_export_save(ap->slot, sel, ap->sector_size)) {
 				cm_log("Export successful");
-			}
-			else {
+			} else {
 				cm_log("Export failed or cancelled");
 			}
 			needs_redraw = true;
-			continue;
+			goto debounce;
 		}
 
-		if ((btns & PAD_BUTTON_X) && card_present) {
+		// Import
+		if ((btns & PAD_BUTTON_X) && ap->card_present) {
 			while (padsButtonsHeld() & PAD_BUTTON_X) { VIDEO_WaitVSync(); }
 			gci_file_entry *gci_files = calloc(MAX_GCI_FILES, sizeof(gci_file_entry));
 			if (gci_files) {
@@ -1154,48 +1622,47 @@ void show_card_manager(void) {
 				if (pick >= 0) {
 					cm_log("Importing \"%s\" to Slot %c",
 						gci_files[pick].display,
-						slot == CARD_SLOTA ? 'A' : 'B');
-					if (card_manager_import_gci(slot, &gci_files[pick], sector_size)) {
+						ap->slot == CARD_SLOTA ? 'A' : 'B');
+					if (card_manager_import_gci(ap->slot, &gci_files[pick], ap->sector_size)) {
 						cm_log("Import successful");
-						needs_reload = true;
-					}
-					else {
+						ap->needs_reload = true;
+					} else {
 						cm_log("Import failed or cancelled");
 						needs_redraw = true;
 					}
-				}
-				else {
+				} else {
 					needs_redraw = true;
 				}
 				free(gci_files);
 			}
-			continue;
+			goto debounce;
 		}
 
-		if ((btns & PAD_TRIGGER_Z) && card_present && num_entries > 0) {
+		// Delete
+		if ((btns & PAD_TRIGGER_Z) && ap->card_present && ap->num_entries > 0) {
 			while (padsButtonsHeld() & PAD_TRIGGER_Z) { VIDEO_WaitVSync(); }
-			if (card_manager_confirm_delete(entries[cursor].filename)) {
+			card_entry *sel = &ap->entries[ap->cursor];
+			if (card_manager_confirm_delete(sel->filename)) {
 				cm_log("Deleting [%d] \"%s\" from Slot %c",
-					cursor, entries[cursor].filename,
-					slot == CARD_SLOTA ? 'A' : 'B');
-				if (card_manager_delete_save(slot, &entries[cursor])) {
+					ap->cursor, sel->filename,
+					ap->slot == CARD_SLOTA ? 'A' : 'B');
+				if (card_manager_delete_save(ap->slot, sel)) {
 					cm_log("Delete successful");
-					needs_reload = true;
-				}
-				else {
+					ap->needs_reload = true;
+				} else {
 					cm_log("Delete failed");
 				}
-			}
-			else {
-				cm_log("Delete cancelled for \"%s\"", entries[cursor].filename);
+			} else {
+				cm_log("Delete cancelled for \"%s\"", sel->filename);
 				needs_redraw = true;
 			}
-			continue;
+			goto debounce;
 		}
 
 		if (btns & PAD_BUTTON_B)
 			break;
 
+debounce:
 		while (padsButtonsHeld() & (PAD_BUTTON_UP | PAD_BUTTON_DOWN |
 			PAD_BUTTON_LEFT | PAD_BUTTON_RIGHT |
 			PAD_BUTTON_A | PAD_BUTTON_B | PAD_BUTTON_X |
@@ -1204,8 +1671,13 @@ void show_card_manager(void) {
 		}
 	}
 
+	// Cleanup: dispose UI before freeing texture data
+	if (pagePanel) DrawDispose(pagePanel);
+	for (int p = 0; p < 2; p++) {
+		card_manager_free_graphics(panels[p]->entries, panels[p]->num_entries);
+		free(panels[p]);
+	}
 	cm_log("Closed card manager");
 	cm_log_close();
-	if (pagePanel) DrawDispose(pagePanel);
 	while (padsButtonsHeld() & PAD_BUTTON_B) { VIDEO_WaitVSync(); }
 }
