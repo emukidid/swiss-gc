@@ -89,6 +89,11 @@ int initialize_card(int slot) {
 	return slot_error;
 }
 
+unsigned char *get_card_sys_area(int slot) {
+	if(slot < 0 || slot > 1) return NULL;
+	return sys_area[slot];
+}
+
 device_info* deviceHandler_CARD_info(file_handle* file) {
 	int slot = (!strncmp((const char*)initial_CARDB.name, file->name, 7));
 	return &initial_CARD_info[slot];
@@ -265,7 +270,7 @@ s32 deviceHandler_CARD_readFile(file_handle* file, void* buffer, u32 length){
 		gci.icon_addr = cardstat.icon_addr;
 		gci.icon_fmt = cardstat.icon_fmt;
 		gci.icon_speed = cardstat.icon_speed;
-		gci.unknown1 = cd->permissions;
+		gci.permission = cd->permissions;
 		gci.filesize8 = cardstat.len / 8192;
 		gci.reserved02 = 0xFFFF;
 		gci.comment_addr = cardstat.comment_addr;
