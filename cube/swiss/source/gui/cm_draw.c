@@ -13,26 +13,27 @@
 extern TPLFile imagesTPL;
 
 // --- Flat rectangle drawing ---
-// DrawEmptyColouredBox adds 3-10px borders, making it unusable for thin lines.
-// Instead, use a tiny solid-color texture with DrawTexObj for pixel-exact rectangles.
 static u16 cm_flat_pixels[16] ATTRIBUTE_ALIGN(32);  // 4x4 RGB5A3
+static u16 cm_highlight_pixels[16] ATTRIBUTE_ALIGN(32);  // 4x4 RGB5A3 (translucent blue)
 static GXTexObj cm_flat_tex;
+static GXTexObj cm_highlight_tex;
 static GXTexObj cm_memcard_tex;
 static bool cm_inited = false;
 
 void cm_draw_init(void) {
 	if (cm_inited) return;
-	// Fill with white, semi-transparent (RGB5A3: bit15=0 → ARGB3444)
-	// Alpha=5 (~71%), R=F, G=F, B=F → 0x5FFF
 	for (int i = 0; i < 16; i++)
-		cm_flat_pixels[i] = 0x5FFF;
+		cm_flat_pixels[i] = 0x5FFF;  // opaque white (RGB555)
 	DCFlushRange(cm_flat_pixels, sizeof(cm_flat_pixels));
 	GX_InitTexObj(&cm_flat_tex, cm_flat_pixels, 4, 4, GX_TF_RGB5A3, GX_CLAMP, GX_CLAMP, GX_FALSE);
 	GX_InitTexObjFilterMode(&cm_flat_tex, GX_LINEAR, GX_NEAR);
-	// Load memcard manager icon from TPL, then re-init GXTexObj from scratch.
-	// TPL_GetTexture sets internal fields (UserData, LOD, etc.) that corrupt
-	// GX state when used with DrawTexObj's GX_NEAR path. Extracting the raw
-	// pixel data and re-initializing avoids all TPL-specific GXTexObj baggage.
+
+	// Translucent blue highlight: A3R4G4B4 — alpha=2/7, R=6, G=6, B=10
+	for (int i = 0; i < 16; i++)
+		cm_highlight_pixels[i] = 0x266A;
+	DCFlushRange(cm_highlight_pixels, sizeof(cm_highlight_pixels));
+	GX_InitTexObj(&cm_highlight_tex, cm_highlight_pixels, 4, 4, GX_TF_RGB5A3, GX_CLAMP, GX_CLAMP, GX_FALSE);
+	GX_InitTexObjFilterMode(&cm_highlight_tex, GX_LINEAR, GX_NEAR);
 	{
 		GXTexObj tplTex;
 		TPL_GetTexture(&imagesTPL, memcard_mgr_icon, &tplTex);
@@ -44,9 +45,12 @@ void cm_draw_init(void) {
 	cm_inited = true;
 }
 
-// Draw a flat semi-transparent white rectangle at exact pixel coordinates
 uiDrawObj_t *cm_draw_rect(int x, int y, int w, int h) {
 	return DrawTexObj(&cm_flat_tex, x, y, w, h, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
+}
+
+uiDrawObj_t *cm_draw_highlight(int x, int y, int w, int h) {
+	return DrawTexObj(&cm_highlight_tex, x, y, w, h, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
 }
 
 // --- Icon animation ---
@@ -60,9 +64,6 @@ static u32 icon_frame_dur(icon_anim *icon, int i) {
 	}
 }
 
-// Resolve a NONE frame (fmt=0) to the next non-NONE frame in index order.
-// NONE frames contribute to timing but display the texture of the nearest
-// subsequent real frame, wrapping around if needed.
 static int icon_resolve_frame(icon_anim *icon, int frame) {
 	if (icon->frames[frame].fmt != 0) return frame;
 	for (int i = frame + 1; i < icon->num_frames; i++) {
@@ -78,7 +79,6 @@ static int icon_anim_get_frame(icon_anim *icon, u32 tick) {
 	if (!icon || icon->num_frames <= 1) return 0;
 	int n = icon->num_frames;
 
-	// All frames (including NONE) contribute to timing
 	u32 fwd_ticks = 0;
 	for (int i = 0; i < n; i++)
 		fwd_ticks += icon_frame_dur(icon, i);
@@ -98,7 +98,6 @@ static int icon_anim_get_frame(icon_anim *icon, u32 tick) {
 	u32 pos = tick % cycle_ticks;
 	int frame;
 
-	// Forward phase
 	if (pos < fwd_ticks) {
 		u32 accum = 0;
 		frame = n - 1;
@@ -107,7 +106,6 @@ static int icon_anim_get_frame(icon_anim *icon, u32 tick) {
 			if (pos < accum) { frame = i; break; }
 		}
 	} else {
-		// Reverse phase (bounce)
 		pos -= fwd_ticks;
 		u32 accum = 0;
 		frame = 1;
@@ -125,26 +123,26 @@ static int icon_anim_get_frame(icon_anim *icon, u32 tick) {
 static void card_manager_draw_panel(uiDrawObj_t *container, cm_panel *panel,
 	int px, int pw, bool active, u32 anim_tick) {
 
-	// Header
+	// Header — use panel label + free blocks info
 	char header[64];
 	if (panel->card_present) {
 		int total = (panel->mem_size << 20 >> 3) / panel->sector_size - 5;
 		int used = 0;
 		for (int i = 0; i < panel->num_entries; i++) used += panel->entries[i].blocks;
-		sprintf(header, "Slot %c  %d/%d free",
-			panel->slot == CARD_SLOTA ? 'A' : 'B', total - used, total);
+		snprintf(header, sizeof(header), "%s  %d/%d free", panel->label, total - used, total);
 	} else {
-		sprintf(header, "Slot %c", panel->slot == CARD_SLOTA ? 'A' : 'B');
+		snprintf(header, sizeof(header), "%s", panel->label);
 	}
 	GXColor hdr_color = active ? defaultColor : (GXColor){160, 160, 160, 255};
+	float hdr_scale = GetTextScaleToFitInWidthWithMax(header, pw - 8, 0.6f);
 	DrawAddChild(container, DrawStyledLabel(px + pw / 2, PANEL_TOP_Y + 9, header,
-		0.6f, ALIGN_CENTER, hdr_color));
+		hdr_scale, ALIGN_CENTER, hdr_color));
 
-	// Panel border (1px outline, always visible)
-	DrawAddChild(container, cm_draw_rect(px, PANEL_TOP_Y, pw, 1));                          // top
-	DrawAddChild(container, cm_draw_rect(px, PANEL_BOTTOM_Y, pw, 1));                       // bottom
-	DrawAddChild(container, cm_draw_rect(px, PANEL_TOP_Y, 1, PANEL_BOTTOM_Y - PANEL_TOP_Y)); // left
-	DrawAddChild(container, cm_draw_rect(px + pw - 1, PANEL_TOP_Y, 1, PANEL_BOTTOM_Y - PANEL_TOP_Y)); // right
+	// Panel border
+	DrawAddChild(container, cm_draw_rect(px, PANEL_TOP_Y, pw, 1));
+	DrawAddChild(container, cm_draw_rect(px, PANEL_BOTTOM_Y, pw, 1));
+	DrawAddChild(container, cm_draw_rect(px, PANEL_TOP_Y, 1, PANEL_BOTTOM_Y - PANEL_TOP_Y));
+	DrawAddChild(container, cm_draw_rect(px + pw - 1, PANEL_TOP_Y, 1, PANEL_BOTTOM_Y - PANEL_TOP_Y));
 
 	if (panel->loading) {
 		DrawAddChild(container, DrawStyledLabel(px + pw / 2, GRID_TOP_Y + 60,
@@ -180,17 +178,15 @@ static void card_manager_draw_panel(uiDrawObj_t *container, cm_panel *panel,
 			int ix = cx + (GRID_CELL - GRID_ICON_SIZE) / 2;
 			int iy = cy + (GRID_CELL - GRID_ICON_SIZE) / 2;
 
-			// Selection highlight (1px border, pixel-exact via cm_draw_rect)
 			if (active && idx == panel->cursor) {
 				int sx = ix - 2, sy = iy - 2;
 				int sw = GRID_ICON_SIZE + 4, sh = GRID_ICON_SIZE + 4;
-				DrawAddChild(container, cm_draw_rect(sx, sy, sw, 1));       // top
-				DrawAddChild(container, cm_draw_rect(sx, sy + sh - 1, sw, 1)); // bottom
-				DrawAddChild(container, cm_draw_rect(sx, sy, 1, sh));       // left
-				DrawAddChild(container, cm_draw_rect(sx + sw - 1, sy, 1, sh)); // right
+				DrawAddChild(container, cm_draw_rect(sx, sy, sw, 1));
+				DrawAddChild(container, cm_draw_rect(sx, sy + sh - 1, sw, 1));
+				DrawAddChild(container, cm_draw_rect(sx, sy, 1, sh));
+				DrawAddChild(container, cm_draw_rect(sx + sw - 1, sy, 1, sh));
 			}
 
-			// Draw icon (animated)
 			card_entry *e = &panel->entries[idx];
 			if (e->icon && e->icon->num_frames > 0) {
 				int frame = icon_anim_get_frame(e->icon, anim_tick);
@@ -200,7 +196,6 @@ static void card_manager_draw_panel(uiDrawObj_t *container, cm_panel *panel,
 						0, 0.0f, 1.0f, 0.0f, 1.0f, 0));
 				}
 			} else if (e->banner) {
-				// Fallback: show banner cropped to square
 				DrawAddChild(container, DrawTexObj(&e->banner_tex,
 					ix, iy, GRID_ICON_SIZE, GRID_ICON_SIZE,
 					0, 0.33f, 0.67f, 0.0f, 1.0f, 0));
@@ -223,7 +218,6 @@ static void card_manager_draw_detail(uiDrawObj_t *container, card_entry *sel) {
 	int dy = DETAIL_TOP_Y;
 	int detail_w = 640 - 2 * PANEL_OUTER_X - 20;
 
-	// Banner on the right
 	int text_w = detail_w;
 	if (sel->banner) {
 		int bx = 640 - PANEL_OUTER_X - DETAIL_BANNER_W - 10;
@@ -233,13 +227,11 @@ static void card_manager_draw_detail(uiDrawObj_t *container, card_entry *sel) {
 		text_w = detail_w - DETAIL_BANNER_W - 16;
 	}
 
-	// Title (larger font)
 	char *name = sel->game_name[0] ? sel->game_name : sel->filename;
 	float name_scale = GetTextScaleToFitInWidthWithMax(name, text_w, 0.65f);
 	DrawAddChild(container, DrawStyledLabel(dx, dy + 6, name,
 		name_scale, ALIGN_LEFT, defaultColor));
 
-	// Stats line with file attributes (§5)
 	char stats[96];
 	char attribs[32] = "";
 	if (sel->permissions & CARD_ATTRIB_NOCOPY) strcat(attribs, " NoCopy");
@@ -268,7 +260,6 @@ uiDrawObj_t *card_manager_draw(cm_panel *left, cm_panel *right,
 	DrawAddChild(container, DrawStyledLabel(PANEL_OUTER_X + 34, TITLE_Y + 12,
 		"Memory Card Manager", 0.75f, ALIGN_LEFT, defaultColor));
 
-	// Panel positions: centered within content area
 	int total_w = PANEL_WIDTH * 2 + PANEL_GAP;
 	int left_x = (640 - total_w) / 2;
 	int right_x = left_x + PANEL_WIDTH + PANEL_GAP;
@@ -278,15 +269,96 @@ uiDrawObj_t *card_manager_draw(cm_panel *left, cm_panel *right,
 	card_manager_draw_panel(container, right, right_x, PANEL_WIDTH,
 		active_panel == 1, anim_tick);
 
-	// Shared detail area below both panels
 	if (has_sel) {
 		card_manager_draw_detail(container, &active_p->entries[active_p->cursor]);
 	}
 
-	// Button hints below detail area
+	// Hint bar
+	const char *hints = has_sel
+		? "A: Actions  X: Backups  L/R: Switch  B: Back"
+		: "X: Backups  L/R: Switch  B: Back";
 	DrawAddChild(container, DrawStyledLabel(640 / 2, HINTS_Y,
-		"A: Export  X: Import  Z: Delete  L/R: Switch  B: Back",
-		0.55f, ALIGN_CENTER, (GXColor){140, 140, 140, 255}));
+		hints, 0.55f, ALIGN_CENTER, (GXColor){140, 140, 140, 255}));
 
 	return container;
+}
+
+// --- Context menu ---
+// Draws a small popup menu centered on screen.
+// Returns selected index or -1 if cancelled.
+
+int cm_context_menu(const char *items[], const bool enabled[], int count) {
+	int cursor = 0;
+	// Start cursor on first enabled item
+	while (cursor < count && !enabled[cursor]) cursor++;
+	if (cursor >= count) return -1;
+
+	// Menu dimensions
+	int menu_w = 240;
+	int item_h = 26;
+	int pad = 12;
+	int menu_h = count * item_h + pad * 2;
+	int menu_x = (640 - menu_w) / 2;
+	int menu_y = (480 - menu_h) / 2;
+
+	while (1) {
+		uiDrawObj_t *overlay = DrawEmptyBox(menu_x, menu_y,
+			menu_x + menu_w, menu_y + menu_h);
+
+		for (int i = 0; i < count; i++) {
+			int iy = menu_y + pad + i * item_h + item_h / 2;
+			GXColor color;
+			if (!enabled[i]) {
+				color = (GXColor){80, 80, 80, 255};
+			} else if (i == cursor) {
+				color = (GXColor){96, 107, 164, 255};
+				DrawAddChild(overlay, cm_draw_highlight(
+					menu_x + 6, menu_y + pad + i * item_h,
+					menu_w - 12, item_h));
+			} else {
+				color = defaultColor;
+			}
+			DrawAddChild(overlay, DrawStyledLabel(menu_x + 20, iy,
+				items[i], 0.55f, ALIGN_LEFT, color));
+		}
+
+		DrawPublish(overlay);
+
+		while (1) {
+			VIDEO_WaitVSync();
+			u16 btns = padsButtonsHeld();
+			s8 stickY = padsStickY();
+			bool has_input = btns || stickY > 16 || stickY < -16;
+			if (!has_input) continue;
+
+			bool redraw = false;
+			if ((btns & PAD_BUTTON_UP) || stickY > 16) {
+				int next = cursor - 1;
+				while (next >= 0 && !enabled[next]) next--;
+				if (next >= 0) { cursor = next; redraw = true; }
+			}
+			if ((btns & PAD_BUTTON_DOWN) || stickY < -16) {
+				int next = cursor + 1;
+				while (next < count && !enabled[next]) next++;
+				if (next < count) { cursor = next; redraw = true; }
+			}
+			if (btns & PAD_BUTTON_A) {
+				while (padsButtonsHeld() & PAD_BUTTON_A) { VIDEO_WaitVSync(); }
+				DrawDispose(overlay);
+				return cursor;
+			}
+			if (btns & PAD_BUTTON_B) {
+				while (padsButtonsHeld() & PAD_BUTTON_B) { VIDEO_WaitVSync(); }
+				DrawDispose(overlay);
+				return -1;
+			}
+			if (redraw) {
+				while (padsButtonsHeld() & (PAD_BUTTON_UP | PAD_BUTTON_DOWN)) {
+					VIDEO_WaitVSync();
+				}
+				break;
+			}
+		}
+		DrawDispose(overlay);
+	}
 }

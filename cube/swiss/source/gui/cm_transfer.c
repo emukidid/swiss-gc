@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <malloc.h>
+#include <time.h>
 #include <gccore.h>
 #include <ogc/timesupp.h>
 #include "cm_internal.h"
@@ -309,6 +310,58 @@ bool card_manager_export_save(int slot, card_entry *entry, s32 sector_size) {
 
 // --- Import (GCI from SD → card) ---
 
+// Parse a single GCI file's header, comment, and first-frame icon for display
+static void cm_parse_gci_file(gci_file_entry *gci, DEVICEHANDLER_INTERFACE *dev) {
+	file_handle *f = calloc(1, sizeof(file_handle));
+	if (!f) return;
+	strlcpy(f->name, gci->path, PATHNAME_MAX);
+
+	if (dev->statFile(f) || f->size <= sizeof(GCI)) {
+		free(f);
+		return;
+	}
+
+	u32 total = f->size;
+	u8 *buf = (u8 *)memalign(32, total);
+	if (!buf) { free(f); return; }
+
+	dev->readFile(f, buf, total);
+	dev->closeFile(f);
+	free(f);
+
+	GCI *hdr = (GCI *)buf;
+	u8 *savedata = buf + sizeof(GCI);
+	u32 save_len = total - sizeof(GCI);
+
+	// Populate entry metadata from GCI header
+	card_entry *e = &gci->entry;
+	memcpy(e->gamecode, hdr->gamecode, 4); e->gamecode[4] = '\0';
+	memcpy(e->company, hdr->company, 2); e->company[2] = '\0';
+	snprintf(e->filename, sizeof(e->filename), "%.*s", CARD_FILENAMELEN, hdr->filename);
+	e->filesize = hdr->filesize8 * 8192;
+	e->blocks = hdr->filesize8;
+	e->permissions = hdr->permission;
+	e->time = hdr->time;
+	e->banner_fmt = hdr->banner_fmt;
+	e->icon_addr = hdr->icon_addr;
+	e->icon_fmt = hdr->icon_fmt;
+	e->icon_speed = hdr->icon_speed;
+
+	// Parse comment block from save data
+	if (hdr->comment_addr != (u32)-1)
+		cm_parse_comment(savedata, save_len, hdr->comment_addr, e);
+
+	// Parse graphics (banner + icons) from save data at icon_addr
+	if (hdr->icon_addr != (u32)-1 && hdr->icon_addr < save_len) {
+		u8 *gfx = savedata + hdr->icon_addr;
+		u32 gfx_len = save_len - hdr->icon_addr;
+		cm_parse_save_graphics(gfx, gfx_len,
+			hdr->banner_fmt, hdr->icon_fmt, hdr->icon_speed, e);
+	}
+
+	free(buf);
+}
+
 int card_manager_scan_gci_files(gci_file_entry *gci_files, int max_files) {
 	DEVICEHANDLER_INTERFACE *dev = devices[DEVICE_CONFIG] ? devices[DEVICE_CONFIG] :
 		devices[DEVICE_CUR] ? devices[DEVICE_CUR] : NULL;
@@ -323,7 +376,6 @@ int card_manager_scan_gci_files(gci_file_entry *gci_files, int max_files) {
 		return 0;
 	}
 
-	// Read directory
 	file_handle *dirEntries = NULL;
 	int count = 0;
 
@@ -333,10 +385,11 @@ int card_manager_scan_gci_files(gci_file_entry *gci_files, int max_files) {
 			char *name = getRelativeName(dirEntries[i].name);
 			int len = strlen(name);
 			if (len > 4 && !strcasecmp(name + len - 4, ".gci")) {
+				memset(&gci_files[count], 0, sizeof(gci_file_entry));
 				strlcpy(gci_files[count].path, dirEntries[i].name, PATHNAME_MAX);
-				snprintf(gci_files[count].display, sizeof(gci_files[count].display),
-					"%.47s", name);
 				gci_files[count].filesize = dirEntries[i].size;
+				// Parse header, comment, and graphics for rich display
+				cm_parse_gci_file(&gci_files[count], dev);
 				count++;
 			}
 		}
@@ -346,78 +399,577 @@ int card_manager_scan_gci_files(gci_file_entry *gci_files, int max_files) {
 	return count;
 }
 
-int card_manager_pick_gci(gci_file_entry *files, int num_files) {
-	if (num_files == 0) {
-		uiDrawObj_t *msgBox = DrawMessageBox(D_INFO, "No .gci files found in swiss/saves/");
-		DrawPublish(msgBox);
-		while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
-		while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
-		DrawDispose(msgBox);
+void card_manager_free_gci_files(gci_file_entry *gci_files, int count) {
+	for (int i = 0; i < count; i++) {
+		card_manager_free_graphics(&gci_files[i].entry, 1);
+	}
+}
+
+// --- GCI picker ---
+#define GCI_PICK_ROW_H 36
+#define GCI_PICK_ICON_SZ 32
+#define GCI_PICK_MAX_VIS 7
+
+// GC epoch is 2000-01-01 00:00:00 UTC
+#define GC_EPOCH_OFFSET 946684800ULL
+
+static void cm_format_gc_date(u32 gc_time, char *buf, int buflen, bool with_time) {
+	if (gc_time == 0 || gc_time == (u32)-1) {
+		snprintf(buf, buflen, "----");
+		return;
+	}
+	time_t unix_time = (time_t)((u64)gc_time + GC_EPOCH_OFFSET);
+	struct tm *t = gmtime(&unix_time);
+	if (!t) { snprintf(buf, buflen, "----"); return; }
+	if (with_time)
+		snprintf(buf, buflen, "%04d-%02d-%02d %02d:%02d",
+			t->tm_year + 1900, t->tm_mon + 1, t->tm_mday,
+			t->tm_hour, t->tm_min);
+	else
+		snprintf(buf, buflen, "%04d-%02d-%02d",
+			t->tm_year + 1900, t->tm_mon + 1, t->tm_mday);
+}
+
+static int cm_gci_sort_date_desc(const void *a, const void *b) {
+	const gci_file_entry *ga = (const gci_file_entry *)a;
+	const gci_file_entry *gb = (const gci_file_entry *)b;
+	if (gb->entry.time > ga->entry.time) return 1;
+	if (gb->entry.time < ga->entry.time) return -1;
+	return 0;
+}
+
+// Shared list input handler: returns action
+// -2 = no action, -1 = B pressed, >=0 = A pressed
+// Updates *cursor and *scroll, signals *redraw
+static int cm_list_input(int *cursor, int *scroll, int count, int max_vis) {
+	u16 btns = padsButtonsHeld();
+	s8 stickY = padsStickY();
+	bool has_input = btns || stickY > 16 || stickY < -16;
+	if (!has_input) return -2;
+
+	bool moved = false;
+	if (((btns & PAD_BUTTON_UP) || stickY > 16) && *cursor > 0) {
+		(*cursor)--;
+		if (*cursor < *scroll) *scroll = *cursor;
+		moved = true;
+	}
+	if (((btns & PAD_BUTTON_DOWN) || stickY < -16) && *cursor < count - 1) {
+		(*cursor)++;
+		if (*cursor >= *scroll + max_vis) *scroll = *cursor - max_vis + 1;
+		moved = true;
+	}
+	if (btns & (PAD_BUTTON_LEFT | PAD_TRIGGER_L)) {
+		*cursor -= max_vis;
+		if (*cursor < 0) *cursor = 0;
+		if (*cursor < *scroll) *scroll = *cursor;
+		moved = true;
+	}
+	if (btns & (PAD_BUTTON_RIGHT | PAD_TRIGGER_R)) {
+		*cursor += max_vis;
+		if (*cursor >= count) *cursor = count - 1;
+		if (*cursor >= *scroll + max_vis) *scroll = *cursor - max_vis + 1;
+		moved = true;
+	}
+	if (btns & PAD_BUTTON_A) {
+		while (padsButtonsHeld() & PAD_BUTTON_A) { VIDEO_WaitVSync(); }
+		return *cursor;
+	}
+	if (btns & PAD_BUTTON_B) {
+		while (padsButtonsHeld() & PAD_BUTTON_B) { VIDEO_WaitVSync(); }
 		return -1;
 	}
+	if (moved) {
+		if (stickY > 16 || stickY < -16) {
+			int wait = abs(stickY) > 64 ? 2 : 5;
+			for (int w = 0; w < wait; w++) VIDEO_WaitVSync();
+		} else {
+			while (padsButtonsHeld() & (PAD_BUTTON_UP | PAD_BUTTON_DOWN |
+				PAD_BUTTON_LEFT | PAD_BUTTON_RIGHT |
+				PAD_TRIGGER_L | PAD_TRIGGER_R)) {
+				VIDEO_WaitVSync();
+			}
+		}
+	}
+	return moved ? -3 : -2;  // -3 = redraw needed
+}
 
-	int cursor = 0;
-	int scroll = 0;
-	int max_visible = 8;
+// Game group: groups GCI files by gamecode
+typedef struct {
+	char gamecode[5];
+	char game_name[33];
+	int first_idx;		// Index into the files array
+	int count;			// Number of saves for this game
+	card_entry *rep;	// Representative entry (for icon)
+} gci_game_group;
+
+#define MAX_GAME_GROUPS 64
+
+// Build game groups from sorted file list
+static int cm_build_game_groups(gci_file_entry *files, int num_files,
+	gci_game_group *groups, int max_groups) {
+	int ng = 0;
+	for (int i = 0; i < num_files && ng < max_groups; i++) {
+		// Check if this gamecode already has a group
+		int found = -1;
+		for (int g = 0; g < ng; g++) {
+			if (strcmp(groups[g].gamecode, files[i].entry.gamecode) == 0) {
+				found = g;
+				break;
+			}
+		}
+		if (found >= 0) {
+			groups[found].count++;
+			// Use the most recent save's name as representative
+			if (files[i].entry.time > files[groups[found].first_idx].entry.time) {
+				groups[found].rep = &files[i].entry;
+				if (files[i].entry.game_name[0])
+					strlcpy(groups[found].game_name, files[i].entry.game_name,
+						sizeof(groups[found].game_name));
+			}
+		} else {
+			strlcpy(groups[ng].gamecode, files[i].entry.gamecode, 5);
+			strlcpy(groups[ng].game_name,
+				files[i].entry.game_name[0] ? files[i].entry.game_name : files[i].entry.filename,
+				sizeof(groups[ng].game_name));
+			groups[ng].first_idx = i;
+			groups[ng].count = 1;
+			groups[ng].rep = &files[i].entry;
+			ng++;
+		}
+	}
+	return ng;
+}
+
+// --- Backup file operations ---
+
+enum {
+	BK_ACT_IMPORT,
+	BK_ACT_RENAME,
+	BK_ACT_DUPLICATE,
+	BK_ACT_DELETE,
+	BK_ACT_COUNT
+};
+
+static DEVICEHANDLER_INTERFACE *cm_get_sd_dev(void) {
+	return devices[DEVICE_CONFIG] ? devices[DEVICE_CONFIG] :
+		devices[DEVICE_CUR] ? devices[DEVICE_CUR] : NULL;
+}
+
+static bool cm_backup_rename(gci_file_entry *gci) {
+	DEVICEHANDLER_INTERFACE *dev = cm_get_sd_dev();
+	if (!dev) return false;
+
+	// Extract current basename (without path and .gci extension)
+	char *rel = getRelativeName(gci->path);
+	char newname[128];
+	strlcpy(newname, rel, sizeof(newname));
+	int len = strlen(newname);
+	if (len > 4 && !strcasecmp(newname + len - 4, ".gci"))
+		newname[len - 4] = '\0';
+
+	DrawGetTextEntry(ENTRYMODE_ALPHA | ENTRYMODE_FILE, "Rename backup", newname, sizeof(newname) - 5);
+
+	// If empty or unchanged, skip
+	if (!newname[0]) return false;
+	char full_new[PATHNAME_MAX];
+	char gci_name[160];
+	snprintf(gci_name, sizeof(gci_name), "swiss/saves/%s.gci", newname);
+	concat_path(full_new, dev->initial->name, gci_name);
+	if (strcmp(full_new, gci->path) == 0) return false;
+
+	// Check if target exists
+	file_handle *check = calloc(1, sizeof(file_handle));
+	if (check) {
+		strlcpy(check->name, full_new, PATHNAME_MAX);
+		if (!dev->statFile(check)) {
+			free(check);
+			uiDrawObj_t *msgBox = DrawMessageBox(D_WARN, "A file with that name already exists.");
+			DrawPublish(msgBox);
+			while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
+			while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
+			DrawDispose(msgBox);
+			return false;
+		}
+		free(check);
+	}
+
+	// Rename = read old, write new, delete old
+	file_handle *src = calloc(1, sizeof(file_handle));
+	if (!src) return false;
+	strlcpy(src->name, gci->path, PATHNAME_MAX);
+	if (dev->statFile(src)) { free(src); return false; }
+
+	u32 total = src->size;
+	u8 *buf = (u8 *)memalign(32, total);
+	if (!buf) { free(src); return false; }
+	dev->readFile(src, buf, total);
+	dev->closeFile(src);
+
+	file_handle *dst = calloc(1, sizeof(file_handle));
+	if (!dst) { free(buf); free(src); return false; }
+	strlcpy(dst->name, full_new, PATHNAME_MAX);
+	dev->writeFile(dst, buf, total);
+	dev->closeFile(dst);
+	free(buf);
+	free(dst);
+
+	dev->deleteFile(src);
+	free(src);
+
+	cm_log("Renamed backup: %s -> %s", gci->path, full_new);
+	strlcpy(gci->path, full_new, PATHNAME_MAX);
+	return true;
+}
+
+static bool cm_backup_delete(gci_file_entry *gci) {
+	DEVICEHANDLER_INTERFACE *dev = cm_get_sd_dev();
+	if (!dev) return false;
+
+	char *rel = getRelativeName(gci->path);
+	char msg[256];
+	snprintf(msg, sizeof(msg), "Delete backup \"%s\"?\n \nPress L + A to confirm, or B to cancel.", rel);
+	uiDrawObj_t *msgBox = DrawMessageBox(D_WARN, msg);
+	DrawPublish(msgBox);
+
+	bool confirmed = false;
+	while (1) {
+		u16 btns = padsButtonsHeld();
+		if ((btns & (PAD_BUTTON_A | PAD_TRIGGER_L)) == (PAD_BUTTON_A | PAD_TRIGGER_L)) {
+			confirmed = true; break;
+		}
+		if (btns & PAD_BUTTON_B) break;
+		VIDEO_WaitVSync();
+	}
+	while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_TRIGGER_L | PAD_BUTTON_B)) {
+		VIDEO_WaitVSync();
+	}
+	DrawDispose(msgBox);
+
+	if (!confirmed) return false;
+
+	file_handle *f = calloc(1, sizeof(file_handle));
+	if (!f) return false;
+	strlcpy(f->name, gci->path, PATHNAME_MAX);
+	dev->deleteFile(f);
+	free(f);
+	cm_log("Deleted backup: %s", gci->path);
+	return true;
+}
+
+static bool cm_backup_duplicate(gci_file_entry *gci) {
+	DEVICEHANDLER_INTERFACE *dev = cm_get_sd_dev();
+	if (!dev) return false;
+
+	file_handle *src = calloc(1, sizeof(file_handle));
+	if (!src) return false;
+	strlcpy(src->name, gci->path, PATHNAME_MAX);
+	if (dev->statFile(src)) { free(src); return false; }
+
+	u32 total = src->size;
+	u8 *buf = (u8 *)memalign(32, total);
+	if (!buf) { free(src); return false; }
+	dev->readFile(src, buf, total);
+	dev->closeFile(src);
+	free(src);
+
+	// Find next available numbered name
+	char *rel = getRelativeName(gci->path);
+	char base[128];
+	strlcpy(base, rel, sizeof(base));
+	int len = strlen(base);
+	if (len > 4 && !strcasecmp(base + len - 4, ".gci"))
+		base[len - 4] = '\0';
+
+	file_handle *dst = calloc(1, sizeof(file_handle));
+	if (!dst) { free(buf); return false; }
+	char gci_name[160];
+	for (int n = 2; n <= 99; n++) {
+		snprintf(gci_name, sizeof(gci_name), "swiss/saves/%s (%d).gci", base, n);
+		concat_path(dst->name, dev->initial->name, gci_name);
+		if (dev->statFile(dst)) break;  // doesn't exist, use it
+	}
+
+	dev->writeFile(dst, buf, total);
+	dev->closeFile(dst);
+	cm_log("Duplicated backup: %s -> %s", gci->path, dst->name);
+	free(dst);
+	free(buf);
+	return true;
+}
+
+// --- Backup manager save list (level 2) ---
+// Returns: 1 = card was modified (import), 0 = files changed on SD, -1 = back (no changes)
+static int cm_backup_save_list(gci_file_entry **pfiles, int *pnum,
+	gci_game_group *group, int slot, s32 sector_size) {
+
+	int cursor = 0, scroll = 0;
+	int box_x1 = 40, box_y1 = 80, box_x2 = 600, box_y2 = 400;
+	int list_top = 110;
+	int list_w = box_x2 - box_x1 - 20;
+	bool card_modified = false;
+	bool files_changed = false;
 
 	while (1) {
-		uiDrawObj_t *container = DrawEmptyBox(40, 80, 600, 400);
-		DrawAddChild(container, DrawStyledLabel(640 / 2, 90,
-			"Select GCI to import", 0.7f, ALIGN_CENTER, defaultColor));
+		// After file operations, rescan GCI files in place
+		if (files_changed) {
+			card_manager_free_gci_files(*pfiles, *pnum);
+			*pnum = card_manager_scan_gci_files(*pfiles, MAX_GCI_FILES);
+			qsort(*pfiles, *pnum, sizeof(gci_file_entry), cm_gci_sort_date_desc);
+			files_changed = false;
+		}
 
-		int visible = num_files - scroll;
-		if (visible > max_visible) visible = max_visible;
+		// Rebuild indices for this game (may change after delete/rename)
+		gci_file_entry *files = *pfiles;
+		int num_files = *pnum;
+		int indices[MAX_GCI_FILES];
+		int count = 0;
+		for (int i = 0; i < num_files && count < MAX_GCI_FILES; i++) {
+			if (strcmp(files[i].entry.gamecode, group->gamecode) == 0)
+				indices[count++] = i;
+		}
+		if (count == 0) return card_modified ? 1 : 0;
+		if (cursor >= count) cursor = count - 1;
+		if (cursor < 0) cursor = 0;
+
+		uiDrawObj_t *container = DrawEmptyBox(box_x1, box_y1, box_x2, box_y2);
+		DrawAddChild(container, DrawStyledLabel(640 / 2, 90,
+			group->game_name, 0.65f, ALIGN_CENTER, defaultColor));
+
+		int visible = count - scroll;
+		if (visible > GCI_PICK_MAX_VIS) visible = GCI_PICK_MAX_VIS;
 
 		for (int i = 0; i < visible; i++) {
-			int idx = scroll + i;
-			int y = 120 + i * 30 + 15;
-			GXColor color = (idx == cursor) ?
-				(GXColor){96, 107, 164, 255} : defaultColor;
-			if (idx == cursor) {
-				DrawAddChild(container, DrawEmptyColouredBox(
-					50, 120 + i * 30, 590, 120 + (i + 1) * 30,
-					(GXColor){96, 107, 164, 80}));
+			int vi = scroll + i;
+			int fi = indices[vi];
+			int ry = list_top + i * GCI_PICK_ROW_H;
+			card_entry *e = &files[fi].entry;
+
+			if (vi == cursor)
+				DrawAddChild(container, cm_draw_highlight(
+					box_x1 + 10, ry, box_x2 - box_x1 - 20, GCI_PICK_ROW_H));
+
+			int ix = box_x1 + 14;
+			int iy = ry + (GCI_PICK_ROW_H - GCI_PICK_ICON_SZ) / 2;
+			if (e->icon && e->icon->num_frames > 0 && e->icon->frames[0].data) {
+				DrawAddChild(container, DrawTexObj(&e->icon->frames[0].tex,
+					ix, iy, GCI_PICK_ICON_SZ, GCI_PICK_ICON_SZ,
+					0, 0.0f, 1.0f, 0.0f, 1.0f, 0));
+			} else if (e->banner) {
+				DrawAddChild(container, DrawTexObj(&e->banner_tex,
+					ix, iy, GCI_PICK_ICON_SZ, GCI_PICK_ICON_SZ,
+					0, 0.33f, 0.67f, 0.0f, 1.0f, 0));
 			}
-			DrawAddChild(container, DrawStyledLabel(60, y,
-				files[idx].display, 0.55f, ALIGN_LEFT, color));
+
+			int tx = ix + GCI_PICK_ICON_SZ + 8;
+			GXColor name_color = (vi == cursor)
+				? (GXColor){96, 107, 164, 255} : defaultColor;
+
+			// Show GCI filename (from SD path, not internal card filename)
+			char *dispname = getRelativeName(files[fi].path);
+			float ns = GetTextScaleToFitInWidthWithMax(dispname,
+				list_w - GCI_PICK_ICON_SZ - 24, 0.55f);
+			DrawAddChild(container, DrawStyledLabel(tx, ry + 10,
+				dispname, ns, ALIGN_LEFT, name_color));
+
+			char datebuf[24];
+			cm_format_gc_date(e->time, datebuf, sizeof(datebuf), true);
+			char stats[64];
+			snprintf(stats, sizeof(stats), "%d blk  %s", e->blocks, datebuf);
+			DrawAddChild(container, DrawStyledLabel(tx, ry + 26,
+				stats, 0.45f, ALIGN_LEFT, (GXColor){140, 140, 140, 255}));
+		}
+
+		if (count > GCI_PICK_MAX_VIS) {
+			float pct = (float)scroll / (float)(count - GCI_PICK_MAX_VIS);
+			DrawAddChild(container, DrawVertScrollBar(
+				box_x2 - 14, list_top, 6,
+				GCI_PICK_MAX_VIS * GCI_PICK_ROW_H, pct, 16));
 		}
 
 		DrawAddChild(container, DrawStyledLabel(640 / 2, 385,
-			"A: Import  |  B: Cancel", 0.55f, ALIGN_CENTER, defaultColor));
+			"A: Actions  |  B: Back", 0.55f, ALIGN_CENTER, defaultColor));
 		DrawPublish(container);
 
 		while (1) {
 			VIDEO_WaitVSync();
-			u16 btns = padsButtonsHeld();
-			if (!btns) continue;
+			int result = cm_list_input(&cursor, &scroll, count, GCI_PICK_MAX_VIS);
+			if (result >= 0) {
+				DrawDispose(container);
+				int fi = indices[result];
 
-			bool redraw = false;
-			if ((btns & PAD_BUTTON_UP) && cursor > 0) {
-				cursor--;
-				if (cursor < scroll) scroll = cursor;
-				redraw = true;
-			}
-			if ((btns & PAD_BUTTON_DOWN) && cursor < num_files - 1) {
-				cursor++;
-				if (cursor >= scroll + max_visible) scroll = cursor - max_visible + 1;
-				redraw = true;
-			}
-			if (btns & PAD_BUTTON_A) {
-				while (padsButtonsHeld() & PAD_BUTTON_A) { VIDEO_WaitVSync(); }
-				DrawDispose(container);
-				return cursor;
-			}
-			if (btns & PAD_BUTTON_B) {
-				while (padsButtonsHeld() & PAD_BUTTON_B) { VIDEO_WaitVSync(); }
-				DrawDispose(container);
-				return -1;
-			}
-			if (redraw) {
-				while (padsButtonsHeld() & (PAD_BUTTON_UP | PAD_BUTTON_DOWN)) {
-					VIDEO_WaitVSync();
+				// Show context menu for this backup
+				const char *items[BK_ACT_COUNT];
+				bool enabled[BK_ACT_COUNT];
+				items[BK_ACT_IMPORT] = "Import to card";
+				enabled[BK_ACT_IMPORT] = true;
+				items[BK_ACT_RENAME] = "Rename";
+				enabled[BK_ACT_RENAME] = true;
+				items[BK_ACT_DUPLICATE] = "Duplicate";
+				enabled[BK_ACT_DUPLICATE] = true;
+				items[BK_ACT_DELETE] = "Delete backup";
+				enabled[BK_ACT_DELETE] = true;
+
+				int act = cm_context_menu(items, enabled, BK_ACT_COUNT);
+				switch (act) {
+					case BK_ACT_IMPORT:
+						if (card_manager_import_gci(slot, &files[fi], sector_size))
+							card_modified = true;
+						break;
+					case BK_ACT_RENAME:
+						if (cm_backup_rename(&files[fi]))
+							files_changed = true;
+						break;
+					case BK_ACT_DUPLICATE:
+						if (cm_backup_duplicate(&files[fi]))
+							files_changed = true;
+						break;
+					case BK_ACT_DELETE:
+						if (cm_backup_delete(&files[fi]))
+							files_changed = true;
+						break;
 				}
+				break;  // redraw list
+			}
+			if (result == -1) {
+				DrawDispose(container);
+				if (card_modified) return 1;
+				if (files_changed) return 0;
+				return -1;  // back, no changes
+			}
+			if (result == -3) break;  // redraw
+		}
+		DrawDispose(container);
+	}
+}
+
+// --- Backup manager (game list → save list → actions) ---
+
+bool card_manager_backups(int slot, s32 sector_size) {
+	bool card_modified = false;
+
+	gci_file_entry *gci_files = calloc(MAX_GCI_FILES, sizeof(gci_file_entry));
+	if (!gci_files) return false;
+	int num_gci = card_manager_scan_gci_files(gci_files, MAX_GCI_FILES);
+	cm_log("Backups: found %d GCI files", num_gci);
+
+	if (num_gci == 0) {
+		uiDrawObj_t *msgBox = DrawMessageBox(D_INFO, "No backups found in swiss/saves/");
+		DrawPublish(msgBox);
+		while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
+		while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
+		DrawDispose(msgBox);
+		free(gci_files);
+		return card_modified;
+	}
+
+	// Sort by date descending
+	qsort(gci_files, num_gci, sizeof(gci_file_entry), cm_gci_sort_date_desc);
+
+	// Build game groups
+	gci_game_group groups[MAX_GAME_GROUPS];
+	int num_groups = cm_build_game_groups(gci_files, num_gci, groups, MAX_GAME_GROUPS);
+
+	int cursor = 0, scroll = 0;
+	int box_x1 = 40, box_y1 = 80, box_x2 = 600, box_y2 = 400;
+	int list_top = 110;
+	int list_w = box_x2 - box_x1 - 20;
+	bool rebuild_groups = false;
+
+	// If only one game, go straight to save list
+	if (num_groups == 1) {
+		int r = cm_backup_save_list(&gci_files, &num_gci, &groups[0], slot, sector_size);
+		if (r == 1) card_modified = true;
+		if (r == 0 || r == 1) rebuild_groups = true;
+		else {
+			card_manager_free_gci_files(gci_files, num_gci);
+			free(gci_files);
+			return card_modified;
+		}
+	}
+
+	while (1) {
+		// Rebuild groups after file changes (delete/duplicate/rename/import)
+		if (rebuild_groups) {
+			num_groups = cm_build_game_groups(gci_files, num_gci, groups, MAX_GAME_GROUPS);
+			if (num_groups == 0) break;
+			if (cursor >= num_groups) cursor = num_groups - 1;
+			rebuild_groups = false;
+		}
+
+		uiDrawObj_t *container = DrawEmptyBox(box_x1, box_y1, box_x2, box_y2);
+		DrawAddChild(container, DrawStyledLabel(640 / 2, 90,
+			"Backups", 0.7f, ALIGN_CENTER, defaultColor));
+
+		int visible = num_groups - scroll;
+		if (visible > GCI_PICK_MAX_VIS) visible = GCI_PICK_MAX_VIS;
+
+		for (int i = 0; i < visible; i++) {
+			int idx = scroll + i;
+			int ry = list_top + i * GCI_PICK_ROW_H;
+			gci_game_group *g = &groups[idx];
+			card_entry *e = g->rep;
+
+			if (idx == cursor)
+				DrawAddChild(container, cm_draw_highlight(
+					box_x1 + 10, ry, box_x2 - box_x1 - 20, GCI_PICK_ROW_H));
+
+			int ix = box_x1 + 14;
+			int iy = ry + (GCI_PICK_ROW_H - GCI_PICK_ICON_SZ) / 2;
+			if (e->icon && e->icon->num_frames > 0 && e->icon->frames[0].data) {
+				DrawAddChild(container, DrawTexObj(&e->icon->frames[0].tex,
+					ix, iy, GCI_PICK_ICON_SZ, GCI_PICK_ICON_SZ,
+					0, 0.0f, 1.0f, 0.0f, 1.0f, 0));
+			} else if (e->banner) {
+				DrawAddChild(container, DrawTexObj(&e->banner_tex,
+					ix, iy, GCI_PICK_ICON_SZ, GCI_PICK_ICON_SZ,
+					0, 0.33f, 0.67f, 0.0f, 1.0f, 0));
+			}
+
+			int tx = ix + GCI_PICK_ICON_SZ + 8;
+			GXColor name_color = (idx == cursor)
+				? (GXColor){96, 107, 164, 255} : defaultColor;
+			float ns = GetTextScaleToFitInWidthWithMax(g->game_name,
+				list_w - GCI_PICK_ICON_SZ - 24, 0.55f);
+			DrawAddChild(container, DrawStyledLabel(tx, ry + 10,
+				g->game_name, ns, ALIGN_LEFT, name_color));
+
+			char stats[48];
+			snprintf(stats, sizeof(stats), "%s  %d save%s",
+				g->gamecode, g->count, g->count > 1 ? "s" : "");
+			DrawAddChild(container, DrawStyledLabel(tx, ry + 26,
+				stats, 0.45f, ALIGN_LEFT, (GXColor){140, 140, 140, 255}));
+		}
+
+		if (num_groups > GCI_PICK_MAX_VIS) {
+			float pct = (float)scroll / (float)(num_groups - GCI_PICK_MAX_VIS);
+			DrawAddChild(container, DrawVertScrollBar(
+				box_x2 - 14, list_top, 6,
+				GCI_PICK_MAX_VIS * GCI_PICK_ROW_H, pct, 16));
+		}
+
+		DrawAddChild(container, DrawStyledLabel(640 / 2, 385,
+			"A: Open  |  B: Back", 0.55f, ALIGN_CENTER, defaultColor));
+		DrawPublish(container);
+
+		while (1) {
+			VIDEO_WaitVSync();
+			int result = cm_list_input(&cursor, &scroll, num_groups, GCI_PICK_MAX_VIS);
+			if (result >= 0) {
+				DrawDispose(container);
+				gci_game_group *sel = &groups[result];
+				int r = cm_backup_save_list(&gci_files, &num_gci, sel, slot, sector_size);
+				if (r == 1) card_modified = true;
+				if (r == 0 || r == 1) rebuild_groups = true;
+				// r == -1: back to game list, no rebuild needed
 				break;
 			}
+			if (result == -1) {
+				DrawDispose(container);
+				card_manager_free_gci_files(gci_files, num_gci);
+				free(gci_files);
+				return card_modified;
+			}
+			if (result == -3) break;
 		}
 		DrawDispose(container);
 	}

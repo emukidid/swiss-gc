@@ -69,6 +69,7 @@ typedef struct {
 	u16 blocks;
 	u32 fileno;
 	u8 permissions;
+	u32 time;		// GC epoch: seconds since 2000-01-01
 	u8 banner_fmt;
 	u32 icon_addr;
 	u16 icon_fmt;
@@ -80,8 +81,16 @@ typedef struct {
 	icon_anim *icon;
 } card_entry;
 
+// Panel source type
+typedef enum {
+	CM_SRC_PHYSICAL,	// Physical card via CARD_* API
+	CM_SRC_VMC,			// Virtual memory card .raw file (future)
+} cm_source_type;
+
 typedef struct {
+	cm_source_type source;
 	int slot;
+	char label[32];		// Display label for panel header (e.g. "Slot A", "VMC: name")
 	card_entry entries[128];
 	int num_entries;
 	int cursor;
@@ -94,11 +103,21 @@ typedef struct {
 	bool loading;
 } cm_panel;
 
+// GCI file entry for import picker (with parsed graphics)
 typedef struct {
 	char path[PATHNAME_MAX];
-	char display[48];
 	u32 filesize;
+	card_entry entry;	// Parsed metadata and first-frame icon
 } gci_file_entry;
+
+// Context menu action
+typedef enum {
+	CM_ACT_COPY,
+	CM_ACT_EXPORT,
+	CM_ACT_IMPORT,
+	CM_ACT_DELETE,
+	CM_ACT_COUNT
+} cm_action;
 
 // --- cm_log.c ---
 
@@ -110,6 +129,10 @@ void cm_log_entry(int idx, card_entry *entry);
 
 // --- cm_card.c ---
 
+void cm_parse_save_graphics(u8 *gfx_data, u32 gfx_len,
+	u8 banner_fmt, u16 icon_fmt, u16 icon_speed, card_entry *entry);
+void cm_parse_comment(u8 *file_data, u32 file_len, u32 comment_addr,
+	card_entry *entry);
 int card_manager_read_saves(int slot, card_entry *entries, int max_entries);
 void card_manager_free_graphics(card_entry *entries, int count);
 
@@ -117,8 +140,10 @@ void card_manager_free_graphics(card_entry *entries, int count);
 
 void cm_draw_init(void);
 uiDrawObj_t *cm_draw_rect(int x, int y, int w, int h);
+uiDrawObj_t *cm_draw_highlight(int x, int y, int w, int h);
 uiDrawObj_t *card_manager_draw(cm_panel *left, cm_panel *right,
 	int active_panel, u32 anim_tick);
+int cm_context_menu(const char *items[], const bool enabled[], int count);
 
 // --- cm_transfer.c ---
 
@@ -126,7 +151,8 @@ bool card_manager_confirm_delete(const char *filename);
 bool card_manager_delete_save(int slot, card_entry *entry);
 bool card_manager_export_save(int slot, card_entry *entry, s32 sector_size);
 int card_manager_scan_gci_files(gci_file_entry *gci_files, int max_files);
-int card_manager_pick_gci(gci_file_entry *files, int num_files);
+void card_manager_free_gci_files(gci_file_entry *gci_files, int count);
 bool card_manager_import_gci(int slot, gci_file_entry *gci_entry, s32 sector_size);
+bool card_manager_backups(int slot, s32 sector_size);
 
 #endif

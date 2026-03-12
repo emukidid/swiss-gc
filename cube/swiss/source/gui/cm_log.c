@@ -43,33 +43,15 @@ void cm_log_close(void) {
 	cm_log_len += snprintf(cm_log_buf + cm_log_len, CM_LOG_MAX - cm_log_len,
 		"--- Card Manager session ended ---\n");
 
+	// Write only the current session's log (overwrite, not append).
+	// This avoids reading a potentially large old log from SD on every exit.
 	file_handle *logFile = calloc(1, sizeof(file_handle));
 	if (logFile) {
 		concat_path(logFile->name, cm_log_dev->initial->name, "cardmanager.log");
-		// Read existing content if present
-		char *existing = NULL;
-		u32 existing_len = 0;
-		if (!cm_log_dev->statFile(logFile) && logFile->size) {
-			existing = calloc(1, logFile->size);
-			if (existing) {
-				cm_log_dev->readFile(logFile, existing, logFile->size);
-				existing_len = logFile->size;
-			}
-			cm_log_dev->closeFile(logFile);
-		}
-		// Combine existing + new into single buffer and write once
-		u32 total_len = existing_len + cm_log_len;
-		char *combined = calloc(1, total_len);
-		if (combined) {
-			if (existing && existing_len)
-				memcpy(combined, existing, existing_len);
-			memcpy(combined + existing_len, cm_log_buf, cm_log_len);
+		if (!cm_log_dev->statFile(logFile))
 			cm_log_dev->deleteFile(logFile);
-			cm_log_dev->writeFile(logFile, combined, total_len);
-			cm_log_dev->closeFile(logFile);
-			free(combined);
-		}
-		free(existing);
+		cm_log_dev->writeFile(logFile, cm_log_buf, cm_log_len);
+		cm_log_dev->closeFile(logFile);
 		free(logFile);
 	}
 	cm_log_dev = NULL;
