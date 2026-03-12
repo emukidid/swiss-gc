@@ -27,10 +27,10 @@
 #define BTNEXIT_WIDTH   (32)
 #define BTNEXIT_HEIGHT  (32)
 
-#define BTNMEMCARD_X       (22)
-#define BTNMEMCARD_Y        (6)
-#define BTNMEMCARD_WIDTH   (24)
-#define BTNMEMCARD_HEIGHT  (24)
+#define BTNMEMCARD_X       (18)
+#define BTNMEMCARD_Y        (4)
+#define BTNMEMCARD_WIDTH   (32)
+#define BTNMEMCARD_HEIGHT  (32)
 
 #define BTNHILIGHT_WIDTH   (68)
 #define BTNHILIGHT_HEIGHT  (52)

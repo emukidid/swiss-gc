@@ -89,6 +89,7 @@ typedef struct {
 	bool card_present;
 	bool has_animated_icons;
 	bool needs_reload;
+	bool loading;
 } cm_panel;
 
 // --- Flat rectangle drawing ---
@@ -633,9 +634,20 @@ static void card_manager_draw_panel(uiDrawObj_t *container, cm_panel *panel,
 	DrawAddChild(container, cm_draw_rect(px, PANEL_TOP_Y, 1, PANEL_BOTTOM_Y - PANEL_TOP_Y)); // left
 	DrawAddChild(container, cm_draw_rect(px + pw - 1, PANEL_TOP_Y, 1, PANEL_BOTTOM_Y - PANEL_TOP_Y)); // right
 
-	if (!panel->card_present) {
+	if (panel->loading) {
 		DrawAddChild(container, DrawStyledLabel(px + pw / 2, GRID_TOP_Y + 60,
-			"No Card", 0.65f, ALIGN_CENTER, (GXColor){140, 140, 140, 255}));
+			"Reading...", 0.55f, ALIGN_CENTER, (GXColor){140, 140, 140, 255}));
+		return;
+	}
+	if (!panel->card_present) {
+		int icon_sz = 64;
+		int icon_x = px + (pw - icon_sz) / 2;
+		int grid_h = PANEL_BOTTOM_Y - GRID_TOP_Y;
+		int icon_y = GRID_TOP_Y + (grid_h - icon_sz) / 2 - 8;
+		DrawAddChild(container, DrawTexObj(&cm_memcard_tex,
+			icon_x, icon_y, icon_sz, icon_sz, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0));
+		DrawAddChild(container, DrawStyledLabel(px + pw / 2, icon_y + icon_sz + 6,
+			"No Card", 0.55f, ALIGN_CENTER, (GXColor){140, 140, 140, 255}));
 		return;
 	}
 	if (panel->num_entries == 0) {
@@ -1684,15 +1696,20 @@ void show_card_manager(void) {
 	while (padsButtonsHeld() & PAD_BUTTON_A) { VIDEO_WaitVSync(); }
 
 	while (1) {
-		// Reload any panel that needs it
+		// Reload any panel that needs it — show "Reading..." during load
 		for (int p = 0; p < 2; p++) {
 			if (panels[p]->needs_reload) {
-				if (pagePanel) {
-					DrawDispose(pagePanel);
-					pagePanel = NULL;
-				}
 				card_manager_free_graphics(panels[p]->entries, panels[p]->num_entries);
+				panels[p]->num_entries = 0;
+				panels[p]->loading = true;
+				// Redraw with loading state visible
+				uiDrawObj_t *loadPanel = card_manager_draw(panels[0], panels[1], active, anim_tick);
+				if (pagePanel) DrawDispose(pagePanel);
+				pagePanel = loadPanel;
+				DrawPublish(pagePanel);
+				// Now do the actual load
 				cm_panel_load(panels[p]);
+				panels[p]->loading = false;
 				needs_redraw = true;
 			}
 		}
