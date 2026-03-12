@@ -1,35 +1,35 @@
 <filepath="backdrop.png" id="backdrop" colfmt=8 palfmt=0 magfilt=0 />
 <filepath="backdrop_ind.png" id="backdrop_ind" colfmt=3 minfilt=0 magfilt=0 />
-<filepath="banner_mask.tif" id="banner_mask" colfmt=0 />
-<filepath="bba.tif" id="bbaimg" colfmt=3 />
-<filepath="dir.tif" id="dirimg" colfmt=6 />
-<filepath="dol.tif" id="dolimg" colfmt=6 />
-<filepath="dolcli.tif" id="dolcliimg" colfmt=6 />
-<filepath="elf.tif" id="elfimg" colfmt=6 />
-<filepath="eth2gc.tif" id="eth2gcimg" colfmt=0 />
-<filepath="file.tif" id="fileimg" colfmt=6 />
-<filepath="flippy.tif" id="flippyimg" colfmt=0 />
-<filepath="fpkg.tif" id="fpkgimg" colfmt=6 />
-<filepath="gcdvdsmall.tif" id="gcdvdsmall" colfmt=3 />
-<filepath="gcloader.tif" id="gcloaderimg" colfmt=0 />
-<filepath="gcm.tif" id="gcmimg" colfmt=6 />
-<filepath="gcnet.tif" id="gcnetimg" colfmt=0 />
-<filepath="hdd.tif" id="hddimg" colfmt=9 palfmt=0 />
-<filepath="kunaigc.tif" id="kunaigcimg" colfmt=0 />
-<filepath="m2loader.tif" id="m2loaderimg" colfmt=0 />
+<filepath="banner_mask.png" id="banner_mask" colfmt=0 />
+<filepath="bba.png" id="bbaimg" colfmt=3 />
+<filepath="dir.png" id="dirimg" colfmt=6 />
+<filepath="dol.png" id="dolimg" colfmt=6 />
+<filepath="dolcli.png" id="dolcliimg" colfmt=6 />
+<filepath="elf.png" id="elfimg" colfmt=6 />
+<filepath="eth2gc.png" id="eth2gcimg" colfmt=0 />
+<filepath="file.png" id="fileimg" colfmt=6 />
+<filepath="flippy.png" id="flippyimg" colfmt=0 />
+<filepath="fpkg.png" id="fpkgimg" colfmt=6 />
+<filepath="gcdvdsmall.png" id="gcdvdsmall" colfmt=3 />
+<filepath="gcloader.png" id="gcloaderimg" colfmt=0 />
+<filepath="gcm.png" id="gcmimg" colfmt=6 />
+<filepath="gcnet.png" id="gcnetimg" colfmt=0 />
+<filepath="hdd.png" id="hddimg" colfmt=9 palfmt=0 />
+<filepath="kunaigc.png" id="kunaigcimg" colfmt=0 />
+<filepath="m2loader.png" id="m2loaderimg" colfmt=0 />
 <filepath="memcard.png" id="memcardimg" colfmt=9 palfmt=0 magfilt=0 />
 <filepath="memcard-manager/memcard-001.png" id="memcard_mgr_icon" colfmt=6 magfilt=0 />
 <filepath="memcard_ind.png" id="memcardimg_ind" colfmt=1 minfilt=0 magfilt=0 />
-<filepath="mp3.tif" id="mp3img" colfmt=6 />
-<filepath="ntscj.tif" id="ntscjimg" colfmt=5 />
-<filepath="ntscu.tif" id="ntscuimg" colfmt=5 />
-<filepath="pal.tif" id="palimg" colfmt=5 />
+<filepath="mp3.png" id="mp3img" colfmt=6 />
+<filepath="ntscj.png" id="ntscjimg" colfmt=5 />
+<filepath="ntscu.png" id="ntscuimg" colfmt=5 />
+<filepath="pal.png" id="palimg" colfmt=5 />
 <filepath="qoob.png" id="qoobimg" colfmt=9 palfmt=0 magfilt=0 />
 <filepath="qoob_ind.png" id="qoobimg_ind" colfmt=1 minfilt=0 magfilt=0 />
-<filepath="sdsmall.tif" id="sdsmall" colfmt=9 palfmt=0 />
-<filepath="swiss.tif" id="swissimg" colfmt=0 />
-<filepath="systemimg.tif" id="systemimg" colfmt=3 />
-<filepath="tgc.tif" id="tgcimg" colfmt=6 />
-<filepath="usbgecko.tif" id="usbgeckoimg" colfmt=9 palfmt=0 />
-<filepath="wiikey.tif" id="wiikeyimg" colfmt=0 />
-<filepath="wodeimg.tif" id="wodeimg" colfmt=0 />
+<filepath="sdsmall.png" id="sdsmall" colfmt=9 palfmt=0 />
+<filepath="swiss.png" id="swissimg" colfmt=0 />
+<filepath="systemimg.png" id="systemimg" colfmt=3 />
+<filepath="tgc.png" id="tgcimg" colfmt=6 />
+<filepath="usbgecko.png" id="usbgeckoimg" colfmt=9 palfmt=0 />
+<filepath="wiikey.png" id="wiikeyimg" colfmt=0 />
+<filepath="wodeimg.png" id="wodeimg" colfmt=0 />
