@@ -29,18 +29,23 @@ extern TPLFile imagesTPL;
 // Grid layout
 #define GRID_COLS 6
 #define GRID_CELL 42
-#define GRID_ROWS_VISIBLE 4
 #define GRID_ICON_SIZE 32
 
 // Dual-panel layout (640x480 screen)
-// Standard Swiss box: DrawEmptyBox(20, 60, 620, 460) — border expands outward by 10px
-#define PANEL_OUTER_X 20
+// DrawEmptyBox border expands 10px outward, so visible area is BOX coords ± 10px
+#define PANEL_OUTER_X 30
 #define PANEL_GAP 20
 #define PANEL_WIDTH 280
-#define PANEL_TOP_Y 100
-#define GRID_TOP_Y 118
-#define PANEL_BOTTOM_Y (GRID_TOP_Y + GRID_ROWS_VISIBLE * GRID_CELL + 2)
+#define GRID_ROWS_VISIBLE_MAX 6
+// Vertical layout — all positions cascade from BOX_TOP_Y
+#define BOX_TOP_Y 52
+#define TITLE_Y (BOX_TOP_Y + 8)
+#define PANEL_TOP_Y (BOX_TOP_Y + 36)
+#define GRID_TOP_Y (PANEL_TOP_Y + 18)
+#define PANEL_BOTTOM_Y (GRID_TOP_Y + GRID_ROWS_VISIBLE_MAX * GRID_CELL + 2)
 #define DETAIL_TOP_Y (PANEL_BOTTOM_Y + 8)
+#define HINTS_Y (DETAIL_TOP_Y + 38)
+#define BOX_BOTTOM_Y (HINTS_Y + 18)
 #define DETAIL_BANNER_W 96
 #define DETAIL_BANNER_H 32
 
@@ -658,7 +663,7 @@ static void card_manager_draw_panel(uiDrawObj_t *container, cm_panel *panel,
 
 	// Icon grid
 	int grid_x = px + (pw - GRID_COLS * GRID_CELL) / 2;
-	for (int row = 0; row < GRID_ROWS_VISIBLE; row++) {
+	for (int row = 0; row < GRID_ROWS_VISIBLE_MAX; row++) {
 		for (int col = 0; col < GRID_COLS; col++) {
 			int idx = (panel->scroll_row + row) * GRID_COLS + col;
 			if (idx >= panel->num_entries) break;
@@ -698,11 +703,11 @@ static void card_manager_draw_panel(uiDrawObj_t *container, cm_panel *panel,
 
 	// Scroll indicator
 	int total_rows = (panel->num_entries + GRID_COLS - 1) / GRID_COLS;
-	if (total_rows > GRID_ROWS_VISIBLE) {
-		float pct = (float)panel->scroll_row / (float)(total_rows - GRID_ROWS_VISIBLE);
+	if (total_rows > GRID_ROWS_VISIBLE_MAX) {
+		float pct = (float)panel->scroll_row / (float)(total_rows - GRID_ROWS_VISIBLE_MAX);
 		DrawAddChild(container, DrawVertScrollBar(
 			px + pw - 10, GRID_TOP_Y, 6,
-			GRID_ROWS_VISIBLE * GRID_CELL, pct, 16));
+			GRID_ROWS_VISIBLE_MAX * GRID_CELL, pct, 16));
 	}
 
 }
@@ -711,10 +716,6 @@ static void card_manager_draw_detail(uiDrawObj_t *container, card_entry *sel) {
 	int dx = PANEL_OUTER_X + 10;
 	int dy = DETAIL_TOP_Y;
 	int detail_w = 640 - 2 * PANEL_OUTER_X - 20;
-
-	// Separator line spanning full width
-	DrawAddChild(container, cm_draw_rect(PANEL_OUTER_X + 4, dy - 4,
-		640 - 2 * PANEL_OUTER_X - 8, 1));
 
 	// Banner on the right
 	int text_w = detail_w;
@@ -750,16 +751,13 @@ static uiDrawObj_t *card_manager_draw(cm_panel *left, cm_panel *right,
 	bool has_sel = active_p->card_present && active_p->num_entries > 0 &&
 		active_p->cursor >= 0 && active_p->cursor < active_p->num_entries;
 
-	// Dynamic box height: shrink to fit content
-	int box_bottom = has_sel ? DETAIL_TOP_Y + 46 : PANEL_BOTTOM_Y + 10;
-
-	uiDrawObj_t *container = DrawEmptyBox(PANEL_OUTER_X, 60,
-		640 - PANEL_OUTER_X, box_bottom);
+	uiDrawObj_t *container = DrawEmptyBox(PANEL_OUTER_X, BOX_TOP_Y,
+		640 - PANEL_OUTER_X, BOX_BOTTOM_Y);
 
 	// Title with memcard icon
 	DrawAddChild(container, DrawTexObj(&cm_memcard_tex,
-		PANEL_OUTER_X + 5, 62, 24, 24, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0));
-	DrawAddChild(container, DrawStyledLabel(PANEL_OUTER_X + 34, 74,
+		PANEL_OUTER_X + 5, TITLE_Y, 24, 24, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0));
+	DrawAddChild(container, DrawStyledLabel(PANEL_OUTER_X + 34, TITLE_Y + 12,
 		"Memory Card Manager", 0.75f, ALIGN_LEFT, defaultColor));
 
 	// Panel positions: centered within content area
@@ -777,10 +775,10 @@ static uiDrawObj_t *card_manager_draw(cm_panel *left, cm_panel *right,
 		card_manager_draw_detail(container, &active_p->entries[active_p->cursor]);
 	}
 
-	// Button hints just below the box
-	DrawAddChild(container, DrawStyledLabel(640 / 2, box_bottom - 4,
+	// Button hints below detail area
+	DrawAddChild(container, DrawStyledLabel(640 / 2, HINTS_Y,
 		"A: Export  X: Import  Z: Delete  L/R: Switch  B: Back",
-		0.55f, ALIGN_CENTER, (GXColor){160, 160, 160, 255}));
+		0.55f, ALIGN_CENTER, (GXColor){140, 140, 140, 255}));
 
 	return container;
 }
@@ -1662,8 +1660,8 @@ static void cm_panel_navigate(cm_panel *panel, u16 btns) {
 	cy = panel->cursor / GRID_COLS;
 	if (cy < panel->scroll_row)
 		panel->scroll_row = cy;
-	if (cy >= panel->scroll_row + GRID_ROWS_VISIBLE)
-		panel->scroll_row = cy - GRID_ROWS_VISIBLE + 1;
+	if (cy >= panel->scroll_row + GRID_ROWS_VISIBLE_MAX)
+		panel->scroll_row = cy - GRID_ROWS_VISIBLE_MAX + 1;
 }
 
 // --- Main loop ---
