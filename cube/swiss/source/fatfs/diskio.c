@@ -140,8 +140,7 @@ DRESULT disk_ioctl (
 
 	switch (ctrl) {
 		case CTRL_SYNC:
-			disc[pdrv]->vt->flush(disc[pdrv]);
-			res = RES_OK;
+			res = disc[pdrv]->vt->flush(disc[pdrv]) ? RES_OK : RES_ERROR;
 			break;
 
 		case GET_SECTOR_COUNT:

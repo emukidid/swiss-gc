@@ -611,7 +611,12 @@ static bool __ataa_writeSectors(DISC_INTERFACE *disc, sec_t sector, sec_t numSec
 	return !ataWriteSectors(0, (u64)sector, numSectors, buffer);
 }
 
-static bool __ataa_clearStatus(DISC_INTERFACE *disc)
+static bool __ataa_eraseSectors(DISC_INTERFACE *disc, sec_t sector, sec_t numSectors)
+{
+	return false;
+}
+
+static bool __ataa_flush(DISC_INTERFACE *disc)
 {
 	return true;
 }
@@ -641,7 +646,12 @@ static bool __atab_writeSectors(DISC_INTERFACE *disc, sec_t sector, sec_t numSec
 	return !ataWriteSectors(1, (u64)sector, numSectors, buffer);
 }
 
-static bool __atab_clearStatus(DISC_INTERFACE *disc)
+static bool __atab_eraseSectors(DISC_INTERFACE *disc, sec_t sector, sec_t numSectors)
+{
+	return false;
+}
+
+static bool __atab_flush(DISC_INTERFACE *disc)
 {
 	return true;
 }
@@ -671,7 +681,12 @@ static bool __atac_writeSectors(DISC_INTERFACE *disc, sec_t sector, sec_t numSec
 	return !ataWriteSectors(2, (u64)sector, numSectors, buffer);
 }
 
-static bool __atac_clearStatus(DISC_INTERFACE *disc)
+static bool __atac_eraseSectors(DISC_INTERFACE *disc, sec_t sector, sec_t numSectors)
+{
+	return false;
+}
+
+static bool __atac_flush(DISC_INTERFACE *disc)
 {
 	return true;
 }
@@ -688,9 +703,11 @@ DISC_INTERFACE __io_ataa = {
 	(FN_MEDIUM_ISINSERTED)&__ataa_isInserted,
 	(FN_MEDIUM_READSECTORS)&__ataa_readSectors,
 	(FN_MEDIUM_WRITESECTORS)&__ataa_writeSectors,
-	(FN_MEDIUM_CLEARSTATUS)&__ataa_clearStatus,
+	(FN_MEDIUM_ERASESECTORS)&__ataa_eraseSectors,
+	(FN_MEDIUM_FLUSH)&__ataa_flush,
 	(FN_MEDIUM_SHUTDOWN)&__ataa_shutdown,
 	~0,
+	1,
 	512
 } ;
 DISC_INTERFACE __io_atab = {
@@ -700,9 +717,11 @@ DISC_INTERFACE __io_atab = {
 	(FN_MEDIUM_ISINSERTED)&__atab_isInserted,
 	(FN_MEDIUM_READSECTORS)&__atab_readSectors,
 	(FN_MEDIUM_WRITESECTORS)&__atab_writeSectors,
-	(FN_MEDIUM_CLEARSTATUS)&__atab_clearStatus,
+	(FN_MEDIUM_ERASESECTORS)&__atab_eraseSectors,
+	(FN_MEDIUM_FLUSH)&__atab_flush,
 	(FN_MEDIUM_SHUTDOWN)&__atab_shutdown,
 	~0,
+	1,
 	512
 } ;
 DISC_INTERFACE __io_atac = {
@@ -712,8 +731,10 @@ DISC_INTERFACE __io_atac = {
 	(FN_MEDIUM_ISINSERTED)&__atac_isInserted,
 	(FN_MEDIUM_READSECTORS)&__atac_readSectors,
 	(FN_MEDIUM_WRITESECTORS)&__atac_writeSectors,
-	(FN_MEDIUM_CLEARSTATUS)&__atac_clearStatus,
+	(FN_MEDIUM_ERASESECTORS)&__atac_eraseSectors,
+	(FN_MEDIUM_FLUSH)&__atac_flush,
 	(FN_MEDIUM_SHUTDOWN)&__atac_shutdown,
 	~0,
+	1,
 	512
 } ;

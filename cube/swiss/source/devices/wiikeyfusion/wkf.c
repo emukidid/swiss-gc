@@ -438,7 +438,12 @@ static bool __wkf_writeSectors(DISC_INTERFACE *disc, sec_t sector, sec_t numSect
 	return false;
 }
 
-static bool __wkf_clearStatus(DISC_INTERFACE *disc)
+static bool __wkf_eraseSectors(DISC_INTERFACE *disc, sec_t sector, sec_t numSectors)
+{
+	return false;
+}
+
+static bool __wkf_flush(DISC_INTERFACE *disc)
 {
 	return true;
 }
@@ -455,8 +460,10 @@ DISC_INTERFACE __io_wkf = {
 	__wkf_isInserted,
 	__wkf_readSectors,
 	__wkf_writeSectors,
-	__wkf_clearStatus,
+	__wkf_eraseSectors,
+	__wkf_flush,
 	__wkf_shutdown,
 	~0,
+	1,
 	512
 };
