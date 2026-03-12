@@ -17,6 +17,9 @@
 #include "swiss.h"
 #include "main.h"
 #include "devices/memcard/deviceHandler-CARD.h"
+#include "images.h"
+
+extern TPLFile imagesTPL;
 
 #define CARD_POLL_INTERVAL 30
 #define ICON_SPEED_FAST_TICKS 4
@@ -30,15 +33,14 @@
 #define GRID_ICON_SIZE 32
 
 // Dual-panel layout (640x480 screen)
-// NOTE: DrawEmptyColouredBox adds 10px border on large boxes, 3px on small.
-// Panel coords are the INNER content area; rendered box is 10px larger on each side.
+// Standard Swiss box: DrawEmptyBox(20, 60, 620, 460) — border expands outward by 10px
 #define PANEL_OUTER_X 20
-#define PANEL_GAP 40
+#define PANEL_GAP 20
 #define PANEL_WIDTH 280
-#define PANEL_TOP_Y 96
-#define GRID_TOP_Y 114
+#define PANEL_TOP_Y 100
+#define GRID_TOP_Y 118
 #define PANEL_BOTTOM_Y (GRID_TOP_Y + GRID_ROWS_VISIBLE * GRID_CELL + 2)
-#define DETAIL_TOP_Y (PANEL_BOTTOM_Y + 6)
+#define DETAIL_TOP_Y (PANEL_BOTTOM_Y + 8)
 #define DETAIL_BANNER_W 96
 #define DETAIL_BANNER_H 32
 
@@ -94,6 +96,7 @@ typedef struct {
 // Instead, use a tiny solid-color texture with DrawTexObj for pixel-exact rectangles.
 static u16 cm_flat_pixels[16] ATTRIBUTE_ALIGN(32);  // 4x4 RGB5A3
 static GXTexObj cm_flat_tex;
+static GXTexObj cm_memcard_tex;
 static bool cm_flat_inited = false;
 
 static void cm_flat_init(void) {
@@ -105,6 +108,18 @@ static void cm_flat_init(void) {
 	DCFlushRange(cm_flat_pixels, sizeof(cm_flat_pixels));
 	GX_InitTexObj(&cm_flat_tex, cm_flat_pixels, 4, 4, GX_TF_RGB5A3, GX_CLAMP, GX_CLAMP, GX_FALSE);
 	GX_InitTexObjFilterMode(&cm_flat_tex, GX_LINEAR, GX_NEAR);
+	// Load memcard manager icon from TPL, then re-init GXTexObj from scratch.
+	// TPL_GetTexture sets internal fields (UserData, LOD, etc.) that corrupt
+	// GX state when used with DrawTexObj's GX_NEAR path. Extracting the raw
+	// pixel data and re-initializing avoids all TPL-specific GXTexObj baggage.
+	{
+		GXTexObj tplTex;
+		TPL_GetTexture(&imagesTPL, memcard_mgr_icon, &tplTex);
+		void *texData = GX_GetTexObjData(&tplTex);
+		GX_InitTexObj(&cm_memcard_tex, texData, 64, 64, GX_TF_RGBA8,
+			GX_CLAMP, GX_CLAMP, GX_FALSE);
+		GX_InitTexObjFilterMode(&cm_memcard_tex, GX_NEAR, GX_NEAR);
+	}
 	cm_flat_inited = true;
 }
 
@@ -196,6 +211,19 @@ static void cm_log_entry(int idx, card_entry *entry) {
 		cm_log("  [%d] \"%s\" code=%s company=%s blocks=%d size=%dK",
 			idx, entry->filename, entry->gamecode, entry->company,
 			entry->blocks, entry->filesize / 1024);
+	}
+	cm_log("       icon_addr=0x%x icon_fmt=0x%04x icon_speed=0x%04x banner_fmt=0x%02x",
+		entry->icon_addr, entry->icon_fmt, entry->icon_speed, entry->banner_fmt);
+	if (entry->icon) {
+		cm_log("       anim: %d frames, type=%s",
+			entry->icon->num_frames,
+			(entry->icon->anim_type & CARD_ANIM_BOUNCE) ? "BOUNCE" : "LOOP");
+		for (int f = 0; f < entry->icon->num_frames; f++) {
+			cm_log("         frame[%d]: fmt=%d speed=%d data=%s size=%d",
+				f, entry->icon->frames[f].fmt, entry->icon->frames[f].speed,
+				entry->icon->frames[f].data ? "yes" : "no",
+				entry->icon->frames[f].data_size);
+		}
 	}
 }
 
@@ -512,43 +540,73 @@ static int card_manager_read_saves(int slot, card_entry *entries, int max_entrie
 // --- Drawing ---
 // Uses a single fixed-size container for all states to avoid pop-in/out
 
+static u32 icon_frame_dur(icon_anim *icon, int i) {
+	switch (icon->frames[i].speed) {
+		case CARD_SPEED_FAST:   return ICON_SPEED_FAST_TICKS;
+		case CARD_SPEED_MIDDLE: return ICON_SPEED_MIDDLE_TICKS;
+		case CARD_SPEED_SLOW:   return ICON_SPEED_SLOW_TICKS;
+		default:                return ICON_SPEED_MIDDLE_TICKS;
+	}
+}
+
+// Resolve a NONE frame (fmt=0) to the next non-NONE frame in index order.
+// NONE frames contribute to timing but display the texture of the nearest
+// subsequent real frame, wrapping around if needed.
+static int icon_resolve_frame(icon_anim *icon, int frame) {
+	if (icon->frames[frame].fmt != 0) return frame;
+	for (int i = frame + 1; i < icon->num_frames; i++) {
+		if (icon->frames[i].fmt != 0) return i;
+	}
+	for (int i = 0; i < frame; i++) {
+		if (icon->frames[i].fmt != 0) return i;
+	}
+	return frame;
+}
+
 static int icon_anim_get_frame(icon_anim *icon, u32 tick) {
 	if (!icon || icon->num_frames <= 1) return 0;
-	// Calculate total ticks per animation cycle
-	u32 total_ticks = 0;
-	for (int i = 0; i < icon->num_frames; i++) {
-		switch (icon->frames[i].speed) {
-			case CARD_SPEED_FAST:   total_ticks += ICON_SPEED_FAST_TICKS; break;
-			case CARD_SPEED_MIDDLE: total_ticks += ICON_SPEED_MIDDLE_TICKS; break;
-			case CARD_SPEED_SLOW:   total_ticks += ICON_SPEED_SLOW_TICKS; break;
-			default: total_ticks += ICON_SPEED_MIDDLE_TICKS; break;
-		}
+	int n = icon->num_frames;
+
+	// All frames (including NONE) contribute to timing
+	u32 fwd_ticks = 0;
+	for (int i = 0; i < n; i++)
+		fwd_ticks += icon_frame_dur(icon, i);
+	if (fwd_ticks == 0) return 0;
+
+	u32 cycle_ticks;
+	if (icon->anim_type & CARD_ANIM_BOUNCE) {
+		u32 rev_ticks = 0;
+		for (int i = n - 2; i >= 1; i--)
+			rev_ticks += icon_frame_dur(icon, i);
+		cycle_ticks = fwd_ticks + rev_ticks;
+	} else {
+		cycle_ticks = fwd_ticks;
 	}
-	if (total_ticks == 0) return 0;
-	u32 cycle_ticks = (icon->anim_type & CARD_ANIM_BOUNCE)
-		? total_ticks * 2 - 2  // bounce: 0,1,2,...,N-1,N-2,...,1
-		: total_ticks;
+	if (cycle_ticks == 0) return 0;
+
 	u32 pos = tick % cycle_ticks;
-	// Map position to frame
-	bool reverse = false;
-	if ((icon->anim_type & CARD_ANIM_BOUNCE) && pos >= total_ticks) {
-		pos = cycle_ticks - pos;
-		reverse = true;
-	}
-	(void)reverse;
-	u32 accum = 0;
-	for (int i = 0; i < icon->num_frames; i++) {
-		u32 dur;
-		switch (icon->frames[i].speed) {
-			case CARD_SPEED_FAST:   dur = ICON_SPEED_FAST_TICKS; break;
-			case CARD_SPEED_MIDDLE: dur = ICON_SPEED_MIDDLE_TICKS; break;
-			case CARD_SPEED_SLOW:   dur = ICON_SPEED_SLOW_TICKS; break;
-			default: dur = ICON_SPEED_MIDDLE_TICKS; break;
+	int frame;
+
+	// Forward phase
+	if (pos < fwd_ticks) {
+		u32 accum = 0;
+		frame = n - 1;
+		for (int i = 0; i < n; i++) {
+			accum += icon_frame_dur(icon, i);
+			if (pos < accum) { frame = i; break; }
 		}
-		accum += dur;
-		if (pos < accum) return i;
+	} else {
+		// Reverse phase (bounce)
+		pos -= fwd_ticks;
+		u32 accum = 0;
+		frame = 1;
+		for (int i = n - 2; i >= 1; i--) {
+			accum += icon_frame_dur(icon, i);
+			if (pos < accum) { frame = i; break; }
+		}
 	}
-	return 0;
+
+	return icon_resolve_frame(icon, frame);
 }
 
 static void card_manager_draw_panel(uiDrawObj_t *container, cm_panel *panel,
@@ -566,8 +624,8 @@ static void card_manager_draw_panel(uiDrawObj_t *container, cm_panel *panel,
 		sprintf(header, "Slot %c", panel->slot == CARD_SLOTA ? 'A' : 'B');
 	}
 	GXColor hdr_color = active ? defaultColor : (GXColor){160, 160, 160, 255};
-	DrawAddChild(container, DrawStyledLabel(px + pw / 2, PANEL_TOP_Y + 8, header,
-		0.55f, ALIGN_CENTER, hdr_color));
+	DrawAddChild(container, DrawStyledLabel(px + pw / 2, PANEL_TOP_Y + 9, header,
+		0.6f, ALIGN_CENTER, hdr_color));
 
 	// Panel border (1px outline, always visible)
 	DrawAddChild(container, cm_draw_rect(px, PANEL_TOP_Y, pw, 1));                          // top
@@ -662,10 +720,13 @@ static void card_manager_draw_detail(uiDrawObj_t *container, card_entry *sel) {
 	DrawAddChild(container, DrawStyledLabel(dx, dy + 6, name,
 		name_scale, ALIGN_LEFT, defaultColor));
 
-	// Stats line
-	char stats[64];
-	snprintf(stats, sizeof(stats), "%s  %d blocks  %dK",
-		sel->gamecode, sel->blocks, sel->filesize / 1024);
+	// Stats line with file attributes (§5)
+	char stats[96];
+	char attribs[32] = "";
+	if (sel->permissions & CARD_ATTRIB_NOCOPY) strcat(attribs, " NoCopy");
+	if (sel->permissions & CARD_ATTRIB_NOMOVE) strcat(attribs, " NoMove");
+	snprintf(stats, sizeof(stats), "%s  %d blocks  %dK%s",
+		sel->gamecode, sel->blocks, sel->filesize / 1024, attribs);
 	DrawAddChild(container, DrawStyledLabel(dx, dy + 22, stats,
 		0.5f, ALIGN_LEFT, (GXColor){160, 160, 160, 255}));
 }
@@ -673,21 +734,26 @@ static void card_manager_draw_detail(uiDrawObj_t *container, card_entry *sel) {
 static uiDrawObj_t *card_manager_draw(cm_panel *left, cm_panel *right,
 	int active_panel, u32 anim_tick) {
 
-	// Detail area height depends on whether there's a selection
 	cm_panel *active_p = active_panel == 0 ? left : right;
 	bool has_sel = active_p->card_present && active_p->num_entries > 0 &&
 		active_p->cursor >= 0 && active_p->cursor < active_p->num_entries;
-	int bottom_y = has_sel ? DETAIL_TOP_Y + 40 : PANEL_BOTTOM_Y + 4;
 
-	uiDrawObj_t *container = DrawEmptyBox(PANEL_OUTER_X, 74,
-		640 - PANEL_OUTER_X, bottom_y + 22);
+	// Dynamic box height: shrink to fit content
+	int box_bottom = has_sel ? DETAIL_TOP_Y + 46 : PANEL_BOTTOM_Y + 10;
 
-	// Title
-	DrawAddChild(container, DrawStyledLabel(640 / 2, 84,
-		"Memory Card Manager", 0.6f, ALIGN_CENTER, defaultColor));
+	uiDrawObj_t *container = DrawEmptyBox(PANEL_OUTER_X, 60,
+		640 - PANEL_OUTER_X, box_bottom);
 
-	int left_x = PANEL_OUTER_X + 2;
-	int right_x = PANEL_OUTER_X + PANEL_WIDTH + PANEL_GAP;
+	// Title with memcard icon
+	DrawAddChild(container, DrawTexObj(&cm_memcard_tex,
+		PANEL_OUTER_X + 5, 62, 24, 24, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0));
+	DrawAddChild(container, DrawStyledLabel(PANEL_OUTER_X + 34, 74,
+		"Memory Card Manager", 0.75f, ALIGN_LEFT, defaultColor));
+
+	// Panel positions: centered within content area
+	int total_w = PANEL_WIDTH * 2 + PANEL_GAP;
+	int left_x = (640 - total_w) / 2;
+	int right_x = left_x + PANEL_WIDTH + PANEL_GAP;
 
 	card_manager_draw_panel(container, left, left_x, PANEL_WIDTH,
 		active_panel == 0, anim_tick);
@@ -699,10 +765,10 @@ static uiDrawObj_t *card_manager_draw(cm_panel *left, cm_panel *right,
 		card_manager_draw_detail(container, &active_p->entries[active_p->cursor]);
 	}
 
-	// Button hints
-	DrawAddChild(container, DrawStyledLabel(640 / 2, bottom_y + 12,
+	// Button hints just below the box
+	DrawAddChild(container, DrawStyledLabel(640 / 2, box_bottom - 4,
 		"A: Export  X: Import  Z: Delete  L/R: Switch  B: Back",
-		0.4f, ALIGN_CENTER, (GXColor){160, 160, 160, 255}));
+		0.55f, ALIGN_CENTER, (GXColor){160, 160, 160, 255}));
 
 	return container;
 }
@@ -733,11 +799,14 @@ static bool card_manager_confirm_delete(const char *filename) {
 }
 
 static bool card_manager_delete_save(int slot, card_entry *entry) {
+	uiDrawObj_t *msgBox = DrawMessageBox(D_INFO, "Deleting save...\nDo not remove the Memory Card.");
+	DrawPublish(msgBox);
 	CARD_SetGamecode(entry->gamecode);
 	CARD_SetCompany(entry->company);
 	s32 ret = CARD_Delete(slot, entry->filename);
+	DrawDispose(msgBox);
 	if (ret != CARD_ERROR_READY) {
-		uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL, "Delete failed.");
+		msgBox = DrawMessageBox(D_FAIL, "Delete failed.");
 		DrawPublish(msgBox);
 		while (!(padsButtonsHeld() & PAD_BUTTON_A)) { VIDEO_WaitVSync(); }
 		while (padsButtonsHeld() & PAD_BUTTON_A) { VIDEO_WaitVSync(); }
@@ -761,8 +830,8 @@ static bool card_manager_export_save(int slot, card_entry *entry, s32 sector_siz
 		return false;
 	}
 
-	// Show progress
-	uiDrawObj_t *msgBox = DrawMessageBox(D_INFO, "Exporting save...");
+	// Show progress (§6.3: indicate when accessing Memory Card)
+	uiDrawObj_t *msgBox = DrawMessageBox(D_INFO, "Exporting save...\nDo not remove the Memory Card.");
 	DrawPublish(msgBox);
 
 	// Open card file
@@ -1127,7 +1196,7 @@ static bool card_manager_import_gci(int slot, gci_file_entry *gci_entry, s32 sec
 		devices[DEVICE_CUR] ? devices[DEVICE_CUR] : NULL;
 	if (!dev) return false;
 
-	uiDrawObj_t *msgBox = DrawMessageBox(D_INFO, "Importing save...");
+	uiDrawObj_t *msgBox = DrawMessageBox(D_INFO, "Importing save...\nDo not remove the Memory Card.");
 	DrawPublish(msgBox);
 
 	// Read GCI file
@@ -1261,7 +1330,7 @@ static bool card_manager_import_gci(int slot, gci_file_entry *gci_entry, s32 sec
 			free(filebuf);
 			return false;
 		}
-		msgBox = DrawMessageBox(D_INFO, "Importing save...");
+		msgBox = DrawMessageBox(D_INFO, "Importing save...\nDo not remove the Memory Card.");
 		DrawPublish(msgBox);
 		// Re-open for writing
 		ret = CARD_Open(slot, filename, &cardfile);
@@ -1437,6 +1506,14 @@ static bool card_manager_check_status(int slot, bool was_present) {
 
 // --- Panel helpers ---
 
+static void cm_show_error(const char *msg) {
+	uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL, msg);
+	DrawPublish(msgBox);
+	while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
+	while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
+	DrawDispose(msgBox);
+}
+
 static void cm_panel_load(cm_panel *panel) {
 	panel->num_entries = 0;
 	panel->cursor = 0;
@@ -1446,9 +1523,84 @@ static void cm_panel_load(cm_panel *panel) {
 	panel->card_present = false;
 	panel->has_animated_icons = false;
 
-	cm_log("Loading Slot %c...", panel->slot == CARD_SLOTA ? 'A' : 'B');
+	char slot_ch = panel->slot == CARD_SLOTA ? 'A' : 'B';
+	cm_log("Loading Slot %c...", slot_ch);
 
 	s32 ret = initialize_card(panel->slot);
+
+	// Handle mount errors per Nintendo Memory Card Guidelines §3.6-3.8
+	if (ret == CARD_ERROR_WRONGDEVICE) {
+		char msg[128];
+		sprintf(msg, "The device in Slot %c is not a\nMemory Card.", slot_ch);
+		cm_log("Slot %c: wrong device", slot_ch);
+		cm_show_error(msg);
+	}
+	else if (ret == CARD_ERROR_ENCODING) {
+		char msg[128];
+		sprintf(msg, "Memory Card in Slot %c uses an\nincompatible format.\n \nA: Format  |  B: Cancel", slot_ch);
+		cm_log("Slot %c: encoding mismatch (foreign card)", slot_ch);
+		uiDrawObj_t *msgBox = DrawMessageBox(D_WARN, msg);
+		DrawPublish(msgBox);
+		int choice = 0;
+		while (!choice) {
+			u16 btn = padsButtonsHeld();
+			if (btn & PAD_BUTTON_A) choice = 1;
+			if (btn & PAD_BUTTON_B) choice = 2;
+			VIDEO_WaitVSync();
+		}
+		while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
+		DrawDispose(msgBox);
+		if (choice == 1) {
+			msgBox = DrawMessageBox(D_INFO, "Formatting Memory Card...\nDo not remove the Memory Card.");
+			DrawPublish(msgBox);
+			ret = CARD_Format(panel->slot);
+			DrawDispose(msgBox);
+			if (ret == CARD_ERROR_READY) {
+				cm_log("Slot %c: format successful, reloading", slot_ch);
+				ret = initialize_card(panel->slot);
+			} else {
+				char fmsg[128];
+				sprintf(fmsg, "Memory Card in Slot %c is damaged\nand cannot be used.", slot_ch);
+				cm_log("Slot %c: format failed (error=%d)", slot_ch, (int)ret);
+				cm_show_error(fmsg);
+			}
+		}
+	}
+	else if (ret == CARD_ERROR_BROKEN) {
+		char msg[128];
+		sprintf(msg, "Memory Card in Slot %c has corrupted\ndata. Format the card?\n \nA: Format  |  B: Cancel", slot_ch);
+		cm_log("Slot %c: card broken/corrupted", slot_ch);
+		uiDrawObj_t *msgBox = DrawMessageBox(D_WARN, msg);
+		DrawPublish(msgBox);
+		int choice = 0;
+		while (!choice) {
+			u16 btn = padsButtonsHeld();
+			if (btn & PAD_BUTTON_A) choice = 1;
+			if (btn & PAD_BUTTON_B) choice = 2;
+			VIDEO_WaitVSync();
+		}
+		while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
+		DrawDispose(msgBox);
+		if (choice == 1) {
+			msgBox = DrawMessageBox(D_INFO, "Formatting Memory Card...\nDo not remove the Memory Card.");
+			DrawPublish(msgBox);
+			ret = CARD_Format(panel->slot);
+			DrawDispose(msgBox);
+			if (ret == CARD_ERROR_READY) {
+				cm_log("Slot %c: format successful, reloading", slot_ch);
+				ret = initialize_card(panel->slot);
+			} else {
+				char fmsg[128];
+				sprintf(fmsg, "Memory Card in Slot %c is damaged\nand cannot be used.", slot_ch);
+				cm_log("Slot %c: format failed (error=%d)", slot_ch, (int)ret);
+				cm_show_error(fmsg);
+			}
+		}
+	}
+	else if (ret != CARD_ERROR_READY && ret != CARD_ERROR_NOCARD) {
+		cm_log("Slot %c: error=%d", slot_ch, (int)ret);
+	}
+
 	if (ret == CARD_ERROR_READY) {
 		CARD_ProbeEx(panel->slot, &panel->mem_size, &panel->sector_size);
 		panel->num_entries = card_manager_read_saves(panel->slot, panel->entries, 128);
@@ -1464,9 +1616,8 @@ static void cm_panel_load(cm_panel *panel) {
 			}
 		}
 	}
-	else {
-		cm_log("No card detected in Slot %c (error=%d)",
-			panel->slot == CARD_SLOTA ? 'A' : 'B', (int)ret);
+	else if (ret != CARD_ERROR_NOCARD) {
+		cm_log("No card detected in Slot %c (error=%d)", slot_ch, (int)ret);
 	}
 	panel->needs_reload = false;
 }
