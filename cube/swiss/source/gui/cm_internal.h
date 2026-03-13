@@ -84,13 +84,14 @@ typedef struct {
 // Panel source type
 typedef enum {
 	CM_SRC_PHYSICAL,	// Physical card via CARD_* API
-	CM_SRC_VMC,			// Virtual memory card .raw file (future)
+	CM_SRC_VMC,			// Virtual memory card .raw file
 } cm_source_type;
 
 typedef struct {
 	cm_source_type source;
 	int slot;
 	char label[32];		// Display label for panel header (e.g. "Slot A", "VMC: name")
+	char vmc_path[PATHNAME_MAX];	// Path to .raw file (for CM_SRC_VMC)
 	card_entry entries[128];
 	int num_entries;
 	int cursor;
@@ -102,6 +103,16 @@ typedef struct {
 	bool needs_reload;
 	bool loading;
 } cm_panel;
+
+// VMC file entry for picker
+#define MAX_VMC_FILES 16
+typedef struct {
+	char path[PATHNAME_MAX];
+	char label[32];
+	u32 filesize;
+	u32 total_blocks;
+	u32 user_blocks;
+} vmc_file_entry;
 
 // GCI file entry for import picker (with parsed graphics)
 typedef struct {
@@ -147,12 +158,22 @@ int cm_context_menu(const char *items[], const bool enabled[], int count);
 
 // --- cm_transfer.c ---
 
+bool cm_write_gci_to_sd(GCI *gci, u8 *savedata, u32 save_len);
 bool card_manager_confirm_delete(const char *filename);
 bool card_manager_delete_save(int slot, card_entry *entry);
 bool card_manager_export_save(int slot, card_entry *entry, s32 sector_size);
 int card_manager_scan_gci_files(gci_file_entry *gci_files, int max_files);
 void card_manager_free_gci_files(gci_file_entry *gci_files, int count);
 bool card_manager_import_gci(int slot, gci_file_entry *gci_entry, s32 sector_size);
-bool card_manager_backups(int slot, s32 sector_size);
+bool card_manager_backups(cm_panel *panel);
+
+// --- cm_vmc.c ---
+
+int vmc_scan_files(vmc_file_entry *out, int max);
+int vmc_read_saves(const char *vmc_path, card_entry *entries, int max_entries,
+	s32 *out_mem_size, s32 *out_sector_size);
+bool vmc_export_save(const char *vmc_path, card_entry *entry);
+bool vmc_delete_save(const char *vmc_path, card_entry *entry);
+bool vmc_import_save(const char *vmc_path, gci_file_entry *gci_entry);
 
 #endif

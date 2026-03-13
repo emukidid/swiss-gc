@@ -74,17 +74,4 @@ void cm_log_entry(int idx, card_entry *entry) {
 			idx, entry->filename, entry->gamecode, entry->company,
 			entry->blocks, entry->filesize / 1024);
 	}
-	cm_log("       icon_addr=0x%x icon_fmt=0x%04x icon_speed=0x%04x banner_fmt=0x%02x",
-		entry->icon_addr, entry->icon_fmt, entry->icon_speed, entry->banner_fmt);
-	if (entry->icon) {
-		cm_log("       anim: %d frames, type=%s",
-			entry->icon->num_frames,
-			(entry->icon->anim_type & CARD_ANIM_BOUNCE) ? "BOUNCE" : "LOOP");
-		for (int f = 0; f < entry->icon->num_frames; f++) {
-			cm_log("         frame[%d]: fmt=%d speed=%d data=%s size=%d",
-				f, entry->icon->frames[f].fmt, entry->icon->frames[f].speed,
-				entry->icon->frames[f].data ? "yes" : "no",
-				entry->icon->frames[f].data_size);
-		}
-	}
 }

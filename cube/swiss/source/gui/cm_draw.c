@@ -275,8 +275,8 @@ uiDrawObj_t *card_manager_draw(cm_panel *left, cm_panel *right,
 
 	// Hint bar
 	const char *hints = has_sel
-		? "A: Actions  X: Backups  L/R: Switch  B: Back"
-		: "X: Backups  L/R: Switch  B: Back";
+		? "A: Actions  X: Backups  Z: VMC  B: Back"
+		: "X: Backups  Z: VMC  L/R: Switch  B: Back";
 	DrawAddChild(container, DrawStyledLabel(640 / 2, HINTS_Y,
 		hints, 0.55f, ALIGN_CENTER, (GXColor){140, 140, 140, 255}));
 

@@ -57,9 +57,11 @@ bool card_manager_delete_save(int slot, card_entry *entry) {
 	return true;
 }
 
-// --- Export (card → GCI on SD) ---
+// --- Shared GCI-to-SD writer ---
+// Writes a GCI header + save data to swiss/saves/ on SD.
+// Handles overwrite/keep-both dialog and success message.
 
-bool card_manager_export_save(int slot, card_entry *entry, s32 sector_size) {
+bool cm_write_gci_to_sd(GCI *gci, u8 *savedata, u32 save_len) {
 	DEVICEHANDLER_INTERFACE *dev = devices[DEVICE_CONFIG] ? devices[DEVICE_CONFIG] :
 		devices[DEVICE_CUR] ? devices[DEVICE_CUR] : NULL;
 	if (!dev) {
@@ -70,6 +72,105 @@ bool card_manager_export_save(int slot, card_entry *entry, s32 sector_size) {
 		DrawDispose(msgBox);
 		return false;
 	}
+
+	char gamecode[5], filename[CARD_FILENAMELEN + 1];
+	memcpy(gamecode, gci->gamecode, 4); gamecode[4] = '\0';
+	memset(filename, 0, sizeof(filename));
+	memcpy(filename, gci->filename, CARD_FILENAMELEN);
+
+	file_handle *outFile = calloc(1, sizeof(file_handle));
+	if (!outFile) return false;
+
+	// Ensure swiss/saves/ directory exists
+	file_handle *savesDir = calloc(1, sizeof(file_handle));
+	if (savesDir) {
+		concat_path(savesDir->name, dev->initial->name, "swiss/saves");
+		dev->makeDir(savesDir);
+		free(savesDir);
+	}
+
+	char gci_name[64];
+	snprintf(gci_name, sizeof(gci_name), "swiss/saves/%.4s-%.32s.gci",
+		gamecode, filename);
+	concat_path(outFile->name, dev->initial->name, gci_name);
+
+	// Check if file already exists
+	if (!dev->statFile(outFile)) {
+		char overwrite_msg[128];
+		snprintf(overwrite_msg, sizeof(overwrite_msg),
+			"%.4s-%.32s.gci already exists.\n \nA: Overwrite  |  X: Keep Both  |  B: Cancel",
+			gamecode, filename);
+		uiDrawObj_t *msgBox = DrawMessageBox(D_WARN, overwrite_msg);
+		DrawPublish(msgBox);
+		int choice = 0;
+		while (!choice) {
+			u16 btn = padsButtonsHeld();
+			if (btn & PAD_BUTTON_A) choice = 1;
+			else if (btn & PAD_BUTTON_X) choice = 2;
+			else if (btn & PAD_BUTTON_B) choice = 3;
+			VIDEO_WaitVSync();
+		}
+		while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_X | PAD_BUTTON_B)) {
+			VIDEO_WaitVSync();
+		}
+		DrawDispose(msgBox);
+		if (choice == 3) {
+			free(outFile);
+			return false;
+		}
+		if (choice == 2) {
+			for (int n = 2; n <= 99; n++) {
+				snprintf(gci_name, sizeof(gci_name), "swiss/saves/%.4s-%.32s (%d).gci",
+					gamecode, filename, n);
+				concat_path(outFile->name, dev->initial->name, gci_name);
+				if (dev->statFile(outFile)) break;
+			}
+		}
+	}
+
+	uiDrawObj_t *msgBox = DrawMessageBox(D_INFO, "Writing file...");
+	DrawPublish(msgBox);
+
+	u32 gci_total = sizeof(GCI) + save_len;
+	u8 *gcibuf = (u8 *)memalign(32, gci_total);
+	if (!gcibuf) {
+		free(outFile);
+		DrawDispose(msgBox);
+		msgBox = DrawMessageBox(D_FAIL, "Out of memory.");
+		DrawPublish(msgBox);
+		while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
+		while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
+		DrawDispose(msgBox);
+		return false;
+	}
+	memcpy(gcibuf, gci, sizeof(GCI));
+	memcpy(gcibuf + sizeof(GCI), savedata, save_len);
+
+	s32 write_ret = dev->writeFile(outFile, gcibuf, gci_total);
+	dev->closeFile(outFile);
+	cm_log("  Wrote GCI: %u bytes (header=%u + data=%u), writeFile ret=%d",
+		gci_total, (u32)sizeof(GCI), save_len, (int)write_ret);
+	free(gcibuf);
+	free(outFile);
+
+	DrawDispose(msgBox);
+	char done_msg[128];
+	snprintf(done_msg, sizeof(done_msg), "Exported %.4s-%.32s.gci",
+		gamecode, filename);
+	msgBox = DrawMessageBox(D_INFO, done_msg);
+	DrawPublish(msgBox);
+	while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
+	while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
+	DrawDispose(msgBox);
+	return true;
+}
+
+// --- Export (card → GCI on SD) ---
+
+bool card_manager_export_save(int slot, card_entry *entry, s32 sector_size) {
+	DEVICEHANDLER_INTERFACE *dev = devices[DEVICE_CONFIG] ? devices[DEVICE_CONFIG] :
+		devices[DEVICE_CUR] ? devices[DEVICE_CUR] : NULL;
+	if (!dev) return false;
 
 	// Show progress (§6.3: indicate when accessing Memory Card)
 	uiDrawObj_t *msgBox = DrawMessageBox(D_INFO, "Exporting save...\nDo not remove the Memory Card.");
@@ -207,105 +308,10 @@ bool card_manager_export_save(int slot, card_entry *entry, s32 sector_size) {
 		return false;
 	}
 
-	// Write GCI file to SD: swiss/saves/<gamecode>-<filename>.gci
-	file_handle *outFile = calloc(1, sizeof(file_handle));
-	if (!outFile) {
-		free(savedata);
-		DrawDispose(msgBox);
-		return false;
-	}
-
-	// Ensure swiss/saves/ directory exists
-	file_handle *savesDir = calloc(1, sizeof(file_handle));
-	if (savesDir) {
-		concat_path(savesDir->name, dev->initial->name, "swiss/saves");
-		dev->makeDir(savesDir);
-		free(savesDir);
-	}
-
-	char gci_name[64];
-	snprintf(gci_name, sizeof(gci_name), "swiss/saves/%.4s-%.32s.gci",
-		entry->gamecode, entry->filename);
-	concat_path(outFile->name, dev->initial->name, gci_name);
-
-	// Check if file already exists
-	if (!dev->statFile(outFile)) {
-		char overwrite_msg[128];
-		snprintf(overwrite_msg, sizeof(overwrite_msg),
-			"%.4s-%.32s.gci already exists.\n \nA: Overwrite  |  X: Keep Both  |  B: Cancel",
-			entry->gamecode, entry->filename);
-		DrawDispose(msgBox);
-		msgBox = DrawMessageBox(D_WARN, overwrite_msg);
-		DrawPublish(msgBox);
-		int choice = 0; // 0=pending, 1=overwrite, 2=keep both, 3=cancel
-		while (!choice) {
-			u16 btn = padsButtonsHeld();
-			if (btn & PAD_BUTTON_A) choice = 1;
-			else if (btn & PAD_BUTTON_X) choice = 2;
-			else if (btn & PAD_BUTTON_B) choice = 3;
-			VIDEO_WaitVSync();
-		}
-		while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_X | PAD_BUTTON_B)) {
-			VIDEO_WaitVSync();
-		}
-		DrawDispose(msgBox);
-		if (choice == 3) {
-			free(savedata);
-			free(outFile);
-			return false;
-		}
-		if (choice == 2) {
-			// Find next available numbered filename
-			for (int n = 2; n <= 99; n++) {
-				snprintf(gci_name, sizeof(gci_name), "swiss/saves/%.4s-%.32s (%d).gci",
-					entry->gamecode, entry->filename, n);
-				concat_path(outFile->name, dev->initial->name, gci_name);
-				if (dev->statFile(outFile)) break; // doesn't exist, use it
-			}
-		}
-		else {
-			// Overwrite: delete existing
-			dev->deleteFile(outFile);
-		}
-		msgBox = DrawMessageBox(D_INFO, "Exporting save...");
-		DrawPublish(msgBox);
-	}
-
-	// Combine GCI header + save data into single buffer for one atomic write
-	u32 gci_total = sizeof(GCI) + entry->filesize;
-	u8 *gcibuf = (u8 *)memalign(32, gci_total);
-	if (!gcibuf) {
-		free(savedata);
-		free(outFile);
-		DrawDispose(msgBox);
-		msgBox = DrawMessageBox(D_FAIL, "Out of memory.");
-		DrawPublish(msgBox);
-		while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
-		while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
-		DrawDispose(msgBox);
-		return false;
-	}
-	memcpy(gcibuf, &gci, sizeof(GCI));
-	memcpy(gcibuf + sizeof(GCI), savedata, entry->filesize);
+	DrawDispose(msgBox);
+	bool result = cm_write_gci_to_sd(&gci, savedata, entry->filesize);
 	free(savedata);
-
-	s32 write_ret = dev->writeFile(outFile, gcibuf, gci_total);
-	dev->closeFile(outFile);
-	cm_log("  Wrote GCI: %u bytes (header=%u + data=%u), writeFile ret=%d",
-		gci_total, (u32)sizeof(GCI), entry->filesize, (int)write_ret);
-	free(gcibuf);
-	free(outFile);
-
-	DrawDispose(msgBox);
-	char done_msg[128];
-	snprintf(done_msg, sizeof(done_msg), "Exported %.4s-%.32s.gci",
-		entry->gamecode, entry->filename);
-	msgBox = DrawMessageBox(D_INFO, done_msg);
-	DrawPublish(msgBox);
-	while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
-	while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
-	DrawDispose(msgBox);
-	return true;
+	return result;
 }
 
 // --- Import (GCI from SD → card) ---
@@ -700,7 +706,7 @@ static bool cm_backup_duplicate(gci_file_entry *gci) {
 // --- Backup manager save list (level 2) ---
 // Returns: 1 = card was modified (import), 0 = files changed on SD, -1 = back (no changes)
 static int cm_backup_save_list(gci_file_entry **pfiles, int *pnum,
-	gci_game_group *group, int slot, s32 sector_size) {
+	gci_game_group *group, cm_panel *panel) {
 
 	int cursor = 0, scroll = 0;
 	int box_x1 = 40, box_y1 = 80, box_x2 = 600, box_y2 = 400;
@@ -800,8 +806,9 @@ static int cm_backup_save_list(gci_file_entry **pfiles, int *pnum,
 				// Show context menu for this backup
 				const char *items[BK_ACT_COUNT];
 				bool enabled[BK_ACT_COUNT];
-				items[BK_ACT_IMPORT] = "Import to card";
-				enabled[BK_ACT_IMPORT] = true;
+				items[BK_ACT_IMPORT] = panel->source == CM_SRC_VMC
+					? "Import to VMC" : "Import to card";
+				enabled[BK_ACT_IMPORT] = panel->card_present;
 				items[BK_ACT_RENAME] = "Rename";
 				enabled[BK_ACT_RENAME] = true;
 				items[BK_ACT_DUPLICATE] = "Duplicate";
@@ -812,8 +819,13 @@ static int cm_backup_save_list(gci_file_entry **pfiles, int *pnum,
 				int act = cm_context_menu(items, enabled, BK_ACT_COUNT);
 				switch (act) {
 					case BK_ACT_IMPORT:
-						if (card_manager_import_gci(slot, &files[fi], sector_size))
-							card_modified = true;
+						if (panel->source == CM_SRC_VMC) {
+							if (vmc_import_save(panel->vmc_path, &files[fi]))
+								card_modified = true;
+						} else {
+							if (card_manager_import_gci(panel->slot, &files[fi], panel->sector_size))
+								card_modified = true;
+						}
 						break;
 					case BK_ACT_RENAME:
 						if (cm_backup_rename(&files[fi]))
@@ -844,7 +856,7 @@ static int cm_backup_save_list(gci_file_entry **pfiles, int *pnum,
 
 // --- Backup manager (game list → save list → actions) ---
 
-bool card_manager_backups(int slot, s32 sector_size) {
+bool card_manager_backups(cm_panel *panel) {
 	bool card_modified = false;
 
 	gci_file_entry *gci_files = calloc(MAX_GCI_FILES, sizeof(gci_file_entry));
@@ -877,7 +889,7 @@ bool card_manager_backups(int slot, s32 sector_size) {
 
 	// If only one game, go straight to save list
 	if (num_groups == 1) {
-		int r = cm_backup_save_list(&gci_files, &num_gci, &groups[0], slot, sector_size);
+		int r = cm_backup_save_list(&gci_files, &num_gci, &groups[0], panel);
 		if (r == 1) card_modified = true;
 		if (r == 0 || r == 1) rebuild_groups = true;
 		else {
@@ -957,7 +969,7 @@ bool card_manager_backups(int slot, s32 sector_size) {
 			if (result >= 0) {
 				DrawDispose(container);
 				gci_game_group *sel = &groups[result];
-				int r = cm_backup_save_list(&gci_files, &num_gci, sel, slot, sector_size);
+				int r = cm_backup_save_list(&gci_files, &num_gci, sel, panel);
 				if (r == 1) card_modified = true;
 				if (r == 0 || r == 1) rebuild_groups = true;
 				// r == -1: back to game list, no rebuild needed

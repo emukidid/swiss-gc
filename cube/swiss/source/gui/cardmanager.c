@@ -136,7 +136,25 @@ static void cm_panel_load(cm_panel *panel) {
 			cm_log("No card detected in Slot %c (error=%d)", slot_ch, (int)ret);
 		}
 	}
-	// Future: CM_SRC_VMC handling here
+	else if (panel->source == CM_SRC_VMC) {
+		cm_log("Loading VMC: %s", panel->vmc_path);
+		panel->num_entries = vmc_read_saves(panel->vmc_path, panel->entries, 128,
+			&panel->mem_size, &panel->sector_size);
+		if (panel->num_entries >= 0) {
+			panel->card_present = true;
+			cm_log("VMC \"%s\": %d KB, %d entries",
+				panel->label, panel->mem_size / 1024, panel->num_entries);
+			for (int i = 0; i < panel->num_entries; i++) {
+				cm_log_entry(i, &panel->entries[i]);
+			}
+			for (int i = 0; i < panel->num_entries; i++) {
+				if (panel->entries[i].icon && panel->entries[i].icon->num_frames > 1) {
+					panel->has_animated_icons = true;
+					break;
+				}
+			}
+		}
+	}
 
 	panel->needs_reload = false;
 }
@@ -207,16 +225,22 @@ static void cm_handle_context_menu(cm_panel *ap, cm_panel *other, bool *needs_re
 		case CM_ACT_EXPORT:
 			cm_log("Exporting [%d] \"%s\" from %s",
 				ap->cursor, sel->filename, ap->label);
-			if (card_manager_export_save(ap->slot, sel, ap->sector_size)) {
-				cm_log("Export successful");
+			if (ap->source == CM_SRC_VMC) {
+				if (vmc_export_save(ap->vmc_path, sel))
+					cm_log("VMC export successful");
+				else
+					cm_log("VMC export failed or cancelled");
 			} else {
-				cm_log("Export failed or cancelled");
+				if (card_manager_export_save(ap->slot, sel, ap->sector_size))
+					cm_log("Export successful");
+				else
+					cm_log("Export failed or cancelled");
 			}
 			*needs_redraw = true;
 			break;
 
 		case CM_ACT_IMPORT:
-			if (card_manager_backups(ap->slot, ap->sector_size)) {
+			if (card_manager_backups(ap)) {
 				ap->needs_reload = true;
 			} else {
 				*needs_redraw = true;
@@ -227,7 +251,12 @@ static void cm_handle_context_menu(cm_panel *ap, cm_panel *other, bool *needs_re
 			if (card_manager_confirm_delete(sel->filename)) {
 				cm_log("Deleting [%d] \"%s\" from %s",
 					ap->cursor, sel->filename, ap->label);
-				if (card_manager_delete_save(ap->slot, sel)) {
+				bool deleted;
+				if (ap->source == CM_SRC_VMC)
+					deleted = vmc_delete_save(ap->vmc_path, sel);
+				else
+					deleted = card_manager_delete_save(ap->slot, sel);
+				if (deleted) {
 					cm_log("Delete successful");
 					ap->needs_reload = true;
 				} else {
@@ -246,6 +275,66 @@ static void cm_handle_context_menu(cm_panel *ap, cm_panel *other, bool *needs_re
 }
 
 // --- Main loop ---
+
+// --- VMC picker ---
+// Shows a list of .raw VMC files and lets the user pick one to mount on the panel.
+// Returns true if panel was changed, false if cancelled.
+static bool cm_pick_vmc(cm_panel *panel) {
+	vmc_file_entry *vmcs = calloc(MAX_VMC_FILES, sizeof(vmc_file_entry));
+	if (!vmcs) return false;
+
+	int num = vmc_scan_files(vmcs, MAX_VMC_FILES);
+	if (num == 0) {
+		uiDrawObj_t *msg = DrawMessageBox(D_INFO, "No .raw VMC files found\nin swiss/saves/");
+		DrawPublish(msg);
+		while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
+		while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
+		DrawDispose(msg);
+		free(vmcs);
+		return false;
+	}
+
+	// Add "Physical card" option at the top
+	const char *items[MAX_VMC_FILES + 1];
+	bool enabled[MAX_VMC_FILES + 1];
+	char phys_label[48];
+	snprintf(phys_label, sizeof(phys_label), "Physical Slot %c",
+		panel->slot == CARD_SLOTA ? 'A' : 'B');
+	items[0] = phys_label;
+	enabled[0] = true;
+	for (int i = 0; i < num; i++) {
+		items[i + 1] = vmcs[i].label;
+		enabled[i + 1] = true;
+	}
+
+	int choice = cm_context_menu(items, enabled, num + 1);
+
+	if (choice == 0) {
+		// Switch back to physical card
+		if (panel->source != CM_SRC_PHYSICAL) {
+			panel->source = CM_SRC_PHYSICAL;
+			panel->vmc_path[0] = '\0';
+			panel->needs_reload = true;
+			cm_log("Switched panel to Physical Slot %c",
+				panel->slot == CARD_SLOTA ? 'A' : 'B');
+		}
+		free(vmcs);
+		return panel->needs_reload;
+	}
+	else if (choice >= 1 && choice <= num) {
+		int vi = choice - 1;
+		panel->source = CM_SRC_VMC;
+		strlcpy(panel->vmc_path, vmcs[vi].path, PATHNAME_MAX);
+		strlcpy(panel->label, vmcs[vi].label, sizeof(panel->label));
+		panel->needs_reload = true;
+		cm_log("Switched panel to VMC: %s", vmcs[vi].label);
+		free(vmcs);
+		return true;
+	}
+
+	free(vmcs);
+	return false;
+}
 
 void show_card_manager(void) {
 	cm_panel *panels[2];
@@ -360,10 +449,21 @@ void show_card_manager(void) {
 			goto debounce;
 		}
 
+		// VMC picker (Z) — switch active panel between physical card and VMC
+		if (btns & PAD_TRIGGER_Z) {
+			while (padsButtonsHeld() & PAD_TRIGGER_Z) { VIDEO_WaitVSync(); }
+			if (cm_pick_vmc(ap)) {
+				needs_redraw = true;
+			} else {
+				needs_redraw = true;
+			}
+			goto debounce;
+		}
+
 		// Backups (X) — browse/manage GCI backups on SD
 		if (btns & PAD_BUTTON_X) {
 			while (padsButtonsHeld() & PAD_BUTTON_X) { VIDEO_WaitVSync(); }
-			if (card_manager_backups(ap->slot, ap->sector_size)) {
+			if (card_manager_backups(ap)) {
 				ap->needs_reload = true;
 			} else {
 				needs_redraw = true;
