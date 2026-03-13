@@ -112,11 +112,12 @@ enum VideoEventType
 	EV_CONTAINER,
 	EV_MENUBUTTONS,
 	EV_TOOLTIP,
-	EV_TITLEBAR
+	EV_TITLEBAR,
+	EV_FLATRECT
 };
 
 char * typeStrings[] = {"TexObj", "MsgBox", "Image", "Progress", "SelectableButton", "EmptyBox", "TransparentBox",
-						"FileBrowserButton", "VertScrollbar", "StyledLabel", "Container", "MenuButtons", "Tooltip", "TitleBar"};
+						"FileBrowserButton", "VertScrollbar", "StyledLabel", "Container", "MenuButtons", "Tooltip", "TitleBar", "FlatRect"};
 
 typedef struct drawTexObjEvent {
 	GXTexObj *texObj;
@@ -139,6 +140,14 @@ typedef struct drawVertScrollbarEvent {
 	float scrollPercent;
 	int scrollHeight;
 } drawVertScrollbarEvent_t;
+
+typedef struct drawFlatRectEvent {
+	int x;
+	int y;
+	int width;
+	int height;
+	GXColor color;
+} drawFlatRectEvent_t;
 
 typedef struct drawImageEvent {
 	int textureId;
@@ -1633,6 +1642,29 @@ uiDrawObj_t* DrawVertScrollBar(int x, int y, int width, int height, float scroll
 	return event;
 }
 
+// Internal
+static void _DrawFlatRect(uiDrawObj_t *evt) {
+	drawFlatRectEvent_t *data = (drawFlatRectEvent_t*)evt->data;
+	GX_InvalidateTexAll();
+	GX_LoadTexObj(&boxinnerTexObj, GX_TEXMAP0);
+	_drawRect(data->x, data->y, data->width, data->height, 0,
+		data->color, 0.95f, 0.95f, 0.95f, 0.95f);
+}
+
+// External
+uiDrawObj_t* DrawFlatColorRect(int x, int y, int width, int height, GXColor color) {
+	drawFlatRectEvent_t *eventData = calloc(1, sizeof(drawFlatRectEvent_t));
+	eventData->x = x;
+	eventData->y = y;
+	eventData->width = width;
+	eventData->height = height;
+	eventData->color = color;
+	uiDrawObj_t *event = calloc(1, sizeof(uiDrawObj_t));
+	event->type = EV_FLATRECT;
+	event->data = eventData;
+	return event;
+}
+
 static uiDrawObj_t* drawParameterForArgsSelector(Parameter *param, int x, int y, int selected) {
 
 	uiDrawObj_t* container = DrawContainer();
@@ -2142,6 +2174,9 @@ static void videoDrawEvent(uiDrawObj_t *videoEvent) {
 			break;
 		case EV_TITLEBAR:
 			_DrawTitleBar(videoEvent);
+			break;
+		case EV_FLATRECT:
+			_DrawFlatRect(videoEvent);
 			break;
 		default:
 			break;

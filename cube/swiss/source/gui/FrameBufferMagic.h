@@ -134,6 +134,7 @@ uiDrawObj_t* DrawFileBrowserButton(int x1, int y1, int x2, int y2, const char *m
 uiDrawObj_t* DrawFileBrowserButtonMeta(int x1, int y1, int x2, int y2, const char *message, file_handle *file, int mode);
 uiDrawObj_t* DrawFileCarouselEntry(int x1, int y1, int x2, int y2, const char *message, file_handle *file, int distFromMiddle);
 uiDrawObj_t* DrawVertScrollBar(int x, int y, int width, int height, float scrollPercent, int scrollHeight);
+uiDrawObj_t* DrawFlatColorRect(int x, int y, int width, int height, GXColor color);
 void DrawArgsSelector(const char *fileName);
 void DrawCheatsSelector(const char *fileName);
 void DrawGetTextEntry(int entryMode, const char *label, void *src, int size);

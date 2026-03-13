@@ -206,6 +206,7 @@ static void lib_draw_game_list(uiDrawObj_t *container,
 
 	int visible = num_groups - scroll;
 	if (visible > LIB_MAX_VIS) visible = LIB_MAX_VIS;
+	int cw = (num_groups > LIB_MAX_VIS) ? lw - 8 : lw;
 
 	for (int i = 0; i < visible; i++) {
 		int idx = scroll + i;
@@ -213,7 +214,7 @@ static void lib_draw_game_list(uiDrawObj_t *container,
 		int ry = LIB_LIST_TOP + i * LIB_ROW_H;
 
 		if (active && idx == cursor)
-			DrawAddChild(container, cm_draw_highlight(lx, ry, lw, LIB_ROW_H));
+			DrawAddChild(container, cm_draw_highlight(lx, ry, cw, LIB_ROW_H));
 
 		// Icon
 		int ix = lx + 4;
@@ -240,7 +241,7 @@ static void lib_draw_game_list(uiDrawObj_t *container,
 			name_color = defaultColor;
 
 		float ns = GetTextScaleToFitInWidthWithMax(g->game_name,
-			lw - LIB_ICON_SZ - 16, 0.5f);
+			cw - LIB_ICON_SZ - 16, 0.5f);
 		DrawAddChild(container, DrawStyledLabel(tx, ry + 10,
 			g->game_name, ns, ALIGN_LEFT, name_color));
 
@@ -252,12 +253,18 @@ static void lib_draw_game_list(uiDrawObj_t *container,
 			stats, 0.4f, ALIGN_LEFT, (GXColor){120, 120, 120, 255}));
 	}
 
-	// Scroll bar
+	// Scroll bar: thin track with small thumb
 	if (num_groups > LIB_MAX_VIS) {
+		int track_h = LIB_MAX_VIS * LIB_ROW_H;
+		int thumb_h = 6;
+		int thumb_w = 6;
 		float pct = (float)scroll / (float)(num_groups - LIB_MAX_VIS);
-		DrawAddChild(container, DrawVertScrollBar(
-			lx + lw - 2, LIB_LIST_TOP, 4,
-			LIB_MAX_VIS * LIB_ROW_H, pct, 12));
+		int tx = lx + lw - 2;
+		int thumb_y = LIB_LIST_TOP + (int)((track_h - thumb_h) * pct);
+		DrawAddChild(container, DrawFlatColorRect(tx, LIB_LIST_TOP, 2, track_h,
+			(GXColor){128, 128, 128, 128}));
+		DrawAddChild(container, DrawFlatColorRect(tx - (thumb_w / 2 - 1), thumb_y, thumb_w, thumb_h,
+			(GXColor){200, 200, 200, 255}));
 	}
 }
 
@@ -328,6 +335,7 @@ static void lib_draw_save_list(uiDrawObj_t *container,
 
 	int visible = count - scroll;
 	if (visible > LIB_SAVE_MAX_VIS) visible = LIB_SAVE_MAX_VIS;
+	int cw = (count > LIB_SAVE_MAX_VIS) ? lw - 8 : lw;
 
 	for (int i = 0; i < visible; i++) {
 		int vi = scroll + i;
@@ -337,7 +345,7 @@ static void lib_draw_save_list(uiDrawObj_t *container,
 		int ry = LIB_SAVE_LIST_TOP + i * LIB_SAVE_ROW_H;
 
 		if (active && vi == cursor)
-			DrawAddChild(container, cm_draw_highlight(lx, ry, lw, LIB_SAVE_ROW_H));
+			DrawAddChild(container, cm_draw_highlight(lx, ry, cw, LIB_SAVE_ROW_H));
 
 		// Source badge
 		GXColor badge_color = lib_source_color(s->source);
@@ -347,7 +355,7 @@ static void lib_draw_save_list(uiDrawObj_t *container,
 
 		// Filename + date + blocks — single compact row
 		int tx = lx + 30;
-		int text_w = lw - 38;
+		int text_w = cw - 38;
 		GXColor name_color;
 		if (active && vi == cursor)
 			name_color = (GXColor){96, 107, 164, 255};
@@ -365,12 +373,18 @@ static void lib_draw_save_list(uiDrawObj_t *container,
 			row_text, rs, ALIGN_LEFT, name_color));
 	}
 
-	// Scroll bar
+	// Scroll bar: thin track with small thumb
 	if (count > LIB_SAVE_MAX_VIS) {
+		int track_h = LIB_SAVE_MAX_VIS * LIB_SAVE_ROW_H;
+		int thumb_h = 6;
+		int thumb_w = 6;
 		float pct = (float)scroll / (float)(count - LIB_SAVE_MAX_VIS);
-		DrawAddChild(container, DrawVertScrollBar(
-			lx + lw - 2, LIB_SAVE_LIST_TOP, 4,
-			LIB_SAVE_MAX_VIS * LIB_SAVE_ROW_H, pct, 12));
+		int tx = lx + lw - 2;
+		int thumb_y = LIB_SAVE_LIST_TOP + (int)((track_h - thumb_h) * pct);
+		DrawAddChild(container, DrawFlatColorRect(tx, LIB_SAVE_LIST_TOP, 2, track_h,
+			(GXColor){128, 128, 128, 128}));
+		DrawAddChild(container, DrawFlatColorRect(tx - (thumb_w / 2 - 1), thumb_y, thumb_w, thumb_h,
+			(GXColor){200, 200, 200, 255}));
 	}
 }
 
