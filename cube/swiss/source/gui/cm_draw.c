@@ -14,10 +14,15 @@ extern TPLFile imagesTPL;
 
 // --- Flat rectangle drawing ---
 static u16 cm_flat_pixels[16] ATTRIBUTE_ALIGN(32);  // 4x4 RGB5A3
+static u16 cm_dim_pixels[16] ATTRIBUTE_ALIGN(32);   // 4x4 RGB5A3 (dark gray)
 static u16 cm_highlight_pixels[16] ATTRIBUTE_ALIGN(32);  // 4x4 RGB5A3 (translucent blue)
 static GXTexObj cm_flat_tex;
+static GXTexObj cm_dim_tex;
 static GXTexObj cm_highlight_tex;
 static GXTexObj cm_memcard_tex;
+static GXTexObj cm_cell_glow_tex;
+static GXTexObj cm_panel_frame_phys_tex;
+static GXTexObj cm_panel_frame_vmc_tex;
 static bool cm_inited = false;
 
 void cm_draw_init(void) {
@@ -28,19 +33,47 @@ void cm_draw_init(void) {
 	GX_InitTexObj(&cm_flat_tex, cm_flat_pixels, 4, 4, GX_TF_RGB5A3, GX_CLAMP, GX_CLAMP, GX_FALSE);
 	GX_InitTexObjFilterMode(&cm_flat_tex, GX_LINEAR, GX_NEAR);
 
+	// Dim gray for inactive icons: RGB555 ~30% (~9/31 per channel)
+	for (int i = 0; i < 16; i++)
+		cm_dim_pixels[i] = 0xA529;  // RGB555 opaque, R=9 G=9 B=9 (~30%)
+	DCFlushRange(cm_dim_pixels, sizeof(cm_dim_pixels));
+	GX_InitTexObj(&cm_dim_tex, cm_dim_pixels, 4, 4, GX_TF_RGB5A3, GX_CLAMP, GX_CLAMP, GX_FALSE);
+	GX_InitTexObjFilterMode(&cm_dim_tex, GX_LINEAR, GX_NEAR);
+
 	// Translucent blue highlight: A3R4G4B4 — alpha=2/7, R=6, G=6, B=10
 	for (int i = 0; i < 16; i++)
 		cm_highlight_pixels[i] = 0x266A;
 	DCFlushRange(cm_highlight_pixels, sizeof(cm_highlight_pixels));
 	GX_InitTexObj(&cm_highlight_tex, cm_highlight_pixels, 4, 4, GX_TF_RGB5A3, GX_CLAMP, GX_CLAMP, GX_FALSE);
 	GX_InitTexObjFilterMode(&cm_highlight_tex, GX_LINEAR, GX_NEAR);
+
 	{
 		GXTexObj tplTex;
+		void *texData;
+
 		TPL_GetTexture(&imagesTPL, memcard_mgr_icon, &tplTex);
-		void *texData = GX_GetTexObjData(&tplTex);
+		texData = GX_GetTexObjData(&tplTex);
 		GX_InitTexObj(&cm_memcard_tex, texData, 64, 64, GX_TF_RGBA8,
 			GX_CLAMP, GX_CLAMP, GX_FALSE);
 		GX_InitTexObjFilterMode(&cm_memcard_tex, GX_NEAR, GX_NEAR);
+
+		TPL_GetTexture(&imagesTPL, cell_glow, &tplTex);
+		texData = GX_GetTexObjData(&tplTex);
+		GX_InitTexObj(&cm_cell_glow_tex, texData, 40, 40, GX_TF_RGBA8,
+			GX_CLAMP, GX_CLAMP, GX_FALSE);
+		GX_InitTexObjFilterMode(&cm_cell_glow_tex, GX_NEAR, GX_NEAR);
+
+		TPL_GetTexture(&imagesTPL, panel_frame_phys, &tplTex);
+		texData = GX_GetTexObjData(&tplTex);
+		GX_InitTexObj(&cm_panel_frame_phys_tex, texData, 24, 24, GX_TF_RGBA8,
+			GX_CLAMP, GX_CLAMP, GX_FALSE);
+		GX_InitTexObjFilterMode(&cm_panel_frame_phys_tex, GX_NEAR, GX_NEAR);
+
+		TPL_GetTexture(&imagesTPL, panel_frame_vmc, &tplTex);
+		texData = GX_GetTexObjData(&tplTex);
+		GX_InitTexObj(&cm_panel_frame_vmc_tex, texData, 24, 24, GX_TF_RGBA8,
+			GX_CLAMP, GX_CLAMP, GX_FALSE);
+		GX_InitTexObjFilterMode(&cm_panel_frame_vmc_tex, GX_NEAR, GX_NEAR);
 	}
 	cm_inited = true;
 }
@@ -51,6 +84,61 @@ uiDrawObj_t *cm_draw_rect(int x, int y, int w, int h) {
 
 uiDrawObj_t *cm_draw_highlight(int x, int y, int w, int h) {
 	return DrawTexObj(&cm_highlight_tex, x, y, w, h, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
+}
+
+// --- 9-slice panel frame ---
+
+static void cm_draw_9slice(uiDrawObj_t *container, GXTexObj *tex,
+	int x, int y, int w, int h, int tex_size, int corner) {
+	float c = (float)corner / tex_size;
+	float e = 1.0f - c;
+	int mw = w - 2 * corner;
+	int mh = h - 2 * corner;
+
+	// Corners
+	DrawAddChild(container, DrawTexObj(tex, x, y, corner, corner, 0, 0, c, 0, c, 0));
+	DrawAddChild(container, DrawTexObj(tex, x+w-corner, y, corner, corner, 0, e, 1, 0, c, 0));
+	DrawAddChild(container, DrawTexObj(tex, x, y+h-corner, corner, corner, 0, 0, c, e, 1, 0));
+	DrawAddChild(container, DrawTexObj(tex, x+w-corner, y+h-corner, corner, corner, 0, e, 1, e, 1, 0));
+	// Edges
+	DrawAddChild(container, DrawTexObj(tex, x+corner, y, mw, corner, 0, c, e, 0, c, 0));
+	DrawAddChild(container, DrawTexObj(tex, x+corner, y+h-corner, mw, corner, 0, c, e, e, 1, 0));
+	DrawAddChild(container, DrawTexObj(tex, x, y+corner, corner, mh, 0, 0, c, c, e, 0));
+	DrawAddChild(container, DrawTexObj(tex, x+w-corner, y+corner, corner, mh, 0, e, 1, c, e, 0));
+	// Center
+	DrawAddChild(container, DrawTexObj(tex, x+corner, y+corner, mw, mh, 0, c, e, c, e, 0));
+}
+
+void cm_draw_panel_frame(uiDrawObj_t *container, bool is_vmc, int x, int y, int w, int h) {
+	cm_draw_init();
+	GXTexObj *tex = is_vmc ? &cm_panel_frame_vmc_tex : &cm_panel_frame_phys_tex;
+	cm_draw_9slice(container, tex, x, y, w, h, 24, 8);
+}
+
+static uiDrawObj_t *cm_draw_icon_rect(GXTexObj *tex, int x, int y, int w, int h) {
+	return DrawTexObj(tex, x, y, w, h, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
+}
+
+void cm_draw_title_bar(uiDrawObj_t *container, int view_mode) {
+	cm_draw_init();
+	DrawAddChild(container, DrawStyledLabel(BOX_X1 + 5, TITLE_Y + 12,
+		"Save Manager", 0.75f, ALIGN_LEFT, defaultColor));
+
+	// View mode icons (upper right) — Cards = two boxes, Library = three lines
+	int ix = BOX_X2 - 40;
+	int iy = TITLE_Y + 4;
+
+	// Cards icon: two small rectangles side by side
+	GXTexObj *ct = view_mode == 0 ? &cm_flat_tex : &cm_dim_tex;
+	DrawAddChild(container, cm_draw_icon_rect(ct, ix, iy, 7, 10));
+	DrawAddChild(container, cm_draw_icon_rect(ct, ix + 9, iy, 7, 10));
+
+	// Library icon: three horizontal lines
+	GXTexObj *lt = view_mode == 1 ? &cm_flat_tex : &cm_dim_tex;
+	ix += 22;
+	DrawAddChild(container, cm_draw_icon_rect(lt, ix, iy, 14, 2));
+	DrawAddChild(container, cm_draw_icon_rect(lt, ix, iy + 4, 14, 2));
+	DrawAddChild(container, cm_draw_icon_rect(lt, ix, iy + 8, 14, 2));
 }
 
 // --- Icon animation ---
@@ -133,16 +221,22 @@ static void card_manager_draw_panel(uiDrawObj_t *container, cm_panel *panel,
 	} else {
 		snprintf(header, sizeof(header), "%s", panel->label);
 	}
-	GXColor hdr_color = active ? defaultColor : (GXColor){160, 160, 160, 255};
+	bool is_vmc = (panel->source == CM_SRC_VMC);
+	GXColor hdr_color;
+	if (!active)
+		hdr_color = (GXColor){160, 160, 160, 255};
+	else if (is_vmc)
+		hdr_color = (GXColor){140, 200, 255, 255};
+	else
+		hdr_color = defaultColor;
 	float hdr_scale = GetTextScaleToFitInWidthWithMax(header, pw - 8, 0.6f);
 	DrawAddChild(container, DrawStyledLabel(px + pw / 2, PANEL_TOP_Y + 9, header,
 		hdr_scale, ALIGN_CENTER, hdr_color));
 
-	// Panel border
-	DrawAddChild(container, cm_draw_rect(px, PANEL_TOP_Y, pw, 1));
-	DrawAddChild(container, cm_draw_rect(px, PANEL_BOTTOM_Y, pw, 1));
-	DrawAddChild(container, cm_draw_rect(px, PANEL_TOP_Y, 1, PANEL_BOTTOM_Y - PANEL_TOP_Y));
-	DrawAddChild(container, cm_draw_rect(px + pw - 1, PANEL_TOP_Y, 1, PANEL_BOTTOM_Y - PANEL_TOP_Y));
+	// Panel frame (9-slice: blue for VMC, grey for physical)
+	GXTexObj *frame_tex = is_vmc ? &cm_panel_frame_vmc_tex : &cm_panel_frame_phys_tex;
+	cm_draw_9slice(container, frame_tex, px, PANEL_TOP_Y, pw,
+		PANEL_BOTTOM_Y - PANEL_TOP_Y, 24, 8);
 
 	if (panel->loading) {
 		DrawAddChild(container, DrawStyledLabel(px + pw / 2, GRID_TOP_Y + 60,
@@ -168,7 +262,11 @@ static void card_manager_draw_panel(uiDrawObj_t *container, cm_panel *panel,
 
 	// Icon grid
 	int grid_x = px + (pw - GRID_COLS * GRID_CELL) / 2;
-	for (int row = 0; row < GRID_ROWS_VISIBLE_MAX; row++) {
+	int total_rows = (panel->num_entries + GRID_COLS - 1) / GRID_COLS;
+	int vis_rows = total_rows - panel->scroll_row;
+	if (vis_rows > GRID_ROWS_VISIBLE_MAX) vis_rows = GRID_ROWS_VISIBLE_MAX;
+
+	for (int row = 0; row < vis_rows; row++) {
 		for (int col = 0; col < GRID_COLS; col++) {
 			int idx = (panel->scroll_row + row) * GRID_COLS + col;
 			if (idx >= panel->num_entries) break;
@@ -178,18 +276,18 @@ static void card_manager_draw_panel(uiDrawObj_t *container, cm_panel *panel,
 			int ix = cx + (GRID_CELL - GRID_ICON_SIZE) / 2;
 			int iy = cy + (GRID_CELL - GRID_ICON_SIZE) / 2;
 
+			// Selection glow (only on active panel's cursor)
 			if (active && idx == panel->cursor) {
-				int sx = ix - 2, sy = iy - 2;
-				int sw = GRID_ICON_SIZE + 4, sh = GRID_ICON_SIZE + 4;
-				DrawAddChild(container, cm_draw_rect(sx, sy, sw, 1));
-				DrawAddChild(container, cm_draw_rect(sx, sy + sh - 1, sw, 1));
-				DrawAddChild(container, cm_draw_rect(sx, sy, 1, sh));
-				DrawAddChild(container, cm_draw_rect(sx + sw - 1, sy, 1, sh));
+				DrawAddChild(container, DrawTexObj(&cm_cell_glow_tex,
+					cx, cy, GRID_CELL, GRID_CELL, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0));
 			}
 
+			// Icon or banner (only animate selected icon)
 			card_entry *e = &panel->entries[idx];
+			bool is_selected = (active && idx == panel->cursor);
 			if (e->icon && e->icon->num_frames > 0) {
-				int frame = icon_anim_get_frame(e->icon, anim_tick);
+				int frame = is_selected
+				? icon_anim_get_frame(e->icon, anim_tick - panel->anim_start) : 0;
 				if (e->icon->frames[frame].data) {
 					DrawAddChild(container, DrawTexObj(&e->icon->frames[frame].tex,
 						ix, iy, GRID_ICON_SIZE, GRID_ICON_SIZE,
@@ -204,42 +302,12 @@ static void card_manager_draw_panel(uiDrawObj_t *container, cm_panel *panel,
 	}
 
 	// Scroll indicator
-	int total_rows = (panel->num_entries + GRID_COLS - 1) / GRID_COLS;
 	if (total_rows > GRID_ROWS_VISIBLE_MAX) {
 		float pct = (float)panel->scroll_row / (float)(total_rows - GRID_ROWS_VISIBLE_MAX);
 		DrawAddChild(container, DrawVertScrollBar(
 			px + pw - 10, GRID_TOP_Y, 6,
 			GRID_ROWS_VISIBLE_MAX * GRID_CELL, pct, 16));
 	}
-}
-
-static void card_manager_draw_detail(uiDrawObj_t *container, card_entry *sel) {
-	int dx = PANEL_OUTER_X + 10;
-	int dy = DETAIL_TOP_Y;
-	int detail_w = 640 - 2 * PANEL_OUTER_X - 20;
-
-	int text_w = detail_w;
-	if (sel->banner) {
-		int bx = 640 - PANEL_OUTER_X - DETAIL_BANNER_W - 10;
-		DrawAddChild(container, DrawTexObj(&sel->banner_tex,
-			bx, dy, DETAIL_BANNER_W, DETAIL_BANNER_H,
-			0, 0.0f, 1.0f, 0.0f, 1.0f, 0));
-		text_w = detail_w - DETAIL_BANNER_W - 16;
-	}
-
-	char *name = sel->game_name[0] ? sel->game_name : sel->filename;
-	float name_scale = GetTextScaleToFitInWidthWithMax(name, text_w, 0.65f);
-	DrawAddChild(container, DrawStyledLabel(dx, dy + 6, name,
-		name_scale, ALIGN_LEFT, defaultColor));
-
-	char stats[96];
-	char attribs[32] = "";
-	if (sel->permissions & CARD_ATTRIB_NOCOPY) strcat(attribs, " NoCopy");
-	if (sel->permissions & CARD_ATTRIB_NOMOVE) strcat(attribs, " NoMove");
-	snprintf(stats, sizeof(stats), "%s  %d blocks  %dK%s",
-		sel->gamecode, sel->blocks, sel->filesize / 1024, attribs);
-	DrawAddChild(container, DrawStyledLabel(dx, dy + 22, stats,
-		0.5f, ALIGN_LEFT, (GXColor){160, 160, 160, 255}));
 }
 
 uiDrawObj_t *card_manager_draw(cm_panel *left, cm_panel *right,
@@ -251,32 +319,22 @@ uiDrawObj_t *card_manager_draw(cm_panel *left, cm_panel *right,
 	bool has_sel = active_p->card_present && active_p->num_entries > 0 &&
 		active_p->cursor >= 0 && active_p->cursor < active_p->num_entries;
 
-	uiDrawObj_t *container = DrawEmptyBox(PANEL_OUTER_X, BOX_TOP_Y,
-		640 - PANEL_OUTER_X, BOX_BOTTOM_Y);
+	uiDrawObj_t *container = DrawEmptyBox(BOX_X1, BOX_TOP_Y, BOX_X2, BOX_BOTTOM_Y);
 
-	// Title with memcard icon
-	DrawAddChild(container, DrawTexObj(&cm_memcard_tex,
-		PANEL_OUTER_X + 5, TITLE_Y, 24, 24, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0));
-	DrawAddChild(container, DrawStyledLabel(PANEL_OUTER_X + 34, TITLE_Y + 12,
-		"Memory Card Manager", 0.75f, ALIGN_LEFT, defaultColor));
+	cm_draw_title_bar(container, 0);
 
-	int total_w = PANEL_WIDTH * 2 + PANEL_GAP;
-	int left_x = (640 - total_w) / 2;
-	int right_x = left_x + PANEL_WIDTH + PANEL_GAP;
+	int left_x = BOX_X1;
+	int right_x = BOX_X1 + PANEL_WIDTH + PANEL_GAP;
 
 	card_manager_draw_panel(container, left, left_x, PANEL_WIDTH,
 		active_panel == 0, anim_tick);
 	card_manager_draw_panel(container, right, right_x, PANEL_WIDTH,
 		active_panel == 1, anim_tick);
 
-	if (has_sel) {
-		card_manager_draw_detail(container, &active_p->entries[active_p->cursor]);
-	}
-
 	// Hint bar
 	const char *hints = has_sel
-		? "A: Actions  X: Backups  Z: VMC  B: Back"
-		: "X: Backups  Z: VMC  L/R: Switch  B: Back";
+		? "A: Actions  L/R: Switch  Z: VMC  X: Library  B: Back"
+		: "L/R: Switch  Z: VMC  X: Library  B: Back";
 	DrawAddChild(container, DrawStyledLabel(640 / 2, HINTS_Y,
 		hints, 0.55f, ALIGN_CENTER, (GXColor){140, 140, 140, 255}));
 

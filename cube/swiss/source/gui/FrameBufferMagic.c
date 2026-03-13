@@ -883,7 +883,8 @@ uiDrawObj_t* DrawMessageBox(int type, const char *msg)
 	int y2 = ((480/2) + (PROGRESS_BOX_HEIGHT/2));
 	int middleY = y2-y1 < 23 ? y1+3 : (y2+y1)/2-12;
 	while(tok != NULL) {
-		uiDrawObj_t *lineLabel = DrawStyledLabel(640/2, middleY, tok, 1.0f, ALIGN_CENTER, defaultColor);
+		float scale = GetTextScaleToFitInWidthWithMax(tok, PROGRESS_BOX_WIDTH - 40, 1.0f);
+		uiDrawObj_t *lineLabel = DrawStyledLabel(640/2, middleY, tok, scale, ALIGN_CENTER, defaultColor);
 		tok = strtok(NULL,"\n");
 		middleY+=24;
 		DrawAddChild(event, lineLabel);

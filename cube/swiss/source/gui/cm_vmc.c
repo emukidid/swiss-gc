@@ -503,7 +503,11 @@ static bool vmc_prepare_write(u8 *sysarea,
 
 // --- VMC export ---
 
-bool vmc_export_save(const char *vmc_path, card_entry *entry) {
+// --- Read save from VMC as in-memory GCI ---
+
+bool vmc_read_save(const char *vmc_path, card_entry *entry,
+	GCI *out_gci, u8 **out_data, u32 *out_len) {
+
 	uiDrawObj_t *msgBox = DrawMessageBox(D_INFO, "Reading VMC save...");
 	DrawPublish(msgBox);
 
@@ -542,18 +546,29 @@ bool vmc_export_save(const char *vmc_path, card_entry *entry) {
 
 	DrawDispose(msgBox);
 
-	// Build GCI header from raw directory entry
 	GCI gci;
 	memcpy(&gci, raw, sizeof(GCI));
 	gci.reserved01 = 0xFF;
 	gci.reserved02 = 0xFFFF;
-	gci.first_block = 0;  // Not meaningful in .gci files
+	gci.first_block = 0;
+
+	*out_gci = gci;
+	*out_data = filedata;
+	*out_len = entry->filesize;
+	free(sysarea);
+	return true;
+}
+
+bool vmc_export_save(const char *vmc_path, card_entry *entry) {
+	GCI gci;
+	u8 *filedata;
+	u32 data_len;
+	if (!vmc_read_save(vmc_path, entry, &gci, &filedata, &data_len))
+		return false;
 
 	cm_log("VMC export: \"%s\" gc=%s sz=%u", entry->filename, entry->gamecode, entry->filesize);
-
-	bool result = cm_write_gci_to_sd(&gci, filedata, entry->filesize);
+	bool result = cm_write_gci_to_sd(&gci, filedata, data_len);
 	free(filedata);
-	free(sysarea);
 	return result;
 }
 
@@ -635,60 +650,28 @@ bool vmc_delete_save(const char *vmc_path, card_entry *entry) {
 		DrawDispose(msgBox);
 		return false;
 	}
+	msgBox = DrawMessageBox(D_INFO, "Save deleted.");
+	DrawPublish(msgBox);
+	while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
+	while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
+	DrawDispose(msgBox);
 	return true;
 }
 
 // --- VMC import ---
 
-bool vmc_import_save(const char *vmc_path, gci_file_entry *gci_entry) {
-	DEVICEHANDLER_INTERFACE *dev = devices[DEVICE_CONFIG] ? devices[DEVICE_CONFIG] :
-		devices[DEVICE_CUR] ? devices[DEVICE_CUR] : NULL;
-	if (!dev) return false;
+// --- Import in-memory GCI to VMC ---
+
+bool vmc_import_save_buf(const char *vmc_path, GCI *gci,
+	u8 *savedata, u32 save_len) {
 
 	uiDrawObj_t *msgBox = DrawMessageBox(D_INFO, "Importing save to VMC...");
 	DrawPublish(msgBox);
 
-	// Read GCI file from SD
-	file_handle *inFile = calloc(1, sizeof(file_handle));
-	if (!inFile) { DrawDispose(msgBox); return false; }
-	strlcpy(inFile->name, gci_entry->path, PATHNAME_MAX);
-
-	if (dev->statFile(inFile) || inFile->size <= sizeof(GCI)) {
-		free(inFile);
-		DrawDispose(msgBox);
-		msgBox = DrawMessageBox(D_FAIL, "Invalid GCI file.");
-		DrawPublish(msgBox);
-		while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
-		while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
-		DrawDispose(msgBox);
-		return false;
-	}
-
-	u32 total_file = inFile->size;
-	u8 *filebuf = (u8 *)memalign(32, total_file);
-	if (!filebuf) {
-		free(inFile);
-		DrawDispose(msgBox);
-		msgBox = DrawMessageBox(D_FAIL, "Out of memory.");
-		DrawPublish(msgBox);
-		while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
-		while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
-		DrawDispose(msgBox);
-		return false;
-	}
-
-	dev->readFile(inFile, filebuf, total_file);
-	dev->closeFile(inFile);
-	free(inFile);
-
-	GCI *gci = (GCI *)filebuf;
-	u8 *savedata = filebuf + sizeof(GCI);
-	u32 save_len = total_file - sizeof(GCI);
 	u32 expected_len = gci->filesize8 * MC_BLOCK_SIZE;
 	u16 need_blocks = gci->filesize8;
 
 	if (save_len != expected_len) {
-		free(filebuf);
 		DrawDispose(msgBox);
 		char errmsg[128];
 		snprintf(errmsg, sizeof(errmsg), "GCI size mismatch: got %dK, expected %dK",
@@ -705,7 +688,6 @@ bool vmc_import_save(const char *vmc_path, gci_file_entry *gci_entry) {
 	u32 sysarea_size = MC_FIRST_DATA_BLOCK * MC_BLOCK_SIZE;
 	u8 *sysarea = vmc_read_range(vmc_path, 0, sysarea_size);
 	if (!sysarea) {
-		free(filebuf);
 		DrawDispose(msgBox);
 		msgBox = DrawMessageBox(D_FAIL, "Failed to read VMC.");
 		DrawPublish(msgBox);
@@ -721,7 +703,7 @@ bool vmc_import_save(const char *vmc_path, gci_file_entry *gci_entry) {
 	u8 *new_dir, *new_bat;
 	int new_dir_blk, new_bat_blk;
 	if (!vmc_prepare_write(sysarea, &new_dir, &new_dir_blk, &new_bat, &new_bat_blk)) {
-		free(filebuf); free(sysarea);
+		free(sysarea);
 		DrawDispose(msgBox);
 		return false;
 	}
@@ -763,7 +745,7 @@ bool vmc_import_save(const char *vmc_path, gci_file_entry *gci_entry) {
 		while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
 		DrawDispose(msgBox);
 		if (choice == 2) {
-			free(new_dir); free(new_bat); free(filebuf); free(sysarea);
+			free(new_dir); free(new_bat); free(sysarea);
 			return false;
 		}
 		msgBox = DrawMessageBox(D_INFO, "Importing save to VMC...");
@@ -784,7 +766,7 @@ bool vmc_import_save(const char *vmc_path, gci_file_entry *gci_entry) {
 
 	// Check free space
 	if (*free_count < need_blocks) {
-		free(new_dir); free(new_bat); free(filebuf); free(sysarea);
+		free(new_dir); free(new_bat); free(sysarea);
 		DrawDispose(msgBox);
 		char errmsg[128];
 		snprintf(errmsg, sizeof(errmsg), "Not enough space.\nNeed %d blocks, have %d free.",
@@ -809,7 +791,7 @@ bool vmc_import_save(const char *vmc_path, gci_file_entry *gci_entry) {
 		}
 	}
 	if (dir_slot < 0) {
-		free(new_dir); free(new_bat); free(filebuf); free(sysarea);
+		free(new_dir); free(new_bat); free(sysarea);
 		DrawDispose(msgBox);
 		msgBox = DrawMessageBox(D_FAIL, "No free directory slots in VMC.");
 		DrawPublish(msgBox);
@@ -822,7 +804,7 @@ bool vmc_import_save(const char *vmc_path, gci_file_entry *gci_entry) {
 	// Allocate blocks in FAT and build chain
 	u16 *alloc_blocks = (u16 *)calloc(need_blocks, sizeof(u16));
 	if (!alloc_blocks) {
-		free(new_dir); free(new_bat); free(filebuf); free(sysarea);
+		free(new_dir); free(new_bat); free(sysarea);
 		DrawDispose(msgBox);
 		return false;
 	}
@@ -840,7 +822,7 @@ bool vmc_import_save(const char *vmc_path, gci_file_entry *gci_entry) {
 
 	if (allocated < need_blocks) {
 		free(alloc_blocks);
-		free(new_dir); free(new_bat); free(filebuf); free(sysarea);
+		free(new_dir); free(new_bat); free(sysarea);
 		DrawDispose(msgBox);
 		msgBox = DrawMessageBox(D_FAIL, "FAT allocation failed.");
 		DrawPublish(msgBox);
@@ -882,7 +864,7 @@ bool vmc_import_save(const char *vmc_path, gci_file_entry *gci_entry) {
 	if (!mod_block_nums || !mod_block_data) {
 		free(mod_block_nums); free(mod_block_data);
 		free(alloc_blocks);
-		free(new_dir); free(new_bat); free(filebuf); free(sysarea);
+		free(new_dir); free(new_bat); free(sysarea);
 		DrawDispose(msgBox);
 		return false;
 	}
@@ -922,7 +904,6 @@ bool vmc_import_save(const char *vmc_path, gci_file_entry *gci_entry) {
 	free(alloc_blocks);
 	free(new_dir);
 	free(new_bat);
-	free(filebuf);
 	free(sysarea);
 	DrawDispose(msgBox);
 
@@ -943,4 +924,50 @@ bool vmc_import_save(const char *vmc_path, gci_file_entry *gci_entry) {
 	while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
 	DrawDispose(msgBox);
 	return true;
+}
+
+// --- Import GCI file from SD to VMC ---
+
+bool vmc_import_save(const char *vmc_path, gci_file_entry *gci_entry) {
+	DEVICEHANDLER_INTERFACE *dev = devices[DEVICE_CONFIG] ? devices[DEVICE_CONFIG] :
+		devices[DEVICE_CUR] ? devices[DEVICE_CUR] : NULL;
+	if (!dev) return false;
+
+	file_handle *inFile = calloc(1, sizeof(file_handle));
+	if (!inFile) return false;
+	strlcpy(inFile->name, gci_entry->path, PATHNAME_MAX);
+
+	if (dev->statFile(inFile) || inFile->size <= sizeof(GCI)) {
+		free(inFile);
+		uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL, "Invalid GCI file.");
+		DrawPublish(msgBox);
+		while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
+		while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
+		DrawDispose(msgBox);
+		return false;
+	}
+
+	u32 total_file = inFile->size;
+	u8 *filebuf = (u8 *)memalign(32, total_file);
+	if (!filebuf) {
+		free(inFile);
+		uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL, "Out of memory.");
+		DrawPublish(msgBox);
+		while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
+		while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
+		DrawDispose(msgBox);
+		return false;
+	}
+
+	dev->readFile(inFile, filebuf, total_file);
+	dev->closeFile(inFile);
+	free(inFile);
+
+	GCI *gci = (GCI *)filebuf;
+	u8 *savedata = filebuf + sizeof(GCI);
+	u32 save_len = total_file - sizeof(GCI);
+
+	bool result = vmc_import_save_buf(vmc_path, gci, savedata, save_len);
+	free(filebuf);
+	return result;
 }

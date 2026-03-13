@@ -195,14 +195,11 @@ static void cm_handle_context_menu(cm_panel *ap, cm_panel *other, bool *needs_re
 	card_entry *sel = &ap->entries[ap->cursor];
 
 	// Build context menu items
-	char copy_label[48];
-	snprintf(copy_label, sizeof(copy_label), "Copy to %s", other->label);
-
 	const char *items[CM_ACT_COUNT];
 	bool enabled[CM_ACT_COUNT];
 
-	items[CM_ACT_COPY] = copy_label;
-	enabled[CM_ACT_COPY] = other->card_present;
+	items[CM_ACT_COPY] = "Copy...";
+	enabled[CM_ACT_COPY] = true;
 
 	items[CM_ACT_EXPORT] = "Export to SD (.gci)";
 	enabled[CM_ACT_EXPORT] = true;
@@ -216,11 +213,151 @@ static void cm_handle_context_menu(cm_panel *ap, cm_panel *other, bool *needs_re
 	int choice = cm_context_menu(items, enabled, CM_ACT_COUNT);
 
 	switch (choice) {
-		case CM_ACT_COPY:
-			// TODO: implement cross-panel copy
-			cm_log("Copy requested: \"%s\" → %s (not yet implemented)",
-				sel->filename, other->label);
+		case CM_ACT_COPY: {
+			// Destination picker: list all available targets except source
+			vmc_file_entry *vmcs = calloc(MAX_VMC_FILES, sizeof(vmc_file_entry));
+			int num_vmcs = vmcs ? vmc_scan_files(vmcs, MAX_VMC_FILES) : 0;
+
+			const char *dest_items[MAX_VMC_FILES + 2];
+			bool dest_enabled[MAX_VMC_FILES + 2];
+			int dest_count = 0;
+
+			// Physical slots (skip if source is the same physical slot)
+			for (int s = 0; s < 2; s++) {
+				if (ap->source == CM_SRC_PHYSICAL && ap->slot == s)
+					continue;
+				char *label = (s == 0) ? "Physical Slot A" : "Physical Slot B";
+				dest_items[dest_count] = label;
+				dest_enabled[dest_count] = true;
+				dest_count++;
+			}
+			// VMC files (skip if source is the same VMC)
+			for (int i = 0; i < num_vmcs; i++) {
+				if (ap->source == CM_SRC_VMC
+					&& strcmp(ap->vmc_path, vmcs[i].path) == 0)
+					continue;
+				dest_items[dest_count] = vmcs[i].label;
+				dest_enabled[dest_count] = true;
+				dest_count++;
+			}
+
+			if (dest_count == 0) {
+				uiDrawObj_t *msg = DrawMessageBox(D_INFO, "No copy destinations available.");
+				DrawPublish(msg);
+				while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
+				while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
+				DrawDispose(msg);
+				free(vmcs);
+				*needs_redraw = true;
+				break;
+			}
+
+			int dest_choice = cm_context_menu(dest_items, dest_enabled, dest_count);
+			if (dest_choice < 0) {
+				free(vmcs);
+				*needs_redraw = true;
+				break;
+			}
+
+			// Determine destination type from the chosen item
+			cm_source_type dest_src;
+			int dest_slot = 0;
+			const char *dest_vmc_path = NULL;
+
+			// Map choice back to source: first come physical slots, then VMCs
+			int phys_offset = 0;
+			for (int s = 0; s < 2; s++) {
+				if (ap->source == CM_SRC_PHYSICAL && ap->slot == s)
+					continue;
+				if (dest_choice == phys_offset) {
+					dest_src = CM_SRC_PHYSICAL;
+					dest_slot = s;
+					goto dest_found;
+				}
+				phys_offset++;
+			}
+			{
+				int vmc_idx = dest_choice - phys_offset;
+				int vi = 0;
+				for (int i = 0; i < num_vmcs; i++) {
+					if (ap->source == CM_SRC_VMC
+						&& strcmp(ap->vmc_path, vmcs[i].path) == 0)
+						continue;
+					if (vi == vmc_idx) {
+						dest_src = CM_SRC_VMC;
+						dest_vmc_path = vmcs[i].path;
+						goto dest_found;
+					}
+					vi++;
+				}
+			}
+			free(vmcs);
+			*needs_redraw = true;
 			break;
+
+		dest_found: ;
+			cm_log("Copy \"%s\" from %s → %s",
+				sel->filename, ap->label,
+				dest_src == CM_SRC_VMC ? dest_vmc_path : (dest_slot == 0 ? "Slot A" : "Slot B"));
+
+			// Read source save as in-memory GCI
+			GCI gci;
+			u8 *savedata = NULL;
+			u32 save_len = 0;
+			bool read_ok;
+			if (ap->source == CM_SRC_VMC)
+				read_ok = vmc_read_save(ap->vmc_path, sel, &gci, &savedata, &save_len);
+			else
+				read_ok = cm_read_physical_save(ap->slot, sel, ap->sector_size,
+					&gci, &savedata, &save_len);
+
+			if (!read_ok) {
+				free(vmcs);
+				*needs_redraw = true;
+				break;
+			}
+
+			// Write to destination
+			bool write_ok;
+			if (dest_src == CM_SRC_VMC)
+				write_ok = vmc_import_save_buf(dest_vmc_path, &gci, savedata, save_len);
+			else {
+				// Need sector_size for physical dest — probe the card
+				s32 dest_sector = 8192;
+				CARD_ProbeEx(dest_slot, NULL, &dest_sector);
+				s32 init_ret = initialize_card(dest_slot);
+				if (init_ret != CARD_ERROR_READY) {
+					uiDrawObj_t *msg = DrawMessageBox(D_FAIL, "Destination card not ready.");
+					DrawPublish(msg);
+					while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
+					while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
+					DrawDispose(msg);
+					write_ok = false;
+				} else {
+					write_ok = card_manager_import_gci_buf(dest_slot, &gci, savedata,
+						save_len, dest_sector);
+				}
+			}
+
+			if (write_ok) {
+				cm_log("Copy successful");
+				// Add entry to any visible panel matching the destination
+				cm_panel *both[] = { ap, other };
+				for (int pi = 0; pi < 2; pi++) {
+					cm_panel *pp = both[pi];
+					if (pp->source != dest_src) continue;
+					if (dest_src == CM_SRC_PHYSICAL && pp->slot == dest_slot)
+						cm_panel_add_from_gci(pp, &gci, savedata, save_len);
+					else if (dest_src == CM_SRC_VMC && dest_vmc_path
+						&& strcmp(pp->vmc_path, dest_vmc_path) == 0)
+						cm_panel_add_from_gci(pp, &gci, savedata, save_len);
+				}
+			}
+			free(savedata);
+			free(vmcs);
+			*needs_redraw = true;
+			break;
+		}
 
 		case CM_ACT_EXPORT:
 			cm_log("Exporting [%d] \"%s\" from %s",
@@ -258,7 +395,8 @@ static void cm_handle_context_menu(cm_panel *ap, cm_panel *other, bool *needs_re
 					deleted = card_manager_delete_save(ap->slot, sel);
 				if (deleted) {
 					cm_log("Delete successful");
-					ap->needs_reload = true;
+					cm_panel_remove_entry(ap, ap->cursor);
+					*needs_redraw = true;
 				} else {
 					cm_log("Delete failed");
 				}
@@ -352,42 +490,67 @@ void show_card_manager(void) {
 	panels[1]->slot = CARD_SLOTB;
 	panels[1]->needs_reload = true;
 
+	int view_mode = 0;	// 0=cards, 1=library
 	int active = 0;
 	bool needs_redraw = false;
 	int poll_counter = 0;
 	u32 anim_tick = 0;
-	uiDrawObj_t *pagePanel = NULL;
+	uiDrawObj_t *page = NULL;
+
+	lib_state *lib = calloc(1, sizeof(lib_state));
 
 	cm_draw_init();
 	cm_log_open();
-	cm_log("Opened card manager (dual-panel)");
+	cm_log("Opened card manager");
 
 	// Wait for A button release
 	while (padsButtonsHeld() & PAD_BUTTON_A) { VIDEO_WaitVSync(); }
 
 	while (1) {
 		// Reload any panel that needs it
+		// First pass: mark all pending panels as loading and clear their state
+		bool any_reload = false;
 		for (int p = 0; p < 2; p++) {
 			if (panels[p]->needs_reload) {
 				card_manager_free_graphics(panels[p]->entries, panels[p]->num_entries);
 				panels[p]->num_entries = 0;
 				panels[p]->loading = true;
-				uiDrawObj_t *loadPanel = card_manager_draw(panels[0], panels[1], active, anim_tick);
-				if (pagePanel) DrawDispose(pagePanel);
-				pagePanel = loadPanel;
-				DrawPublish(pagePanel);
+				any_reload = true;
+			}
+		}
+		// Draw once with all loading indicators visible
+		if (any_reload) {
+			uiDrawObj_t *loadPage = card_manager_draw(panels[0], panels[1], active, anim_tick);
+			if (page) DrawDispose(page);
+			page = loadPage;
+			DrawPublish(page);
+		}
+		// Second pass: actually load each panel
+		for (int p = 0; p < 2; p++) {
+			if (panels[p]->loading) {
 				cm_panel_load(panels[p]);
 				panels[p]->loading = false;
 				needs_redraw = true;
 			}
 		}
 
-		bool has_anim = panels[0]->has_animated_icons || panels[1]->has_animated_icons;
+		// Rebuild library index after panel reloads
+		if (lib->initialized && lib->needs_rebuild)
+			lib_state_rebuild(lib, panels);
+
+		// Draw current view
+		bool has_anim = view_mode == 0 &&
+			(panels[0]->has_animated_icons || panels[1]->has_animated_icons);
 		if (needs_redraw || has_anim) {
-			uiDrawObj_t *newPanel = card_manager_draw(panels[0], panels[1], active, anim_tick);
-			if (pagePanel) DrawDispose(pagePanel);
-			pagePanel = newPanel;
-			DrawPublish(pagePanel);
+			uiDrawObj_t *newPage;
+			if (view_mode == 0)
+				newPage = card_manager_draw(panels[0], panels[1], active, anim_tick);
+			else
+				newPage = lib_draw_view(lib);
+
+			if (page) DrawDispose(page);
+			page = newPage;
+			DrawPublish(page);
 			needs_redraw = false;
 		}
 
@@ -405,6 +568,7 @@ void show_card_manager(void) {
 						panels[p]->card_present ? "removed" : "inserted",
 						panels[p]->slot == CARD_SLOTA ? 'A' : 'B');
 					panels[p]->needs_reload = true;
+					if (lib->initialized) lib->needs_rebuild = true;
 				}
 			}
 			if (panels[0]->needs_reload || panels[1]->needs_reload)
@@ -418,61 +582,85 @@ void show_card_manager(void) {
 			stickX > 16 || stickX < -16;
 		if (!has_input) continue;
 
-		cm_panel *ap = panels[active];
-		cm_panel *other = panels[active ^ 1];
-
-		// Grid navigation (d-pad + analog stick)
-		u16 nav = btns & (PAD_BUTTON_UP | PAD_BUTTON_DOWN | PAD_BUTTON_LEFT | PAD_BUTTON_RIGHT);
-		if (stickY > 16)  nav |= PAD_BUTTON_UP;
-		if (stickY < -16) nav |= PAD_BUTTON_DOWN;
-		if (stickX < -16) nav |= PAD_BUTTON_LEFT;
-		if (stickX > 16)  nav |= PAD_BUTTON_RIGHT;
-		if (nav) {
-			cm_panel_navigate(ap, nav);
-			needs_redraw = true;
-		}
-
-		// Switch active panel
-		if ((btns & PAD_TRIGGER_L) && active != 0) {
-			active = 0;
-			needs_redraw = true;
-		}
-		if ((btns & PAD_TRIGGER_R) && active != 1) {
-			active = 1;
-			needs_redraw = true;
-		}
-
-		// Context menu (A) — requires a save selected
-		if ((btns & PAD_BUTTON_A) && ap->card_present && ap->num_entries > 0) {
-			while (padsButtonsHeld() & PAD_BUTTON_A) { VIDEO_WaitVSync(); }
-			cm_handle_context_menu(ap, other, &needs_redraw);
-			goto debounce;
-		}
-
-		// VMC picker (Z) — switch active panel between physical card and VMC
-		if (btns & PAD_TRIGGER_Z) {
-			while (padsButtonsHeld() & PAD_TRIGGER_Z) { VIDEO_WaitVSync(); }
-			if (cm_pick_vmc(ap)) {
-				needs_redraw = true;
-			} else {
-				needs_redraw = true;
-			}
-			goto debounce;
-		}
-
-		// Backups (X) — browse/manage GCI backups on SD
+		// --- View toggle (X) ---
 		if (btns & PAD_BUTTON_X) {
 			while (padsButtonsHeld() & PAD_BUTTON_X) { VIDEO_WaitVSync(); }
-			if (card_manager_backups(ap)) {
-				ap->needs_reload = true;
+			if (view_mode == 0) {
+				if (!lib->initialized)
+					lib_state_init(lib, panels);
+				else if (lib->needs_rebuild)
+					lib_state_rebuild(lib, panels);
+				view_mode = 1;
+				cm_log("Switched to library view");
 			} else {
-				needs_redraw = true;
+				view_mode = 0;
+				cm_log("Switched to cards view");
 			}
-			goto debounce;
+			needs_redraw = true;
+			continue;
 		}
 
-		if (btns & PAD_BUTTON_B)
-			break;
+		// --- Cards view input ---
+		if (view_mode == 0) {
+			cm_panel *ap = panels[active];
+			cm_panel *other = panels[active ^ 1];
+
+			// Grid navigation (d-pad + analog stick)
+			u16 nav = btns & (PAD_BUTTON_UP | PAD_BUTTON_DOWN | PAD_BUTTON_LEFT | PAD_BUTTON_RIGHT);
+			if (stickY > 16)  nav |= PAD_BUTTON_UP;
+			if (stickY < -16) nav |= PAD_BUTTON_DOWN;
+			if (stickX < -16) nav |= PAD_BUTTON_LEFT;
+			if (stickX > 16)  nav |= PAD_BUTTON_RIGHT;
+			if (nav) {
+				cm_panel_navigate(ap, nav);
+				if (ap->cursor != ap->prev_cursor) {
+					ap->anim_start = anim_tick;
+					ap->prev_cursor = ap->cursor;
+				}
+				needs_redraw = true;
+			}
+
+			// Switch active panel (L/R)
+			if (btns & (PAD_TRIGGER_L | PAD_TRIGGER_R)) {
+				while (padsButtonsHeld() & (PAD_TRIGGER_L | PAD_TRIGGER_R)) { VIDEO_WaitVSync(); }
+				active ^= 1;
+				panels[active]->anim_start = anim_tick;
+				needs_redraw = true;
+				continue;
+			}
+
+			// Context menu (A) — requires a save selected
+			if ((btns & PAD_BUTTON_A) && ap->card_present && ap->num_entries > 0) {
+				while (padsButtonsHeld() & PAD_BUTTON_A) { VIDEO_WaitVSync(); }
+				cm_handle_context_menu(ap, other, &needs_redraw);
+				if (lib->initialized) lib->needs_rebuild = true;
+				goto debounce;
+			}
+
+			// VMC picker (Z) — switch active panel between physical card and VMC
+			if (btns & PAD_TRIGGER_Z) {
+				while (padsButtonsHeld() & PAD_TRIGGER_Z) { VIDEO_WaitVSync(); }
+				cm_pick_vmc(ap);
+				if (lib->initialized) lib->needs_rebuild = true;
+				needs_redraw = true;
+				goto debounce;
+			}
+
+			if (btns & PAD_BUTTON_B)
+				break;
+		}
+
+		// --- Library view input ---
+		if (view_mode == 1) {
+			int result = lib_handle_input(lib, panels, btns, stickY);
+			if (result == LIB_INPUT_EXIT) {
+				view_mode = 0;
+				needs_redraw = true;
+				cm_log("Library → cards (back)");
+			} else if (result == LIB_INPUT_REDRAW) {
+				needs_redraw = true;
+			}
+		}
 
 debounce:
 		// Analog stick: speed-based repeat; d-pad/buttons: wait for release
@@ -491,8 +679,12 @@ debounce:
 		}
 	}
 
-	// Cleanup: dispose UI before freeing texture data
-	if (pagePanel) DrawDispose(pagePanel);
+	// Cleanup
+	if (page) DrawDispose(page);
+	if (lib) {
+		if (lib->initialized) lib_state_free(lib);
+		free(lib);
+	}
 	for (int p = 0; p < 2; p++) {
 		card_manager_free_graphics(panels[p]->entries, panels[p]->num_entries);
 		free(panels[p]);

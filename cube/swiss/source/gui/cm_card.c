@@ -273,6 +273,73 @@ void card_manager_free_graphics(card_entry *entries, int count) {
 	}
 }
 
+// --- Incremental panel updates ---
+
+bool cm_panel_add_from_gci(cm_panel *panel, GCI *gci, u8 *savedata, u32 save_len) {
+	if (panel->num_entries >= 128) return false;
+
+	card_entry *e = &panel->entries[panel->num_entries];
+	memset(e, 0, sizeof(card_entry));
+
+	snprintf(e->filename, CARD_FILENAMELEN + 1, "%.*s", CARD_FILENAMELEN, gci->filename);
+	memcpy(e->gamecode, gci->gamecode, 4);
+	e->gamecode[4] = '\0';
+	memcpy(e->company, gci->company, 2);
+	e->company[2] = '\0';
+	e->filesize = (u32)gci->filesize8 * 8192;
+	e->blocks = gci->filesize8;
+	e->permissions = gci->permission;
+	e->time = gci->time;
+	e->banner_fmt = gci->banner_fmt;
+	e->icon_addr = gci->icon_addr;
+	e->icon_fmt = gci->icon_fmt;
+	e->icon_speed = gci->icon_speed;
+
+	// Parse comment (game name + description)
+	cm_parse_comment(savedata, save_len, gci->comment_addr, e);
+
+	// Parse graphics (banner + icons)
+	if (e->icon_addr != (u32)-1 && e->icon_addr < save_len) {
+		u8 *gfx = savedata + e->icon_addr;
+		u32 gfx_len = save_len - e->icon_addr;
+		cm_parse_save_graphics(gfx, gfx_len, e->banner_fmt, e->icon_fmt, e->icon_speed, e);
+	}
+
+	panel->num_entries++;
+
+	// Update animated icons flag
+	if (e->icon && e->icon->num_frames > 1)
+		panel->has_animated_icons = true;
+
+	return true;
+}
+
+void cm_panel_remove_entry(cm_panel *panel, int index) {
+	if (index < 0 || index >= panel->num_entries) return;
+
+	// Free graphics for this entry
+	card_manager_free_graphics(&panel->entries[index], 1);
+
+	// Shift remaining entries down
+	for (int i = index; i < panel->num_entries - 1; i++)
+		panel->entries[i] = panel->entries[i + 1];
+	panel->num_entries--;
+	memset(&panel->entries[panel->num_entries], 0, sizeof(card_entry));
+
+	// Recompute animated icons flag
+	panel->has_animated_icons = false;
+	for (int i = 0; i < panel->num_entries; i++) {
+		if (panel->entries[i].icon && panel->entries[i].icon->num_frames > 1) {
+			panel->has_animated_icons = true;
+			break;
+		}
+	}
+
+	// Clamp cursor
+	if (panel->cursor >= panel->num_entries && panel->num_entries > 0)
+		panel->cursor = panel->num_entries - 1;
+}
+
 int card_manager_read_saves(int slot, card_entry *entries, int max_entries) {
 	int count = 0;
 	card_dir carddir;

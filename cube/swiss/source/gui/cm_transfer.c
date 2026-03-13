@@ -54,6 +54,11 @@ bool card_manager_delete_save(int slot, card_entry *entry) {
 		DrawDispose(msgBox);
 		return false;
 	}
+	msgBox = DrawMessageBox(D_INFO, "Save deleted.");
+	DrawPublish(msgBox);
+	while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
+	while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
+	DrawDispose(msgBox);
 	return true;
 }
 
@@ -561,7 +566,7 @@ static DEVICEHANDLER_INTERFACE *cm_get_sd_dev(void) {
 		devices[DEVICE_CUR] ? devices[DEVICE_CUR] : NULL;
 }
 
-static bool cm_backup_rename(gci_file_entry *gci) {
+bool cm_backup_rename(gci_file_entry *gci) {
 	DEVICEHANDLER_INTERFACE *dev = cm_get_sd_dev();
 	if (!dev) return false;
 
@@ -627,7 +632,7 @@ static bool cm_backup_rename(gci_file_entry *gci) {
 	return true;
 }
 
-static bool cm_backup_delete(gci_file_entry *gci) {
+bool cm_backup_delete(gci_file_entry *gci) {
 	DEVICEHANDLER_INTERFACE *dev = cm_get_sd_dev();
 	if (!dev) return false;
 
@@ -985,83 +990,140 @@ bool card_manager_backups(cm_panel *panel) {
 		}
 		DrawDispose(container);
 	}
+
+	card_manager_free_gci_files(gci_files, num_gci);
+	free(gci_files);
+	return card_modified;
 }
 
-bool card_manager_import_gci(int slot, gci_file_entry *gci_entry, s32 sector_size) {
-	DEVICEHANDLER_INTERFACE *dev = devices[DEVICE_CONFIG] ? devices[DEVICE_CONFIG] :
-		devices[DEVICE_CUR] ? devices[DEVICE_CUR] : NULL;
-	if (!dev) return false;
+// --- Read save from physical card as in-memory GCI ---
 
-	uiDrawObj_t *msgBox = DrawMessageBox(D_INFO, "Importing save...\nDo not remove the Memory Card.");
+bool cm_read_physical_save(int slot, card_entry *entry, s32 sector_size,
+	GCI *out_gci, u8 **out_data, u32 *out_len) {
+
+	uiDrawObj_t *msgBox = DrawMessageBox(D_INFO, "Reading save...\nDo not remove the Memory Card.");
 	DrawPublish(msgBox);
 
-	// Read GCI file
-	file_handle *inFile = calloc(1, sizeof(file_handle));
-	if (!inFile) {
+	CARD_SetGamecode(entry->gamecode);
+	CARD_SetCompany(entry->company);
+	card_file cardfile;
+	s32 ret = CARD_Open(slot, entry->filename, &cardfile);
+	if (ret != CARD_ERROR_READY) {
 		DrawDispose(msgBox);
-		return false;
-	}
-	strlcpy(inFile->name, gci_entry->path, PATHNAME_MAX);
-
-	if (dev->statFile(inFile)) {
-		DrawDispose(msgBox);
-		msgBox = DrawMessageBox(D_FAIL, "File not found.");
+		msgBox = DrawMessageBox(D_FAIL, "Failed to open card file.");
 		DrawPublish(msgBox);
 		while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
 		while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
 		DrawDispose(msgBox);
-		free(inFile);
 		return false;
 	}
 
-	u32 total_size = inFile->size;
-	if (total_size <= sizeof(GCI)) {
-		DrawDispose(msgBox);
-		msgBox = DrawMessageBox(D_FAIL, "Invalid GCI file (too small).");
-		DrawPublish(msgBox);
-		while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
-		while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
-		DrawDispose(msgBox);
-		free(inFile);
-		return false;
+	// Build GCI header from raw sys_area directory entry
+	GCI gci;
+	memset(&gci, 0, sizeof(GCI));
+	gci.reserved01 = 0xFF;
+	gci.reserved02 = 0xFFFF;
+	gci.filesize8 = entry->filesize / 8192;
+
+	bool got_raw = false;
+	unsigned char *sysarea = get_card_sys_area(slot);
+	if (sysarea) {
+		u32 entry_off = cardfile.filenum * 64;
+		for (int blk = 0; blk < 5; blk++) {
+			GCI *candidate = (GCI *)(sysarea + blk * 8192 + entry_off);
+			if (memcmp(candidate->gamecode, entry->gamecode, 4) == 0
+				&& memcmp(candidate->company, entry->company, 2) == 0
+				&& memcmp(candidate->filename, entry->filename, CARD_FILENAMELEN) == 0) {
+				memcpy(gci.gamecode, candidate->gamecode, 4);
+				memcpy(gci.company, candidate->company, 2);
+				memcpy(gci.filename, candidate->filename, CARD_FILENAMELEN);
+				gci.banner_fmt = candidate->banner_fmt;
+				gci.time = candidate->time;
+				gci.icon_addr = candidate->icon_addr;
+				gci.icon_fmt = candidate->icon_fmt;
+				gci.icon_speed = candidate->icon_speed;
+				gci.permission = candidate->permission;
+				gci.copy_counter = candidate->copy_counter;
+				gci.comment_addr = candidate->comment_addr;
+				got_raw = true;
+				break;
+			}
+		}
+	}
+	if (!got_raw) {
+		card_stat cardstat;
+		CARD_GetStatus(slot, cardfile.filenum, &cardstat);
+		u8 file_attr = 0;
+		CARD_GetAttributes(slot, cardfile.filenum, &file_attr);
+		memcpy(gci.gamecode, cardstat.gamecode, 4);
+		memcpy(gci.company, cardstat.company, 2);
+		memcpy(gci.filename, cardstat.filename, CARD_FILENAMELEN);
+		gci.banner_fmt = cardstat.banner_fmt;
+		gci.time = cardstat.time;
+		gci.icon_addr = cardstat.icon_addr;
+		gci.icon_fmt = cardstat.icon_fmt;
+		gci.icon_speed = cardstat.icon_speed;
+		gci.permission = file_attr;
+		gci.comment_addr = cardstat.comment_addr;
 	}
 
-	u8 *filebuf = (u8 *)memalign(32, total_size);
-	if (!filebuf) {
+	u8 *savedata = (u8 *)memalign(32, entry->filesize);
+	if (!savedata) {
+		CARD_Close(&cardfile);
 		DrawDispose(msgBox);
 		msgBox = DrawMessageBox(D_FAIL, "Out of memory.");
 		DrawPublish(msgBox);
 		while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
 		while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
 		DrawDispose(msgBox);
-		free(inFile);
 		return false;
 	}
 
-	s32 read_ret = dev->readFile(inFile, filebuf, total_size);
-	dev->closeFile(inFile);
-	free(inFile);
-	cm_log("  Read GCI: requested=%u, readFile ret=%d", total_size, (int)read_ret);
+	u8 *read_buf = (u8 *)memalign(32, sector_size);
+	bool read_ok = true;
+	u32 offset = 0;
+	while (offset < entry->filesize) {
+		ret = CARD_Read(&cardfile, read_buf, sector_size, offset);
+		if (ret != CARD_ERROR_READY) {
+			usleep(2000);
+			ret = CARD_Read(&cardfile, read_buf, sector_size, offset);
+		}
+		if (ret != CARD_ERROR_READY) { read_ok = false; break; }
+		u32 copy_len = entry->filesize - offset;
+		if (copy_len > (u32)sector_size) copy_len = sector_size;
+		memcpy(savedata + offset, read_buf, copy_len);
+		offset += sector_size;
+	}
+	free(read_buf);
+	CARD_Close(&cardfile);
+	DrawDispose(msgBox);
 
-	// Parse GCI header
-	GCI *gci = (GCI *)filebuf;
-	u8 *savedata = filebuf + sizeof(GCI);
-	u32 save_len = total_size - sizeof(GCI);
-	u32 expected_len = gci->filesize8 * 8192;
-
-	cm_log("  GCI header: filesize8=%d banner_fmt=0x%02x icon_addr=0x%x icon_fmt=0x%04x icon_speed=0x%04x comment_addr=0x%x perms=0x%02x",
-		gci->filesize8, gci->banner_fmt, gci->icon_addr, gci->icon_fmt, gci->icon_speed, gci->comment_addr, gci->permission);
-
-	if (expected_len >= 16) {
-		cm_log("  Import data: first4=%02x%02x%02x%02x last4=%02x%02x%02x%02x total=%u",
-			savedata[0], savedata[1], savedata[2], savedata[3],
-			savedata[expected_len-4], savedata[expected_len-3],
-			savedata[expected_len-2], savedata[expected_len-1],
-			expected_len);
+	if (!read_ok) {
+		free(savedata);
+		msgBox = DrawMessageBox(D_FAIL, "Failed to read card data.");
+		DrawPublish(msgBox);
+		while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
+		while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
+		DrawDispose(msgBox);
+		return false;
 	}
 
+	*out_gci = gci;
+	*out_data = savedata;
+	*out_len = entry->filesize;
+	return true;
+}
+
+// --- Import GCI buffer to physical card ---
+
+bool card_manager_import_gci_buf(int slot, GCI *gci, u8 *savedata,
+	u32 save_len, s32 sector_size) {
+
+	uiDrawObj_t *msgBox = DrawMessageBox(D_INFO, "Importing save...\nDo not remove the Memory Card.");
+	DrawPublish(msgBox);
+
+	u32 expected_len = gci->filesize8 * 8192;
 	if (save_len != expected_len) {
-		free(filebuf);
 		DrawDispose(msgBox);
 		char errmsg[128];
 		snprintf(errmsg, sizeof(errmsg), "GCI size mismatch: got %dK, expected %dK",
@@ -1083,7 +1145,6 @@ bool card_manager_import_gci(int slot, gci_file_entry *gci_entry, s32 sector_siz
 	CARD_SetGamecode(gamecode);
 	CARD_SetCompany(company);
 
-	// Get filename from GCI
 	char filename[CARD_FILENAMELEN + 1];
 	memset(filename, 0, sizeof(filename));
 	memcpy(filename, gci->filename, CARD_FILENAMELEN);
@@ -1095,7 +1156,6 @@ bool card_manager_import_gci(int slot, gci_file_entry *gci_entry, s32 sector_siz
 	if (ret == CARD_ERROR_NOFILE) {
 		ret = CARD_Create(slot, filename, expected_len, &cardfile);
 		if (ret != CARD_ERROR_READY) {
-			free(filebuf);
 			DrawDispose(msgBox);
 			msgBox = DrawMessageBox(D_FAIL, "Failed to create file on card.\nCard may be full.");
 			DrawPublish(msgBox);
@@ -1123,7 +1183,6 @@ bool card_manager_import_gci(int slot, gci_file_entry *gci_entry, s32 sector_siz
 		while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
 		DrawDispose(msgBox);
 		if (choice == 2) {
-			free(filebuf);
 			return false;
 		}
 		msgBox = DrawMessageBox(D_INFO, "Importing save...\nDo not remove the Memory Card.");
@@ -1135,7 +1194,6 @@ bool card_manager_import_gci(int slot, gci_file_entry *gci_entry, s32 sector_siz
 	}
 
 	if (ret != CARD_ERROR_READY) {
-		free(filebuf);
 		DrawDispose(msgBox);
 		msgBox = DrawMessageBox(D_FAIL, "Failed to open card file.");
 		DrawPublish(msgBox);
@@ -1166,7 +1224,6 @@ bool card_manager_import_gci(int slot, gci_file_entry *gci_entry, s32 sector_siz
 
 	if (!write_ok) {
 		CARD_Close(&cardfile);
-		free(filebuf);
 		DrawDispose(msgBox);
 		msgBox = DrawMessageBox(D_FAIL, "Failed to write data to card.");
 		DrawPublish(msgBox);
@@ -1279,7 +1336,6 @@ bool card_manager_import_gci(int slot, gci_file_entry *gci_entry, s32 sector_siz
 	}
 
 	CARD_Close(&cardfile);
-	free(filebuf);
 
 	DrawDispose(msgBox);
 	char done_msg[128];
@@ -1290,4 +1346,61 @@ bool card_manager_import_gci(int slot, gci_file_entry *gci_entry, s32 sector_siz
 	while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
 	DrawDispose(msgBox);
 	return true;
+}
+
+// --- Import GCI file from SD to physical card ---
+
+bool card_manager_import_gci(int slot, gci_file_entry *gci_entry, s32 sector_size) {
+	DEVICEHANDLER_INTERFACE *dev = devices[DEVICE_CONFIG] ? devices[DEVICE_CONFIG] :
+		devices[DEVICE_CUR] ? devices[DEVICE_CUR] : NULL;
+	if (!dev) return false;
+
+	// Read GCI file from SD
+	file_handle *inFile = calloc(1, sizeof(file_handle));
+	if (!inFile) return false;
+	strlcpy(inFile->name, gci_entry->path, PATHNAME_MAX);
+
+	if (dev->statFile(inFile)) {
+		free(inFile);
+		uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL, "File not found.");
+		DrawPublish(msgBox);
+		while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
+		while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
+		DrawDispose(msgBox);
+		return false;
+	}
+
+	u32 total_size = inFile->size;
+	if (total_size <= sizeof(GCI)) {
+		free(inFile);
+		uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL, "Invalid GCI file (too small).");
+		DrawPublish(msgBox);
+		while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
+		while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
+		DrawDispose(msgBox);
+		return false;
+	}
+
+	u8 *filebuf = (u8 *)memalign(32, total_size);
+	if (!filebuf) {
+		free(inFile);
+		uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL, "Out of memory.");
+		DrawPublish(msgBox);
+		while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
+		while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
+		DrawDispose(msgBox);
+		return false;
+	}
+
+	dev->readFile(inFile, filebuf, total_size);
+	dev->closeFile(inFile);
+	free(inFile);
+
+	GCI *gci = (GCI *)filebuf;
+	u8 *savedata = filebuf + sizeof(GCI);
+	u32 save_len = total_size - sizeof(GCI);
+
+	bool result = card_manager_import_gci_buf(slot, gci, savedata, save_len, sector_size);
+	free(filebuf);
+	return result;
 }
