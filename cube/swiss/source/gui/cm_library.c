@@ -45,6 +45,17 @@
 // GC epoch for date formatting
 #define GC_EPOCH_OFFSET 946684800ULL
 
+static void lib_draw_thin_scrollbar(uiDrawObj_t *container,
+	int x, int top_y, int track_h, int total, int visible, int scroll) {
+	int thumb_w = 6, thumb_h = 6;
+	float pct = (float)scroll / (float)(total - visible);
+	int thumb_y = top_y + (int)((track_h - thumb_h) * pct);
+	DrawAddChild(container, DrawFlatColorRect(x, top_y, 2, track_h,
+		(GXColor){128, 128, 128, 128}));
+	DrawAddChild(container, DrawFlatColorRect(x - (thumb_w / 2 - 1), thumb_y, thumb_w, thumb_h,
+		(GXColor){200, 200, 200, 255}));
+}
+
 static void lib_format_date(u32 gc_time, char *buf, int buflen) {
 	if (gc_time == 0 || gc_time == (u32)-1) {
 		snprintf(buf, buflen, "----");
@@ -265,19 +276,9 @@ static void lib_draw_game_list(uiDrawObj_t *container,
 			stats, 0.4f, ALIGN_LEFT, (GXColor){120, 120, 120, 255}));
 	}
 
-	// Scroll bar: thin track with small thumb
-	if (num_groups > LIB_MAX_VIS) {
-		int track_h = LIB_MAX_VIS * LIB_ROW_H;
-		int thumb_h = 6;
-		int thumb_w = 6;
-		float pct = (float)scroll / (float)(num_groups - LIB_MAX_VIS);
-		int tx = lx + lw - 2;
-		int thumb_y = LIB_LIST_TOP + (int)((track_h - thumb_h) * pct);
-		DrawAddChild(container, DrawFlatColorRect(tx, LIB_LIST_TOP, 2, track_h,
-			(GXColor){128, 128, 128, 128}));
-		DrawAddChild(container, DrawFlatColorRect(tx - (thumb_w / 2 - 1), thumb_y, thumb_w, thumb_h,
-			(GXColor){200, 200, 200, 255}));
-	}
+	if (num_groups > LIB_MAX_VIS)
+		lib_draw_thin_scrollbar(container, lx + lw - 2, LIB_LIST_TOP,
+			LIB_MAX_VIS * LIB_ROW_H, num_groups, LIB_MAX_VIS, scroll);
 }
 
 static void lib_draw_save_list(uiDrawObj_t *container,
@@ -385,19 +386,9 @@ static void lib_draw_save_list(uiDrawObj_t *container,
 			row_text, rs, ALIGN_LEFT, name_color));
 	}
 
-	// Scroll bar: thin track with small thumb
-	if (count > LIB_SAVE_MAX_VIS) {
-		int track_h = LIB_SAVE_MAX_VIS * LIB_SAVE_ROW_H;
-		int thumb_h = 6;
-		int thumb_w = 6;
-		float pct = (float)scroll / (float)(count - LIB_SAVE_MAX_VIS);
-		int tx = lx + lw - 2;
-		int thumb_y = LIB_SAVE_LIST_TOP + (int)((track_h - thumb_h) * pct);
-		DrawAddChild(container, DrawFlatColorRect(tx, LIB_SAVE_LIST_TOP, 2, track_h,
-			(GXColor){128, 128, 128, 128}));
-		DrawAddChild(container, DrawFlatColorRect(tx - (thumb_w / 2 - 1), thumb_y, thumb_w, thumb_h,
-			(GXColor){200, 200, 200, 255}));
-	}
+	if (count > LIB_SAVE_MAX_VIS)
+		lib_draw_thin_scrollbar(container, lx + lw - 2, LIB_SAVE_LIST_TOP,
+			LIB_SAVE_MAX_VIS * LIB_SAVE_ROW_H, count, LIB_SAVE_MAX_VIS, scroll);
 }
 
 // --- Context menu for a save in the library ---
