@@ -37,6 +37,10 @@ static void cm_panel_load(cm_panel *panel) {
 	panel->card_present = false;
 	panel->has_animated_icons = false;
 
+	char load_msg[64];
+	snprintf(load_msg, sizeof(load_msg), "Reading %s...", panel->label);
+	cm_led_show(load_msg);
+
 	if (panel->source == CM_SRC_PHYSICAL) {
 		char slot_ch = panel->slot == CARD_SLOTA ? 'A' : 'B';
 		snprintf(panel->label, sizeof(panel->label), "Slot %c", slot_ch);
@@ -157,6 +161,7 @@ static void cm_panel_load(cm_panel *panel) {
 	}
 
 	panel->needs_reload = false;
+	cm_led_hide();
 }
 
 static void cm_panel_navigate(cm_panel *panel, u16 btns) {
@@ -305,11 +310,13 @@ static void cm_handle_context_menu(cm_panel *ap, cm_panel *other, bool *needs_re
 			u8 *savedata = NULL;
 			u32 save_len = 0;
 			bool read_ok;
+			ap->activity = CM_ACTIVITY_READ;
 			if (ap->source == CM_SRC_VMC)
 				read_ok = vmc_read_save(ap->vmc_path, sel, &gci, &savedata, &save_len);
 			else
 				read_ok = cm_read_physical_save(ap->slot, sel, ap->sector_size,
 					&gci, &savedata, &save_len);
+			ap->activity = CM_ACTIVITY_IDLE;
 
 			if (!read_ok) {
 				free(vmcs);
@@ -317,12 +324,24 @@ static void cm_handle_context_menu(cm_panel *ap, cm_panel *other, bool *needs_re
 				break;
 			}
 
-			// Write to destination
+			// Write to destination — find dest panel for LED
+			cm_panel *dest_panel = NULL;
+			cm_panel *both_wr[] = { ap, other };
+			for (int pi = 0; pi < 2; pi++) {
+				if (dest_src == CM_SRC_PHYSICAL
+					&& both_wr[pi]->source == CM_SRC_PHYSICAL
+					&& both_wr[pi]->slot == dest_slot)
+					dest_panel = both_wr[pi];
+				else if (dest_src == CM_SRC_VMC && dest_vmc_path
+					&& both_wr[pi]->source == CM_SRC_VMC
+					&& strcmp(both_wr[pi]->vmc_path, dest_vmc_path) == 0)
+					dest_panel = both_wr[pi];
+			}
+			if (dest_panel) dest_panel->activity = CM_ACTIVITY_WRITE;
 			bool write_ok;
 			if (dest_src == CM_SRC_VMC)
 				write_ok = vmc_import_save_buf(dest_vmc_path, &gci, savedata, save_len);
 			else {
-				// Need sector_size for physical dest — probe the card
 				s32 dest_sector = 8192;
 				CARD_ProbeEx(dest_slot, NULL, &dest_sector);
 				s32 init_ret = initialize_card(dest_slot);
@@ -338,6 +357,7 @@ static void cm_handle_context_menu(cm_panel *ap, cm_panel *other, bool *needs_re
 						save_len, dest_sector);
 				}
 			}
+			if (dest_panel) dest_panel->activity = CM_ACTIVITY_IDLE;
 
 			if (write_ok) {
 				cm_log("Copy successful");
@@ -362,6 +382,7 @@ static void cm_handle_context_menu(cm_panel *ap, cm_panel *other, bool *needs_re
 		case CM_ACT_EXPORT:
 			cm_log("Exporting [%d] \"%s\" from %s",
 				ap->cursor, sel->filename, ap->label);
+			ap->activity = CM_ACTIVITY_READ;
 			if (ap->source == CM_SRC_VMC) {
 				if (vmc_export_save(ap->vmc_path, sel))
 					cm_log("VMC export successful");
@@ -373,13 +394,17 @@ static void cm_handle_context_menu(cm_panel *ap, cm_panel *other, bool *needs_re
 				else
 					cm_log("Export failed or cancelled");
 			}
+			ap->activity = CM_ACTIVITY_IDLE;
 			*needs_redraw = true;
 			break;
 
 		case CM_ACT_IMPORT:
+			ap->activity = CM_ACTIVITY_WRITE;
 			if (card_manager_backups(ap)) {
+				ap->activity = CM_ACTIVITY_IDLE;
 				ap->needs_reload = true;
 			} else {
+				ap->activity = CM_ACTIVITY_IDLE;
 				*needs_redraw = true;
 			}
 			break;
@@ -388,11 +413,13 @@ static void cm_handle_context_menu(cm_panel *ap, cm_panel *other, bool *needs_re
 			if (card_manager_confirm_delete(sel->filename)) {
 				cm_log("Deleting [%d] \"%s\" from %s",
 					ap->cursor, sel->filename, ap->label);
+				ap->activity = CM_ACTIVITY_WRITE;
 				bool deleted;
 				if (ap->source == CM_SRC_VMC)
 					deleted = vmc_delete_save(ap->vmc_path, sel);
 				else
 					deleted = card_manager_delete_save(ap->slot, sel);
+				ap->activity = CM_ACTIVITY_IDLE;
 				if (deleted) {
 					cm_log("Delete successful");
 					cm_panel_remove_entry(ap, ap->cursor);
@@ -500,6 +527,7 @@ void show_card_manager(void) {
 	lib_state *lib = calloc(1, sizeof(lib_state));
 
 	cm_draw_init();
+	cm_led_begin(panels);
 	cm_log_open();
 	cm_log("Opened card manager");
 
@@ -508,28 +536,33 @@ void show_card_manager(void) {
 
 	while (1) {
 		// Reload any panel that needs it
-		// First pass: mark all pending panels as loading and clear their state
 		bool any_reload = false;
 		for (int p = 0; p < 2; p++) {
 			if (panels[p]->needs_reload) {
 				card_manager_free_graphics(panels[p]->entries, panels[p]->num_entries);
 				panels[p]->num_entries = 0;
 				panels[p]->loading = true;
+				panels[p]->activity = CM_ACTIVITY_READ;
 				any_reload = true;
 			}
 		}
-		// Draw once with all loading indicators visible
 		if (any_reload) {
-			uiDrawObj_t *loadPage = card_manager_draw(panels[0], panels[1], active, anim_tick);
+			// Show loading state in both views (LEDs go orange)
+			uiDrawObj_t *loadPage;
+			if (view_mode == 0)
+				loadPage = card_manager_draw(panels[0], panels[1], active, anim_tick);
+			else
+				loadPage = lib_draw_view(lib, anim_tick);
+			cm_draw_status_leds(loadPage, panels);
 			if (page) DrawDispose(page);
 			page = loadPage;
 			DrawPublish(page);
 		}
-		// Second pass: actually load each panel
 		for (int p = 0; p < 2; p++) {
 			if (panels[p]->loading) {
 				cm_panel_load(panels[p]);
 				panels[p]->loading = false;
+				panels[p]->activity = CM_ACTIVITY_IDLE;
 				needs_redraw = true;
 			}
 		}
@@ -549,6 +582,7 @@ void show_card_manager(void) {
 			else
 				newPage = lib_draw_view(lib, anim_tick);
 
+			cm_draw_status_leds(newPage, panels);
 			if (page) DrawDispose(page);
 			page = newPage;
 			DrawPublish(page);
@@ -690,6 +724,7 @@ debounce:
 		card_manager_free_graphics(panels[p]->entries, panels[p]->num_entries);
 		free(panels[p]);
 	}
+	cm_led_end();
 	cm_log("Closed card manager");
 	cm_log_close();
 	while (padsButtonsHeld() & PAD_BUTTON_B) { VIDEO_WaitVSync(); }

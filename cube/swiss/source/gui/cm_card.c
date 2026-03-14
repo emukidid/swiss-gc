@@ -389,10 +389,12 @@ int card_manager_read_saves(int slot, card_entry *entries, int max_entries) {
 
 	for (int i = 0; i < count; i++) {
 		card_manager_read_comment(slot, &entries[i]);
+		cm_led_pulse();
 	}
 
 	for (int i = 0; i < count; i++) {
 		card_manager_read_graphics(slot, &entries[i]);
+		cm_led_pulse();
 	}
 
 	return count;

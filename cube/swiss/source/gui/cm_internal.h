@@ -106,7 +106,13 @@ typedef struct {
 	bool has_animated_icons;
 	bool needs_reload;
 	bool loading;
+	u8 activity;	// CM_ACTIVITY_*
 } cm_panel;
+
+// Panel activity states (for LED indicators)
+#define CM_ACTIVITY_IDLE  0
+#define CM_ACTIVITY_READ  1
+#define CM_ACTIVITY_WRITE 2
 
 // VMC file entry for picker
 #define MAX_VMC_FILES 16
@@ -161,6 +167,12 @@ uiDrawObj_t *cm_draw_rect(int x, int y, int w, int h);
 uiDrawObj_t *cm_draw_highlight(int x, int y, int w, int h);
 void cm_draw_panel_frame(uiDrawObj_t *container, bool is_vmc, int x, int y, int w, int h);
 void cm_draw_title_bar(uiDrawObj_t *container, int view_mode);
+void cm_draw_status_leds(uiDrawObj_t *container, cm_panel *panels[2]);
+void cm_led_begin(cm_panel *panels[2]);
+void cm_led_end(void);
+void cm_led_show(const char *msg);
+void cm_led_hide(void);
+void cm_led_pulse(void);
 uiDrawObj_t *card_manager_draw(cm_panel *left, cm_panel *right,
 	int active_panel, u32 anim_tick);
 int cm_context_menu(const char *items[], const bool enabled[], int count);

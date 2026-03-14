@@ -7,6 +7,7 @@
 #include <string.h>
 #include <math.h>
 #include <gccore.h>
+#include <ogc/lwp_watchdog.h>
 #include "cm_internal.h"
 #include "IPLFontWrite.h"
 #include "images.h"
@@ -88,6 +89,11 @@ uiDrawObj_t *cm_draw_highlight(int x, int y, int w, int h) {
 #define CM_MSG_LINE_H   20
 #define CM_MSG_FONT     0.55f
 
+// LED global context
+static cm_panel **s_led_panels = NULL;
+static char s_led_msg_text[256];
+static uiDrawObj_t *s_led_page = NULL;
+
 uiDrawObj_t *cm_draw_message(const char *msg) {
 	char buf[512];
 	strlcpy(buf, msg, sizeof(buf));
@@ -115,6 +121,10 @@ uiDrawObj_t *cm_draw_message(const char *msg) {
 		DrawAddChild(box, DrawStyledLabel(640 / 2, ly,
 			lines[i], scale, ALIGN_CENTER, defaultColor));
 	}
+
+	// Auto-include status LEDs when context is set
+	if (s_led_panels)
+		cm_draw_status_leds(box, s_led_panels);
 
 	return box;
 }
@@ -172,6 +182,110 @@ void cm_draw_title_bar(uiDrawObj_t *container, int view_mode) {
 	DrawAddChild(container, cm_draw_icon_rect(lt, ix, iy, 14, 2));
 	DrawAddChild(container, cm_draw_icon_rect(lt, ix, iy + 4, 14, 2));
 	DrawAddChild(container, cm_draw_icon_rect(lt, ix, iy + 8, 14, 2));
+}
+
+// --- Status LEDs ---
+
+#define LED_SZ     5
+#define LED_GAP_X  20
+
+static float cm_led_phase(void) {
+	return (float)(ticks_to_millisecs(gettime()) % 2000) / 2000.0f * 6.2832f;
+}
+
+void cm_draw_status_leds(uiDrawObj_t *container, cm_panel *panels[2]) {
+	int base_x = BOX_X2 - 95;
+	int base_y = TITLE_Y + 7;
+	float phase = cm_led_phase();
+
+	for (int p = 0; p < 2; p++) {
+		int lx = base_x + p * LED_GAP_X;
+
+		// Label: A/B for physical, V for VMC
+		const char *label;
+		if (panels[p]->source == CM_SRC_VMC)
+			label = "V";
+		else
+			label = panels[p]->slot == CARD_SLOTA ? "A" : "B";
+
+		GXColor led_color;
+		GXColor glow_color = {0};
+		u8 glow_i = 0;
+		float glow_w = 0;
+		bool active = panels[p]->loading
+			|| panels[p]->activity == CM_ACTIVITY_READ
+			|| panels[p]->activity == CM_ACTIVITY_WRITE;
+
+		if (active) {
+			float pulse = 0.5f + 0.5f * sinf(phase);
+			u8 a = (u8)(140.0f + 115.0f * pulse);
+			if (panels[p]->activity == CM_ACTIVITY_WRITE) {
+				// Red/warm for writes
+				led_color = (GXColor){255, 80, 40, a};
+				glow_color = (GXColor){255, 80, 40, 255};
+			} else {
+				// Orange for reads/loading
+				led_color = (GXColor){255, 140, 40, a};
+				glow_color = (GXColor){255, 140, 40, 255};
+			}
+			glow_i = (u8)(180.0f * pulse);
+			glow_w = 3.0f;
+		} else if (panels[p]->card_present) {
+			// Green steady
+			led_color = (GXColor){60, 200, 80, 220};
+			glow_color = (GXColor){60, 200, 80, 255};
+			glow_i = 40;
+			glow_w = 2.0f;
+		} else {
+			// Grey — no device
+			led_color = (GXColor){60, 60, 60, 100};
+		}
+
+		// LED body
+		DrawAddChild(container, DrawFlatColorRect(lx, base_y, LED_SZ, LED_SZ, led_color));
+
+		// LED glow
+		if (glow_w > 0)
+			DrawAddChild(container, DrawEdgeGlow(lx, base_y, LED_SZ, LED_SZ,
+				glow_w, glow_color, glow_i));
+
+		// Label to the right
+		DrawAddChild(container, DrawStyledLabel(lx + LED_SZ + 2, base_y + LED_SZ / 2,
+			label, 0.35f, ALIGN_LEFT, (GXColor){120, 120, 120, 200}));
+	}
+}
+
+// --- LED managed display ---
+
+void cm_led_begin(cm_panel *panels[2]) {
+	s_led_panels = panels;
+}
+
+void cm_led_end(void) {
+	cm_led_hide();
+	s_led_panels = NULL;
+}
+
+void cm_led_show(const char *msg) {
+	strlcpy(s_led_msg_text, msg, sizeof(s_led_msg_text));
+	cm_led_pulse();
+}
+
+void cm_led_hide(void) {
+	if (s_led_page) {
+		DrawDispose(s_led_page);
+		s_led_page = NULL;
+	}
+	s_led_msg_text[0] = '\0';
+}
+
+void cm_led_pulse(void) {
+	if (!s_led_msg_text[0]) return;
+	uiDrawObj_t *fresh = cm_draw_message(s_led_msg_text);
+	if (s_led_page) DrawDispose(s_led_page);
+	s_led_page = fresh;
+	DrawPublish(fresh);
+	VIDEO_WaitVSync();
 }
 
 // --- Icon animation ---

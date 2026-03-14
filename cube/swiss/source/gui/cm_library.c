@@ -446,6 +446,8 @@ enum {
 	LIB_ACT_COUNT
 };
 
+static int lib_match_panel(lib_save *s, cm_panel *panels[2]);
+
 static bool lib_handle_action(lib_save *s, cm_panel *panels[2],
 	gci_file_entry *gci_files, int num_gci) {
 
@@ -517,6 +519,8 @@ static bool lib_handle_action(lib_save *s, cm_panel *panels[2],
 			u8 *savedata = NULL;
 			u32 save_len = 0;
 			bool read_ok = false;
+			int src_p = lib_match_panel(s, panels);
+			if (src_p >= 0) panels[src_p]->activity = CM_ACTIVITY_READ;
 
 			if (s->source == LIB_SRC_SLOT_A || s->source == LIB_SRC_SLOT_B)
 				read_ok = cm_read_physical_save(s->slot, s->entry, s->sector_size,
@@ -553,6 +557,7 @@ static bool lib_handle_action(lib_save *s, cm_panel *panels[2],
 				}
 			}
 
+			if (src_p >= 0) panels[src_p]->activity = CM_ACTIVITY_IDLE;
 			if (!read_ok) { free(vmcs); return false; }
 
 			// Determine destination and write
@@ -563,18 +568,21 @@ static bool lib_handle_action(lib_save *s, cm_panel *panels[2],
 					(s->source == LIB_SRC_SLOT_B && slot == 1))
 					continue;
 				if (dest_choice == phys_offset) {
+					for (int p = 0; p < 2; p++)
+						if (panels[p]->source == CM_SRC_PHYSICAL && panels[p]->slot == slot)
+							panels[p]->activity = CM_ACTIVITY_WRITE;
 					s32 dest_sector = 8192;
 					CARD_ProbeEx(slot, NULL, &dest_sector);
 					s32 init_ret = initialize_card(slot);
 					if (init_ret == CARD_ERROR_READY)
 						write_ok = card_manager_import_gci_buf(slot, &gci, savedata,
 							save_len, dest_sector);
-					if (write_ok) {
-						for (int p = 0; p < 2; p++) {
-							if (panels[p]->source == CM_SRC_PHYSICAL && panels[p]->slot == slot)
+					for (int p = 0; p < 2; p++)
+						if (panels[p]->source == CM_SRC_PHYSICAL && panels[p]->slot == slot) {
+							panels[p]->activity = CM_ACTIVITY_IDLE;
+							if (write_ok)
 								cm_panel_add_from_gci(panels[p], &gci, savedata, save_len);
 						}
-					}
 					free(savedata);
 					free(vmcs);
 					return write_ok;
@@ -588,14 +596,18 @@ static bool lib_handle_action(lib_save *s, cm_panel *panels[2],
 				if (s->source == LIB_SRC_VMC && strcmp(s->vmc_path, vmcs[i].path) == 0)
 					continue;
 				if (dest_choice == vmc_offset) {
+					for (int p = 0; p < 2; p++)
+						if (panels[p]->source == CM_SRC_VMC
+							&& strcmp(panels[p]->vmc_path, vmcs[i].path) == 0)
+							panels[p]->activity = CM_ACTIVITY_WRITE;
 					write_ok = vmc_import_save_buf(vmcs[i].path, &gci, savedata, save_len);
-					if (write_ok) {
-						for (int p = 0; p < 2; p++) {
-							if (panels[p]->source == CM_SRC_VMC
-								&& strcmp(panels[p]->vmc_path, vmcs[i].path) == 0)
+					for (int p = 0; p < 2; p++)
+						if (panels[p]->source == CM_SRC_VMC
+							&& strcmp(panels[p]->vmc_path, vmcs[i].path) == 0) {
+							panels[p]->activity = CM_ACTIVITY_IDLE;
+							if (write_ok)
 								cm_panel_add_from_gci(panels[p], &gci, savedata, save_len);
 						}
-					}
 					free(savedata);
 					free(vmcs);
 					return write_ok;
@@ -632,30 +644,40 @@ static bool lib_handle_action(lib_save *s, cm_panel *panels[2],
 				if (s->gci_idx >= 0)
 					return cm_backup_delete(&gci_files[s->gci_idx]);
 			} else if (s->source == LIB_SRC_VMC) {
-				if (card_manager_confirm_delete(s->entry->filename)
-					&& vmc_delete_save(s->vmc_path, s->entry)) {
-					for (int p = 0; p < 2; p++) {
-						if (panels[p]->source == CM_SRC_VMC
-							&& strcmp(panels[p]->vmc_path, s->vmc_path) == 0) {
-							int idx = (int)(s->entry - panels[p]->entries);
-							if (idx >= 0 && idx < panels[p]->num_entries)
-								cm_panel_remove_entry(panels[p], idx);
+				if (card_manager_confirm_delete(s->entry->filename)) {
+					int dp = lib_match_panel(s, panels);
+					if (dp >= 0) panels[dp]->activity = CM_ACTIVITY_WRITE;
+					bool ok = vmc_delete_save(s->vmc_path, s->entry);
+					if (dp >= 0) panels[dp]->activity = CM_ACTIVITY_IDLE;
+					if (ok) {
+						for (int p = 0; p < 2; p++) {
+							if (panels[p]->source == CM_SRC_VMC
+								&& strcmp(panels[p]->vmc_path, s->vmc_path) == 0) {
+								int idx = (int)(s->entry - panels[p]->entries);
+								if (idx >= 0 && idx < panels[p]->num_entries)
+									cm_panel_remove_entry(panels[p], idx);
+							}
 						}
+						return true;
 					}
-					return true;
 				}
 			} else {
-				if (card_manager_confirm_delete(s->entry->filename)
-					&& card_manager_delete_save(s->slot, s->entry)) {
-					for (int p = 0; p < 2; p++) {
-						if (panels[p]->source == CM_SRC_PHYSICAL
-							&& panels[p]->slot == s->slot) {
-							int idx = (int)(s->entry - panels[p]->entries);
-							if (idx >= 0 && idx < panels[p]->num_entries)
-								cm_panel_remove_entry(panels[p], idx);
+				if (card_manager_confirm_delete(s->entry->filename)) {
+					int dp = lib_match_panel(s, panels);
+					if (dp >= 0) panels[dp]->activity = CM_ACTIVITY_WRITE;
+					bool ok = card_manager_delete_save(s->slot, s->entry);
+					if (dp >= 0) panels[dp]->activity = CM_ACTIVITY_IDLE;
+					if (ok) {
+						for (int p = 0; p < 2; p++) {
+							if (panels[p]->source == CM_SRC_PHYSICAL
+								&& panels[p]->slot == s->slot) {
+								int idx = (int)(s->entry - panels[p]->entries);
+								if (idx >= 0 && idx < panels[p]->num_entries)
+									cm_panel_remove_entry(panels[p], idx);
+							}
 						}
+						return true;
 					}
-					return true;
 				}
 			}
 			return false;
