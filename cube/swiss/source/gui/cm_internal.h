@@ -197,6 +197,7 @@ typedef struct {
 	lib_source_type source;
 	card_entry *entry;			// Points into panel->entries or gci_files[].entry
 	char source_label[32];		// "Slot A", "Slot B", "VMC: name", "SD Backup"
+	char display_name[48];		// Row label: filename for card/VMC, .gci basename for SD
 	// For operations: need to know how to reach it
 	int slot;					// For physical cards
 	char vmc_path[PATHNAME_MAX];	// For VMC saves

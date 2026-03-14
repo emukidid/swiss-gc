@@ -101,6 +101,8 @@ static int lib_build_index(cm_panel *panels[2],
 				strlcpy(s->source_label, panel->label, sizeof(s->source_label));
 				strlcpy(s->vmc_path, panel->vmc_path, PATHNAME_MAX);
 			}
+			strlcpy(s->display_name, panel->entries[i].filename,
+				sizeof(s->display_name));
 			ns++;
 		}
 	}
@@ -115,6 +117,10 @@ static int lib_build_index(cm_panel *panels[2],
 		s->vmc_path[0] = '\0';
 		s->gci_idx = i;
 		s->sector_size = 0;
+		// Display name: basename of the .gci file on SD
+		const char *slash = strrchr(gci_files[i].path, '/');
+		strlcpy(s->display_name, slash ? slash + 1 : gci_files[i].path,
+			sizeof(s->display_name));
 		ns++;
 	}
 
@@ -367,7 +373,7 @@ static void lib_draw_save_list(uiDrawObj_t *container,
 		DrawAddChild(container, DrawStyledLabel(lx + 4, ry + LIB_SAVE_ROW_H / 2,
 			badge, 0.4f, ALIGN_LEFT, badge_color));
 
-		// Filename + date + blocks — single compact row
+		// Name + blocks + date
 		int tx = lx + 30;
 		int text_w = cw - 38;
 		GXColor name_color;
@@ -376,12 +382,11 @@ static void lib_draw_save_list(uiDrawObj_t *container,
 		else
 			name_color = defaultColor;
 
-		// Build display: "filename  |  3 blk  2025-01-15  Slot A"
 		char datebuf[16];
 		lib_format_date(e->time, datebuf, sizeof(datebuf));
 		char row_text[128];
-		snprintf(row_text, sizeof(row_text), "%-20.20s  %d blk  %s  %s",
-			e->filename, e->blocks, datebuf, s->source_label);
+		snprintf(row_text, sizeof(row_text), "%-20.20s  %d blk  %s",
+			s->display_name, e->blocks, datebuf);
 		float rs = GetTextScaleToFitInWidthWithMax(row_text, text_w, 0.42f);
 		DrawAddChild(container, DrawStyledLabel(tx, ry + LIB_SAVE_ROW_H / 2,
 			row_text, rs, ALIGN_LEFT, name_color));
