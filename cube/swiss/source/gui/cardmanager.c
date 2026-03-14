@@ -423,7 +423,7 @@ static bool cm_pick_vmc(cm_panel *panel) {
 
 	int num = vmc_scan_files(vmcs, MAX_VMC_FILES);
 	if (num == 0) {
-		uiDrawObj_t *msg = cm_draw_message("No .raw VMC files found\nin swiss/saves/");
+		uiDrawObj_t *msg = cm_draw_message("No virtual card files found\nin swiss/saves/");
 		DrawPublish(msg);
 		while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
 		while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
