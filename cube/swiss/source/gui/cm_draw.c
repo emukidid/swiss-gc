@@ -5,6 +5,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <math.h>
 #include <gccore.h>
 #include "cm_internal.h"
 #include "IPLFontWrite.h"
@@ -278,8 +279,11 @@ static void card_manager_draw_panel(uiDrawObj_t *container, cm_panel *panel,
 
 			// Selection glow (only on active panel's cursor)
 			if (active && idx == panel->cursor) {
-				DrawAddChild(container, DrawTexObj(&cm_cell_glow_tex,
-					cx, cy, GRID_CELL, GRID_CELL, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0));
+				float flicker = 0.85f + 0.15f * sinf((float)anim_tick * 0.12f);
+				u8 glow_i = (u8)(255.0f * flicker);
+				DrawAddChild(container, DrawGlow(
+					cx + GRID_CELL / 2, cy + GRID_CELL / 2,
+					GRID_CELL / 2 + 4, GRID_ICON_SIZE, (GXColor){100, 120, 200, 255}, glow_i));
 			}
 
 			// Icon or banner (only animate selected icon)

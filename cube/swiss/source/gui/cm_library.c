@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <malloc.h>
+#include <math.h>
 #include <gccore.h>
 #include "cm_internal.h"
 #include "IPLFontWrite.h"
@@ -184,7 +185,7 @@ static const char *lib_source_short(lib_save *s) {
 
 static void lib_draw_game_list(uiDrawObj_t *container,
 	lib_game_group *groups, int num_groups,
-	int cursor, int scroll, bool active) {
+	int cursor, int scroll, bool active, u32 anim_tick) {
 
 	int lx = LIB_GAME_FX + LIB_INSET;
 	int lw = LIB_GAME_FW - 2 * LIB_INSET;
@@ -219,7 +220,18 @@ static void lib_draw_game_list(uiDrawObj_t *container,
 		// Icon
 		int ix = lx + 4;
 		int iy = ry + (LIB_ROW_H - LIB_ICON_SZ) / 2;
+		int icon_cx = ix + LIB_ICON_SZ / 2;
+		int icon_cy = iy + LIB_ICON_SZ / 2;
 		card_entry *e = g->rep;
+
+		// Glow behind selected icon
+		if (active && idx == cursor) {
+			float flicker = 0.85f + 0.15f * sinf((float)anim_tick * 0.12f);
+			u8 glow_i = (u8)(255.0f * flicker);
+			DrawAddChild(container, DrawGlow(icon_cx, icon_cy,
+				LIB_ICON_SZ, LIB_ICON_SZ, (GXColor){100, 120, 200, 255}, glow_i));
+		}
+
 		if (e->icon && e->icon->num_frames > 0 && e->icon->frames[0].data) {
 			DrawAddChild(container, DrawTexObj(&e->icon->frames[0].tex,
 				ix, iy, LIB_ICON_SZ, LIB_ICON_SZ,
@@ -635,13 +647,13 @@ void lib_state_rebuild(lib_state *st, cm_panel *panels[2]) {
 	lib_update_selection(st);
 }
 
-uiDrawObj_t *lib_draw_view(lib_state *st) {
+uiDrawObj_t *lib_draw_view(lib_state *st, u32 anim_tick) {
 	uiDrawObj_t *container = DrawEmptyBox(BOX_X1, BOX_TOP_Y, BOX_X2, BOX_BOTTOM_Y);
 
 	cm_draw_title_bar(container, 1);
 
 	lib_draw_game_list(container, st->groups, st->num_groups,
-		st->game_cursor, st->game_scroll, st->focus == 0);
+		st->game_cursor, st->game_scroll, st->focus == 0, anim_tick);
 
 	lib_draw_save_list(container, st->saves, st->save_indices, st->save_count,
 		st->save_cursor, st->save_scroll, st->focus == 1, st->sel_group);

@@ -539,14 +539,15 @@ void show_card_manager(void) {
 			lib_state_rebuild(lib, panels);
 
 		// Draw current view
-		bool has_anim = view_mode == 0 &&
-			(panels[0]->has_animated_icons || panels[1]->has_animated_icons);
+		bool has_anim = (view_mode == 0 &&
+			(panels[0]->has_animated_icons || panels[1]->has_animated_icons))
+			|| view_mode == 1;
 		if (needs_redraw || has_anim) {
 			uiDrawObj_t *newPage;
 			if (view_mode == 0)
 				newPage = card_manager_draw(panels[0], panels[1], active, anim_tick);
 			else
-				newPage = lib_draw_view(lib);
+				newPage = lib_draw_view(lib, anim_tick);
 
 			if (page) DrawDispose(page);
 			page = newPage;

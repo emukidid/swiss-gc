@@ -113,11 +113,12 @@ enum VideoEventType
 	EV_MENUBUTTONS,
 	EV_TOOLTIP,
 	EV_TITLEBAR,
-	EV_FLATRECT
+	EV_FLATRECT,
+	EV_GLOW
 };
 
 char * typeStrings[] = {"TexObj", "MsgBox", "Image", "Progress", "SelectableButton", "EmptyBox", "TransparentBox",
-						"FileBrowserButton", "VertScrollbar", "StyledLabel", "Container", "MenuButtons", "Tooltip", "TitleBar", "FlatRect"};
+						"FileBrowserButton", "VertScrollbar", "StyledLabel", "Container", "MenuButtons", "Tooltip", "TitleBar", "FlatRect", "Glow"};
 
 typedef struct drawTexObjEvent {
 	GXTexObj *texObj;
@@ -148,6 +149,15 @@ typedef struct drawFlatRectEvent {
 	int height;
 	GXColor color;
 } drawFlatRectEvent_t;
+
+typedef struct drawGlowEvent {
+	int cx;
+	int cy;
+	int radius;
+	int icon_size;
+	GXColor color;
+	u8 intensity;
+} drawGlowEvent_t;
 
 typedef struct drawImageEvent {
 	int textureId;
@@ -1665,6 +1675,134 @@ uiDrawObj_t* DrawFlatColorRect(int x, int y, int width, int height, GXColor colo
 	return event;
 }
 
+// Internal — radial glow using additive blending with per-vertex alpha
+static void _DrawGlow(uiDrawObj_t *evt) {
+	drawGlowEvent_t *data = (drawGlowEvent_t*)evt->data;
+	float cx = (float)data->cx;
+	float cy = (float)data->cy;
+	int r = data->radius;
+	float intensity = (float)data->intensity / 255.0f;
+
+	// TEV: pass vertex color directly, ignore texture
+	GX_SetNumTevStages(1);
+	GX_SetTevOrder(GX_TEVSTAGE0, GX_TEXCOORDNULL, GX_TEXMAP_NULL, GX_COLOR0A0);
+	GX_SetTevColorIn(GX_TEVSTAGE0, GX_CC_ZERO, GX_CC_ZERO, GX_CC_ZERO, GX_CC_RASC);
+	GX_SetTevColorOp(GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_ENABLE, GX_TEVPREV);
+	GX_SetTevAlphaIn(GX_TEVSTAGE0, GX_CA_ZERO, GX_CA_ZERO, GX_CA_ZERO, GX_CA_RASA);
+	GX_SetTevAlphaOp(GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_ENABLE, GX_TEVPREV);
+
+	// Additive blending
+	GX_SetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_ONE, GX_LO_CLEAR);
+
+	// Draw concentric layers from outside in, each brighter
+	#define GLOW_LAYERS 6
+	for (int i = 0; i < GLOW_LAYERS; i++) {
+		float t = (float)i / (float)(GLOW_LAYERS - 1); // 0=outermost, 1=innermost
+		float layer_r = r * (1.0f - t * 0.6f); // outer layers are bigger
+		float alpha = (60.0f + 195.0f * t * t) * intensity; // quadratic ramp
+		if (alpha > 255.0f) alpha = 255.0f;
+		u8 a = (u8)alpha;
+
+		GXColor c = {data->color.r, data->color.g, data->color.b, a};
+		GXColor edge = {data->color.r, data->color.g, data->color.b, 0};
+
+		float x0 = cx - layer_r;
+		float y0 = cy - layer_r;
+		float x1 = cx + layer_r;
+		float y1 = cy + layer_r;
+
+		// Quad with bright center vertices and transparent edges
+		// Draw as 4 triangles (fan from center) for radial falloff
+		GX_Begin(GX_TRIANGLEFAN, GX_VTXFMT0, 6);
+			// Center
+			GX_Position3f32(cx, cy, 0.0f);
+			GX_Color4u8(c.r, c.g, c.b, c.a);
+			GX_TexCoord2f32(0.95f, 0.95f);
+			// Top-left
+			GX_Position3f32(x0, y0, 0.0f);
+			GX_Color4u8(edge.r, edge.g, edge.b, edge.a);
+			GX_TexCoord2f32(0.95f, 0.95f);
+			// Top-right
+			GX_Position3f32(x1, y0, 0.0f);
+			GX_Color4u8(edge.r, edge.g, edge.b, edge.a);
+			GX_TexCoord2f32(0.95f, 0.95f);
+			// Bottom-right
+			GX_Position3f32(x1, y1, 0.0f);
+			GX_Color4u8(edge.r, edge.g, edge.b, edge.a);
+			GX_TexCoord2f32(0.95f, 0.95f);
+			// Bottom-left
+			GX_Position3f32(x0, y1, 0.0f);
+			GX_Color4u8(edge.r, edge.g, edge.b, edge.a);
+			GX_TexCoord2f32(0.95f, 0.95f);
+			// Close fan back to top-left
+			GX_Position3f32(x0, y0, 0.0f);
+			GX_Color4u8(edge.r, edge.g, edge.b, edge.a);
+			GX_TexCoord2f32(0.95f, 0.95f);
+		GX_End();
+	}
+	#undef GLOW_LAYERS
+
+	// Bright rim just outside the icon edges
+	int half = data->icon_size / 2;
+	float rim_a = 180.0f * intensity;
+	if (rim_a > 255.0f) rim_a = 255.0f;
+	u8 ra = (u8)rim_a;
+	GXColor rc = {data->color.r, data->color.g, data->color.b, ra};
+	GXColor re = {data->color.r, data->color.g, data->color.b, 0};
+	float rim_w = 3.0f; // rim thickness outward from icon edge
+
+	float ix0 = cx - half;
+	float iy0 = cy - half;
+	float ix1 = cx + half;
+	float iy1 = cy + half;
+
+	// Top edge: bright along icon top, fades upward
+	GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
+		GX_Position3f32(ix0, iy0 - rim_w, 0.0f); GX_Color4u8(re.r, re.g, re.b, re.a); GX_TexCoord2f32(0.0f, 0.0f);
+		GX_Position3f32(ix1, iy0 - rim_w, 0.0f); GX_Color4u8(re.r, re.g, re.b, re.a); GX_TexCoord2f32(0.0f, 0.0f);
+		GX_Position3f32(ix1, iy0, 0.0f);          GX_Color4u8(rc.r, rc.g, rc.b, rc.a); GX_TexCoord2f32(0.0f, 0.0f);
+		GX_Position3f32(ix0, iy0, 0.0f);          GX_Color4u8(rc.r, rc.g, rc.b, rc.a); GX_TexCoord2f32(0.0f, 0.0f);
+	GX_End();
+	// Bottom edge: bright along icon bottom, fades downward
+	GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
+		GX_Position3f32(ix0, iy1, 0.0f);          GX_Color4u8(rc.r, rc.g, rc.b, rc.a); GX_TexCoord2f32(0.0f, 0.0f);
+		GX_Position3f32(ix1, iy1, 0.0f);          GX_Color4u8(rc.r, rc.g, rc.b, rc.a); GX_TexCoord2f32(0.0f, 0.0f);
+		GX_Position3f32(ix1, iy1 + rim_w, 0.0f); GX_Color4u8(re.r, re.g, re.b, re.a); GX_TexCoord2f32(0.0f, 0.0f);
+		GX_Position3f32(ix0, iy1 + rim_w, 0.0f); GX_Color4u8(re.r, re.g, re.b, re.a); GX_TexCoord2f32(0.0f, 0.0f);
+	GX_End();
+	// Left edge: bright along icon left, fades leftward
+	GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
+		GX_Position3f32(ix0 - rim_w, iy0, 0.0f); GX_Color4u8(re.r, re.g, re.b, re.a); GX_TexCoord2f32(0.0f, 0.0f);
+		GX_Position3f32(ix0, iy0, 0.0f);          GX_Color4u8(rc.r, rc.g, rc.b, rc.a); GX_TexCoord2f32(0.0f, 0.0f);
+		GX_Position3f32(ix0, iy1, 0.0f);          GX_Color4u8(rc.r, rc.g, rc.b, rc.a); GX_TexCoord2f32(0.0f, 0.0f);
+		GX_Position3f32(ix0 - rim_w, iy1, 0.0f); GX_Color4u8(re.r, re.g, re.b, re.a); GX_TexCoord2f32(0.0f, 0.0f);
+	GX_End();
+	// Right edge: bright along icon right, fades rightward
+	GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
+		GX_Position3f32(ix1, iy0, 0.0f);          GX_Color4u8(rc.r, rc.g, rc.b, rc.a); GX_TexCoord2f32(0.0f, 0.0f);
+		GX_Position3f32(ix1 + rim_w, iy0, 0.0f); GX_Color4u8(re.r, re.g, re.b, re.a); GX_TexCoord2f32(0.0f, 0.0f);
+		GX_Position3f32(ix1 + rim_w, iy1, 0.0f); GX_Color4u8(re.r, re.g, re.b, re.a); GX_TexCoord2f32(0.0f, 0.0f);
+		GX_Position3f32(ix1, iy1, 0.0f);          GX_Color4u8(rc.r, rc.g, rc.b, rc.a); GX_TexCoord2f32(0.0f, 0.0f);
+	GX_End();
+
+	// drawInit() restores TEV and blend state before next event
+}
+
+// External
+uiDrawObj_t* DrawGlow(int cx, int cy, int radius, int icon_size, GXColor color, u8 intensity) {
+	drawGlowEvent_t *eventData = calloc(1, sizeof(drawGlowEvent_t));
+	eventData->cx = cx;
+	eventData->cy = cy;
+	eventData->radius = radius;
+	eventData->icon_size = icon_size;
+	eventData->color = color;
+	eventData->intensity = intensity;
+	uiDrawObj_t *event = calloc(1, sizeof(uiDrawObj_t));
+	event->type = EV_GLOW;
+	event->data = eventData;
+	return event;
+}
+
 static uiDrawObj_t* drawParameterForArgsSelector(Parameter *param, int x, int y, int selected) {
 
 	uiDrawObj_t* container = DrawContainer();
@@ -2177,6 +2315,9 @@ static void videoDrawEvent(uiDrawObj_t *videoEvent) {
 			break;
 		case EV_FLATRECT:
 			_DrawFlatRect(videoEvent);
+			break;
+		case EV_GLOW:
+			_DrawGlow(videoEvent);
 			break;
 		default:
 			break;
