@@ -21,7 +21,6 @@ static GXTexObj cm_flat_tex;
 static GXTexObj cm_dim_tex;
 static GXTexObj cm_highlight_tex;
 static GXTexObj cm_memcard_tex;
-static GXTexObj cm_cell_glow_tex;
 static GXTexObj cm_panel_frame_phys_tex;
 static GXTexObj cm_panel_frame_vmc_tex;
 static bool cm_inited = false;
@@ -57,12 +56,6 @@ void cm_draw_init(void) {
 		GX_InitTexObj(&cm_memcard_tex, texData, 64, 64, GX_TF_RGBA8,
 			GX_CLAMP, GX_CLAMP, GX_FALSE);
 		GX_InitTexObjFilterMode(&cm_memcard_tex, GX_NEAR, GX_NEAR);
-
-		TPL_GetTexture(&imagesTPL, cell_glow, &tplTex);
-		texData = GX_GetTexObjData(&tplTex);
-		GX_InitTexObj(&cm_cell_glow_tex, texData, 40, 40, GX_TF_RGBA8,
-			GX_CLAMP, GX_CLAMP, GX_FALSE);
-		GX_InitTexObjFilterMode(&cm_cell_glow_tex, GX_NEAR, GX_NEAR);
 
 		TPL_GetTexture(&imagesTPL, panel_frame_phys, &tplTex);
 		texData = GX_GetTexObjData(&tplTex);
