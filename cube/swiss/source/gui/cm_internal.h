@@ -216,6 +216,15 @@ typedef struct {
 
 #define LIB_MAX_SAVES 320		// 128 per slot × 2 + VMC + GCI
 #define LIB_MAX_GROUPS 128
+#define LIB_MAX_CARD_SAVES 64
+
+// A unique save filename across card/VMC sources (grouped view)
+typedef struct {
+	char filename[CARD_FILENAMELEN + 1];
+	u16 blocks;
+	u32 time;				// Most recent modification time
+	int save_idx[2];		// Index into all_saves per panel (-1 if absent)
+} lib_card_save;
 
 // Library view state (managed from main loop, not a standalone page)
 typedef struct {
@@ -232,6 +241,16 @@ typedef struct {
 	int save_indices[LIB_MAX_SAVES];
 	int save_count;
 	lib_game_group *sel_group;
+	// Grouped card/VMC saves and separate GCI list for selected game
+	lib_card_save card_saves[LIB_MAX_CARD_SAVES];
+	int num_card_saves;
+	int gci_save_indices[LIB_MAX_SAVES];
+	int num_gci_saves;
+	int total_rows;			// card rows + divider(1) + gci rows
+	// Panel state snapshot (for indicator drawing)
+	bool panel_present[2];
+	bool panel_is_vmc[2];
+	char panel_label[2][4];	// "A", "B", or "V"
 } lib_state;
 
 #define LIB_INPUT_NONE   0
