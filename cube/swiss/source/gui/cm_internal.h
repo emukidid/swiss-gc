@@ -163,16 +163,19 @@ void cm_panel_remove_entry(cm_panel *panel, int index);
 
 void cm_draw_init(void);
 uiDrawObj_t *cm_draw_message(const char *msg);
+uiDrawObj_t *cm_draw_progress(const char *msg, int current, int total);
 uiDrawObj_t *cm_draw_rect(int x, int y, int w, int h);
 uiDrawObj_t *cm_draw_highlight(int x, int y, int w, int h);
 void cm_draw_panel_frame(uiDrawObj_t *container, bool is_vmc, int x, int y, int w, int h);
 void cm_draw_title_bar(uiDrawObj_t *container, int view_mode);
 void cm_draw_status_leds(uiDrawObj_t *container, cm_panel *panels[2]);
+void cm_led_scan_vmc(void);
 void cm_led_begin(cm_panel *panels[2]);
 void cm_led_end(void);
 void cm_led_show(const char *msg);
 void cm_led_hide(void);
 void cm_led_pulse(void);
+void cm_led_progress(const char *msg, int current, int total);
 uiDrawObj_t *card_manager_draw(cm_panel *left, cm_panel *right,
 	int active_panel, u32 anim_tick);
 int cm_context_menu(const char *items[], const bool enabled[], int count);

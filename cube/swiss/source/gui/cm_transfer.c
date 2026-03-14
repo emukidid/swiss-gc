@@ -177,9 +177,8 @@ bool card_manager_export_save(int slot, card_entry *entry, s32 sector_size) {
 		devices[DEVICE_CUR] ? devices[DEVICE_CUR] : NULL;
 	if (!dev) return false;
 
-	// Show progress (§6.3: indicate when accessing Memory Card)
-	uiDrawObj_t *msgBox = cm_draw_message("Exporting save...\nDo not remove the Memory Card.");
-	DrawPublish(msgBox);
+	int total_sectors = (entry->filesize + sector_size - 1) / sector_size;
+	cm_led_progress("Exporting save...\nDo not remove the Memory Card.", 0, total_sectors);
 
 	// Open card file
 	CARD_SetGamecode(entry->gamecode);
@@ -187,8 +186,8 @@ bool card_manager_export_save(int slot, card_entry *entry, s32 sector_size) {
 	card_file cardfile;
 	s32 ret = CARD_Open(slot, entry->filename, &cardfile);
 	if (ret != CARD_ERROR_READY) {
-		DrawDispose(msgBox);
-		msgBox = cm_draw_message("Failed to open card file.");
+		cm_led_hide();
+		uiDrawObj_t *msgBox = cm_draw_message("Failed to open card file.");
 		DrawPublish(msgBox);
 		while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
 		while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
@@ -261,8 +260,8 @@ bool card_manager_export_save(int slot, card_entry *entry, s32 sector_size) {
 	u8 *savedata = (u8 *)memalign(32, entry->filesize);
 	if (!savedata) {
 		CARD_Close(&cardfile);
-		DrawDispose(msgBox);
-		msgBox = cm_draw_message("Out of memory.");
+		cm_led_hide();
+		uiDrawObj_t *msgBox = cm_draw_message("Out of memory.");
 		DrawPublish(msgBox);
 		while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
 		while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
@@ -273,7 +272,10 @@ bool card_manager_export_save(int slot, card_entry *entry, s32 sector_size) {
 	u8 *read_buf = (u8 *)memalign(32, sector_size);
 	bool read_ok = true;
 	u32 offset = 0;
+	int cur_sector = 0;
 	while (offset < entry->filesize) {
+		cm_led_progress("Exporting save...\nDo not remove the Memory Card.",
+			cur_sector, total_sectors);
 		ret = CARD_Read(&cardfile, read_buf, sector_size, offset);
 		if (ret != CARD_ERROR_READY) {
 			// Retry once
@@ -289,9 +291,11 @@ bool card_manager_export_save(int slot, card_entry *entry, s32 sector_size) {
 		if (copy_len > (u32)sector_size) copy_len = sector_size;
 		memcpy(savedata + offset, read_buf, copy_len);
 		offset += sector_size;
+		cur_sector++;
 	}
 	free(read_buf);
 	CARD_Close(&cardfile);
+	cm_led_hide();
 
 	// Log data fingerprint for verification
 	if (read_ok && entry->filesize >= 16) {
@@ -304,16 +308,14 @@ bool card_manager_export_save(int slot, card_entry *entry, s32 sector_size) {
 
 	if (!read_ok) {
 		free(savedata);
-		DrawDispose(msgBox);
-		msgBox = cm_draw_message("Failed to read card data.");
-		DrawPublish(msgBox);
+		uiDrawObj_t *errBox = cm_draw_message("Failed to read card data.");
+		DrawPublish(errBox);
 		while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
 		while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
-		DrawDispose(msgBox);
+		DrawDispose(errBox);
 		return false;
 	}
 
-	DrawDispose(msgBox);
 	bool result = cm_write_gci_to_sd(&gci, savedata, entry->filesize);
 	free(savedata);
 	return result;
@@ -1001,16 +1003,16 @@ bool card_manager_backups(cm_panel *panel) {
 bool cm_read_physical_save(int slot, card_entry *entry, s32 sector_size,
 	GCI *out_gci, u8 **out_data, u32 *out_len) {
 
-	uiDrawObj_t *msgBox = cm_draw_message("Reading save...\nDo not remove the Memory Card.");
-	DrawPublish(msgBox);
+	int total_sectors = (entry->filesize + sector_size - 1) / sector_size;
+	cm_led_progress("Reading save...\nDo not remove the Memory Card.", 0, total_sectors);
 
 	CARD_SetGamecode(entry->gamecode);
 	CARD_SetCompany(entry->company);
 	card_file cardfile;
 	s32 ret = CARD_Open(slot, entry->filename, &cardfile);
 	if (ret != CARD_ERROR_READY) {
-		DrawDispose(msgBox);
-		msgBox = cm_draw_message("Failed to open card file.");
+		cm_led_hide();
+		uiDrawObj_t *msgBox = cm_draw_message("Failed to open card file.");
 		DrawPublish(msgBox);
 		while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
 		while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
@@ -1070,8 +1072,8 @@ bool cm_read_physical_save(int slot, card_entry *entry, s32 sector_size,
 	u8 *savedata = (u8 *)memalign(32, entry->filesize);
 	if (!savedata) {
 		CARD_Close(&cardfile);
-		DrawDispose(msgBox);
-		msgBox = cm_draw_message("Out of memory.");
+		cm_led_hide();
+		uiDrawObj_t *msgBox = cm_draw_message("Out of memory.");
 		DrawPublish(msgBox);
 		while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
 		while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
@@ -1082,7 +1084,10 @@ bool cm_read_physical_save(int slot, card_entry *entry, s32 sector_size,
 	u8 *read_buf = (u8 *)memalign(32, sector_size);
 	bool read_ok = true;
 	u32 offset = 0;
+	int cur_sector = 0;
 	while (offset < entry->filesize) {
+		cm_led_progress("Reading save...\nDo not remove the Memory Card.",
+			cur_sector, total_sectors);
 		ret = CARD_Read(&cardfile, read_buf, sector_size, offset);
 		if (ret != CARD_ERROR_READY) {
 			usleep(2000);
@@ -1093,18 +1098,19 @@ bool cm_read_physical_save(int slot, card_entry *entry, s32 sector_size,
 		if (copy_len > (u32)sector_size) copy_len = sector_size;
 		memcpy(savedata + offset, read_buf, copy_len);
 		offset += sector_size;
+		cur_sector++;
 	}
 	free(read_buf);
 	CARD_Close(&cardfile);
-	DrawDispose(msgBox);
+	cm_led_hide();
 
 	if (!read_ok) {
 		free(savedata);
-		msgBox = cm_draw_message("Failed to read card data.");
-		DrawPublish(msgBox);
+		uiDrawObj_t *errBox = cm_draw_message("Failed to read card data.");
+		DrawPublish(errBox);
 		while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
 		while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
-		DrawDispose(msgBox);
+		DrawDispose(errBox);
 		return false;
 	}
 
@@ -1195,19 +1201,27 @@ bool card_manager_import_gci_buf(int slot, GCI *gci, u8 *savedata,
 
 	if (ret != CARD_ERROR_READY) {
 		DrawDispose(msgBox);
-		msgBox = cm_draw_message("Failed to open card file.");
-		DrawPublish(msgBox);
+		uiDrawObj_t *errBox = cm_draw_message("Failed to open card file.");
+		DrawPublish(errBox);
 		while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
 		while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
-		DrawDispose(msgBox);
+		DrawDispose(errBox);
 		return false;
 	}
+
+	// Switch to progress bar display for the write/verify phase
+	DrawDispose(msgBox);
+	int total_sectors = (expected_len + sector_size - 1) / sector_size;
+	cm_led_progress("Writing save...\nDo not remove the Memory Card.", 0, total_sectors);
 
 	// Write data sector by sector
 	u8 *write_buf = (u8 *)memalign(32, sector_size);
 	bool write_ok = true;
 	u32 offset = 0;
+	int cur_sector = 0;
 	while (offset < expected_len) {
+		cm_led_progress("Writing save...\nDo not remove the Memory Card.",
+			cur_sector, total_sectors);
 		u32 chunk = expected_len - offset;
 		if (chunk > (u32)sector_size) chunk = sector_size;
 		memset(write_buf, 0, sector_size);
@@ -1219,17 +1233,18 @@ bool card_manager_import_gci_buf(int slot, GCI *gci, u8 *savedata,
 			break;
 		}
 		offset += sector_size;
+		cur_sector++;
 	}
 	free(write_buf);
 
 	if (!write_ok) {
+		cm_led_hide();
 		CARD_Close(&cardfile);
-		DrawDispose(msgBox);
-		msgBox = cm_draw_message("Failed to write data to card.");
-		DrawPublish(msgBox);
+		uiDrawObj_t *errBox = cm_draw_message("Failed to write data to card.");
+		DrawPublish(errBox);
 		while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
 		while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
-		DrawDispose(msgBox);
+		DrawDispose(errBox);
 		return false;
 	}
 
@@ -1238,7 +1253,10 @@ bool card_manager_import_gci_buf(int slot, GCI *gci, u8 *savedata,
 	bool verify_ok = true;
 	if (verify_buf) {
 		offset = 0;
+		cur_sector = 0;
 		while (offset < expected_len) {
+			cm_led_progress("Verifying save...\nDo not remove the Memory Card.",
+				cur_sector, total_sectors);
 			ret = CARD_Read(&cardfile, verify_buf, sector_size, offset);
 			if (ret != CARD_ERROR_READY) {
 				cm_log("  VERIFY: CARD_Read failed at offset=%u ret=%d", offset, (int)ret);
@@ -1261,12 +1279,14 @@ bool card_manager_import_gci_buf(int slot, GCI *gci, u8 *savedata,
 				break;
 			}
 			offset += sector_size;
+			cur_sector++;
 		}
 		free(verify_buf);
 		if (verify_ok) {
 			cm_log("  VERIFY: all %u bytes match", expected_len);
 		}
 	}
+	cm_led_hide();
 
 	// Patch raw directory entry in sys_area to restore ALL GCI fields.
 	// CARD_SetStatus has bugs: it rejects icon_addr >= 512, overwrites
@@ -1336,15 +1356,15 @@ bool card_manager_import_gci_buf(int slot, GCI *gci, u8 *savedata,
 	}
 
 	CARD_Close(&cardfile);
+	cm_led_hide();
 
-	DrawDispose(msgBox);
 	char done_msg[128];
 	snprintf(done_msg, sizeof(done_msg), "Imported \"%s\" successfully.", filename);
-	msgBox = cm_draw_message(done_msg);
-	DrawPublish(msgBox);
+	uiDrawObj_t *doneBox = cm_draw_message(done_msg);
+	DrawPublish(doneBox);
 	while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
 	while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
-	DrawDispose(msgBox);
+	DrawDispose(doneBox);
 	return true;
 }
 

@@ -93,6 +93,7 @@ uiDrawObj_t *cm_draw_highlight(int x, int y, int w, int h) {
 static cm_panel **s_led_panels = NULL;
 static char s_led_msg_text[256];
 static uiDrawObj_t *s_led_page = NULL;
+static bool s_vmc_present[2] = {false, false};  // MemoryCardA/B.*.raw exists
 
 uiDrawObj_t *cm_draw_message(const char *msg) {
 	char buf[512];
@@ -123,6 +124,63 @@ uiDrawObj_t *cm_draw_message(const char *msg) {
 	}
 
 	// Auto-include status LEDs when context is set
+	if (s_led_panels)
+		cm_draw_status_leds(box, s_led_panels);
+
+	return box;
+}
+
+#define CM_PROG_BAR_H    8
+#define CM_PROG_BAR_PAD  6
+#define CM_PROG_LINES    2  // Fixed layout: 2 text lines + progress bar
+
+uiDrawObj_t *cm_draw_progress(const char *msg, int current, int total) {
+	char buf[512];
+	strlcpy(buf, msg, sizeof(buf));
+
+	const char *lines[16];
+	int num_lines = 0;
+	char *tok = strtok(buf, "\n");
+	while (tok && num_lines < 16) {
+		lines[num_lines++] = tok;
+		tok = strtok(NULL, "\n");
+	}
+
+	// Fixed box size regardless of actual line count
+	int content_w = CM_MSG_MAX_W - 2 * CM_MSG_PAD_X;
+	int box_h = CM_PROG_LINES * CM_MSG_LINE_H + 2 * CM_MSG_PAD_Y
+		+ CM_PROG_BAR_H + CM_PROG_BAR_PAD;
+	int box_x = (640 - CM_MSG_MAX_W) / 2;
+	int box_y = (480 - box_h) / 2;
+
+	uiDrawObj_t *box = DrawEmptyBox(box_x, box_y,
+		box_x + CM_MSG_MAX_W, box_y + box_h);
+
+	for (int i = 0; i < num_lines && i < CM_PROG_LINES; i++) {
+		if (lines[i][0] == ' ' && lines[i][1] == '\0') continue;
+		float scale = GetTextScaleToFitInWidthWithMax(lines[i], content_w, CM_MSG_FONT);
+		int ly = box_y + CM_MSG_PAD_Y + i * CM_MSG_LINE_H + CM_MSG_LINE_H / 2;
+		DrawAddChild(box, DrawStyledLabel(640 / 2, ly,
+			lines[i], scale, ALIGN_CENTER, defaultColor));
+	}
+
+	// Progress bar — always at the same Y position
+	int bar_x = box_x + CM_MSG_PAD_X;
+	int bar_y = box_y + CM_MSG_PAD_Y + CM_PROG_LINES * CM_MSG_LINE_H + CM_PROG_BAR_PAD;
+	int bar_w = content_w;
+	float frac = (total > 0) ? (float)current / (float)total : 0.0f;
+	if (frac > 1.0f) frac = 1.0f;
+	int fill_w = (int)(bar_w * frac);
+
+	// Background track
+	GXColor track = {40, 40, 40, 200};
+	DrawAddChild(box, DrawFlatColorRect(bar_x, bar_y, bar_w, CM_PROG_BAR_H, track));
+	// Filled portion
+	if (fill_w > 0) {
+		GXColor fill = {100, 180, 100, 255};
+		DrawAddChild(box, DrawFlatColorRect(bar_x, bar_y, fill_w, CM_PROG_BAR_H, fill));
+	}
+
 	if (s_led_panels)
 		cm_draw_status_leds(box, s_led_panels);
 
@@ -187,71 +245,134 @@ void cm_draw_title_bar(uiDrawObj_t *container, int view_mode) {
 // --- Status LEDs ---
 
 #define LED_SZ     5
-#define LED_GAP_X  20
+#define LED_GAP_X  16
 
 static float cm_led_phase(void) {
 	return (float)(ticks_to_millisecs(gettime()) % 2000) / 2000.0f * 6.2832f;
 }
 
+// Scan swiss/saves/ for MemoryCardA/B.*.raw presence
+void cm_led_scan_vmc(void) {
+	vmc_file_entry vmcs[MAX_VMC_FILES];
+	int n = vmc_scan_files(vmcs, MAX_VMC_FILES);
+	s_vmc_present[0] = false;
+	s_vmc_present[1] = false;
+	for (int i = 0; i < n; i++) {
+		char *name = strrchr(vmcs[i].path, '/');
+		name = name ? name + 1 : vmcs[i].path;
+		if (strncasecmp(name, "MemoryCardA", 11) == 0 && vmcs[i].filesize > 0)
+			s_vmc_present[0] = true;
+		else if (strncasecmp(name, "MemoryCardB", 11) == 0 && vmcs[i].filesize > 0)
+			s_vmc_present[1] = true;
+	}
+}
+
+// Find panel activity targeting a specific device
+static u8 cm_device_activity(cm_panel *panels[2],
+	cm_source_type src, int slot, const char *vmc_prefix) {
+	u8 act = CM_ACTIVITY_IDLE;
+	for (int p = 0; p < 2; p++) {
+		if (src == CM_SRC_PHYSICAL) {
+			if (panels[p]->source == CM_SRC_PHYSICAL && panels[p]->slot == slot) {
+				if (panels[p]->loading || panels[p]->activity == CM_ACTIVITY_READ)
+					act = act < CM_ACTIVITY_READ ? CM_ACTIVITY_READ : act;
+				if (panels[p]->activity == CM_ACTIVITY_WRITE)
+					act = CM_ACTIVITY_WRITE;
+			}
+		} else {
+			if (panels[p]->source == CM_SRC_VMC && vmc_prefix) {
+				char *name = strrchr(panels[p]->vmc_path, '/');
+				name = name ? name + 1 : panels[p]->vmc_path;
+				if (strncasecmp(name, vmc_prefix, strlen(vmc_prefix)) == 0) {
+					if (panels[p]->loading || panels[p]->activity == CM_ACTIVITY_READ)
+						act = act < CM_ACTIVITY_READ ? CM_ACTIVITY_READ : act;
+					if (panels[p]->activity == CM_ACTIVITY_WRITE)
+						act = CM_ACTIVITY_WRITE;
+				}
+			}
+		}
+	}
+	return act;
+}
+
+static void cm_draw_one_led(uiDrawObj_t *container, int x, int y,
+	const char *label, bool present, u8 activity, float phase) {
+	GXColor led_color;
+	GXColor glow_color = {0};
+	u8 glow_i = 0;
+	float glow_w = 0;
+
+	if (activity != CM_ACTIVITY_IDLE) {
+		float pulse = 0.5f + 0.5f * sinf(phase);
+		u8 a = (u8)(140.0f + 115.0f * pulse);
+		if (activity == CM_ACTIVITY_WRITE) {
+			led_color = (GXColor){255, 80, 40, a};
+			glow_color = (GXColor){255, 80, 40, 255};
+		} else {
+			led_color = (GXColor){255, 140, 40, a};
+			glow_color = (GXColor){255, 140, 40, 255};
+		}
+		glow_i = (u8)(180.0f * pulse);
+		glow_w = 3.0f;
+	} else if (present) {
+		led_color = (GXColor){60, 200, 80, 220};
+		glow_color = (GXColor){60, 200, 80, 255};
+		glow_i = 40;
+		glow_w = 2.0f;
+	} else {
+		led_color = (GXColor){60, 60, 60, 100};
+	}
+
+	DrawAddChild(container, DrawFlatColorRect(x, y, LED_SZ, LED_SZ, led_color));
+	if (glow_w > 0)
+		DrawAddChild(container, DrawEdgeGlow(x, y, LED_SZ, LED_SZ,
+			glow_w, glow_color, glow_i));
+	DrawAddChild(container, DrawStyledLabel(x + LED_SZ + 2, y + LED_SZ / 2,
+		label, 0.35f, ALIGN_LEFT, (GXColor){120, 120, 120, 200}));
+}
+
 void cm_draw_status_leds(uiDrawObj_t *container, cm_panel *panels[2]) {
-	int base_x = BOX_X2 - 95;
-	int base_y = TITLE_Y + 7;
 	float phase = cm_led_phase();
 
-	for (int p = 0; p < 2; p++) {
-		int lx = base_x + p * LED_GAP_X;
+	// Count visible indicators
+	int num_leds = 2;  // Physical A + B always
+	if (s_vmc_present[0]) num_leds++;
+	if (s_vmc_present[1]) num_leds++;
 
-		// Label: A/B for physical, V for VMC
-		const char *label;
-		if (panels[p]->source == CM_SRC_VMC)
-			label = "V";
-		else
-			label = panels[p]->slot == CARD_SLOTA ? "A" : "B";
+	// Dock LEDs immediately left of view mode icons (icons start at BOX_X2 - 40)
+	int total_w = num_leds * LED_GAP_X;
+	int base_x = BOX_X2 - 46 - total_w;
+	int base_y = TITLE_Y + 7;
+	int slot_idx = 0;
 
-		GXColor led_color;
-		GXColor glow_color = {0};
-		u8 glow_i = 0;
-		float glow_w = 0;
-		bool active = panels[p]->loading
-			|| panels[p]->activity == CM_ACTIVITY_READ
-			|| panels[p]->activity == CM_ACTIVITY_WRITE;
+	// Physical A
+	bool phys_a = (CARD_ProbeEx(CARD_SLOTA, NULL, NULL) == CARD_ERROR_READY);
+	u8 act_a = cm_device_activity(panels, CM_SRC_PHYSICAL, CARD_SLOTA, NULL);
+	cm_draw_one_led(container, base_x + slot_idx * LED_GAP_X, base_y,
+		"A", phys_a, act_a, phase);
+	slot_idx++;
 
-		if (active) {
-			float pulse = 0.5f + 0.5f * sinf(phase);
-			u8 a = (u8)(140.0f + 115.0f * pulse);
-			if (panels[p]->activity == CM_ACTIVITY_WRITE) {
-				// Red/warm for writes
-				led_color = (GXColor){255, 80, 40, a};
-				glow_color = (GXColor){255, 80, 40, 255};
-			} else {
-				// Orange for reads/loading
-				led_color = (GXColor){255, 140, 40, a};
-				glow_color = (GXColor){255, 140, 40, 255};
-			}
-			glow_i = (u8)(180.0f * pulse);
-			glow_w = 3.0f;
-		} else if (panels[p]->card_present) {
-			// Green steady
-			led_color = (GXColor){60, 200, 80, 220};
-			glow_color = (GXColor){60, 200, 80, 255};
-			glow_i = 40;
-			glow_w = 2.0f;
-		} else {
-			// Grey — no device
-			led_color = (GXColor){60, 60, 60, 100};
-		}
+	// Physical B
+	bool phys_b = (CARD_ProbeEx(CARD_SLOTB, NULL, NULL) == CARD_ERROR_READY);
+	u8 act_b = cm_device_activity(panels, CM_SRC_PHYSICAL, CARD_SLOTB, NULL);
+	cm_draw_one_led(container, base_x + slot_idx * LED_GAP_X, base_y,
+		"B", phys_b, act_b, phase);
+	slot_idx++;
 
-		// LED body
-		DrawAddChild(container, DrawFlatColorRect(lx, base_y, LED_SZ, LED_SZ, led_color));
+	// Virtual A (if MemoryCardA.*.raw exists)
+	if (s_vmc_present[0]) {
+		u8 act_va = cm_device_activity(panels, CM_SRC_VMC, 0, "MemoryCardA");
+		cm_draw_one_led(container, base_x + slot_idx * LED_GAP_X, base_y,
+			"VA", true, act_va, phase);
+		slot_idx++;
+	}
 
-		// LED glow
-		if (glow_w > 0)
-			DrawAddChild(container, DrawEdgeGlow(lx, base_y, LED_SZ, LED_SZ,
-				glow_w, glow_color, glow_i));
-
-		// Label to the right
-		DrawAddChild(container, DrawStyledLabel(lx + LED_SZ + 2, base_y + LED_SZ / 2,
-			label, 0.35f, ALIGN_LEFT, (GXColor){120, 120, 120, 200}));
+	// Virtual B (if MemoryCardB.*.raw exists)
+	if (s_vmc_present[1]) {
+		u8 act_vb = cm_device_activity(panels, CM_SRC_VMC, 0, "MemoryCardB");
+		cm_draw_one_led(container, base_x + slot_idx * LED_GAP_X, base_y,
+			"VB", true, act_vb, phase);
+		slot_idx++;
 	}
 }
 
@@ -259,6 +380,7 @@ void cm_draw_status_leds(uiDrawObj_t *container, cm_panel *panels[2]) {
 
 void cm_led_begin(cm_panel *panels[2]) {
 	s_led_panels = panels;
+	cm_led_scan_vmc();
 }
 
 void cm_led_end(void) {
@@ -282,6 +404,14 @@ void cm_led_hide(void) {
 void cm_led_pulse(void) {
 	if (!s_led_msg_text[0]) return;
 	uiDrawObj_t *fresh = cm_draw_message(s_led_msg_text);
+	if (s_led_page) DrawDispose(s_led_page);
+	s_led_page = fresh;
+	DrawPublish(fresh);
+	VIDEO_WaitVSync();
+}
+
+void cm_led_progress(const char *msg, int current, int total) {
+	uiDrawObj_t *fresh = cm_draw_progress(msg, current, total);
 	if (s_led_page) DrawDispose(s_led_page);
 	s_led_page = fresh;
 	DrawPublish(fresh);
