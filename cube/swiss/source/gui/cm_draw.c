@@ -80,6 +80,45 @@ uiDrawObj_t *cm_draw_highlight(int x, int y, int w, int h) {
 	return DrawTexObj(&cm_highlight_tex, x, y, w, h, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
 }
 
+// --- Message box (consistent with context menu styling) ---
+
+#define CM_MSG_MAX_W    400
+#define CM_MSG_PAD_X    20
+#define CM_MSG_PAD_Y    16
+#define CM_MSG_LINE_H   20
+#define CM_MSG_FONT     0.55f
+
+uiDrawObj_t *cm_draw_message(const char *msg) {
+	char buf[512];
+	strlcpy(buf, msg, sizeof(buf));
+
+	const char *lines[16];
+	int num_lines = 0;
+	char *tok = strtok(buf, "\n");
+	while (tok && num_lines < 16) {
+		lines[num_lines++] = tok;
+		tok = strtok(NULL, "\n");
+	}
+
+	int content_w = CM_MSG_MAX_W - 2 * CM_MSG_PAD_X;
+	int box_h = num_lines * CM_MSG_LINE_H + 2 * CM_MSG_PAD_Y;
+	int box_x = (640 - CM_MSG_MAX_W) / 2;
+	int box_y = (480 - box_h) / 2;
+
+	uiDrawObj_t *box = DrawEmptyBox(box_x, box_y,
+		box_x + CM_MSG_MAX_W, box_y + box_h);
+
+	for (int i = 0; i < num_lines; i++) {
+		if (lines[i][0] == ' ' && lines[i][1] == '\0') continue;
+		float scale = GetTextScaleToFitInWidthWithMax(lines[i], content_w, CM_MSG_FONT);
+		int ly = box_y + CM_MSG_PAD_Y + i * CM_MSG_LINE_H + CM_MSG_LINE_H / 2;
+		DrawAddChild(box, DrawStyledLabel(640 / 2, ly,
+			lines[i], scale, ALIGN_CENTER, defaultColor));
+	}
+
+	return box;
+}
+
 // --- 9-slice panel frame ---
 
 static void cm_draw_9slice(uiDrawObj_t *container, GXTexObj *tex,

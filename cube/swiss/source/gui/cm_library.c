@@ -454,7 +454,7 @@ static bool lib_handle_action(lib_save *s, cm_panel *panels[2],
 			}
 
 			if (dest_count == 0) {
-				uiDrawObj_t *msg = DrawMessageBox(D_INFO, "No destinations available.");
+				uiDrawObj_t *msg = cm_draw_message("No destinations available.");
 				DrawPublish(msg);
 				while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
 				while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }

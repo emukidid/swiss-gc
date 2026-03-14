@@ -19,7 +19,7 @@
 bool card_manager_confirm_delete(const char *filename) {
 	char msg[256];
 	sprintf(msg, "Delete \"%s\"?\n \nPress L + A to confirm, or B to cancel.", filename);
-	uiDrawObj_t *msgBox = DrawMessageBox(D_WARN, msg);
+	uiDrawObj_t *msgBox = cm_draw_message(msg);
 	DrawPublish(msgBox);
 
 	bool confirmed = false;
@@ -40,21 +40,21 @@ bool card_manager_confirm_delete(const char *filename) {
 }
 
 bool card_manager_delete_save(int slot, card_entry *entry) {
-	uiDrawObj_t *msgBox = DrawMessageBox(D_INFO, "Deleting save...\nDo not remove the Memory Card.");
+	uiDrawObj_t *msgBox = cm_draw_message("Deleting save...\nDo not remove the Memory Card.");
 	DrawPublish(msgBox);
 	CARD_SetGamecode(entry->gamecode);
 	CARD_SetCompany(entry->company);
 	s32 ret = CARD_Delete(slot, entry->filename);
 	DrawDispose(msgBox);
 	if (ret != CARD_ERROR_READY) {
-		msgBox = DrawMessageBox(D_FAIL, "Delete failed.");
+		msgBox = cm_draw_message("Delete failed.");
 		DrawPublish(msgBox);
 		while (!(padsButtonsHeld() & PAD_BUTTON_A)) { VIDEO_WaitVSync(); }
 		while (padsButtonsHeld() & PAD_BUTTON_A) { VIDEO_WaitVSync(); }
 		DrawDispose(msgBox);
 		return false;
 	}
-	msgBox = DrawMessageBox(D_INFO, "Save deleted.");
+	msgBox = cm_draw_message("Save deleted.");
 	DrawPublish(msgBox);
 	while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
 	while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
@@ -70,7 +70,7 @@ bool cm_write_gci_to_sd(GCI *gci, u8 *savedata, u32 save_len) {
 	DEVICEHANDLER_INTERFACE *dev = devices[DEVICE_CONFIG] ? devices[DEVICE_CONFIG] :
 		devices[DEVICE_CUR] ? devices[DEVICE_CUR] : NULL;
 	if (!dev) {
-		uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL, "No storage device available.");
+		uiDrawObj_t *msgBox = cm_draw_message("No storage device available.");
 		DrawPublish(msgBox);
 		while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
 		while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
@@ -105,7 +105,7 @@ bool cm_write_gci_to_sd(GCI *gci, u8 *savedata, u32 save_len) {
 		snprintf(overwrite_msg, sizeof(overwrite_msg),
 			"%.4s-%.32s.gci already exists.\n \nA: Overwrite  |  X: Keep Both  |  B: Cancel",
 			gamecode, filename);
-		uiDrawObj_t *msgBox = DrawMessageBox(D_WARN, overwrite_msg);
+		uiDrawObj_t *msgBox = cm_draw_message(overwrite_msg);
 		DrawPublish(msgBox);
 		int choice = 0;
 		while (!choice) {
@@ -133,7 +133,7 @@ bool cm_write_gci_to_sd(GCI *gci, u8 *savedata, u32 save_len) {
 		}
 	}
 
-	uiDrawObj_t *msgBox = DrawMessageBox(D_INFO, "Writing file...");
+	uiDrawObj_t *msgBox = cm_draw_message("Writing file...");
 	DrawPublish(msgBox);
 
 	u32 gci_total = sizeof(GCI) + save_len;
@@ -141,7 +141,7 @@ bool cm_write_gci_to_sd(GCI *gci, u8 *savedata, u32 save_len) {
 	if (!gcibuf) {
 		free(outFile);
 		DrawDispose(msgBox);
-		msgBox = DrawMessageBox(D_FAIL, "Out of memory.");
+		msgBox = cm_draw_message("Out of memory.");
 		DrawPublish(msgBox);
 		while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
 		while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
@@ -162,7 +162,7 @@ bool cm_write_gci_to_sd(GCI *gci, u8 *savedata, u32 save_len) {
 	char done_msg[128];
 	snprintf(done_msg, sizeof(done_msg), "Exported %.4s-%.32s.gci",
 		gamecode, filename);
-	msgBox = DrawMessageBox(D_INFO, done_msg);
+	msgBox = cm_draw_message(done_msg);
 	DrawPublish(msgBox);
 	while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
 	while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
@@ -178,7 +178,7 @@ bool card_manager_export_save(int slot, card_entry *entry, s32 sector_size) {
 	if (!dev) return false;
 
 	// Show progress (§6.3: indicate when accessing Memory Card)
-	uiDrawObj_t *msgBox = DrawMessageBox(D_INFO, "Exporting save...\nDo not remove the Memory Card.");
+	uiDrawObj_t *msgBox = cm_draw_message("Exporting save...\nDo not remove the Memory Card.");
 	DrawPublish(msgBox);
 
 	// Open card file
@@ -188,7 +188,7 @@ bool card_manager_export_save(int slot, card_entry *entry, s32 sector_size) {
 	s32 ret = CARD_Open(slot, entry->filename, &cardfile);
 	if (ret != CARD_ERROR_READY) {
 		DrawDispose(msgBox);
-		msgBox = DrawMessageBox(D_FAIL, "Failed to open card file.");
+		msgBox = cm_draw_message("Failed to open card file.");
 		DrawPublish(msgBox);
 		while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
 		while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
@@ -262,7 +262,7 @@ bool card_manager_export_save(int slot, card_entry *entry, s32 sector_size) {
 	if (!savedata) {
 		CARD_Close(&cardfile);
 		DrawDispose(msgBox);
-		msgBox = DrawMessageBox(D_FAIL, "Out of memory.");
+		msgBox = cm_draw_message("Out of memory.");
 		DrawPublish(msgBox);
 		while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
 		while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
@@ -305,7 +305,7 @@ bool card_manager_export_save(int slot, card_entry *entry, s32 sector_size) {
 	if (!read_ok) {
 		free(savedata);
 		DrawDispose(msgBox);
-		msgBox = DrawMessageBox(D_FAIL, "Failed to read card data.");
+		msgBox = cm_draw_message("Failed to read card data.");
 		DrawPublish(msgBox);
 		while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
 		while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
@@ -594,7 +594,7 @@ bool cm_backup_rename(gci_file_entry *gci) {
 		strlcpy(check->name, full_new, PATHNAME_MAX);
 		if (!dev->statFile(check)) {
 			free(check);
-			uiDrawObj_t *msgBox = DrawMessageBox(D_WARN, "A file with that name already exists.");
+			uiDrawObj_t *msgBox = cm_draw_message("A file with that name already exists.");
 			DrawPublish(msgBox);
 			while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
 			while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
@@ -639,7 +639,7 @@ bool cm_backup_delete(gci_file_entry *gci) {
 	char *rel = getRelativeName(gci->path);
 	char msg[256];
 	snprintf(msg, sizeof(msg), "Delete backup \"%s\"?\n \nPress L + A to confirm, or B to cancel.", rel);
-	uiDrawObj_t *msgBox = DrawMessageBox(D_WARN, msg);
+	uiDrawObj_t *msgBox = cm_draw_message(msg);
 	DrawPublish(msgBox);
 
 	bool confirmed = false;
@@ -870,7 +870,7 @@ bool card_manager_backups(cm_panel *panel) {
 	cm_log("Backups: found %d GCI files", num_gci);
 
 	if (num_gci == 0) {
-		uiDrawObj_t *msgBox = DrawMessageBox(D_INFO, "No backups found in swiss/saves/");
+		uiDrawObj_t *msgBox = cm_draw_message("No backups found in swiss/saves/");
 		DrawPublish(msgBox);
 		while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
 		while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
@@ -1001,7 +1001,7 @@ bool card_manager_backups(cm_panel *panel) {
 bool cm_read_physical_save(int slot, card_entry *entry, s32 sector_size,
 	GCI *out_gci, u8 **out_data, u32 *out_len) {
 
-	uiDrawObj_t *msgBox = DrawMessageBox(D_INFO, "Reading save...\nDo not remove the Memory Card.");
+	uiDrawObj_t *msgBox = cm_draw_message("Reading save...\nDo not remove the Memory Card.");
 	DrawPublish(msgBox);
 
 	CARD_SetGamecode(entry->gamecode);
@@ -1010,7 +1010,7 @@ bool cm_read_physical_save(int slot, card_entry *entry, s32 sector_size,
 	s32 ret = CARD_Open(slot, entry->filename, &cardfile);
 	if (ret != CARD_ERROR_READY) {
 		DrawDispose(msgBox);
-		msgBox = DrawMessageBox(D_FAIL, "Failed to open card file.");
+		msgBox = cm_draw_message("Failed to open card file.");
 		DrawPublish(msgBox);
 		while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
 		while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
@@ -1071,7 +1071,7 @@ bool cm_read_physical_save(int slot, card_entry *entry, s32 sector_size,
 	if (!savedata) {
 		CARD_Close(&cardfile);
 		DrawDispose(msgBox);
-		msgBox = DrawMessageBox(D_FAIL, "Out of memory.");
+		msgBox = cm_draw_message("Out of memory.");
 		DrawPublish(msgBox);
 		while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
 		while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
@@ -1100,7 +1100,7 @@ bool cm_read_physical_save(int slot, card_entry *entry, s32 sector_size,
 
 	if (!read_ok) {
 		free(savedata);
-		msgBox = DrawMessageBox(D_FAIL, "Failed to read card data.");
+		msgBox = cm_draw_message("Failed to read card data.");
 		DrawPublish(msgBox);
 		while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
 		while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
@@ -1119,7 +1119,7 @@ bool cm_read_physical_save(int slot, card_entry *entry, s32 sector_size,
 bool card_manager_import_gci_buf(int slot, GCI *gci, u8 *savedata,
 	u32 save_len, s32 sector_size) {
 
-	uiDrawObj_t *msgBox = DrawMessageBox(D_INFO, "Importing save...\nDo not remove the Memory Card.");
+	uiDrawObj_t *msgBox = cm_draw_message("Importing save...\nDo not remove the Memory Card.");
 	DrawPublish(msgBox);
 
 	u32 expected_len = gci->filesize8 * 8192;
@@ -1128,7 +1128,7 @@ bool card_manager_import_gci_buf(int slot, GCI *gci, u8 *savedata,
 		char errmsg[128];
 		snprintf(errmsg, sizeof(errmsg), "GCI size mismatch: got %dK, expected %dK",
 			(int)(save_len / 1024), (int)(expected_len / 1024));
-		msgBox = DrawMessageBox(D_FAIL, errmsg);
+		msgBox = cm_draw_message(errmsg);
 		DrawPublish(msgBox);
 		while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
 		while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
@@ -1157,7 +1157,7 @@ bool card_manager_import_gci_buf(int slot, GCI *gci, u8 *savedata,
 		ret = CARD_Create(slot, filename, expected_len, &cardfile);
 		if (ret != CARD_ERROR_READY) {
 			DrawDispose(msgBox);
-			msgBox = DrawMessageBox(D_FAIL, "Failed to create file on card.\nCard may be full.");
+			msgBox = cm_draw_message("Failed to create file on card.\nCard may be full.");
 			DrawPublish(msgBox);
 			while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
 			while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
@@ -1171,7 +1171,7 @@ bool card_manager_import_gci_buf(int slot, GCI *gci, u8 *savedata,
 		// File exists — confirm overwrite
 		CARD_Close(&cardfile);
 		DrawDispose(msgBox);
-		msgBox = DrawMessageBox(D_WARN, "Save already exists on card.\n \nA: Overwrite  |  B: Cancel");
+		msgBox = cm_draw_message("Save already exists on card.\n \nA: Overwrite  |  B: Cancel");
 		DrawPublish(msgBox);
 		int choice = 0;
 		while (!choice) {
@@ -1185,7 +1185,7 @@ bool card_manager_import_gci_buf(int slot, GCI *gci, u8 *savedata,
 		if (choice == 2) {
 			return false;
 		}
-		msgBox = DrawMessageBox(D_INFO, "Importing save...\nDo not remove the Memory Card.");
+		msgBox = cm_draw_message("Importing save...\nDo not remove the Memory Card.");
 		DrawPublish(msgBox);
 		// Re-open for writing
 		ret = CARD_Open(slot, filename, &cardfile);
@@ -1195,7 +1195,7 @@ bool card_manager_import_gci_buf(int slot, GCI *gci, u8 *savedata,
 
 	if (ret != CARD_ERROR_READY) {
 		DrawDispose(msgBox);
-		msgBox = DrawMessageBox(D_FAIL, "Failed to open card file.");
+		msgBox = cm_draw_message("Failed to open card file.");
 		DrawPublish(msgBox);
 		while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
 		while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
@@ -1225,7 +1225,7 @@ bool card_manager_import_gci_buf(int slot, GCI *gci, u8 *savedata,
 	if (!write_ok) {
 		CARD_Close(&cardfile);
 		DrawDispose(msgBox);
-		msgBox = DrawMessageBox(D_FAIL, "Failed to write data to card.");
+		msgBox = cm_draw_message("Failed to write data to card.");
 		DrawPublish(msgBox);
 		while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
 		while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
@@ -1340,7 +1340,7 @@ bool card_manager_import_gci_buf(int slot, GCI *gci, u8 *savedata,
 	DrawDispose(msgBox);
 	char done_msg[128];
 	snprintf(done_msg, sizeof(done_msg), "Imported \"%s\" successfully.", filename);
-	msgBox = DrawMessageBox(D_INFO, done_msg);
+	msgBox = cm_draw_message(done_msg);
 	DrawPublish(msgBox);
 	while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
 	while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
@@ -1362,7 +1362,7 @@ bool card_manager_import_gci(int slot, gci_file_entry *gci_entry, s32 sector_siz
 
 	if (dev->statFile(inFile)) {
 		free(inFile);
-		uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL, "File not found.");
+		uiDrawObj_t *msgBox = cm_draw_message("File not found.");
 		DrawPublish(msgBox);
 		while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
 		while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
@@ -1373,7 +1373,7 @@ bool card_manager_import_gci(int slot, gci_file_entry *gci_entry, s32 sector_siz
 	u32 total_size = inFile->size;
 	if (total_size <= sizeof(GCI)) {
 		free(inFile);
-		uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL, "Invalid GCI file (too small).");
+		uiDrawObj_t *msgBox = cm_draw_message("Invalid GCI file (too small).");
 		DrawPublish(msgBox);
 		while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
 		while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
@@ -1384,7 +1384,7 @@ bool card_manager_import_gci(int slot, gci_file_entry *gci_entry, s32 sector_siz
 	u8 *filebuf = (u8 *)memalign(32, total_size);
 	if (!filebuf) {
 		free(inFile);
-		uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL, "Out of memory.");
+		uiDrawObj_t *msgBox = cm_draw_message("Out of memory.");
 		DrawPublish(msgBox);
 		while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
 		while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }

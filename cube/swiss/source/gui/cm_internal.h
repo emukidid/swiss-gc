@@ -156,6 +156,7 @@ void cm_panel_remove_entry(cm_panel *panel, int index);
 // --- cm_draw.c ---
 
 void cm_draw_init(void);
+uiDrawObj_t *cm_draw_message(const char *msg);
 uiDrawObj_t *cm_draw_rect(int x, int y, int w, int h);
 uiDrawObj_t *cm_draw_highlight(int x, int y, int w, int h);
 void cm_draw_panel_frame(uiDrawObj_t *container, bool is_vmc, int x, int y, int w, int h);

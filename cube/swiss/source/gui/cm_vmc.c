@@ -508,14 +508,14 @@ static bool vmc_prepare_write(u8 *sysarea,
 bool vmc_read_save(const char *vmc_path, card_entry *entry,
 	GCI *out_gci, u8 **out_data, u32 *out_len) {
 
-	uiDrawObj_t *msgBox = DrawMessageBox(D_INFO, "Reading VMC save...");
+	uiDrawObj_t *msgBox = cm_draw_message("Reading VMC save...");
 	DrawPublish(msgBox);
 
 	u32 sysarea_size = MC_FIRST_DATA_BLOCK * MC_BLOCK_SIZE;
 	u8 *sysarea = vmc_read_range(vmc_path, 0, sysarea_size);
 	if (!sysarea) {
 		DrawDispose(msgBox);
-		msgBox = DrawMessageBox(D_FAIL, "Failed to read VMC.");
+		msgBox = cm_draw_message("Failed to read VMC.");
 		DrawPublish(msgBox);
 		while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
 		while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
@@ -536,7 +536,7 @@ bool vmc_read_save(const char *vmc_path, card_entry *entry,
 	if (!filedata) {
 		free(sysarea);
 		DrawDispose(msgBox);
-		msgBox = DrawMessageBox(D_FAIL, "Failed to read save data from VMC.");
+		msgBox = cm_draw_message("Failed to read save data from VMC.");
 		DrawPublish(msgBox);
 		while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
 		while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
@@ -575,14 +575,14 @@ bool vmc_export_save(const char *vmc_path, card_entry *entry) {
 // --- VMC delete ---
 
 bool vmc_delete_save(const char *vmc_path, card_entry *entry) {
-	uiDrawObj_t *msgBox = DrawMessageBox(D_INFO, "Deleting save from VMC...");
+	uiDrawObj_t *msgBox = cm_draw_message("Deleting save from VMC...");
 	DrawPublish(msgBox);
 
 	u32 sysarea_size = MC_FIRST_DATA_BLOCK * MC_BLOCK_SIZE;
 	u8 *sysarea = vmc_read_range(vmc_path, 0, sysarea_size);
 	if (!sysarea) {
 		DrawDispose(msgBox);
-		msgBox = DrawMessageBox(D_FAIL, "Failed to read VMC.");
+		msgBox = cm_draw_message("Failed to read VMC.");
 		DrawPublish(msgBox);
 		while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
 		while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
@@ -643,14 +643,14 @@ bool vmc_delete_save(const char *vmc_path, card_entry *entry) {
 	DrawDispose(msgBox);
 
 	if (!ok) {
-		msgBox = DrawMessageBox(D_FAIL, "Failed to write VMC.");
+		msgBox = cm_draw_message("Failed to write VMC.");
 		DrawPublish(msgBox);
 		while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
 		while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
 		DrawDispose(msgBox);
 		return false;
 	}
-	msgBox = DrawMessageBox(D_INFO, "Save deleted.");
+	msgBox = cm_draw_message("Save deleted.");
 	DrawPublish(msgBox);
 	while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
 	while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
@@ -665,7 +665,7 @@ bool vmc_delete_save(const char *vmc_path, card_entry *entry) {
 bool vmc_import_save_buf(const char *vmc_path, GCI *gci,
 	u8 *savedata, u32 save_len) {
 
-	uiDrawObj_t *msgBox = DrawMessageBox(D_INFO, "Importing save to VMC...");
+	uiDrawObj_t *msgBox = cm_draw_message("Importing save to VMC...");
 	DrawPublish(msgBox);
 
 	u32 expected_len = gci->filesize8 * MC_BLOCK_SIZE;
@@ -676,7 +676,7 @@ bool vmc_import_save_buf(const char *vmc_path, GCI *gci,
 		char errmsg[128];
 		snprintf(errmsg, sizeof(errmsg), "GCI size mismatch: got %dK, expected %dK",
 			(int)(save_len / 1024), (int)(expected_len / 1024));
-		msgBox = DrawMessageBox(D_FAIL, errmsg);
+		msgBox = cm_draw_message(errmsg);
 		DrawPublish(msgBox);
 		while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
 		while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
@@ -689,7 +689,7 @@ bool vmc_import_save_buf(const char *vmc_path, GCI *gci,
 	u8 *sysarea = vmc_read_range(vmc_path, 0, sysarea_size);
 	if (!sysarea) {
 		DrawDispose(msgBox);
-		msgBox = DrawMessageBox(D_FAIL, "Failed to read VMC.");
+		msgBox = cm_draw_message("Failed to read VMC.");
 		DrawPublish(msgBox);
 		while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
 		while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
@@ -732,7 +732,7 @@ bool vmc_import_save_buf(const char *vmc_path, GCI *gci,
 	if (existing_slot >= 0) {
 		// Confirm overwrite
 		DrawDispose(msgBox);
-		msgBox = DrawMessageBox(D_WARN,
+		msgBox = cm_draw_message(
 			"Save already exists in VMC.\n \nA: Overwrite  |  B: Cancel");
 		DrawPublish(msgBox);
 		int choice = 0;
@@ -748,7 +748,7 @@ bool vmc_import_save_buf(const char *vmc_path, GCI *gci,
 			free(new_dir); free(new_bat); free(sysarea);
 			return false;
 		}
-		msgBox = DrawMessageBox(D_INFO, "Importing save to VMC...");
+		msgBox = cm_draw_message("Importing save to VMC...");
 		DrawPublish(msgBox);
 
 		// Free old blocks first
@@ -771,7 +771,7 @@ bool vmc_import_save_buf(const char *vmc_path, GCI *gci,
 		char errmsg[128];
 		snprintf(errmsg, sizeof(errmsg), "Not enough space.\nNeed %d blocks, have %d free.",
 			need_blocks, *free_count);
-		msgBox = DrawMessageBox(D_FAIL, errmsg);
+		msgBox = cm_draw_message(errmsg);
 		DrawPublish(msgBox);
 		while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
 		while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
@@ -793,7 +793,7 @@ bool vmc_import_save_buf(const char *vmc_path, GCI *gci,
 	if (dir_slot < 0) {
 		free(new_dir); free(new_bat); free(sysarea);
 		DrawDispose(msgBox);
-		msgBox = DrawMessageBox(D_FAIL, "No free directory slots in VMC.");
+		msgBox = cm_draw_message("No free directory slots in VMC.");
 		DrawPublish(msgBox);
 		while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
 		while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
@@ -824,7 +824,7 @@ bool vmc_import_save_buf(const char *vmc_path, GCI *gci,
 		free(alloc_blocks);
 		free(new_dir); free(new_bat); free(sysarea);
 		DrawDispose(msgBox);
-		msgBox = DrawMessageBox(D_FAIL, "FAT allocation failed.");
+		msgBox = cm_draw_message("FAT allocation failed.");
 		DrawPublish(msgBox);
 		while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
 		while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
@@ -908,7 +908,7 @@ bool vmc_import_save_buf(const char *vmc_path, GCI *gci,
 	DrawDispose(msgBox);
 
 	if (!ok) {
-		msgBox = DrawMessageBox(D_FAIL, "Failed to write VMC.");
+		msgBox = cm_draw_message("Failed to write VMC.");
 		DrawPublish(msgBox);
 		while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
 		while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
@@ -918,7 +918,7 @@ bool vmc_import_save_buf(const char *vmc_path, GCI *gci,
 
 	char done_msg[128];
 	snprintf(done_msg, sizeof(done_msg), "Imported \"%s\" to VMC.", gci_filename);
-	msgBox = DrawMessageBox(D_INFO, done_msg);
+	msgBox = cm_draw_message(done_msg);
 	DrawPublish(msgBox);
 	while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
 	while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
@@ -939,7 +939,7 @@ bool vmc_import_save(const char *vmc_path, gci_file_entry *gci_entry) {
 
 	if (dev->statFile(inFile) || inFile->size <= sizeof(GCI)) {
 		free(inFile);
-		uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL, "Invalid GCI file.");
+		uiDrawObj_t *msgBox = cm_draw_message("Invalid GCI file.");
 		DrawPublish(msgBox);
 		while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
 		while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
@@ -951,7 +951,7 @@ bool vmc_import_save(const char *vmc_path, gci_file_entry *gci_entry) {
 	u8 *filebuf = (u8 *)memalign(32, total_file);
 	if (!filebuf) {
 		free(inFile);
-		uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL, "Out of memory.");
+		uiDrawObj_t *msgBox = cm_draw_message("Out of memory.");
 		DrawPublish(msgBox);
 		while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
 		while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }

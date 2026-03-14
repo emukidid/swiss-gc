@@ -21,7 +21,7 @@ static bool card_manager_check_status(int slot, bool was_present) {
 // --- Panel helpers ---
 
 static void cm_show_error(const char *msg) {
-	uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL, msg);
+	uiDrawObj_t *msgBox = cm_draw_message(msg);
 	DrawPublish(msgBox);
 	while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
 	while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
@@ -55,7 +55,7 @@ static void cm_panel_load(cm_panel *panel) {
 			char msg[128];
 			sprintf(msg, "Memory Card in Slot %c uses an\nincompatible format.\n \nA: Format  |  B: Cancel", slot_ch);
 			cm_log("Slot %c: encoding mismatch (foreign card)", slot_ch);
-			uiDrawObj_t *msgBox = DrawMessageBox(D_WARN, msg);
+			uiDrawObj_t *msgBox = cm_draw_message(msg);
 			DrawPublish(msgBox);
 			int choice = 0;
 			while (!choice) {
@@ -67,7 +67,7 @@ static void cm_panel_load(cm_panel *panel) {
 			while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
 			DrawDispose(msgBox);
 			if (choice == 1) {
-				msgBox = DrawMessageBox(D_INFO, "Formatting Memory Card...\nDo not remove the Memory Card.");
+				msgBox = cm_draw_message("Formatting Memory Card...\nDo not remove the Memory Card.");
 				DrawPublish(msgBox);
 				ret = CARD_Format(panel->slot);
 				DrawDispose(msgBox);
@@ -86,7 +86,7 @@ static void cm_panel_load(cm_panel *panel) {
 			char msg[128];
 			sprintf(msg, "Memory Card in Slot %c has corrupted\ndata. Format the card?\n \nA: Format  |  B: Cancel", slot_ch);
 			cm_log("Slot %c: card broken/corrupted", slot_ch);
-			uiDrawObj_t *msgBox = DrawMessageBox(D_WARN, msg);
+			uiDrawObj_t *msgBox = cm_draw_message(msg);
 			DrawPublish(msgBox);
 			int choice = 0;
 			while (!choice) {
@@ -98,7 +98,7 @@ static void cm_panel_load(cm_panel *panel) {
 			while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
 			DrawDispose(msgBox);
 			if (choice == 1) {
-				msgBox = DrawMessageBox(D_INFO, "Formatting Memory Card...\nDo not remove the Memory Card.");
+				msgBox = cm_draw_message("Formatting Memory Card...\nDo not remove the Memory Card.");
 				DrawPublish(msgBox);
 				ret = CARD_Format(panel->slot);
 				DrawDispose(msgBox);
@@ -242,7 +242,7 @@ static void cm_handle_context_menu(cm_panel *ap, cm_panel *other, bool *needs_re
 			}
 
 			if (dest_count == 0) {
-				uiDrawObj_t *msg = DrawMessageBox(D_INFO, "No copy destinations available.");
+				uiDrawObj_t *msg = cm_draw_message("No copy destinations available.");
 				DrawPublish(msg);
 				while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
 				while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
@@ -327,7 +327,7 @@ static void cm_handle_context_menu(cm_panel *ap, cm_panel *other, bool *needs_re
 				CARD_ProbeEx(dest_slot, NULL, &dest_sector);
 				s32 init_ret = initialize_card(dest_slot);
 				if (init_ret != CARD_ERROR_READY) {
-					uiDrawObj_t *msg = DrawMessageBox(D_FAIL, "Destination card not ready.");
+					uiDrawObj_t *msg = cm_draw_message("Destination card not ready.");
 					DrawPublish(msg);
 					while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
 					while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
@@ -423,7 +423,7 @@ static bool cm_pick_vmc(cm_panel *panel) {
 
 	int num = vmc_scan_files(vmcs, MAX_VMC_FILES);
 	if (num == 0) {
-		uiDrawObj_t *msg = DrawMessageBox(D_INFO, "No .raw VMC files found\nin swiss/saves/");
+		uiDrawObj_t *msg = cm_draw_message("No .raw VMC files found\nin swiss/saves/");
 		DrawPublish(msg);
 		while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
 		while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
