@@ -114,11 +114,12 @@ enum VideoEventType
 	EV_TOOLTIP,
 	EV_TITLEBAR,
 	EV_FLATRECT,
-	EV_GLOW
+	EV_GLOW,
+	EV_EDGEGLOW
 };
 
 char * typeStrings[] = {"TexObj", "MsgBox", "Image", "Progress", "SelectableButton", "EmptyBox", "TransparentBox",
-						"FileBrowserButton", "VertScrollbar", "StyledLabel", "Container", "MenuButtons", "Tooltip", "TitleBar", "FlatRect", "Glow"};
+						"FileBrowserButton", "VertScrollbar", "StyledLabel", "Container", "MenuButtons", "Tooltip", "TitleBar", "FlatRect", "Glow", "EdgeGlow"};
 
 typedef struct drawTexObjEvent {
 	GXTexObj *texObj;
@@ -158,6 +159,16 @@ typedef struct drawGlowEvent {
 	GXColor color;
 	u8 intensity;
 } drawGlowEvent_t;
+
+typedef struct drawEdgeGlowEvent {
+	int x;
+	int y;
+	int w;
+	int h;
+	float rim_w;
+	GXColor color;
+	u8 intensity;
+} drawEdgeGlowEvent_t;
 
 typedef struct drawImageEvent {
 	int textureId;
@@ -1756,33 +1767,58 @@ static void _DrawGlow(uiDrawObj_t *evt) {
 	float ix1 = cx + half;
 	float iy1 = cy + half;
 
-	// Top edge: bright along icon top, fades upward
+	// Top edge
 	GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
-		GX_Position3f32(ix0, iy0 - rim_w, 0.0f); GX_Color4u8(re.r, re.g, re.b, re.a); GX_TexCoord2f32(0.0f, 0.0f);
-		GX_Position3f32(ix1, iy0 - rim_w, 0.0f); GX_Color4u8(re.r, re.g, re.b, re.a); GX_TexCoord2f32(0.0f, 0.0f);
-		GX_Position3f32(ix1, iy0, 0.0f);          GX_Color4u8(rc.r, rc.g, rc.b, rc.a); GX_TexCoord2f32(0.0f, 0.0f);
-		GX_Position3f32(ix0, iy0, 0.0f);          GX_Color4u8(rc.r, rc.g, rc.b, rc.a); GX_TexCoord2f32(0.0f, 0.0f);
+		GX_Position3f32(ix0, iy0 - rim_w, 0.0f); GX_Color4u8(re.r, re.g, re.b, re.a); GX_TexCoord2f32(0,0);
+		GX_Position3f32(ix1, iy0 - rim_w, 0.0f); GX_Color4u8(re.r, re.g, re.b, re.a); GX_TexCoord2f32(0,0);
+		GX_Position3f32(ix1, iy0, 0.0f);          GX_Color4u8(rc.r, rc.g, rc.b, rc.a); GX_TexCoord2f32(0,0);
+		GX_Position3f32(ix0, iy0, 0.0f);          GX_Color4u8(rc.r, rc.g, rc.b, rc.a); GX_TexCoord2f32(0,0);
 	GX_End();
-	// Bottom edge: bright along icon bottom, fades downward
+	// Bottom edge
 	GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
-		GX_Position3f32(ix0, iy1, 0.0f);          GX_Color4u8(rc.r, rc.g, rc.b, rc.a); GX_TexCoord2f32(0.0f, 0.0f);
-		GX_Position3f32(ix1, iy1, 0.0f);          GX_Color4u8(rc.r, rc.g, rc.b, rc.a); GX_TexCoord2f32(0.0f, 0.0f);
-		GX_Position3f32(ix1, iy1 + rim_w, 0.0f); GX_Color4u8(re.r, re.g, re.b, re.a); GX_TexCoord2f32(0.0f, 0.0f);
-		GX_Position3f32(ix0, iy1 + rim_w, 0.0f); GX_Color4u8(re.r, re.g, re.b, re.a); GX_TexCoord2f32(0.0f, 0.0f);
+		GX_Position3f32(ix0, iy1, 0.0f);          GX_Color4u8(rc.r, rc.g, rc.b, rc.a); GX_TexCoord2f32(0,0);
+		GX_Position3f32(ix1, iy1, 0.0f);          GX_Color4u8(rc.r, rc.g, rc.b, rc.a); GX_TexCoord2f32(0,0);
+		GX_Position3f32(ix1, iy1 + rim_w, 0.0f); GX_Color4u8(re.r, re.g, re.b, re.a); GX_TexCoord2f32(0,0);
+		GX_Position3f32(ix0, iy1 + rim_w, 0.0f); GX_Color4u8(re.r, re.g, re.b, re.a); GX_TexCoord2f32(0,0);
 	GX_End();
-	// Left edge: bright along icon left, fades leftward
+	// Left edge
 	GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
-		GX_Position3f32(ix0 - rim_w, iy0, 0.0f); GX_Color4u8(re.r, re.g, re.b, re.a); GX_TexCoord2f32(0.0f, 0.0f);
-		GX_Position3f32(ix0, iy0, 0.0f);          GX_Color4u8(rc.r, rc.g, rc.b, rc.a); GX_TexCoord2f32(0.0f, 0.0f);
-		GX_Position3f32(ix0, iy1, 0.0f);          GX_Color4u8(rc.r, rc.g, rc.b, rc.a); GX_TexCoord2f32(0.0f, 0.0f);
-		GX_Position3f32(ix0 - rim_w, iy1, 0.0f); GX_Color4u8(re.r, re.g, re.b, re.a); GX_TexCoord2f32(0.0f, 0.0f);
+		GX_Position3f32(ix0 - rim_w, iy0, 0.0f); GX_Color4u8(re.r, re.g, re.b, re.a); GX_TexCoord2f32(0,0);
+		GX_Position3f32(ix0, iy0, 0.0f);          GX_Color4u8(rc.r, rc.g, rc.b, rc.a); GX_TexCoord2f32(0,0);
+		GX_Position3f32(ix0, iy1, 0.0f);          GX_Color4u8(rc.r, rc.g, rc.b, rc.a); GX_TexCoord2f32(0,0);
+		GX_Position3f32(ix0 - rim_w, iy1, 0.0f); GX_Color4u8(re.r, re.g, re.b, re.a); GX_TexCoord2f32(0,0);
 	GX_End();
-	// Right edge: bright along icon right, fades rightward
+	// Right edge
 	GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
-		GX_Position3f32(ix1, iy0, 0.0f);          GX_Color4u8(rc.r, rc.g, rc.b, rc.a); GX_TexCoord2f32(0.0f, 0.0f);
-		GX_Position3f32(ix1 + rim_w, iy0, 0.0f); GX_Color4u8(re.r, re.g, re.b, re.a); GX_TexCoord2f32(0.0f, 0.0f);
-		GX_Position3f32(ix1 + rim_w, iy1, 0.0f); GX_Color4u8(re.r, re.g, re.b, re.a); GX_TexCoord2f32(0.0f, 0.0f);
-		GX_Position3f32(ix1, iy1, 0.0f);          GX_Color4u8(rc.r, rc.g, rc.b, rc.a); GX_TexCoord2f32(0.0f, 0.0f);
+		GX_Position3f32(ix1, iy0, 0.0f);          GX_Color4u8(rc.r, rc.g, rc.b, rc.a); GX_TexCoord2f32(0,0);
+		GX_Position3f32(ix1 + rim_w, iy0, 0.0f); GX_Color4u8(re.r, re.g, re.b, re.a); GX_TexCoord2f32(0,0);
+		GX_Position3f32(ix1 + rim_w, iy1, 0.0f); GX_Color4u8(re.r, re.g, re.b, re.a); GX_TexCoord2f32(0,0);
+		GX_Position3f32(ix1, iy1, 0.0f);          GX_Color4u8(rc.r, rc.g, rc.b, rc.a); GX_TexCoord2f32(0,0);
+	GX_End();
+	// Corners: triangle fan from corner vertex (bright) to two outer vertices (transparent)
+	// Top-left
+	GX_Begin(GX_TRIANGLES, GX_VTXFMT0, 3);
+		GX_Position3f32(ix0, iy0, 0.0f);              GX_Color4u8(rc.r, rc.g, rc.b, rc.a); GX_TexCoord2f32(0,0);
+		GX_Position3f32(ix0 - rim_w, iy0, 0.0f);      GX_Color4u8(re.r, re.g, re.b, re.a); GX_TexCoord2f32(0,0);
+		GX_Position3f32(ix0, iy0 - rim_w, 0.0f);      GX_Color4u8(re.r, re.g, re.b, re.a); GX_TexCoord2f32(0,0);
+	GX_End();
+	// Top-right
+	GX_Begin(GX_TRIANGLES, GX_VTXFMT0, 3);
+		GX_Position3f32(ix1, iy0, 0.0f);              GX_Color4u8(rc.r, rc.g, rc.b, rc.a); GX_TexCoord2f32(0,0);
+		GX_Position3f32(ix1, iy0 - rim_w, 0.0f);      GX_Color4u8(re.r, re.g, re.b, re.a); GX_TexCoord2f32(0,0);
+		GX_Position3f32(ix1 + rim_w, iy0, 0.0f);      GX_Color4u8(re.r, re.g, re.b, re.a); GX_TexCoord2f32(0,0);
+	GX_End();
+	// Bottom-left
+	GX_Begin(GX_TRIANGLES, GX_VTXFMT0, 3);
+		GX_Position3f32(ix0, iy1, 0.0f);              GX_Color4u8(rc.r, rc.g, rc.b, rc.a); GX_TexCoord2f32(0,0);
+		GX_Position3f32(ix0, iy1 + rim_w, 0.0f);      GX_Color4u8(re.r, re.g, re.b, re.a); GX_TexCoord2f32(0,0);
+		GX_Position3f32(ix0 - rim_w, iy1, 0.0f);      GX_Color4u8(re.r, re.g, re.b, re.a); GX_TexCoord2f32(0,0);
+	GX_End();
+	// Bottom-right
+	GX_Begin(GX_TRIANGLES, GX_VTXFMT0, 3);
+		GX_Position3f32(ix1, iy1, 0.0f);              GX_Color4u8(rc.r, rc.g, rc.b, rc.a); GX_TexCoord2f32(0,0);
+		GX_Position3f32(ix1 + rim_w, iy1, 0.0f);      GX_Color4u8(re.r, re.g, re.b, re.a); GX_TexCoord2f32(0,0);
+		GX_Position3f32(ix1, iy1 + rim_w, 0.0f);      GX_Color4u8(re.r, re.g, re.b, re.a); GX_TexCoord2f32(0,0);
 	GX_End();
 
 	// drawInit() restores TEV and blend state before next event
@@ -1799,6 +1835,103 @@ uiDrawObj_t* DrawGlow(int cx, int cy, int radius, int icon_size, GXColor color, 
 	eventData->intensity = intensity;
 	uiDrawObj_t *event = calloc(1, sizeof(uiDrawObj_t));
 	event->type = EV_GLOW;
+	event->data = eventData;
+	return event;
+}
+
+static void _DrawEdgeGlow(uiDrawObj_t *evt) {
+	drawEdgeGlowEvent_t *data = (drawEdgeGlowEvent_t*)evt->data;
+	float intensity = (float)data->intensity / 255.0f;
+
+	// TEV: pass vertex color directly, ignore texture
+	GX_SetNumTevStages(1);
+	GX_SetTevOrder(GX_TEVSTAGE0, GX_TEXCOORDNULL, GX_TEXMAP_NULL, GX_COLOR0A0);
+	GX_SetTevColorIn(GX_TEVSTAGE0, GX_CC_ZERO, GX_CC_ZERO, GX_CC_ZERO, GX_CC_RASC);
+	GX_SetTevColorOp(GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_ENABLE, GX_TEVPREV);
+	GX_SetTevAlphaIn(GX_TEVSTAGE0, GX_CA_ZERO, GX_CA_ZERO, GX_CA_ZERO, GX_CA_RASA);
+	GX_SetTevAlphaOp(GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_ENABLE, GX_TEVPREV);
+
+	// Additive blending
+	GX_SetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_ONE, GX_LO_CLEAR);
+
+	float rim_a = 180.0f * intensity;
+	if (rim_a > 255.0f) rim_a = 255.0f;
+	u8 ra = (u8)rim_a;
+	GXColor rc = {data->color.r, data->color.g, data->color.b, ra};
+	GXColor re = {data->color.r, data->color.g, data->color.b, 0};
+	float rw = data->rim_w;
+
+	float x0 = (float)data->x;
+	float y0 = (float)data->y;
+	float x1 = x0 + (float)data->w;
+	float y1 = y0 + (float)data->h;
+
+	// Top edge
+	GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
+		GX_Position3f32(x0, y0 - rw, 0.0f); GX_Color4u8(re.r, re.g, re.b, re.a); GX_TexCoord2f32(0,0);
+		GX_Position3f32(x1, y0 - rw, 0.0f); GX_Color4u8(re.r, re.g, re.b, re.a); GX_TexCoord2f32(0,0);
+		GX_Position3f32(x1, y0, 0.0f);      GX_Color4u8(rc.r, rc.g, rc.b, rc.a); GX_TexCoord2f32(0,0);
+		GX_Position3f32(x0, y0, 0.0f);      GX_Color4u8(rc.r, rc.g, rc.b, rc.a); GX_TexCoord2f32(0,0);
+	GX_End();
+	// Bottom edge
+	GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
+		GX_Position3f32(x0, y1, 0.0f);      GX_Color4u8(rc.r, rc.g, rc.b, rc.a); GX_TexCoord2f32(0,0);
+		GX_Position3f32(x1, y1, 0.0f);      GX_Color4u8(rc.r, rc.g, rc.b, rc.a); GX_TexCoord2f32(0,0);
+		GX_Position3f32(x1, y1 + rw, 0.0f); GX_Color4u8(re.r, re.g, re.b, re.a); GX_TexCoord2f32(0,0);
+		GX_Position3f32(x0, y1 + rw, 0.0f); GX_Color4u8(re.r, re.g, re.b, re.a); GX_TexCoord2f32(0,0);
+	GX_End();
+	// Left edge
+	GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
+		GX_Position3f32(x0 - rw, y0, 0.0f); GX_Color4u8(re.r, re.g, re.b, re.a); GX_TexCoord2f32(0,0);
+		GX_Position3f32(x0, y0, 0.0f);      GX_Color4u8(rc.r, rc.g, rc.b, rc.a); GX_TexCoord2f32(0,0);
+		GX_Position3f32(x0, y1, 0.0f);      GX_Color4u8(rc.r, rc.g, rc.b, rc.a); GX_TexCoord2f32(0,0);
+		GX_Position3f32(x0 - rw, y1, 0.0f); GX_Color4u8(re.r, re.g, re.b, re.a); GX_TexCoord2f32(0,0);
+	GX_End();
+	// Right edge
+	GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
+		GX_Position3f32(x1, y0, 0.0f);      GX_Color4u8(rc.r, rc.g, rc.b, rc.a); GX_TexCoord2f32(0,0);
+		GX_Position3f32(x1 + rw, y0, 0.0f); GX_Color4u8(re.r, re.g, re.b, re.a); GX_TexCoord2f32(0,0);
+		GX_Position3f32(x1 + rw, y1, 0.0f); GX_Color4u8(re.r, re.g, re.b, re.a); GX_TexCoord2f32(0,0);
+		GX_Position3f32(x1, y1, 0.0f);      GX_Color4u8(rc.r, rc.g, rc.b, rc.a); GX_TexCoord2f32(0,0);
+	GX_End();
+	// Corner triangles: bright at corner vertex, transparent at outer diagonal
+	// Top-left
+	GX_Begin(GX_TRIANGLES, GX_VTXFMT0, 3);
+		GX_Position3f32(x0, y0, 0.0f);          GX_Color4u8(rc.r, rc.g, rc.b, rc.a); GX_TexCoord2f32(0,0);
+		GX_Position3f32(x0 - rw, y0, 0.0f);     GX_Color4u8(re.r, re.g, re.b, re.a); GX_TexCoord2f32(0,0);
+		GX_Position3f32(x0, y0 - rw, 0.0f);     GX_Color4u8(re.r, re.g, re.b, re.a); GX_TexCoord2f32(0,0);
+	GX_End();
+	// Top-right
+	GX_Begin(GX_TRIANGLES, GX_VTXFMT0, 3);
+		GX_Position3f32(x1, y0, 0.0f);          GX_Color4u8(rc.r, rc.g, rc.b, rc.a); GX_TexCoord2f32(0,0);
+		GX_Position3f32(x1, y0 - rw, 0.0f);     GX_Color4u8(re.r, re.g, re.b, re.a); GX_TexCoord2f32(0,0);
+		GX_Position3f32(x1 + rw, y0, 0.0f);     GX_Color4u8(re.r, re.g, re.b, re.a); GX_TexCoord2f32(0,0);
+	GX_End();
+	// Bottom-left
+	GX_Begin(GX_TRIANGLES, GX_VTXFMT0, 3);
+		GX_Position3f32(x0, y1, 0.0f);          GX_Color4u8(rc.r, rc.g, rc.b, rc.a); GX_TexCoord2f32(0,0);
+		GX_Position3f32(x0, y1 + rw, 0.0f);     GX_Color4u8(re.r, re.g, re.b, re.a); GX_TexCoord2f32(0,0);
+		GX_Position3f32(x0 - rw, y1, 0.0f);     GX_Color4u8(re.r, re.g, re.b, re.a); GX_TexCoord2f32(0,0);
+	GX_End();
+	// Bottom-right
+	GX_Begin(GX_TRIANGLES, GX_VTXFMT0, 3);
+		GX_Position3f32(x1, y1, 0.0f);          GX_Color4u8(rc.r, rc.g, rc.b, rc.a); GX_TexCoord2f32(0,0);
+		GX_Position3f32(x1 + rw, y1, 0.0f);     GX_Color4u8(re.r, re.g, re.b, re.a); GX_TexCoord2f32(0,0);
+		GX_Position3f32(x1, y1 + rw, 0.0f);     GX_Color4u8(re.r, re.g, re.b, re.a); GX_TexCoord2f32(0,0);
+	GX_End();
+}
+
+uiDrawObj_t* DrawEdgeGlow(int x, int y, int w, int h, float rim_w, GXColor color, u8 intensity) {
+	drawEdgeGlowEvent_t *eventData = calloc(1, sizeof(drawEdgeGlowEvent_t));
+	eventData->x = x;
+	eventData->y = y;
+	eventData->w = w;
+	eventData->h = h;
+	eventData->rim_w = rim_w;
+	eventData->color = color;
+	eventData->intensity = intensity;
+	uiDrawObj_t *event = calloc(1, sizeof(uiDrawObj_t));
+	event->type = EV_EDGEGLOW;
 	event->data = eventData;
 	return event;
 }
@@ -2318,6 +2451,9 @@ static void videoDrawEvent(uiDrawObj_t *videoEvent) {
 			break;
 		case EV_GLOW:
 			_DrawGlow(videoEvent);
+			break;
+		case EV_EDGEGLOW:
+			_DrawEdgeGlow(videoEvent);
 			break;
 		default:
 			break;

@@ -244,16 +244,6 @@ static int icon_anim_get_frame(icon_anim *icon, u32 tick) {
 static void card_manager_draw_panel(uiDrawObj_t *container, cm_panel *panel,
 	int px, int pw, bool active, u32 anim_tick) {
 
-	// Header — use panel label + free blocks info
-	char header[64];
-	if (panel->card_present) {
-		int total = (panel->mem_size << 20 >> 3) / panel->sector_size - 5;
-		int used = 0;
-		for (int i = 0; i < panel->num_entries; i++) used += panel->entries[i].blocks;
-		snprintf(header, sizeof(header), "%s  %d/%d free", panel->label, total - used, total);
-	} else {
-		snprintf(header, sizeof(header), "%s", panel->label);
-	}
 	bool is_vmc = (panel->source == CM_SRC_VMC);
 	GXColor hdr_color;
 	if (!active)
@@ -262,9 +252,46 @@ static void card_manager_draw_panel(uiDrawObj_t *container, cm_panel *panel,
 		hdr_color = (GXColor){140, 200, 255, 255};
 	else
 		hdr_color = defaultColor;
-	float hdr_scale = GetTextScaleToFitInWidthWithMax(header, pw - 8, 0.6f);
-	DrawAddChild(container, DrawStyledLabel(px + pw / 2, PANEL_TOP_Y + 9, header,
-		hdr_scale, ALIGN_CENTER, hdr_color));
+
+	// Align header text with icon grid edges
+	int grid_w = GRID_COLS * GRID_CELL;
+	int grid_lx = px + (pw - grid_w) / 2;
+	int grid_rx = grid_lx + grid_w;
+
+	// Header: vertically centered between PANEL_TOP_Y and GRID_TOP_Y
+	// GRID_TOP_Y = PANEL_TOP_Y + 36, so 36px of header space
+	int hdr_mid = PANEL_TOP_Y + (GRID_TOP_Y - PANEL_TOP_Y) / 2;
+
+	// Slot label left-aligned with first icon
+	DrawAddChild(container, DrawStyledLabel(grid_lx + 4, hdr_mid, panel->label,
+		0.55f, ALIGN_LEFT, hdr_color));
+
+	// Free blocks right-aligned with last icon
+	if (panel->card_present) {
+		int total = (panel->mem_size << 20 >> 3) / panel->sector_size - 5;
+		int used = 0;
+		for (int i = 0; i < panel->num_entries; i++) used += panel->entries[i].blocks;
+		char blocks[32];
+		snprintf(blocks, sizeof(blocks), "%d/%d free", total - used, total);
+		DrawAddChild(container, DrawStyledLabel(grid_rx - 4, hdr_mid, blocks,
+			0.5f, ALIGN_RIGHT, hdr_color));
+	}
+
+	// Separator line — centered between text bottom (~hdr_mid+7) and grid top
+	int text_bot = hdr_mid + 7;
+	int sep_y = text_bot + (GRID_TOP_Y - text_bot) / 2;
+	DrawAddChild(container, DrawFlatColorRect(grid_lx, sep_y, grid_w, 1,
+		(GXColor){120, 120, 120, 80}));
+
+	// Edge glow for active panel
+	if (active) {
+		float flicker = 0.85f + 0.15f * sinf((float)anim_tick * 0.08f);
+		u8 glow_i = (u8)(240.0f * flicker);
+		GXColor glow_color = is_vmc ? (GXColor){80, 140, 220, 255}
+			: (GXColor){80, 100, 180, 255};
+		DrawAddChild(container, DrawEdgeGlow(px, PANEL_TOP_Y, pw,
+			PANEL_BOTTOM_Y - PANEL_TOP_Y, 6.0f, glow_color, glow_i));
+	}
 
 	// Panel frame (9-slice: blue for VMC, grey for physical)
 	GXTexObj *frame_tex = is_vmc ? &cm_panel_frame_vmc_tex : &cm_panel_frame_phys_tex;
