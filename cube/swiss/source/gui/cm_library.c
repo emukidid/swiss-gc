@@ -36,7 +36,8 @@
 #define LIB_DETAIL_H    52
 #define LIB_BANNER_W    96
 #define LIB_BANNER_H    32
-#define LIB_SAVE_LIST_TOP (LIB_LIST_TOP + LIB_DETAIL_H)
+#define LIB_SAVE_HDR_TOP  (PANEL_TOP_Y + LIB_INSET)
+#define LIB_SAVE_LIST_TOP (LIB_SAVE_HDR_TOP + LIB_DETAIL_H)
 
 // Visible row counts (derived)
 #define LIB_MAX_VIS       ((LIB_LIST_BOT - LIB_LIST_TOP) / LIB_ROW_H)
@@ -301,7 +302,7 @@ static void lib_draw_save_list(uiDrawObj_t *container,
 
 	// --- Detail header: banner + game info ---
 	card_entry *rep = group->rep;
-	int hdr_y = LIB_LIST_TOP;
+	int hdr_y = LIB_SAVE_HDR_TOP;
 	int text_x = lx + 4;
 
 	// Banner (if available)
