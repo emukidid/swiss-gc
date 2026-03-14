@@ -250,14 +250,14 @@ static void lib_draw_game_list(uiDrawObj_t *container,
 
 		float ns = GetTextScaleToFitInWidthWithMax(g->game_name,
 			cw - LIB_ICON_SZ - 16, 0.5f);
-		DrawAddChild(container, DrawStyledLabel(tx, ry + 10,
+		DrawAddChild(container, DrawStyledLabel(tx, ry + 9,
 			g->game_name, ns, ALIGN_LEFT, name_color));
 
 		// Save count
 		char stats[24];
 		snprintf(stats, sizeof(stats), "%d save%s",
 			g->num_saves, g->num_saves > 1 ? "s" : "");
-		DrawAddChild(container, DrawStyledLabel(tx, ry + 23,
+		DrawAddChild(container, DrawStyledLabel(tx, ry + 20,
 			stats, 0.4f, ALIGN_LEFT, (GXColor){120, 120, 120, 255}));
 	}
 
