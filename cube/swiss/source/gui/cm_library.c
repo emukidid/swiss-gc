@@ -523,6 +523,12 @@ static bool lib_handle_action(lib_save *s, cm_panel *panels[2],
 					if (init_ret == CARD_ERROR_READY)
 						write_ok = card_manager_import_gci_buf(slot, &gci, savedata,
 							save_len, dest_sector);
+					if (write_ok) {
+						for (int p = 0; p < 2; p++) {
+							if (panels[p]->source == CM_SRC_PHYSICAL && panels[p]->slot == slot)
+								cm_panel_add_from_gci(panels[p], &gci, savedata, save_len);
+						}
+					}
 					free(savedata);
 					free(vmcs);
 					return write_ok;
@@ -537,6 +543,13 @@ static bool lib_handle_action(lib_save *s, cm_panel *panels[2],
 					continue;
 				if (dest_choice == vmc_offset) {
 					write_ok = vmc_import_save_buf(vmcs[i].path, &gci, savedata, save_len);
+					if (write_ok) {
+						for (int p = 0; p < 2; p++) {
+							if (panels[p]->source == CM_SRC_VMC
+								&& strcmp(panels[p]->vmc_path, vmcs[i].path) == 0)
+								cm_panel_add_from_gci(panels[p], &gci, savedata, save_len);
+						}
+					}
 					free(savedata);
 					free(vmcs);
 					return write_ok;
@@ -573,11 +586,31 @@ static bool lib_handle_action(lib_save *s, cm_panel *panels[2],
 				if (s->gci_idx >= 0)
 					return cm_backup_delete(&gci_files[s->gci_idx]);
 			} else if (s->source == LIB_SRC_VMC) {
-				if (card_manager_confirm_delete(s->entry->filename))
-					return vmc_delete_save(s->vmc_path, s->entry);
+				if (card_manager_confirm_delete(s->entry->filename)
+					&& vmc_delete_save(s->vmc_path, s->entry)) {
+					for (int p = 0; p < 2; p++) {
+						if (panels[p]->source == CM_SRC_VMC
+							&& strcmp(panels[p]->vmc_path, s->vmc_path) == 0) {
+							int idx = (int)(s->entry - panels[p]->entries);
+							if (idx >= 0 && idx < panels[p]->num_entries)
+								cm_panel_remove_entry(panels[p], idx);
+						}
+					}
+					return true;
+				}
 			} else {
-				if (card_manager_confirm_delete(s->entry->filename))
-					return card_manager_delete_save(s->slot, s->entry);
+				if (card_manager_confirm_delete(s->entry->filename)
+					&& card_manager_delete_save(s->slot, s->entry)) {
+					for (int p = 0; p < 2; p++) {
+						if (panels[p]->source == CM_SRC_PHYSICAL
+							&& panels[p]->slot == s->slot) {
+							int idx = (int)(s->entry - panels[p]->entries);
+							if (idx >= 0 && idx < panels[p]->num_entries)
+								cm_panel_remove_entry(panels[p], idx);
+						}
+					}
+					return true;
+				}
 			}
 			return false;
 
@@ -710,8 +743,6 @@ int lib_handle_input(lib_state *st, cm_panel *panels[2], u16 btns, s8 stickY) {
 			int si = st->save_indices[st->save_cursor];
 			if (lib_handle_action(&st->saves[si], panels,
 					st->gci_files, st->num_gci)) {
-				for (int p = 0; p < 2; p++)
-					panels[p]->needs_reload = true;
 				st->needs_rebuild = true;
 			}
 			return LIB_INPUT_REDRAW;
