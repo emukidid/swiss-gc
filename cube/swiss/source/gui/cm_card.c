@@ -83,21 +83,9 @@ void cm_parse_save_graphics(u8 *gfx_data, u32 gfx_len,
 
 	// Extract banner
 	if (banner_size > 0 && banner_size <= total_size) {
-		entry->banner = (u8 *)memalign(32, banner_size);
-		if (entry->banner) {
-			memcpy(entry->banner, gfx_data, banner_size);
-			entry->banner_size = banner_size;
-			DCFlushRange(entry->banner, banner_size);
-			if (bnr_fmt == CARD_BANNER_CI) {
-				GX_InitTlutObj(&entry->banner_tlut, entry->banner + CARD_BANNER_W * CARD_BANNER_H, GX_TL_RGB5A3, 256);
-				GX_InitTexObjCI(&entry->banner_tex, entry->banner, CARD_BANNER_W, CARD_BANNER_H, GX_TF_CI8, GX_CLAMP, GX_CLAMP, GX_FALSE, GX_TLUT0);
-				GX_InitTexObjFilterMode(&entry->banner_tex, GX_LINEAR, GX_NEAR);
-				GX_InitTexObjUserData(&entry->banner_tex, &entry->banner_tlut);
-			} else {
-				GX_InitTexObj(&entry->banner_tex, entry->banner, CARD_BANNER_W, CARD_BANNER_H, GX_TF_RGB5A3, GX_CLAMP, GX_CLAMP, GX_FALSE);
-				GX_InitTexObjFilterMode(&entry->banner_tex, GX_LINEAR, GX_NEAR);
-			}
-		}
+		u8 gx_fmt = (bnr_fmt == CARD_BANNER_CI) ? GX_TF_CI8 : GX_TF_RGB5A3;
+		entry->banner_snap = cm_snap_create(gfx_data, banner_size, gx_fmt,
+			CARD_BANNER_W, CARD_BANNER_H);
 	}
 
 	// Extract icon frames
@@ -108,16 +96,12 @@ void cm_parse_save_graphics(u8 *gfx_data, u32 gfx_len,
 			entry->icon->num_frames = total_frames;
 			int last_valid = -1;
 			for (int i = 0; i < total_frames; i++) {
-				entry->icon->frames[i].fmt = ifmts[i];
 				entry->icon->frames[i].speed = ispeeds[i];
 
 				if (ifmts[i] == CARD_ICON_NONE) {
-					if (last_valid >= 0) {
-						entry->icon->frames[i].data = entry->icon->frames[last_valid].data;
-						entry->icon->frames[i].data_size = 0;  // borrowed
-						entry->icon->frames[i].tex = entry->icon->frames[last_valid].tex;
-						entry->icon->frames[i].tlut = entry->icon->frames[last_valid].tlut;
-					}
+					// Borrowed frame — share snapshot pointer from last valid
+					if (last_valid >= 0)
+						entry->icon->frames[i].snap = entry->icon->frames[last_valid].snap;
 					continue;
 				}
 
@@ -132,29 +116,19 @@ void cm_parse_save_graphics(u8 *gfx_data, u32 gfx_len,
 				if (poff + pix_size > total_size) break;
 				if (has_tlut && icon_tlut_off[i] + tlut_size > total_size) break;
 
-				entry->icon->frames[i].data = (u8 *)memalign(32, alloc_size);
-				if (!entry->icon->frames[i].data) break;
-				entry->icon->frames[i].data_size = alloc_size;
-
-				memcpy(entry->icon->frames[i].data, gfx_data + poff, pix_size);
+				// Build contiguous pixel+tlut buffer for snapshot
+				u8 *tmp = (u8 *)memalign(32, alloc_size);
+				if (!tmp) break;
+				memcpy(tmp, gfx_data + poff, pix_size);
 				if (has_tlut)
-					memcpy(entry->icon->frames[i].data + pix_size, gfx_data + icon_tlut_off[i], tlut_size);
-				DCFlushRange(entry->icon->frames[i].data, alloc_size);
+					memcpy(tmp + pix_size, gfx_data + icon_tlut_off[i], tlut_size);
 
-				if (ifmts[i] == CARD_ICON_RGB) {
-					GX_InitTexObj(&entry->icon->frames[i].tex,
-						entry->icon->frames[i].data,
-						CARD_ICON_W, CARD_ICON_H, GX_TF_RGB5A3, GX_CLAMP, GX_CLAMP, GX_FALSE);
-				} else {
-					GX_InitTlutObj(&entry->icon->frames[i].tlut,
-						entry->icon->frames[i].data + pix_size, GX_TL_RGB5A3, 256);
-					GX_InitTexObjCI(&entry->icon->frames[i].tex,
-						entry->icon->frames[i].data,
-						CARD_ICON_W, CARD_ICON_H, GX_TF_CI8, GX_CLAMP, GX_CLAMP, GX_FALSE, GX_TLUT0);
-					GX_InitTexObjUserData(&entry->icon->frames[i].tex,
-						&entry->icon->frames[i].tlut);
-				}
-				GX_InitTexObjFilterMode(&entry->icon->frames[i].tex, GX_LINEAR, GX_NEAR);
+				u8 gx_fmt = (ifmts[i] == CARD_ICON_RGB) ? GX_TF_RGB5A3 : GX_TF_CI8;
+				entry->icon->frames[i].snap = cm_snap_create(tmp, alloc_size,
+					gx_fmt, CARD_ICON_W, CARD_ICON_H);
+				free(tmp);
+
+				if (!entry->icon->frames[i].snap) break;
 				last_valid = i;
 			}
 			if (last_valid < 0) {
@@ -183,11 +157,6 @@ static void card_manager_read_comment(int slot, card_entry *entry) {
 	CARD_SetGamecode(entry->gamecode);
 	CARD_SetCompany(entry->company);
 
-	s32 sector_size;
-	if (CARD_ProbeEx(slot, NULL, &sector_size) != CARD_ERROR_READY)
-		return;
-	u32 sector_mask = sector_size - 1;
-
 	card_file cardfile;
 	if (CARD_Open(slot, entry->filename, &cardfile) != CARD_ERROR_READY)
 		return;
@@ -195,10 +164,10 @@ static void card_manager_read_comment(int slot, card_entry *entry) {
 	card_stat cardstat;
 	if (CARD_GetStatus(slot, cardfile.filenum, &cardstat) == CARD_ERROR_READY
 		&& cardstat.comment_addr != (u32)-1) {
-		u32 sector_offset = cardstat.comment_addr & ~sector_mask;
-		u8 *buf = (u8 *)memalign(32, sector_size);
+		u32 sector_offset = cardstat.comment_addr & ~(8192 - 1);
+		u8 *buf = (u8 *)memalign(32, 8192);
 		if (buf) {
-			if (CARD_Read(&cardfile, buf, sector_size, sector_offset) == CARD_ERROR_READY) {
+			if (CARD_Read(&cardfile, buf, 8192, sector_offset) == CARD_ERROR_READY) {
 				u32 off_in_sector = cardstat.comment_addr - sector_offset;
 				char *comment = (char *)(buf + off_in_sector);
 				snprintf(entry->game_name, sizeof(entry->game_name), "%.32s", comment);
@@ -217,24 +186,19 @@ static void card_manager_read_graphics(int slot, card_entry *entry) {
 	CARD_SetGamecode(entry->gamecode);
 	CARD_SetCompany(entry->company);
 
-	s32 sector_size;
-	if (CARD_ProbeEx(slot, NULL, &sector_size) != CARD_ERROR_READY)
-		return;
-	u32 sector_mask = sector_size - 1;
-
 	card_file cardfile;
 	if (CARD_Open(slot, entry->filename, &cardfile) != CARD_ERROR_READY)
 		return;
 
-	// Read graphics data from card in a single aligned read
-	u32 sector_offset = entry->icon_addr & ~sector_mask;
+	// Read all graphics data from card in sector-aligned chunks
+	u32 sector_offset = entry->icon_addr & ~(8192 - 1);
 	u32 off_in_sector = entry->icon_addr - sector_offset;
 	// Estimate max graphics size: banner(6144) + 8 icons(2048 each) + tlut(512) ≈ 23KB
 	u32 est_size = 24576;
-	u32 read_len = (off_in_sector + est_size + sector_mask) & ~sector_mask;
+	u32 read_len = (off_in_sector + est_size + 8191) & ~(8192 - 1);
 	u32 max_read = entry->filesize > sector_offset ? entry->filesize - sector_offset : 0;
-	max_read &= ~sector_mask;
-	if (max_read == 0) max_read = (u32)sector_size;
+	max_read &= ~(8192 - 1);
+	if (max_read == 0) max_read = 8192;
 	if (read_len > max_read) read_len = max_read;
 
 	u8 *buf = (u8 *)memalign(32, read_len);
@@ -243,7 +207,13 @@ static void card_manager_read_graphics(int slot, card_entry *entry) {
 		return;
 	}
 
-	bool ok = (CARD_Read(&cardfile, buf, read_len, sector_offset) == CARD_ERROR_READY);
+	bool ok = true;
+	for (u32 off = 0; off < read_len; off += 8192) {
+		if (CARD_Read(&cardfile, buf + off, 8192, sector_offset + off) != CARD_ERROR_READY) {
+			ok = false;
+			break;
+		}
+	}
 	CARD_Close(&cardfile);
 
 	if (!ok) {
@@ -261,34 +231,16 @@ static void card_manager_read_graphics(int slot, card_entry *entry) {
 }
 
 // Deep-copy graphics from src to dst (which already has metadata copied).
-// dst gets its own allocated banner/icon data — safe to free independently.
+// dst gets its own allocated snapshots — safe to free independently.
 void cm_deep_copy_graphics(card_entry *dst, const card_entry *src) {
-	dst->banner = NULL;
-	dst->banner_size = 0;
+	dst->banner_snap = NULL;
 	dst->icon = NULL;
 
 	// Copy banner
-	if (src->banner && src->banner_size > 0) {
-		dst->banner = (u8 *)memalign(32, src->banner_size);
-		if (dst->banner) {
-			memcpy(dst->banner, src->banner, src->banner_size);
-			dst->banner_size = src->banner_size;
-			DCFlushRange(dst->banner, dst->banner_size);
-			if ((src->banner_fmt & CARD_BANNER_MASK) == CARD_BANNER_CI) {
-				GX_InitTlutObj(&dst->banner_tlut,
-					dst->banner + CARD_BANNER_W * CARD_BANNER_H, GX_TL_RGB5A3, 256);
-				GX_InitTexObjCI(&dst->banner_tex, dst->banner,
-					CARD_BANNER_W, CARD_BANNER_H, GX_TF_CI8,
-					GX_CLAMP, GX_CLAMP, GX_FALSE, GX_TLUT0);
-				GX_InitTexObjFilterMode(&dst->banner_tex, GX_LINEAR, GX_NEAR);
-				GX_InitTexObjUserData(&dst->banner_tex, &dst->banner_tlut);
-			} else {
-				GX_InitTexObj(&dst->banner_tex, dst->banner,
-					CARD_BANNER_W, CARD_BANNER_H, GX_TF_RGB5A3,
-					GX_CLAMP, GX_CLAMP, GX_FALSE);
-				GX_InitTexObjFilterMode(&dst->banner_tex, GX_LINEAR, GX_NEAR);
-			}
-		}
+	if (src->banner_snap) {
+		dst->banner_snap = cm_snap_create(src->banner_snap->pixels,
+			src->banner_snap->pixel_size, src->banner_snap->fmt,
+			CARD_BANNER_W, CARD_BANNER_H);
 	}
 
 	// Copy icon
@@ -299,64 +251,148 @@ void cm_deep_copy_graphics(card_entry *dst, const card_entry *src) {
 		dst->icon->anim_type = src->icon->anim_type;
 		int last_valid = -1;
 		for (int i = 0; i < src->icon->num_frames; i++) {
-			dst->icon->frames[i].fmt = src->icon->frames[i].fmt;
 			dst->icon->frames[i].speed = src->icon->frames[i].speed;
 
-			if (src->icon->frames[i].data_size == 0) {
-				// Borrowed frame — share from last valid in the copy
-				if (last_valid >= 0) {
-					dst->icon->frames[i].data = dst->icon->frames[last_valid].data;
-					dst->icon->frames[i].data_size = 0;
-					dst->icon->frames[i].tex = dst->icon->frames[last_valid].tex;
-					dst->icon->frames[i].tlut = dst->icon->frames[last_valid].tlut;
-				}
+			cm_tex_snapshot *ss = src->icon->frames[i].snap;
+			if (!ss) continue;
+
+			// Borrowed frame — shares snap pointer with a previous frame
+			if (last_valid >= 0 && ss == src->icon->frames[last_valid].snap) {
+				dst->icon->frames[i].snap = dst->icon->frames[last_valid].snap;
 				continue;
 			}
 
-			u16 alloc_size = src->icon->frames[i].data_size;
-			dst->icon->frames[i].data = (u8 *)memalign(32, alloc_size);
-			if (!dst->icon->frames[i].data) break;
-			memcpy(dst->icon->frames[i].data, src->icon->frames[i].data, alloc_size);
-			dst->icon->frames[i].data_size = alloc_size;
-			DCFlushRange(dst->icon->frames[i].data, alloc_size);
-
-			if (src->icon->frames[i].fmt == CARD_ICON_RGB) {
-				GX_InitTexObj(&dst->icon->frames[i].tex,
-					dst->icon->frames[i].data,
-					CARD_ICON_W, CARD_ICON_H, GX_TF_RGB5A3,
-					GX_CLAMP, GX_CLAMP, GX_FALSE);
-			} else {
-				u16 pix_size = CARD_ICON_W * CARD_ICON_H;
-				GX_InitTlutObj(&dst->icon->frames[i].tlut,
-					dst->icon->frames[i].data + pix_size, GX_TL_RGB5A3, 256);
-				GX_InitTexObjCI(&dst->icon->frames[i].tex,
-					dst->icon->frames[i].data,
-					CARD_ICON_W, CARD_ICON_H, GX_TF_CI8,
-					GX_CLAMP, GX_CLAMP, GX_FALSE, GX_TLUT0);
-				GX_InitTexObjUserData(&dst->icon->frames[i].tex,
-					&dst->icon->frames[i].tlut);
-			}
-			GX_InitTexObjFilterMode(&dst->icon->frames[i].tex, GX_LINEAR, GX_NEAR);
+			dst->icon->frames[i].snap = cm_snap_create(ss->pixels,
+				ss->pixel_size, ss->fmt, CARD_ICON_W, CARD_ICON_H);
+			if (!dst->icon->frames[i].snap) break;
 			last_valid = i;
 		}
 	}
 }
 
+// Free graphics for entries — snapshots go to retirement queue (safe for video thread).
 void card_manager_free_graphics(card_entry *entries, int count) {
 	for (int i = 0; i < count; i++) {
-		if (entries[i].banner) {
-			free(entries[i].banner);
-			entries[i].banner = NULL;
+		if (entries[i].banner_snap) {
+			cm_snap_retire(entries[i].banner_snap);
+			entries[i].banner_snap = NULL;
 		}
 		if (entries[i].icon) {
+			// Collect unique snapshots first, then retire.
+			// Can't null-and-check because borrowed frames share pointers.
+			cm_tex_snapshot *unique[CARD_MAXICONS];
+			int nu = 0;
 			for (int f = 0; f < entries[i].icon->num_frames; f++) {
-				if (entries[i].icon->frames[f].data_size > 0)
-					free(entries[i].icon->frames[f].data);
+				cm_tex_snapshot *s = entries[i].icon->frames[f].snap;
+				if (!s) continue;
+				bool dup = false;
+				for (int u = 0; u < nu; u++) {
+					if (unique[u] == s) { dup = true; break; }
+				}
+				if (!dup)
+					unique[nu++] = s;
+				entries[i].icon->frames[f].snap = NULL;
 			}
+			for (int u = 0; u < nu; u++)
+				cm_snap_retire(unique[u]);
 			free(entries[i].icon);
 			entries[i].icon = NULL;
 		}
 	}
+}
+
+// --- Snapshot lifecycle ---
+// Heap-allocated texture bundles with frame-based retirement queue.
+// Snapshots are never freed immediately — they enter the retirement queue
+// and are freed only after CM_RETIRE_DELAY frames have elapsed, guaranteeing
+// the video thread is no longer rendering from them.
+
+#define CM_RETIRE_DELAY 3
+
+static struct {
+	cm_tex_snapshot **items;
+	u32 *stamps;
+	int count, cap;
+} s_retire;
+static u32 s_frame_counter;
+
+cm_tex_snapshot *cm_snap_create(const u8 *pixels, u16 size, u8 fmt,
+	u16 w, u16 h) {
+	cm_tex_snapshot *s = calloc(1, sizeof(cm_tex_snapshot));
+	if (!s) return NULL;
+	s->pixels = (u8 *)memalign(32, size);
+	if (!s->pixels) { free(s); return NULL; }
+	memcpy(s->pixels, pixels, size);
+	s->pixel_size = size;
+	s->fmt = fmt;
+	DCFlushRange(s->pixels, size);
+
+	if (fmt == GX_TF_CI8) {
+		u16 pix_size = w * h;
+		GX_InitTlutObj(&s->tlut, s->pixels + pix_size, GX_TL_RGB5A3, 256);
+		GX_InitTexObjCI(&s->tex, s->pixels, w, h, GX_TF_CI8,
+			GX_CLAMP, GX_CLAMP, GX_FALSE, GX_TLUT0);
+		GX_InitTexObjUserData(&s->tex, &s->tlut);
+	} else {
+		GX_InitTexObj(&s->tex, s->pixels, w, h, GX_TF_RGB5A3,
+			GX_CLAMP, GX_CLAMP, GX_FALSE);
+	}
+	GX_InitTexObjFilterMode(&s->tex, GX_LINEAR, GX_NEAR);
+	return s;
+}
+
+void cm_snap_retire(cm_tex_snapshot *snap) {
+	if (!snap) return;
+	if (s_retire.count >= s_retire.cap) {
+		int new_cap = s_retire.cap ? s_retire.cap * 2 : 128;
+		cm_tex_snapshot **ni = realloc(s_retire.items, new_cap * sizeof(*ni));
+		if (!ni) {
+			free(snap->pixels);
+			free(snap);
+			return;
+		}
+		s_retire.items = ni;
+		u32 *ns = realloc(s_retire.stamps, new_cap * sizeof(*ns));
+		if (!ns) {
+			free(snap->pixels);
+			free(snap);
+			return;
+		}
+		s_retire.stamps = ns;
+		s_retire.cap = new_cap;
+	}
+	s_retire.items[s_retire.count] = snap;
+	s_retire.stamps[s_retire.count] = s_frame_counter;
+	s_retire.count++;
+}
+
+void cm_retire_tick(void) {
+	s_frame_counter++;
+	int w = 0;
+	for (int r = 0; r < s_retire.count; r++) {
+		if (s_frame_counter - s_retire.stamps[r] > CM_RETIRE_DELAY) {
+			free(s_retire.items[r]->pixels);
+			free(s_retire.items[r]);
+		} else {
+			s_retire.items[w] = s_retire.items[r];
+			s_retire.stamps[w] = s_retire.stamps[r];
+			w++;
+		}
+	}
+	s_retire.count = w;
+}
+
+void cm_retire_flush(void) {
+	for (int i = 0; i < s_retire.count; i++) {
+		free(s_retire.items[i]->pixels);
+		free(s_retire.items[i]);
+	}
+	s_retire.count = 0;
+	free(s_retire.items);
+	free(s_retire.stamps);
+	s_retire.items = NULL;
+	s_retire.stamps = NULL;
+	s_retire.cap = 0;
 }
 
 // --- Incremental panel updates ---

@@ -476,6 +476,8 @@ void show_card_manager(void) {
 	while (padsButtonsHeld() & PAD_BUTTON_A) { VIDEO_WaitVSync(); }
 
 	while (1) {
+		cm_retire_tick();
+
 		// Reload any panel that needs it
 		bool any_reload = false;
 		for (int p = 0; p < 2; p++) {
@@ -486,19 +488,28 @@ void show_card_manager(void) {
 			}
 		}
 		if (any_reload) {
-			// Show loading page (no card data references — safe during CARD I/O)
+			// Free panel graphics (snapshots go to retirement queue)
 			for (int p = 0; p < 2; p++) {
 				if (panels[p]->loading) {
 					card_manager_free_graphics(panels[p]->entries, panels[p]->num_entries);
 					panels[p]->num_entries = 0;
 				}
 			}
-			uiDrawObj_t *loadPage = card_manager_draw(panels[0], panels[1], active, anim_tick);
+
+			// Show loading page — in library mode, keep the library visible.
+			// Library snapshots are in the retirement queue (not yet freed)
+			// so the video thread can safely render from them during CARD I/O.
+			uiDrawObj_t *loadPage;
+			if (view_mode == 0)
+				loadPage = card_manager_draw(panels[0], panels[1], active, anim_tick);
+			else
+				loadPage = lib_draw_view(lib, anim_tick);
 			cm_draw_status_leds(loadPage, panels);
 			DrawPublish(loadPage);
 			if (page) DrawDispose(page);
 			page = loadPage;
 
+			// CARD I/O — library snapshots stay alive via retirement queue
 			for (int p = 0; p < 2; p++) {
 				if (panels[p]->loading) {
 					cm_panel_load(panels[p]);
@@ -576,11 +587,25 @@ void show_card_manager(void) {
 		if (btns & PAD_BUTTON_X) {
 			while (padsButtonsHeld() & PAD_BUTTON_X) { VIDEO_WaitVSync(); }
 			if (view_mode == 0) {
-				if (!lib->initialized) {
-					lib_state_init(lib);
-					for (int p = 0; p < 2; p++)
-						lib_sync_from_panel(lib, panels[p]);
-					lib_rebuild_index(lib);
+				if (!lib->initialized || lib->needs_rebuild) {
+					uiDrawObj_t *loadMsg = cm_draw_message("Loading library...");
+					DrawPublish(loadMsg);
+					if (!lib->initialized) {
+						lib_state_init(lib);
+						for (int p = 0; p < 2; p++)
+							lib_sync_from_panel(lib, panels[p]);
+						lib_rebuild_index(lib);
+					} else {
+						for (int p = 0; p < 2; p++)
+							lib_sync_from_panel(lib, panels[p]);
+						for (int d = 0; d < LIB_NUM_DEVICES; d++) {
+							if (lib->devices[d].vmc_path[0])
+								lib->devices[d].needs_reload = true;
+						}
+						lib_state_rebuild(lib);
+					}
+					lib->needs_rebuild = false;
+					DrawDispose(loadMsg);
 				}
 				view_mode = 1;
 			} else {
@@ -624,17 +649,8 @@ void show_card_manager(void) {
 				while (padsButtonsHeld() & PAD_BUTTON_A) { VIDEO_WaitVSync(); }
 				cm_handle_context_menu(ap, other, &needs_redraw);
 				needs_redraw = true;
-				if (lib->initialized) {
-					// Re-sync physical devices from panels (no CARD I/O)
-					for (int p = 0; p < 2; p++)
-						lib_sync_from_panel(lib, panels[p]);
-					// Flag VMC devices for reload
-					for (int d = 0; d < LIB_NUM_DEVICES; d++) {
-						if (lib->devices[d].vmc_path[0])
-							lib->devices[d].needs_reload = true;
-					}
-					lib_rebuild_index(lib);
-				}
+				if (lib->initialized)
+					lib->needs_rebuild = true;
 				goto debounce;
 			}
 
@@ -642,12 +658,8 @@ void show_card_manager(void) {
 			if (btns & PAD_TRIGGER_Z) {
 				while (padsButtonsHeld() & PAD_TRIGGER_Z) { VIDEO_WaitVSync(); }
 				cm_pick_vmc(ap);
-				if (lib->initialized) {
-					for (int d = 0; d < LIB_NUM_DEVICES; d++) {
-						if (lib->devices[d].vmc_path[0])
-							lib->devices[d].needs_reload = true;
-					}
-				}
+				if (lib->initialized)
+					lib->needs_rebuild = true;
 				needs_redraw = true;
 				goto debounce;
 			}
@@ -694,6 +706,7 @@ debounce:
 		card_manager_free_graphics(panels[p]->entries, panels[p]->num_entries);
 		free(panels[p]);
 	}
+	cm_retire_flush();
 	cm_led_end();
 	while (padsButtonsHeld() & PAD_BUTTON_B) { VIDEO_WaitVSync(); }
 }

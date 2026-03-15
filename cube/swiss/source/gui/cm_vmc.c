@@ -481,7 +481,7 @@ static bool vmc_prepare_write(u8 *sysarea,
 bool vmc_read_save(const char *vmc_path, card_entry *entry,
 	GCI *out_gci, u8 **out_data, u32 *out_len) {
 
-	uiDrawObj_t *msgBox = cm_draw_message("Reading VMC save...");
+	uiDrawObj_t *msgBox = cm_draw_message("Reading save...");
 	DrawPublish(msgBox);
 
 	u32 sysarea_size = MC_FIRST_DATA_BLOCK * MC_BLOCK_SIZE;
@@ -547,7 +547,7 @@ bool vmc_export_save(const char *vmc_path, card_entry *entry) {
 // --- VMC delete ---
 
 bool vmc_delete_save(const char *vmc_path, card_entry *entry) {
-	uiDrawObj_t *msgBox = cm_draw_message("Deleting save from VMC...");
+	uiDrawObj_t *msgBox = cm_draw_message("Deleting save...");
 	DrawPublish(msgBox);
 
 	u32 sysarea_size = MC_FIRST_DATA_BLOCK * MC_BLOCK_SIZE;
@@ -633,7 +633,7 @@ bool vmc_delete_save(const char *vmc_path, card_entry *entry) {
 bool vmc_import_save_buf(const char *vmc_path, GCI *gci,
 	u8 *savedata, u32 save_len) {
 
-	uiDrawObj_t *msgBox = cm_draw_message("Importing save to VMC...");
+	uiDrawObj_t *msgBox = cm_draw_message("Writing save...");
 	DrawPublish(msgBox);
 
 	u32 expected_len = gci->filesize8 * MC_BLOCK_SIZE;
@@ -882,7 +882,7 @@ bool vmc_import_save_buf(const char *vmc_path, GCI *gci,
 	}
 
 	char done_msg[128];
-	snprintf(done_msg, sizeof(done_msg), "Imported \"%s\" to VMC.", gci_filename);
+	snprintf(done_msg, sizeof(done_msg), "Imported \"%s\" successfully.", gci_filename);
 	msgBox = cm_draw_message(done_msg);
 	DrawPublish(msgBox);
 	while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }

@@ -108,7 +108,8 @@ void lib_sync_from_panel(lib_state *st, cm_panel *panel) {
 	int dev_idx = (panel->slot == CARD_SLOTA) ? LIB_DEV_PHYS_A : LIB_DEV_PHYS_B;
 	lib_device *dev = &st->devices[dev_idx];
 
-	// Free old library graphics before overwriting
+	// Retire old snapshots — they enter the retirement queue and will be freed
+	// after CM_RETIRE_DELAY frames, safe from video thread access.
 	card_manager_free_graphics(dev->entries, dev->num_entries);
 
 	dev->num_entries = 0;
@@ -220,8 +221,8 @@ static int lib_build_index(lib_state *st) {
 		if (found >= 0) {
 			st->groups[found].num_saves++;
 			// Prefer a rep with graphics (VMC/GCI entries have them, physical don't)
-			if (!st->groups[found].rep->icon && !st->groups[found].rep->banner
-				&& (e->icon || e->banner))
+			if (!st->groups[found].rep->icon && !st->groups[found].rep->banner_snap
+				&& (e->icon || e->banner_snap))
 				st->groups[found].rep = e;
 		} else {
 			lib_game_group *g = &st->groups[ng];
@@ -398,12 +399,12 @@ static void lib_draw_game_list(uiDrawObj_t *container,
 				LIB_ICON_SZ, LIB_ICON_SZ, (GXColor){100, 120, 200, 255}, glow_i));
 		}
 
-		if (e->icon && e->icon->num_frames > 0 && e->icon->frames[0].data) {
-			DrawAddChild(container, DrawTexObj(&e->icon->frames[0].tex,
+		if (e->icon && e->icon->num_frames > 0 && e->icon->frames[0].snap) {
+			DrawAddChild(container, DrawTexObj(&e->icon->frames[0].snap->tex,
 				ix, iy, LIB_ICON_SZ, LIB_ICON_SZ,
 				0, 0.0f, 1.0f, 0.0f, 1.0f, 0));
-		} else if (e->banner) {
-			DrawAddChild(container, DrawTexObj(&e->banner_tex,
+		} else if (e->banner_snap) {
+			DrawAddChild(container, DrawTexObj(&e->banner_snap->tex,
 				ix, iy, LIB_ICON_SZ, LIB_ICON_SZ,
 				0, 0.33f, 0.67f, 0.0f, 1.0f, 0));
 		}
@@ -475,8 +476,8 @@ static void lib_draw_save_list(uiDrawObj_t *container, lib_state *st,
 	int hdr_y = LIB_SAVE_HDR_TOP;
 	int text_x = lx + 4;
 
-	if (rep->banner) {
-		DrawAddChild(container, DrawTexObj(&rep->banner_tex,
+	if (rep->banner_snap) {
+		DrawAddChild(container, DrawTexObj(&rep->banner_snap->tex,
 			lx + lw - LIB_BANNER_W - 4, hdr_y,
 			LIB_BANNER_W, LIB_BANNER_H,
 			0, 0.0f, 1.0f, 0.0f, 1.0f, 0));
@@ -1013,7 +1014,10 @@ int lib_handle_input(lib_state *st, cm_panel *panels[2], u16 btns, s8 stickY) {
 			}
 
 			if (target && lib_handle_action(st, target, panels)) {
+				uiDrawObj_t *loadMsg = cm_draw_message("Updating...");
+				DrawPublish(loadMsg);
 				lib_state_rebuild(st);
+				DrawDispose(loadMsg);
 			}
 			return LIB_INPUT_REDRAW;
 		}

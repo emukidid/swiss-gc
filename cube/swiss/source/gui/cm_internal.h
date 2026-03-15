@@ -48,16 +48,21 @@
 
 // --- Types ---
 
+// Heap-allocated texture bundle — stable address, independent of card_entry lifetime
+typedef struct {
+	GXTexObj  tex;
+	GXTlutObj tlut;
+	u8       *pixels;
+	u16       pixel_size;
+	u8        fmt;
+} cm_tex_snapshot;
+
 typedef struct {
 	u8 num_frames;
 	u8 anim_type;	// CARD_ANIM_LOOP or CARD_ANIM_BOUNCE
 	struct {
-		u8 *data;
-		u16 data_size;
-		u8 fmt;
+		cm_tex_snapshot *snap;
 		u8 speed;
-		GXTexObj tex;
-		GXTlutObj tlut;
 	} frames[CARD_MAXICONS];
 } icon_anim;
 
@@ -76,10 +81,7 @@ typedef struct {
 	u32 icon_addr;
 	u16 icon_fmt;
 	u16 icon_speed;
-	u8 *banner;
-	u16 banner_size;
-	GXTexObj banner_tex;
-	GXTlutObj banner_tlut;
+	cm_tex_snapshot *banner_snap;
 	icon_anim *icon;
 } card_entry;
 
@@ -149,6 +151,11 @@ void cm_parse_comment(u8 *file_data, u32 file_len, u32 comment_addr,
 int card_manager_read_saves(int slot, card_entry *entries, int max_entries);
 void cm_deep_copy_graphics(card_entry *dst, const card_entry *src);
 void card_manager_free_graphics(card_entry *entries, int count);
+cm_tex_snapshot *cm_snap_create(const u8 *pixels, u16 size, u8 fmt,
+	u16 w, u16 h);
+void cm_snap_retire(cm_tex_snapshot *snap);
+void cm_retire_tick(void);
+void cm_retire_flush(void);
 bool cm_panel_add_from_gci(cm_panel *panel, GCI *gci, u8 *savedata, u32 save_len);
 void cm_panel_remove_entry(cm_panel *panel, int index);
 
@@ -266,6 +273,7 @@ typedef struct {
 	int save_cursor, save_scroll;
 	int focus;				// 0=game list, 1=save list
 	bool initialized;
+	bool needs_rebuild;		// Deferred rebuild after cards-view mutations
 	int save_indices[LIB_MAX_SAVES];
 	int save_count;
 	lib_game_group *sel_group;

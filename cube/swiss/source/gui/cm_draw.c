@@ -433,12 +433,12 @@ static u32 icon_frame_dur(icon_anim *icon, int i) {
 }
 
 static int icon_resolve_frame(icon_anim *icon, int frame) {
-	if (icon->frames[frame].fmt != 0) return frame;
+	if (icon->frames[frame].snap) return frame;
 	for (int i = frame + 1; i < icon->num_frames; i++) {
-		if (icon->frames[i].fmt != 0) return i;
+		if (icon->frames[i].snap) return i;
 	}
 	for (int i = 0; i < frame; i++) {
-		if (icon->frames[i].fmt != 0) return i;
+		if (icon->frames[i].snap) return i;
 	}
 	return frame;
 }
@@ -598,13 +598,13 @@ static void card_manager_draw_panel(uiDrawObj_t *container, cm_panel *panel,
 			if (e->icon && e->icon->num_frames > 0) {
 				int frame = is_selected
 				? icon_anim_get_frame(e->icon, anim_tick - panel->anim_start) : 0;
-				if (e->icon->frames[frame].data) {
-					DrawAddChild(container, DrawTexObj(&e->icon->frames[frame].tex,
+				if (e->icon->frames[frame].snap) {
+					DrawAddChild(container, DrawTexObj(&e->icon->frames[frame].snap->tex,
 						ix, iy, GRID_ICON_SIZE, GRID_ICON_SIZE,
 						0, 0.0f, 1.0f, 0.0f, 1.0f, 0));
 				}
-			} else if (e->banner) {
-				DrawAddChild(container, DrawTexObj(&e->banner_tex,
+			} else if (e->banner_snap) {
+				DrawAddChild(container, DrawTexObj(&e->banner_snap->tex,
 					ix, iy, GRID_ICON_SIZE, GRID_ICON_SIZE,
 					0, 0.33f, 0.67f, 0.0f, 1.0f, 0));
 			}

@@ -738,12 +738,12 @@ static int cm_backup_save_list(gci_file_entry **pfiles, int *pnum,
 
 			int ix = box_x1 + 14;
 			int iy = ry + (GCI_PICK_ROW_H - GCI_PICK_ICON_SZ) / 2;
-			if (e->icon && e->icon->num_frames > 0 && e->icon->frames[0].data) {
-				DrawAddChild(container, DrawTexObj(&e->icon->frames[0].tex,
+			if (e->icon && e->icon->num_frames > 0 && e->icon->frames[0].snap) {
+				DrawAddChild(container, DrawTexObj(&e->icon->frames[0].snap->tex,
 					ix, iy, GCI_PICK_ICON_SZ, GCI_PICK_ICON_SZ,
 					0, 0.0f, 1.0f, 0.0f, 1.0f, 0));
-			} else if (e->banner) {
-				DrawAddChild(container, DrawTexObj(&e->banner_tex,
+			} else if (e->banner_snap) {
+				DrawAddChild(container, DrawTexObj(&e->banner_snap->tex,
 					ix, iy, GCI_PICK_ICON_SZ, GCI_PICK_ICON_SZ,
 					0, 0.33f, 0.67f, 0.0f, 1.0f, 0));
 			}
@@ -907,12 +907,12 @@ bool card_manager_backups(cm_panel *panel) {
 
 			int ix = box_x1 + 14;
 			int iy = ry + (GCI_PICK_ROW_H - GCI_PICK_ICON_SZ) / 2;
-			if (e->icon && e->icon->num_frames > 0 && e->icon->frames[0].data) {
-				DrawAddChild(container, DrawTexObj(&e->icon->frames[0].tex,
+			if (e->icon && e->icon->num_frames > 0 && e->icon->frames[0].snap) {
+				DrawAddChild(container, DrawTexObj(&e->icon->frames[0].snap->tex,
 					ix, iy, GCI_PICK_ICON_SZ, GCI_PICK_ICON_SZ,
 					0, 0.0f, 1.0f, 0.0f, 1.0f, 0));
-			} else if (e->banner) {
-				DrawAddChild(container, DrawTexObj(&e->banner_tex,
+			} else if (e->banner_snap) {
+				DrawAddChild(container, DrawTexObj(&e->banner_snap->tex,
 					ix, iy, GCI_PICK_ICON_SZ, GCI_PICK_ICON_SZ,
 					0, 0.33f, 0.67f, 0.0f, 1.0f, 0));
 			}
@@ -1098,7 +1098,7 @@ bool cm_read_physical_save(int slot, card_entry *entry, s32 sector_size,
 bool card_manager_import_gci_buf(int slot, GCI *gci, u8 *savedata,
 	u32 save_len, s32 sector_size) {
 
-	uiDrawObj_t *msgBox = cm_draw_message("Importing save...\nDo not remove the Memory Card.");
+	uiDrawObj_t *msgBox = cm_draw_message("Writing save...\nDo not remove the Memory Card.");
 	DrawPublish(msgBox);
 
 	u32 expected_len = gci->filesize8 * 8192;
