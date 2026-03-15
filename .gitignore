@@ -12,3 +12,5 @@
 /swiss_r*
 build
 dist
+.devkitpro
+.vscode

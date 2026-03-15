@@ -27,13 +27,14 @@
 #define PROGRESS_BOX_BOTTOMLEFT 0
 #define PROGRESS_BOX_TOPRIGHT 1
 
-#define MENU_MAX 5
+#define MENU_MAX 6
 #define MENU_NOSELECT -1
 #define MENU_DEVICE 0
 #define MENU_SETTINGS 1
 #define MENU_INFO 2
 #define MENU_REFRESH 3
-#define MENU_EXIT 4
+#define MENU_MEMCARD 4
+#define MENU_EXIT 5
 
 #include "images_tpl.h"
 #include "images.h"
@@ -76,7 +77,8 @@ enum TextureId
 	TEX_FLIPPY,
 	TEX_GCNET,
 	TEX_GCODE,
-	TEX_KUNAIGC
+	TEX_KUNAIGC,
+	TEX_BTNMEMCARD
 };
 
 extern GXTexObj ntscjTexObj;
@@ -132,6 +134,9 @@ uiDrawObj_t* DrawFileBrowserButton(int x1, int y1, int x2, int y2, const char *m
 uiDrawObj_t* DrawFileBrowserButtonMeta(int x1, int y1, int x2, int y2, const char *message, file_handle *file, int mode);
 uiDrawObj_t* DrawFileCarouselEntry(int x1, int y1, int x2, int y2, const char *message, file_handle *file, int distFromMiddle);
 uiDrawObj_t* DrawVertScrollBar(int x, int y, int width, int height, float scrollPercent, int scrollHeight);
+uiDrawObj_t* DrawFlatColorRect(int x, int y, int width, int height, GXColor color);
+uiDrawObj_t* DrawGlow(int cx, int cy, int radius, int icon_size, GXColor color, u8 intensity);
+uiDrawObj_t* DrawEdgeGlow(int x, int y, int w, int h, float rim_w, GXColor color, u8 intensity);
 void DrawArgsSelector(const char *fileName);
 void DrawCheatsSelector(const char *fileName);
 void DrawGetTextEntry(int entryMode, const char *label, void *src, int size);

@@ -18,6 +18,10 @@
 <filepath="kunaigc.tif" id="kunaigcimg" colfmt=0 />
 <filepath="m2loader.tif" id="m2loaderimg" colfmt=0 />
 <filepath="memcard.png" id="memcardimg" colfmt=9 palfmt=0 magfilt=0 />
+<filepath="memcard-manager/cell-glow.tif" id="cell_glow" colfmt=6 magfilt=0 />
+<filepath="memcard-manager/memcard-001.tif" id="memcard_mgr_icon" colfmt=6 magfilt=0 />
+<filepath="memcard-manager/panel-frame-phys.tif" id="panel_frame_phys" colfmt=6 magfilt=0 />
+<filepath="memcard-manager/panel-frame-vmc.tif" id="panel_frame_vmc" colfmt=6 magfilt=0 />
 <filepath="memcard_ind.png" id="memcardimg_ind" colfmt=1 minfilt=0 magfilt=0 />
 <filepath="mp3.tif" id="mp3img" colfmt=6 />
 <filepath="ntscj.tif" id="ntscjimg" colfmt=5 />

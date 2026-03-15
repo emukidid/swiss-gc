@@ -48,6 +48,7 @@
 #include "wkf.h"
 #include "cheats.h"
 #include "settings.h"
+#include "gui/cardmanager.h"
 #include "aram/sidestep.h"
 #include "gui/FrameBufferMagic.h"
 #include "gui/IPLFontWrite.h"
@@ -2912,6 +2913,9 @@ void menu_loop()
 							}
 						}
 						needsRefresh=1;
+						break;
+					case MENU_MEMCARD:
+						show_card_manager();
 						break;
 					case MENU_EXIT:
 						if(devices[DEVICE_CUR] != NULL) {
