@@ -40,9 +40,9 @@ static u32 card_sectorsize[2] = {8192, 8192};
 static GCI *gciInfo;
 static bool isCopyGCIMode = 0;
 
-void card_removed_cb(s32 chn, s32 result) {  
-  card_init[chn] = 0; 
-  CARD_Unmount(chn); 
+void card_removed_cb(s32 chn, s32 result) {
+  card_init[chn] = 0;
+  CARD_Unmount(chn);
 }
 
 char *cardError(int error_code) {
@@ -76,7 +76,7 @@ int initialize_card(int slot) {
 		/* Pass company identifier and number */
 		CARD_Init ("SWIS", "S0");
 		if(!sys_area[slot]) sys_area[slot] = memalign(32,CARD_WORKAREA);
-		  
+
 		while((slot_error = CARD_ProbeEx (slot, NULL, NULL)) == CARD_ERROR_BUSY);
 		if(slot_error == CARD_ERROR_READY) {
 			slot_error = CARD_Mount (slot, sys_area[slot], card_removed_cb);
@@ -184,16 +184,20 @@ int CARD_ReadUnaligned(card_file *cardfile, void *buffer, unsigned int length, u
 	int ret = CARD_ERROR_READY;
 	print_debug("Unaligned read dst %08X offset %08X length %i\n", dst, offset, length);
 	// Unaligned because we're in the middle of a sector, read partial
-	ret = CARD_Read(cardfile, read_buffer, card_sectorsize[slot], offset-(offset&0x1ff));
-	print_debug("CARD_Read offset %08X length %i\n", offset-(offset&0x1ff), card_sectorsize[slot]);
+	// FIX: Was hardcoded 0x1ff (512-byte mask). Sector size varies by card
+	// (typically 8192). Using the wrong mask misaligns the read offset,
+	// causing CARD_Read to access the wrong sector or return an error.
+	u32 sector_mask = card_sectorsize[slot] - 1;
+	ret = CARD_Read(cardfile, read_buffer, card_sectorsize[slot], offset & ~sector_mask);
+	print_debug("CARD_Read offset %08X length %i\n", offset & ~sector_mask, card_sectorsize[slot]);
 	if(ret != CARD_ERROR_READY) {
 		free(read_buffer);
 		return ret;
 	}
 
-	int amountRead = card_sectorsize[slot]-(offset&0x1ff);
+	int amountRead = card_sectorsize[slot] - (offset & sector_mask);
 	int amountToCopy = length > amountRead ? amountRead : length;
-	memcpy(dst, read_buffer+(offset&0x1ff), amountToCopy);
+	memcpy(dst, read_buffer + (offset & sector_mask), amountToCopy);
 	dst += amountToCopy;
 	length -= amountToCopy;
 	offset += amountToCopy;
@@ -299,8 +303,13 @@ s32 deviceHandler_CARD_readFile(file_handle* file, void* buffer, u32 length){
 		
 		if(ret == CARD_ERROR_READY)
 			memcpy(dst,read_buffer,readsize);
-		else 
+		else {
+			// FIX: Was bare "return ret" — leaked read_buffer and left
+			// cardfile open, preventing future CARD_Open on this slot.
+			free(read_buffer);
+			CARD_Close(&cardfile);
 			return ret;
+		}
 		dst+=readsize;
 		file->offset += readsize;
 		length -= readsize;
@@ -310,7 +319,12 @@ s32 deviceHandler_CARD_readFile(file_handle* file, void* buffer, u32 length){
 	if(swissFile && length != 0) {
 		amountRead+= length;
 	}
-	DCFlushRange(dst, amountRead);
+	// FIX: Was DCFlushRange(dst, ...) — but dst is incremented through the
+	// read loop, so it points past the data by the time we get here.
+	// DCFlushRange must receive the original buffer pointer to flush the
+	// correct cache lines. EXI DMA masks addresses to 32-byte boundaries
+	// (& 0x1FFFFFE0), so a wrong pointer silently flushes the wrong range.
+	DCFlushRange(buffer, amountRead);
 	CARD_Close(&cardfile);
 	free(read_buffer);   
 
@@ -395,9 +409,12 @@ s32 deviceHandler_CARD_writeFile(file_handle* file, const void* data, u32 length
 		if(ret != CARD_ERROR_READY) break;
 	}
 	
+	// FIX: memset was only in the Swiss path — GCI imports left cardstat
+	// uninitialized, so CARD_SetStatus could write garbage to fields not
+	// explicitly set (e.g. permissions, padding bytes).
 	card_stat cardstat;
+	memset(&cardstat, 0, sizeof(card_stat));
 	if(gciInfo == NULL) {	// Swiss
-		memset(&cardstat, 0, sizeof(card_stat));
 		memcpy(&cardstat.filename, filename, CARD_FILENAMELEN-1);
 		cardstat.time = gc_time;
 		cardstat.comment_addr = 0;

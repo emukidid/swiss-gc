@@ -94,6 +94,7 @@ static cm_panel **s_led_panels = NULL;
 static char s_led_msg_text[256];
 static uiDrawObj_t *s_led_page = NULL;
 static bool s_vmc_present[2] = {false, false};  // MemoryCardA/B.*.raw exists
+static bool s_phys_present[2] = {false, false}; // Cached CARD_ProbeEx results
 
 uiDrawObj_t *cm_draw_message(const char *msg) {
 	char buf[512];
@@ -251,6 +252,11 @@ static float cm_led_phase(void) {
 	return (float)(ticks_to_millisecs(gettime()) % 2000) / 2000.0f * 6.2832f;
 }
 
+void cm_led_update_card_status(bool slot_a, bool slot_b) {
+	s_phys_present[0] = slot_a;
+	s_phys_present[1] = slot_b;
+}
+
 // Scan swiss/saves/ for MemoryCardA/B.*.raw presence
 void cm_led_scan_vmc(void) {
 	vmc_file_entry vmcs[MAX_VMC_FILES];
@@ -345,18 +351,15 @@ void cm_draw_status_leds(uiDrawObj_t *container, cm_panel *panels[2]) {
 	int base_y = TITLE_Y + 7;
 	int slot_idx = 0;
 
-	// Physical A
-	bool phys_a = (CARD_ProbeEx(CARD_SLOTA, NULL, NULL) == CARD_ERROR_READY);
+	// Use cached probe results — never touch CARD hardware from draw code
 	u8 act_a = cm_device_activity(panels, CM_SRC_PHYSICAL, CARD_SLOTA, NULL);
 	cm_draw_one_led(container, base_x + slot_idx * LED_GAP_X, base_y,
-		"A", phys_a, act_a, phase);
+		"A", s_phys_present[0], act_a, phase);
 	slot_idx++;
 
-	// Physical B
-	bool phys_b = (CARD_ProbeEx(CARD_SLOTB, NULL, NULL) == CARD_ERROR_READY);
 	u8 act_b = cm_device_activity(panels, CM_SRC_PHYSICAL, CARD_SLOTB, NULL);
 	cm_draw_one_led(container, base_x + slot_idx * LED_GAP_X, base_y,
-		"B", phys_b, act_b, phase);
+		"B", s_phys_present[1], act_b, phase);
 	slot_idx++;
 
 	// Virtual A (if MemoryCardA.*.raw exists)

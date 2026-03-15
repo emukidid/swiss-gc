@@ -256,6 +256,88 @@ static void card_manager_read_graphics(int slot, card_entry *entry) {
 	free(buf);
 }
 
+// Deep-copy graphics from src to dst (which already has metadata copied).
+// dst gets its own allocated banner/icon data — safe to free independently.
+void cm_deep_copy_graphics(card_entry *dst, const card_entry *src) {
+	dst->banner = NULL;
+	dst->banner_size = 0;
+	dst->icon = NULL;
+
+	// Copy banner
+	if (src->banner && src->banner_size > 0) {
+		dst->banner = (u8 *)memalign(32, src->banner_size);
+		if (dst->banner) {
+			memcpy(dst->banner, src->banner, src->banner_size);
+			dst->banner_size = src->banner_size;
+			DCFlushRange(dst->banner, dst->banner_size);
+			if ((src->banner_fmt & CARD_BANNER_MASK) == CARD_BANNER_CI) {
+				GX_InitTlutObj(&dst->banner_tlut,
+					dst->banner + CARD_BANNER_W * CARD_BANNER_H, GX_TL_RGB5A3, 256);
+				GX_InitTexObjCI(&dst->banner_tex, dst->banner,
+					CARD_BANNER_W, CARD_BANNER_H, GX_TF_CI8,
+					GX_CLAMP, GX_CLAMP, GX_FALSE, GX_TLUT0);
+				GX_InitTexObjFilterMode(&dst->banner_tex, GX_LINEAR, GX_NEAR);
+				GX_InitTexObjUserData(&dst->banner_tex, &dst->banner_tlut);
+			} else {
+				GX_InitTexObj(&dst->banner_tex, dst->banner,
+					CARD_BANNER_W, CARD_BANNER_H, GX_TF_RGB5A3,
+					GX_CLAMP, GX_CLAMP, GX_FALSE);
+				GX_InitTexObjFilterMode(&dst->banner_tex, GX_LINEAR, GX_NEAR);
+			}
+		}
+	}
+
+	// Copy icon
+	if (src->icon && src->icon->num_frames > 0) {
+		dst->icon = calloc(1, sizeof(icon_anim));
+		if (!dst->icon) return;
+		dst->icon->num_frames = src->icon->num_frames;
+		dst->icon->anim_type = src->icon->anim_type;
+		int last_valid = -1;
+		for (int i = 0; i < src->icon->num_frames; i++) {
+			dst->icon->frames[i].fmt = src->icon->frames[i].fmt;
+			dst->icon->frames[i].speed = src->icon->frames[i].speed;
+
+			if (src->icon->frames[i].data_size == 0) {
+				// Borrowed frame — share from last valid in the copy
+				if (last_valid >= 0) {
+					dst->icon->frames[i].data = dst->icon->frames[last_valid].data;
+					dst->icon->frames[i].data_size = 0;
+					dst->icon->frames[i].tex = dst->icon->frames[last_valid].tex;
+					dst->icon->frames[i].tlut = dst->icon->frames[last_valid].tlut;
+				}
+				continue;
+			}
+
+			u16 alloc_size = src->icon->frames[i].data_size;
+			dst->icon->frames[i].data = (u8 *)memalign(32, alloc_size);
+			if (!dst->icon->frames[i].data) break;
+			memcpy(dst->icon->frames[i].data, src->icon->frames[i].data, alloc_size);
+			dst->icon->frames[i].data_size = alloc_size;
+			DCFlushRange(dst->icon->frames[i].data, alloc_size);
+
+			if (src->icon->frames[i].fmt == CARD_ICON_RGB) {
+				GX_InitTexObj(&dst->icon->frames[i].tex,
+					dst->icon->frames[i].data,
+					CARD_ICON_W, CARD_ICON_H, GX_TF_RGB5A3,
+					GX_CLAMP, GX_CLAMP, GX_FALSE);
+			} else {
+				u16 pix_size = CARD_ICON_W * CARD_ICON_H;
+				GX_InitTlutObj(&dst->icon->frames[i].tlut,
+					dst->icon->frames[i].data + pix_size, GX_TL_RGB5A3, 256);
+				GX_InitTexObjCI(&dst->icon->frames[i].tex,
+					dst->icon->frames[i].data,
+					CARD_ICON_W, CARD_ICON_H, GX_TF_CI8,
+					GX_CLAMP, GX_CLAMP, GX_FALSE, GX_TLUT0);
+				GX_InitTexObjUserData(&dst->icon->frames[i].tex,
+					&dst->icon->frames[i].tlut);
+			}
+			GX_InitTexObjFilterMode(&dst->icon->frames[i].tex, GX_LINEAR, GX_NEAR);
+			last_valid = i;
+		}
+	}
+}
+
 void card_manager_free_graphics(card_entry *entries, int count) {
 	for (int i = 0; i < count; i++) {
 		if (entries[i].banner) {

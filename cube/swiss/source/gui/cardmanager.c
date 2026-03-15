@@ -10,14 +10,6 @@
 #include "cm_internal.h"
 #include "swiss.h"
 
-// --- Card status polling ---
-
-static bool card_manager_check_status(int slot, bool was_present) {
-	s32 ret = CARD_ProbeEx(slot, NULL, NULL);
-	bool is_present = (ret == CARD_ERROR_READY || ret == CARD_ERROR_BUSY);
-	return is_present != was_present;
-}
-
 // --- Panel helpers ---
 
 static void cm_show_error(const char *msg) {
@@ -36,10 +28,6 @@ static void cm_panel_load(cm_panel *panel) {
 	panel->sector_size = 0;
 	panel->card_present = false;
 	panel->has_animated_icons = false;
-
-	char load_msg[64];
-	snprintf(load_msg, sizeof(load_msg), "Reading %s...", panel->label);
-	cm_led_show(load_msg);
 
 	if (panel->source == CM_SRC_PHYSICAL) {
 		char slot_ch = panel->slot == CARD_SLOTA ? 'A' : 'B';
@@ -161,7 +149,6 @@ static void cm_panel_load(cm_panel *panel) {
 	}
 
 	panel->needs_reload = false;
-	cm_led_hide();
 }
 
 static void cm_panel_navigate(cm_panel *panel, u16 btns) {
@@ -310,6 +297,7 @@ static void cm_handle_context_menu(cm_panel *ap, cm_panel *other, bool *needs_re
 			u8 *savedata = NULL;
 			u32 save_len = 0;
 			bool read_ok;
+
 			ap->activity = CM_ACTIVITY_READ;
 			if (ap->source == CM_SRC_VMC)
 				read_ok = vmc_read_save(ap->vmc_path, sel, &gci, &savedata, &save_len);
@@ -382,6 +370,7 @@ static void cm_handle_context_menu(cm_panel *ap, cm_panel *other, bool *needs_re
 		case CM_ACT_EXPORT:
 			cm_log("Exporting [%d] \"%s\" from %s",
 				ap->cursor, sel->filename, ap->label);
+
 			ap->activity = CM_ACTIVITY_READ;
 			if (ap->source == CM_SRC_VMC) {
 				if (vmc_export_save(ap->vmc_path, sel))
@@ -399,6 +388,7 @@ static void cm_handle_context_menu(cm_panel *ap, cm_panel *other, bool *needs_re
 			break;
 
 		case CM_ACT_IMPORT:
+
 			ap->activity = CM_ACTIVITY_WRITE;
 			if (card_manager_backups(ap)) {
 				ap->activity = CM_ACTIVITY_IDLE;
@@ -413,6 +403,7 @@ static void cm_handle_context_menu(cm_panel *ap, cm_panel *other, bool *needs_re
 			if (card_manager_confirm_delete(sel->filename)) {
 				cm_log("Deleting [%d] \"%s\" from %s",
 					ap->cursor, sel->filename, ap->label);
+	
 				ap->activity = CM_ACTIVITY_WRITE;
 				bool deleted;
 				if (ap->source == CM_SRC_VMC)
@@ -528,6 +519,9 @@ void show_card_manager(void) {
 
 	cm_draw_init();
 	cm_led_begin(panels);
+	cm_led_update_card_status(
+		CARD_ProbeEx(CARD_SLOTA, NULL, NULL) == CARD_ERROR_READY,
+		CARD_ProbeEx(CARD_SLOTB, NULL, NULL) == CARD_ERROR_READY);
 	cm_log_open();
 	cm_log("Opened card manager");
 
@@ -539,37 +533,47 @@ void show_card_manager(void) {
 		bool any_reload = false;
 		for (int p = 0; p < 2; p++) {
 			if (panels[p]->needs_reload) {
-				card_manager_free_graphics(panels[p]->entries, panels[p]->num_entries);
-				panels[p]->num_entries = 0;
 				panels[p]->loading = true;
 				panels[p]->activity = CM_ACTIVITY_READ;
 				any_reload = true;
 			}
 		}
 		if (any_reload) {
-			// Show loading state in both views (LEDs go orange)
-			uiDrawObj_t *loadPage;
-			if (view_mode == 0)
-				loadPage = card_manager_draw(panels[0], panels[1], active, anim_tick);
-			else
-				loadPage = lib_draw_view(lib, anim_tick);
+			// Show loading page (no card data references — safe during CARD I/O)
+			for (int p = 0; p < 2; p++) {
+				if (panels[p]->loading) {
+					card_manager_free_graphics(panels[p]->entries, panels[p]->num_entries);
+					panels[p]->num_entries = 0;
+				}
+			}
+			uiDrawObj_t *loadPage = card_manager_draw(panels[0], panels[1], active, anim_tick);
 			cm_draw_status_leds(loadPage, panels);
+			DrawPublish(loadPage);
 			if (page) DrawDispose(page);
 			page = loadPage;
-			DrawPublish(page);
-		}
-		for (int p = 0; p < 2; p++) {
-			if (panels[p]->loading) {
-				cm_panel_load(panels[p]);
-				panels[p]->loading = false;
-				panels[p]->activity = CM_ACTIVITY_IDLE;
-				needs_redraw = true;
+
+			for (int p = 0; p < 2; p++) {
+				if (panels[p]->loading) {
+					cm_panel_load(panels[p]);
+					panels[p]->loading = false;
+					panels[p]->activity = CM_ACTIVITY_IDLE;
+					lib_sync_from_panel(lib, panels[p]);
+				}
 			}
+			if (lib->initialized)
+				lib_rebuild_index(lib);
+			needs_redraw = true;
 		}
 
-		// Rebuild library index after panel reloads
-		if (lib->initialized && lib->needs_rebuild)
-			lib_state_rebuild(lib, panels);
+		// Reload any VMC library devices that need it
+		if (lib->initialized) {
+			for (int d = 0; d < LIB_NUM_DEVICES; d++) {
+				if (lib->devices[d].needs_reload) {
+					lib_reload_device(lib, d);
+					needs_redraw = true;
+				}
+			}
+		}
 
 		// Draw current view
 		bool has_anim = (view_mode == 0 &&
@@ -592,20 +596,27 @@ void show_card_manager(void) {
 		VIDEO_WaitVSync();
 		anim_tick++;
 
-		// Poll both slots for hotswap (physical only)
+		// Poll both physical slots for hotswap
 		poll_counter++;
 		if (poll_counter >= CARD_POLL_INTERVAL) {
 			poll_counter = 0;
-			for (int p = 0; p < 2; p++) {
-				if (panels[p]->source != CM_SRC_PHYSICAL) continue;
-				if (card_manager_check_status(panels[p]->slot, panels[p]->card_present)) {
-					cm_log("Card %s in Slot %c",
-						panels[p]->card_present ? "removed" : "inserted",
-						panels[p]->slot == CARD_SLOTA ? 'A' : 'B');
-					panels[p]->needs_reload = true;
-					if (lib->initialized) lib->needs_rebuild = true;
+			bool slot_present[2];
+			for (int slot = 0; slot < 2; slot++) {
+				s32 probe = CARD_ProbeEx(slot, NULL, NULL);
+				slot_present[slot] = (probe == CARD_ERROR_READY || probe == CARD_ERROR_BUSY);
+
+				for (int p = 0; p < 2; p++) {
+					if (panels[p]->source == CM_SRC_PHYSICAL
+						&& panels[p]->slot == slot
+						&& panels[p]->card_present != slot_present[slot]) {
+						cm_log("Card %s in Slot %c",
+							slot_present[slot] ? "inserted" : "removed",
+							slot == 0 ? 'A' : 'B');
+						panels[p]->needs_reload = true;
+					}
 				}
 			}
+			cm_led_update_card_status(slot_present[0], slot_present[1]);
 			if (panels[0]->needs_reload || panels[1]->needs_reload)
 				continue;
 		}
@@ -621,10 +632,12 @@ void show_card_manager(void) {
 		if (btns & PAD_BUTTON_X) {
 			while (padsButtonsHeld() & PAD_BUTTON_X) { VIDEO_WaitVSync(); }
 			if (view_mode == 0) {
-				if (!lib->initialized)
-					lib_state_init(lib, panels);
-				else if (lib->needs_rebuild)
-					lib_state_rebuild(lib, panels);
+				if (!lib->initialized) {
+					lib_state_init(lib);
+					for (int p = 0; p < 2; p++)
+						lib_sync_from_panel(lib, panels[p]);
+					lib_rebuild_index(lib);
+				}
 				view_mode = 1;
 				cm_log("Switched to library view");
 			} else {
@@ -668,7 +681,18 @@ void show_card_manager(void) {
 			if ((btns & PAD_BUTTON_A) && ap->card_present && ap->num_entries > 0) {
 				while (padsButtonsHeld() & PAD_BUTTON_A) { VIDEO_WaitVSync(); }
 				cm_handle_context_menu(ap, other, &needs_redraw);
-				if (lib->initialized) lib->needs_rebuild = true;
+				needs_redraw = true;
+				if (lib->initialized) {
+					// Re-sync physical devices from panels (no CARD I/O)
+					for (int p = 0; p < 2; p++)
+						lib_sync_from_panel(lib, panels[p]);
+					// Flag VMC devices for reload
+					for (int d = 0; d < LIB_NUM_DEVICES; d++) {
+						if (lib->devices[d].vmc_path[0])
+							lib->devices[d].needs_reload = true;
+					}
+					lib_rebuild_index(lib);
+				}
 				goto debounce;
 			}
 
@@ -676,7 +700,12 @@ void show_card_manager(void) {
 			if (btns & PAD_TRIGGER_Z) {
 				while (padsButtonsHeld() & PAD_TRIGGER_Z) { VIDEO_WaitVSync(); }
 				cm_pick_vmc(ap);
-				if (lib->initialized) lib->needs_rebuild = true;
+				if (lib->initialized) {
+					for (int d = 0; d < LIB_NUM_DEVICES; d++) {
+						if (lib->devices[d].vmc_path[0])
+							lib->devices[d].needs_reload = true;
+					}
+				}
 				needs_redraw = true;
 				goto debounce;
 			}

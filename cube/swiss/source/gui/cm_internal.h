@@ -155,6 +155,7 @@ void cm_parse_save_graphics(u8 *gfx_data, u32 gfx_len,
 void cm_parse_comment(u8 *file_data, u32 file_len, u32 comment_addr,
 	card_entry *entry);
 int card_manager_read_saves(int slot, card_entry *entries, int max_entries);
+void cm_deep_copy_graphics(card_entry *dst, const card_entry *src);
 void card_manager_free_graphics(card_entry *entries, int count);
 bool cm_panel_add_from_gci(cm_panel *panel, GCI *gci, u8 *savedata, u32 save_len);
 void cm_panel_remove_entry(cm_panel *panel, int index);
@@ -169,6 +170,7 @@ uiDrawObj_t *cm_draw_highlight(int x, int y, int w, int h);
 void cm_draw_panel_frame(uiDrawObj_t *container, bool is_vmc, int x, int y, int w, int h);
 void cm_draw_title_bar(uiDrawObj_t *container, int view_mode);
 void cm_draw_status_leds(uiDrawObj_t *container, cm_panel *panels[2]);
+void cm_led_update_card_status(bool slot_a, bool slot_b);
 void cm_led_scan_vmc(void);
 void cm_led_begin(cm_panel *panels[2]);
 void cm_led_end(void);
@@ -199,6 +201,28 @@ bool card_manager_backups(cm_panel *panel);
 
 // --- cm_library.c ---
 
+// Device indices — the 4 fixed sources the library tracks independently
+#define LIB_DEV_PHYS_A  0
+#define LIB_DEV_PHYS_B  1
+#define LIB_DEV_VMC_A   2
+#define LIB_DEV_VMC_B   3
+#define LIB_NUM_DEVICES 4
+
+// Per-device owned data (library loads independently from panels)
+typedef struct {
+	card_entry entries[128];
+	int num_entries;
+	bool present;
+	bool loaded;
+	bool needs_reload;
+	int slot;					// CARD_SLOTA/B (physical only)
+	char vmc_path[PATHNAME_MAX];
+	char label[32];				// "Slot A", "MemoryCardA (USA)", etc.
+	s32 mem_size;
+	s32 sector_size;
+	u8 activity;				// CM_ACTIVITY_*
+} lib_device;
+
 // Save source: where a save lives
 typedef enum {
 	LIB_SRC_SLOT_A,
@@ -210,14 +234,11 @@ typedef enum {
 // A single save in the unified library index
 typedef struct {
 	lib_source_type source;
-	card_entry *entry;			// Points into panel->entries or gci_files[].entry
-	char source_label[32];		// "Slot A", "Slot B", "VMC: name", "SD Backup"
+	card_entry *entry;			// Points into lib_device.entries[] or gci_files[].entry
+	char source_label[32];		// "Slot A", "Slot B", "MemoryCardA (USA)", "SD Backup"
 	char display_name[48];		// Row label: filename for card/VMC, .gci basename for SD
-	// For operations: need to know how to reach it
-	int slot;					// For physical cards
-	char vmc_path[PATHNAME_MAX];	// For VMC saves
-	int gci_idx;				// Index into gci_files array (for SD backups)
-	s32 sector_size;			// For physical card writes
+	int device_idx;				// 0-3 = LIB_DEV_*, -1 = GCI
+	int gci_idx;				// Index into gci_files array (-1 if not GCI)
 } lib_save;
 
 // A game group in the library
@@ -229,7 +250,7 @@ typedef struct {
 	int num_saves;				// Number of saves for this game
 } lib_game_group;
 
-#define LIB_MAX_SAVES 320		// 128 per slot × 2 + VMC + GCI
+#define LIB_MAX_SAVES 640		// 128 per device × 4 + GCI
 #define LIB_MAX_GROUPS 128
 #define LIB_MAX_CARD_SAVES 64
 
@@ -238,11 +259,12 @@ typedef struct {
 	char filename[CARD_FILENAMELEN + 1];
 	u16 blocks;
 	u32 time;				// Most recent modification time
-	int save_idx[2];		// Index into all_saves per panel (-1 if absent)
+	int save_idx[LIB_NUM_DEVICES];	// Index into all_saves per device (-1 if absent)
 } lib_card_save;
 
 // Library view state (managed from main loop, not a standalone page)
 typedef struct {
+	lib_device devices[LIB_NUM_DEVICES];
 	gci_file_entry *gci_files;
 	int num_gci;
 	lib_save *saves;
@@ -251,7 +273,6 @@ typedef struct {
 	int game_cursor, game_scroll;
 	int save_cursor, save_scroll;
 	int focus;				// 0=game list, 1=save list
-	bool needs_rebuild;
 	bool initialized;
 	int save_indices[LIB_MAX_SAVES];
 	int save_count;
@@ -262,18 +283,17 @@ typedef struct {
 	int gci_save_indices[LIB_MAX_SAVES];
 	int num_gci_saves;
 	int total_rows;			// card rows + divider(1) + gci rows
-	// Panel state snapshot (for indicator drawing)
-	bool panel_present[2];
-	bool panel_is_vmc[2];
-	char panel_label[2][4];	// "A", "B", or "V"
 } lib_state;
 
 #define LIB_INPUT_NONE   0
 #define LIB_INPUT_REDRAW 1
 #define LIB_INPUT_EXIT   2
 
-bool lib_state_init(lib_state *st, cm_panel *panels[2]);
-void lib_state_rebuild(lib_state *st, cm_panel *panels[2]);
+bool lib_state_init(lib_state *st);
+void lib_state_rebuild(lib_state *st);
+void lib_reload_device(lib_state *st, int dev_idx);
+void lib_sync_from_panel(lib_state *st, cm_panel *panel);
+void lib_rebuild_index(lib_state *st);
 uiDrawObj_t *lib_draw_view(lib_state *st, u32 anim_tick);
 int lib_handle_input(lib_state *st, cm_panel *panels[2], u16 btns, s8 stickY);
 void lib_state_free(lib_state *st);
