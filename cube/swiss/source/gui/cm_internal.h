@@ -293,8 +293,7 @@ typedef struct {
 bool lib_state_init(lib_state *st);
 void lib_state_rebuild(lib_state *st);
 void lib_reload_device(lib_state *st, int dev_idx);
-void lib_clear_physical_device(lib_state *st, int dev_idx);
-void lib_sync_from_panel(lib_state *st, cm_panel *panel);
+void lib_poll_cards(lib_state *st);
 void lib_rebuild_index(lib_state *st);
 uiDrawObj_t *lib_draw_view(lib_state *st, u32 anim_tick);
 int lib_handle_input(lib_state *st, cm_panel *panels[2], u16 btns, s8 stickY);

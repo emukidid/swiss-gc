@@ -509,28 +509,24 @@ void show_card_manager(void) {
 			if (page) DrawDispose(page);
 			page = loadPage;
 
-			// CARD I/O — library snapshots stay alive via retirement queue
+			// CARD I/O
 			for (int p = 0; p < 2; p++) {
 				if (panels[p]->loading) {
 					cm_panel_load(panels[p]);
 					panels[p]->loading = false;
 					panels[p]->activity = CM_ACTIVITY_IDLE;
-					lib_sync_from_panel(lib, panels[p]);
 				}
 			}
 			if (lib->initialized)
-				lib_rebuild_index(lib);
+				lib->needs_rebuild = true;
 			needs_redraw = true;
 		}
 
-		// Reload any VMC library devices that need it
-		if (lib->initialized) {
-			for (int d = 0; d < LIB_NUM_DEVICES; d++) {
-				if (lib->devices[d].needs_reload) {
-					lib_reload_device(lib, d);
-					needs_redraw = true;
-				}
-			}
+		// Reload any library devices that need it
+		if (lib->initialized && lib->needs_rebuild) {
+			lib_state_rebuild(lib);
+			lib->needs_rebuild = false;
+			needs_redraw = true;
 		}
 
 		// Draw current view
@@ -572,6 +568,22 @@ void show_card_manager(void) {
 				}
 			}
 			cm_led_update_card_status(slot_present[0], slot_present[1]);
+
+			// Library polls independently — check if physical slots changed
+			if (lib->initialized) {
+				for (int d = 0; d < LIB_DEV_VMC_A; d++) {
+					bool present = slot_present[lib->devices[d].slot];
+					if (present != lib->devices[d].present)
+						lib->devices[d].needs_reload = true;
+				}
+				for (int d = 0; d < LIB_NUM_DEVICES; d++) {
+					if (lib->devices[d].needs_reload) {
+						lib->needs_rebuild = true;
+						break;
+					}
+				}
+			}
+
 			if (panels[0]->needs_reload || panels[1]->needs_reload)
 				continue;
 		}
@@ -592,26 +604,7 @@ void show_card_manager(void) {
 					DrawPublish(loadMsg);
 					if (!lib->initialized) {
 						lib_state_init(lib);
-						for (int p = 0; p < 2; p++)
-							lib_sync_from_panel(lib, panels[p]);
-						lib_rebuild_index(lib);
 					} else {
-						// Clear physical devices not backed by any panel
-						bool phys_covered[2] = {false, false};
-						for (int p = 0; p < 2; p++) {
-							if (panels[p]->source == CM_SRC_PHYSICAL)
-								phys_covered[panels[p]->slot] = true;
-						}
-						if (!phys_covered[CARD_SLOTA])
-							lib_clear_physical_device(lib, LIB_DEV_PHYS_A);
-						if (!phys_covered[CARD_SLOTB])
-							lib_clear_physical_device(lib, LIB_DEV_PHYS_B);
-						for (int p = 0; p < 2; p++)
-							lib_sync_from_panel(lib, panels[p]);
-						for (int d = 0; d < LIB_NUM_DEVICES; d++) {
-							if (lib->devices[d].vmc_path[0])
-								lib->devices[d].needs_reload = true;
-						}
 						lib_state_rebuild(lib);
 					}
 					lib->needs_rebuild = false;

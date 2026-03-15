@@ -99,41 +99,26 @@ static void lib_load_vmc_device(lib_device *dev) {
 	dev->needs_reload = false;
 }
 
-// Clear a physical device that is no longer backed by any panel.
-// Must be called before lib_sync_from_panel to handle panels that
-// switched from physical to VMC (lib_sync_from_panel skips non-physical).
-void lib_clear_physical_device(lib_state *st, int dev_idx) {
-	lib_device *dev = &st->devices[dev_idx];
-	if (!dev->present && dev->num_entries == 0) return;
+// Load physical card device directly via CARD API (no panel dependency)
+static void lib_load_physical_device(lib_device *dev) {
 	card_manager_free_graphics(dev->entries, dev->num_entries);
 	dev->num_entries = 0;
 	dev->present = false;
-	dev->loaded = false;
-}
+	dev->mem_size = 0;
+	dev->sector_size = 0;
 
-// Sync a physical lib_device from a panel that already loaded the slot.
-// Deep-copies metadata and graphics — the library owns its own data,
-// completely independent of panel state. No shared pointers.
-void lib_sync_from_panel(lib_state *st, cm_panel *panel) {
-	if (!st->initialized || panel->source != CM_SRC_PHYSICAL) return;
-
-	int dev_idx = (panel->slot == CARD_SLOTA) ? LIB_DEV_PHYS_A : LIB_DEV_PHYS_B;
-	lib_device *dev = &st->devices[dev_idx];
-
-	// Retire old snapshots — they enter the retirement queue and will be freed
-	// after CM_RETIRE_DELAY frames, safe from video thread access.
-	card_manager_free_graphics(dev->entries, dev->num_entries);
-
-	dev->num_entries = 0;
-	dev->present = panel->card_present;
-	dev->mem_size = panel->mem_size;
-	dev->sector_size = panel->sector_size;
-
-	for (int i = 0; i < panel->num_entries && i < 128; i++) {
-		dev->entries[i] = panel->entries[i];
-		cm_deep_copy_graphics(&dev->entries[i], &panel->entries[i]);
+	s32 ret = initialize_card(dev->slot);
+	if (ret != CARD_ERROR_READY) {
+		dev->loaded = true;
+		dev->needs_reload = false;
+		return;
 	}
-	dev->num_entries = panel->num_entries;
+
+	CARD_ProbeEx(dev->slot, &dev->mem_size, &dev->sector_size);
+	dev->present = true;
+	dev->activity = CM_ACTIVITY_READ;
+	dev->num_entries = card_manager_read_saves(dev->slot, dev->entries, 128);
+	dev->activity = CM_ACTIVITY_IDLE;
 	dev->loaded = true;
 	dev->needs_reload = false;
 }
@@ -169,12 +154,13 @@ static void lib_init_devices(lib_state *st) {
 		}
 	}
 
-	// Load VMC devices independently (no CARD hardware access)
+	// Load all devices independently
 	for (int d = 0; d < LIB_NUM_DEVICES; d++) {
-		if (st->devices[d].vmc_path[0])
+		if (d < LIB_DEV_VMC_A)
+			lib_load_physical_device(&st->devices[d]);
+		else if (st->devices[d].vmc_path[0])
 			lib_load_vmc_device(&st->devices[d]);
 	}
-	// Physical devices are synced from panels via lib_sync_from_panel
 }
 
 // --- Build unified save index ---
@@ -901,7 +887,10 @@ bool lib_state_init(lib_state *st) {
 
 void lib_state_rebuild(lib_state *st) {
 	for (int d = 0; d < LIB_NUM_DEVICES; d++) {
-		if (st->devices[d].needs_reload && st->devices[d].vmc_path[0])
+		if (!st->devices[d].needs_reload) continue;
+		if (d < LIB_DEV_VMC_A)
+			lib_load_physical_device(&st->devices[d]);
+		else if (st->devices[d].vmc_path[0])
 			lib_load_vmc_device(&st->devices[d]);
 	}
 	lib_rebuild_index(st);
@@ -909,10 +898,21 @@ void lib_state_rebuild(lib_state *st) {
 
 void lib_reload_device(lib_state *st, int dev_idx) {
 	lib_device *dev = &st->devices[dev_idx];
-	if (dev->vmc_path[0])
+	if (dev_idx < LIB_DEV_VMC_A)
+		lib_load_physical_device(dev);
+	else if (dev->vmc_path[0])
 		lib_load_vmc_device(dev);
-	// Physical devices are synced via lib_sync_from_panel — nothing to do here
 	lib_rebuild_index(st);
+}
+
+void lib_poll_cards(lib_state *st) {
+	if (!st->initialized) return;
+	for (int d = 0; d < LIB_DEV_VMC_A; d++) {
+		s32 probe = CARD_ProbeEx(st->devices[d].slot, NULL, NULL);
+		bool present = (probe == CARD_ERROR_READY || probe == CARD_ERROR_BUSY);
+		if (present != st->devices[d].present)
+			st->devices[d].needs_reload = true;
+	}
 }
 
 uiDrawObj_t *lib_draw_view(lib_state *st, u32 anim_tick) {
