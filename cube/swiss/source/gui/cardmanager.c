@@ -127,8 +127,8 @@ static void cm_panel_navigate(cm_panel *panel, u16 btns) {
 	cy = panel->cursor / GRID_COLS;
 	if (cy < panel->scroll_row)
 		panel->scroll_row = cy;
-	if (cy >= panel->scroll_row + GRID_ROWS_VISIBLE_MAX)
-		panel->scroll_row = cy - GRID_ROWS_VISIBLE_MAX + 1;
+	if (cy >= panel->scroll_row + CARDS_GRID_ROWS)
+		panel->scroll_row = cy - CARDS_GRID_ROWS + 1;
 }
 
 // --- Context menu handling ---

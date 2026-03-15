@@ -488,6 +488,13 @@ static int icon_anim_get_frame(icon_anim *icon, u32 tick) {
 	return icon_resolve_frame(icon, frame);
 }
 
+// --- Cards view detail bar ---
+// Grid shows fewer rows in cards view to make room for the detail strip
+#define CARDS_PANEL_BOT   (GRID_TOP_Y + CARDS_GRID_ROWS * GRID_CELL + 2)
+#define DETAIL_Y          (CARDS_PANEL_BOT + 8)
+#define DETAIL_BANNER_W   96
+#define DETAIL_BANNER_H   32
+
 // --- Panel drawing ---
 
 static void card_manager_draw_panel(uiDrawObj_t *container, cm_panel *panel,
@@ -544,13 +551,13 @@ static void card_manager_draw_panel(uiDrawObj_t *container, cm_panel *panel,
 		GXColor glow_color = is_vmc ? (GXColor){80, 140, 220, 255}
 			: (GXColor){80, 100, 180, 255};
 		DrawAddChild(container, DrawEdgeGlow(px, PANEL_TOP_Y, pw,
-			PANEL_BOTTOM_Y - PANEL_TOP_Y, 6.0f, glow_color, glow_i));
+			CARDS_PANEL_BOT - PANEL_TOP_Y, 6.0f, glow_color, glow_i));
 	}
 
 	// Panel frame (9-slice: blue for VMC, grey for physical)
 	GXTexObj *frame_tex = is_vmc ? &cm_panel_frame_vmc_tex : &cm_panel_frame_phys_tex;
 	cm_draw_9slice(container, frame_tex, px, PANEL_TOP_Y, pw,
-		PANEL_BOTTOM_Y - PANEL_TOP_Y, 24, 8);
+		CARDS_PANEL_BOT - PANEL_TOP_Y, 24, 8);
 
 	if (panel->loading && panel->num_entries == 0) {
 		DrawAddChild(container, DrawStyledLabel(px + pw / 2, GRID_TOP_Y + 60,
@@ -560,7 +567,7 @@ static void card_manager_draw_panel(uiDrawObj_t *container, cm_panel *panel,
 	if (!panel->card_present) {
 		int icon_sz = 64;
 		int icon_x = px + (pw - icon_sz) / 2;
-		int grid_h = PANEL_BOTTOM_Y - GRID_TOP_Y;
+		int grid_h = CARDS_PANEL_BOT - GRID_TOP_Y;
 		int icon_y = GRID_TOP_Y + (grid_h - icon_sz) / 2 - 8;
 		DrawAddChild(container, DrawTexObj(&cm_memcard_tex,
 			icon_x, icon_y, icon_sz, icon_sz, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0));
@@ -578,7 +585,7 @@ static void card_manager_draw_panel(uiDrawObj_t *container, cm_panel *panel,
 	int grid_x = px + (pw - GRID_COLS * GRID_CELL) / 2;
 	int total_rows = (panel->num_entries + GRID_COLS - 1) / GRID_COLS;
 	int vis_rows = total_rows - panel->scroll_row;
-	if (vis_rows > GRID_ROWS_VISIBLE_MAX) vis_rows = GRID_ROWS_VISIBLE_MAX;
+	if (vis_rows > CARDS_GRID_ROWS) vis_rows = CARDS_GRID_ROWS;
 
 	for (int row = 0; row < vis_rows; row++) {
 		for (int col = 0; col < GRID_COLS; col++) {
@@ -619,11 +626,11 @@ static void card_manager_draw_panel(uiDrawObj_t *container, cm_panel *panel,
 	}
 
 	// Scroll indicator
-	if (total_rows > GRID_ROWS_VISIBLE_MAX) {
-		float pct = (float)panel->scroll_row / (float)(total_rows - GRID_ROWS_VISIBLE_MAX);
+	if (total_rows > CARDS_GRID_ROWS) {
+		float pct = (float)panel->scroll_row / (float)(total_rows - CARDS_GRID_ROWS);
 		DrawAddChild(container, DrawVertScrollBar(
 			px + pw - 10, GRID_TOP_Y, 6,
-			GRID_ROWS_VISIBLE_MAX * GRID_CELL, pct, 16));
+			CARDS_GRID_ROWS * GRID_CELL, pct, 16));
 	}
 }
 
@@ -647,6 +654,54 @@ uiDrawObj_t *card_manager_draw(cm_panel *left, cm_panel *right,
 		active_panel == 0, anim_tick);
 	card_manager_draw_panel(container, right, right_x, PANEL_WIDTH,
 		active_panel == 1, anim_tick);
+
+	// Detail bar — selected save info below the panels
+	if (has_sel) {
+		card_entry *sel = &active_p->entries[active_p->cursor];
+		int dx = BOX_X1 + 8;
+		int dy = DETAIL_Y;
+		int detail_w = BOX_INNER_W - 16;
+
+		// Banner or animated icon as thumbnail
+		int thumb_w = 0;
+		if (sel->banner_snap) {
+			DrawAddChild(container, DrawTexObj(&sel->banner_snap->tex,
+				dx, dy, DETAIL_BANNER_W, DETAIL_BANNER_H,
+				0, 0.0f, 1.0f, 0.0f, 1.0f, 0));
+			thumb_w = DETAIL_BANNER_W + 8;
+		} else if (sel->icon && sel->icon->num_frames > 0) {
+			int frame = icon_anim_get_frame(sel->icon,
+				anim_tick - active_p->anim_start);
+			if (sel->icon->frames[frame].snap) {
+				DrawAddChild(container, DrawTexObj(
+					&sel->icon->frames[frame].snap->tex,
+					dx, dy, DETAIL_BANNER_H, DETAIL_BANNER_H,
+					0, 0.0f, 1.0f, 0.0f, 1.0f, 0));
+				thumb_w = DETAIL_BANNER_H + 8;
+			}
+		}
+
+		int tx = dx + thumb_w;
+		int tw = detail_w - thumb_w;
+
+		// Game name (large)
+		if (sel->game_name[0]) {
+			float ns = GetTextScaleToFitInWidthWithMax(sel->game_name, tw, 0.6f);
+			DrawAddChild(container, DrawStyledLabel(tx, dy + 8,
+				sel->game_name, ns, ALIGN_LEFT, defaultColor));
+		}
+
+		// Blocks + filename/description
+		char info[96];
+		if (sel->game_desc[0])
+			snprintf(info, sizeof(info), "%d  %s: %s",
+				sel->blocks, sel->filename, sel->game_desc);
+		else
+			snprintf(info, sizeof(info), "%d  %s", sel->blocks, sel->filename);
+		float is = GetTextScaleToFitInWidthWithMax(info, tw, 0.45f);
+		DrawAddChild(container, DrawStyledLabel(tx, dy + 24,
+			info, is, ALIGN_LEFT, (GXColor){180, 180, 180, 255}));
+	}
 
 	// Hint bar
 	const char *hints = has_sel

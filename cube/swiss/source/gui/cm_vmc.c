@@ -55,6 +55,9 @@
 // GameCube is big-endian, same as .raw file format.
 // GCI struct fields and FAT entries can be read directly without byte swapping.
 
+// Forward declaration (defined below)
+static u8 *vmc_read_range(const char *path, u32 offset, u32 len);
+
 // --- VMC file scanning ---
 
 int vmc_scan_files(vmc_file_entry *out, int max) {
@@ -105,6 +108,14 @@ int vmc_scan_files(vmc_file_entry *out, int max) {
 					out[count].total_blocks = out[count].filesize / MC_BLOCK_SIZE;
 					out[count].user_blocks = out[count].total_blocks - MC_FIRST_DATA_BLOCK;
 				}
+
+				// Read encoding from card header
+				u8 *hdr = vmc_read_range(out[count].path, 0, MC_BLOCK_SIZE);
+				if (hdr) {
+					out[count].encoding = (hdr[MC_HDR_ENCODING] << 8) | hdr[MC_HDR_ENCODING + 1];
+					free(hdr);
+				}
+
 				count++;
 			}
 		}

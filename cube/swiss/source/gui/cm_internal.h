@@ -36,6 +36,7 @@
 #define PANEL_TOP_Y (BOX_TOP_Y + 36)
 #define GRID_TOP_Y (PANEL_TOP_Y + 18)
 #define GRID_ROWS_VISIBLE_MAX 7
+#define CARDS_GRID_ROWS 6		// Cards view shows fewer rows to fit detail bar
 #define PANEL_BOTTOM_Y (GRID_TOP_Y + GRID_ROWS_VISIBLE_MAX * GRID_CELL + 2)
 #define BOX_BOTTOM_Y (PANEL_BOTTOM_Y + 31)
 #define HINTS_Y (PANEL_BOTTOM_Y + 17)
@@ -127,6 +128,7 @@ typedef struct {
 	u32 filesize;
 	u32 total_blocks;
 	u32 user_blocks;
+	u16 encoding;	// 0=ANSI, 1=SJIS (from card header)
 } vmc_file_entry;
 
 // GCI file entry for import picker (with parsed graphics)

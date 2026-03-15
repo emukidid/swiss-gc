@@ -142,6 +142,9 @@ static void lib_init_devices(lib_state *st) {
 		char *name = strrchr(vmcs[i].path, '/');
 		name = name ? name + 1 : vmcs[i].path;
 
+		// Only load ANSI-encoded VMCs (skip JPN/SJIS cards)
+		if (vmcs[i].encoding != 0) continue;
+
 		if (strncasecmp(name, "MemoryCardA", 11) == 0 && vmcs[i].filesize > 0
 			&& !st->devices[LIB_DEV_VMC_A].vmc_path[0]) {
 			strlcpy(st->devices[LIB_DEV_VMC_A].vmc_path, vmcs[i].path, PATHNAME_MAX);
