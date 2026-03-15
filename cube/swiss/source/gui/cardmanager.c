@@ -596,6 +596,16 @@ void show_card_manager(void) {
 							lib_sync_from_panel(lib, panels[p]);
 						lib_rebuild_index(lib);
 					} else {
+						// Clear physical devices not backed by any panel
+						bool phys_covered[2] = {false, false};
+						for (int p = 0; p < 2; p++) {
+							if (panels[p]->source == CM_SRC_PHYSICAL)
+								phys_covered[panels[p]->slot] = true;
+						}
+						if (!phys_covered[CARD_SLOTA])
+							lib_clear_physical_device(lib, LIB_DEV_PHYS_A);
+						if (!phys_covered[CARD_SLOTB])
+							lib_clear_physical_device(lib, LIB_DEV_PHYS_B);
 						for (int p = 0; p < 2; p++)
 							lib_sync_from_panel(lib, panels[p]);
 						for (int d = 0; d < LIB_NUM_DEVICES; d++) {

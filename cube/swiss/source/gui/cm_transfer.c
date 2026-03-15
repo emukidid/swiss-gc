@@ -46,6 +46,8 @@ bool card_manager_delete_save(int slot, card_entry *entry) {
 	CARD_SetCompany(entry->company);
 	s32 ret = CARD_Delete(slot, entry->filename);
 	DrawDispose(msgBox);
+	if (ret == CARD_ERROR_READY)
+		cm_gfx_cache_invalidate(entry);
 	if (ret != CARD_ERROR_READY) {
 		msgBox = cm_draw_message("Delete failed.");
 		DrawPublish(msgBox);
@@ -1298,6 +1300,14 @@ bool card_manager_import_gci_buf(int slot, GCI *gci, u8 *savedata,
 
 	CARD_Close(&cardfile);
 	cm_led_hide();
+
+	// Invalidate graphics cache — the save's graphics may have changed
+	card_entry tmp;
+	memset(&tmp, 0, sizeof(tmp));
+	memcpy(tmp.gamecode, gci->gamecode, 4);
+	memcpy(tmp.company, gci->company, 2);
+	memcpy(tmp.filename, gci->filename, CARD_FILENAMELEN);
+	cm_gfx_cache_invalidate(&tmp);
 
 	char done_msg[128];
 	snprintf(done_msg, sizeof(done_msg), "Imported \"%s\" successfully.", filename);

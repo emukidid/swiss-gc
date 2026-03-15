@@ -156,6 +156,7 @@ cm_tex_snapshot *cm_snap_create(const u8 *pixels, u16 size, u8 fmt,
 void cm_snap_retire(cm_tex_snapshot *snap);
 void cm_retire_tick(void);
 void cm_retire_flush(void);
+void cm_gfx_cache_invalidate(const card_entry *entry);
 bool cm_panel_add_from_gci(cm_panel *panel, GCI *gci, u8 *savedata, u32 save_len);
 void cm_panel_remove_entry(cm_panel *panel, int index);
 
@@ -292,6 +293,7 @@ typedef struct {
 bool lib_state_init(lib_state *st);
 void lib_state_rebuild(lib_state *st);
 void lib_reload_device(lib_state *st, int dev_idx);
+void lib_clear_physical_device(lib_state *st, int dev_idx);
 void lib_sync_from_panel(lib_state *st, cm_panel *panel);
 void lib_rebuild_index(lib_state *st);
 uiDrawObj_t *lib_draw_view(lib_state *st, u32 anim_tick);

@@ -99,6 +99,18 @@ static void lib_load_vmc_device(lib_device *dev) {
 	dev->needs_reload = false;
 }
 
+// Clear a physical device that is no longer backed by any panel.
+// Must be called before lib_sync_from_panel to handle panels that
+// switched from physical to VMC (lib_sync_from_panel skips non-physical).
+void lib_clear_physical_device(lib_state *st, int dev_idx) {
+	lib_device *dev = &st->devices[dev_idx];
+	if (!dev->present && dev->num_entries == 0) return;
+	card_manager_free_graphics(dev->entries, dev->num_entries);
+	dev->num_entries = 0;
+	dev->present = false;
+	dev->loaded = false;
+}
+
 // Sync a physical lib_device from a panel that already loaded the slot.
 // Deep-copies metadata and graphics — the library owns its own data,
 // completely independent of panel state. No shared pointers.

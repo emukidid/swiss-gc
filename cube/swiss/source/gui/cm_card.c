@@ -9,6 +9,7 @@
 #include <malloc.h>
 #include <gccore.h>
 #include "cm_internal.h"
+#include "deviceHandler.h"
 
 // --- Shared graphics parser ---
 // Parses banner and icon textures from a raw graphics buffer.
@@ -179,8 +180,139 @@ static void card_manager_read_comment(int slot, card_entry *entry) {
 	CARD_Close(&cardfile);
 }
 
+// --- Graphics cache (SD) ---
+// Caches raw banner/icon pixel data on SD to skip slow CARD reads on repeat visits.
+// Cache key: gamecode + company + hex(filename). Staleness detected by timestamp.
+
+#define GFX_CACHE_MAGIC 0x53474658  // "SGFX"
+#define GFX_CACHE_VER   1
+
+typedef struct __attribute__((packed)) {
+	u32 magic;
+	u8  version;
+	u8  banner_fmt;
+	u16 icon_fmt;
+	u16 icon_speed;
+	u32 time;
+	u32 gfx_len;
+} gfx_cache_hdr;
+
+static DEVICEHANDLER_INTERFACE *cm_get_sd_dev(void) {
+	return devices[DEVICE_CONFIG] ? devices[DEVICE_CONFIG] :
+		devices[DEVICE_CUR] ? devices[DEVICE_CUR] : NULL;
+}
+
+static void cm_gfx_cache_path(char *out, size_t out_size,
+	const card_entry *entry, DEVICEHANDLER_INTERFACE *dev) {
+	// Hex-encode filename to avoid FAT issues with special characters
+	char hex[CARD_FILENAMELEN * 2 + 1];
+	for (int i = 0; i < CARD_FILENAMELEN && entry->filename[i]; i++)
+		sprintf(hex + i * 2, "%02x", (u8)entry->filename[i]);
+	char rel[128];
+	snprintf(rel, sizeof(rel), "swiss/cache/gfx/%.4s%.2s-%s.bin",
+		entry->gamecode, entry->company, hex);
+	concat_path(out, dev->initial->name, rel);
+}
+
+static bool cm_gfx_cache_load(card_entry *entry) {
+	DEVICEHANDLER_INTERFACE *dev = cm_get_sd_dev();
+	if (!dev) return false;
+
+	file_handle *f = calloc(1, sizeof(file_handle));
+	if (!f) return false;
+	cm_gfx_cache_path(f->name, sizeof(f->name), entry, dev);
+
+	if (dev->statFile(f) || f->size < sizeof(gfx_cache_hdr)) {
+		free(f);
+		return false;
+	}
+
+	u32 file_size = f->size;
+	u8 *buf = (u8 *)memalign(32, file_size);
+	if (!buf) { free(f); return false; }
+
+	dev->seekFile(f, 0, DEVICE_HANDLER_SEEK_SET);
+	if (dev->readFile(f, buf, file_size) != file_size) {
+		dev->closeFile(f);
+		free(buf); free(f);
+		return false;
+	}
+	dev->closeFile(f);
+	free(f);
+
+	gfx_cache_hdr *hdr = (gfx_cache_hdr *)buf;
+	if (hdr->magic != GFX_CACHE_MAGIC || hdr->version != GFX_CACHE_VER
+		|| hdr->time != entry->time
+		|| hdr->banner_fmt != entry->banner_fmt
+		|| hdr->icon_fmt != entry->icon_fmt
+		|| hdr->icon_speed != entry->icon_speed
+		|| sizeof(gfx_cache_hdr) + hdr->gfx_len > file_size) {
+		free(buf);
+		return false;
+	}
+
+	u8 *gfx = buf + sizeof(gfx_cache_hdr);
+	cm_parse_save_graphics(gfx, hdr->gfx_len,
+		entry->banner_fmt, entry->icon_fmt, entry->icon_speed, entry);
+
+	free(buf);
+	return true;
+}
+
+static void cm_gfx_cache_save(const card_entry *entry,
+	const u8 *gfx, u32 gfx_len) {
+	DEVICEHANDLER_INTERFACE *dev = cm_get_sd_dev();
+	if (!dev) return;
+
+	// Ensure cache directories exist (f_mkdir only creates one level)
+	file_handle *dir = calloc(1, sizeof(file_handle));
+	if (!dir) return;
+	concat_path(dir->name, dev->initial->name, "swiss/cache");
+	dev->makeDir(dir);
+	concat_path(dir->name, dev->initial->name, "swiss/cache/gfx");
+	dev->makeDir(dir);
+	free(dir);
+
+	file_handle *f = calloc(1, sizeof(file_handle));
+	if (!f) return;
+	cm_gfx_cache_path(f->name, sizeof(f->name), entry, dev);
+
+	u32 total = sizeof(gfx_cache_hdr) + gfx_len;
+	u8 *buf = (u8 *)memalign(32, total);
+	if (!buf) { free(f); return; }
+
+	gfx_cache_hdr *hdr = (gfx_cache_hdr *)buf;
+	hdr->magic = GFX_CACHE_MAGIC;
+	hdr->version = GFX_CACHE_VER;
+	hdr->banner_fmt = entry->banner_fmt;
+	hdr->icon_fmt = entry->icon_fmt;
+	hdr->icon_speed = entry->icon_speed;
+	hdr->time = entry->time;
+	hdr->gfx_len = gfx_len;
+	memcpy(buf + sizeof(gfx_cache_hdr), gfx, gfx_len);
+
+	dev->writeFile(f, buf, total);
+	dev->closeFile(f);
+	free(buf);
+	free(f);
+}
+
+void cm_gfx_cache_invalidate(const card_entry *entry) {
+	DEVICEHANDLER_INTERFACE *dev = cm_get_sd_dev();
+	if (!dev) return;
+	file_handle *f = calloc(1, sizeof(file_handle));
+	if (!f) return;
+	cm_gfx_cache_path(f->name, sizeof(f->name), entry, dev);
+	dev->deleteFile(f);
+	free(f);
+}
+
 static void card_manager_read_graphics(int slot, card_entry *entry) {
 	if (entry->icon_addr == (u32)-1)
+		return;
+
+	// Try SD cache first — much faster than CARD reads
+	if (cm_gfx_cache_load(entry))
 		return;
 
 	CARD_SetGamecode(entry->gamecode);
@@ -226,6 +358,9 @@ static void card_manager_read_graphics(int slot, card_entry *entry) {
 
 	cm_parse_save_graphics(gfx, avail,
 		entry->banner_fmt, entry->icon_fmt, entry->icon_speed, entry);
+
+	// Write to SD cache for next time
+	cm_gfx_cache_save(entry, gfx, avail);
 
 	free(buf);
 }
