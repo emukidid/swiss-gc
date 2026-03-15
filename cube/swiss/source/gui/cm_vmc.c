@@ -182,8 +182,6 @@ static u8 *vmc_read_file_data(const char *vmc_path, const u8 *bat,
 
 	for (int i = 0; i < max_iter && offset < filesize; i++) {
 		if (block < MC_FIRST_DATA_BLOCK || block >= total_blocks) {
-			cm_log("  FAT chain error: block=%u (iter %d, offset=%u/%u)",
-				block, i, offset, filesize);
 			free(data);
 			return NULL;
 		}
@@ -258,12 +256,6 @@ int vmc_read_saves(const char *vmc_path, card_entry *entries, int max_entries,
 	const u8 *dir = sysarea + dir_blk * MC_BLOCK_SIZE;
 	const u8 *bat = sysarea + bat_blk * MC_BLOCK_SIZE;
 
-	u16 free_blocks = *(const u16 *)(bat + MC_BAT_FREE_BLOCKS);
-	cm_log("VMC: dir=%c, bat=%c, total=%u blocks, free=%u",
-		dir_blk == MC_BLOCK_DIR_A ? 'A' : 'B',
-		bat_blk == MC_BLOCK_BAT_A ? 'A' : 'B',
-		total_blocks, free_blocks);
-
 	// Parse directory entries
 	int count = 0;
 	for (int i = 0; i < MC_DIR_ENTRIES && count < max_entries; i++) {
@@ -299,19 +291,11 @@ int vmc_read_saves(const char *vmc_path, card_entry *entries, int max_entries,
 		u16 first_block = raw->first_block;
 		u32 comment_addr = raw->comment_addr;
 
-		cm_log("VMC [%d] \"%s\" gc=%s sz=%u blk1=%u icon_addr=0x%X icon_fmt=0x%04X icon_spd=0x%04X bnr_fmt=0x%02X comment=0x%X",
-			i, e->filename, e->gamecode, e->filesize, first_block,
-			e->icon_addr, e->icon_fmt, e->icon_speed, e->banner_fmt, comment_addr);
-
 		// Read file data for graphics and comment
 		if (e->filesize > 0 && first_block >= MC_FIRST_DATA_BLOCK) {
 			u8 *file_data = vmc_read_file_data(vmc_path, bat,
 				first_block, e->filesize, total_blocks);
 			if (file_data) {
-				cm_log("  file_data OK (%u bytes), first 8: %02X %02X %02X %02X %02X %02X %02X %02X",
-					e->filesize, file_data[0], file_data[1], file_data[2], file_data[3],
-					file_data[4], file_data[5], file_data[6], file_data[7]);
-
 				// Parse comment (game name + description)
 				cm_parse_comment(file_data, e->filesize, comment_addr, e);
 
@@ -319,22 +303,11 @@ int vmc_read_saves(const char *vmc_path, card_entry *entries, int max_entries,
 				if (e->icon_addr != (u32)-1 && e->icon_addr < e->filesize) {
 					u8 *gfx = file_data + e->icon_addr;
 					u32 gfx_len = e->filesize - e->icon_addr;
-					cm_log("  gfx @ 0x%X len=%u, first 8: %02X %02X %02X %02X %02X %02X %02X %02X",
-						e->icon_addr, gfx_len, gfx[0], gfx[1], gfx[2], gfx[3],
-						gfx[4], gfx[5], gfx[6], gfx[7]);
 					cm_parse_save_graphics(gfx, gfx_len,
 						e->banner_fmt, e->icon_fmt, e->icon_speed, e);
-					cm_log("  after parse: banner=%p icon=%p (frames=%d)",
-						e->banner, e->icon, e->icon ? e->icon->num_frames : 0);
-				} else {
-					cm_log("  SKIP gfx: icon_addr=0x%X filesize=%u", e->icon_addr, e->filesize);
 				}
 				free(file_data);
-			} else {
-				cm_log("  vmc_read_file_data FAILED");
 			}
-		} else {
-			cm_log("  SKIP read: filesize=%u first_block=%u", e->filesize, first_block);
 		}
 
 		count++;
@@ -566,7 +539,6 @@ bool vmc_export_save(const char *vmc_path, card_entry *entry) {
 	if (!vmc_read_save(vmc_path, entry, &gci, &filedata, &data_len))
 		return false;
 
-	cm_log("VMC export: \"%s\" gc=%s sz=%u", entry->filename, entry->gamecode, entry->filesize);
 	bool result = cm_write_gci_to_sd(&gci, filedata, data_len);
 	free(filedata);
 	return result;
@@ -604,9 +576,6 @@ bool vmc_delete_save(const char *vmc_path, card_entry *entry) {
 	u16 first_block = dir_entry->first_block;
 	u16 num_blocks8 = dir_entry->filesize8;
 
-	cm_log("VMC delete: \"%s\" fileno=%d first_block=%u blocks=%u",
-		entry->filename, entry->fileno, first_block, num_blocks8);
-
 	// Clear directory entry
 	dir_entry->gamecode[0] = 0xFF;
 
@@ -626,7 +595,6 @@ bool vmc_delete_save(const char *vmc_path, card_entry *entry) {
 		block = next_block;
 	}
 	*free_blocks += freed;
-	cm_log("  Freed %d blocks, new free count=%u", freed, *free_blocks);
 
 	// Update checksums
 	vmc_update_dir_checksum(new_dir);
@@ -849,9 +817,6 @@ bool vmc_import_save_buf(const char *vmc_path, GCI *gci,
 	GCI *new_entry = (GCI *)(new_dir + dir_slot * MC_DIR_ENTRY_SIZE);
 	memcpy(new_entry, gci, sizeof(GCI));
 	new_entry->first_block = alloc_blocks[0];
-
-	cm_log("VMC import: \"%s\" gc=%.4s dir_slot=%d first_block=%u blocks=%d",
-		gci_filename, gci->gamecode, dir_slot, alloc_blocks[0], need_blocks);
 
 	// Update checksums
 	vmc_update_dir_checksum(new_dir);

@@ -32,21 +32,17 @@ static void cm_panel_load(cm_panel *panel) {
 	if (panel->source == CM_SRC_PHYSICAL) {
 		char slot_ch = panel->slot == CARD_SLOTA ? 'A' : 'B';
 		snprintf(panel->label, sizeof(panel->label), "Slot %c", slot_ch);
-		cm_log("Loading Slot %c...", slot_ch);
-
 		s32 ret = initialize_card(panel->slot);
 
 		// Handle mount errors per Nintendo Memory Card Guidelines §3.6-3.8
 		if (ret == CARD_ERROR_WRONGDEVICE) {
 			char msg[128];
 			sprintf(msg, "The device in Slot %c is not a\nMemory Card.", slot_ch);
-			cm_log("Slot %c: wrong device", slot_ch);
 			cm_show_error(msg);
 		}
 		else if (ret == CARD_ERROR_ENCODING) {
 			char msg[128];
 			sprintf(msg, "Memory Card in Slot %c uses an\nincompatible format.\n \nA: Format  |  B: Cancel", slot_ch);
-			cm_log("Slot %c: encoding mismatch (foreign card)", slot_ch);
 			uiDrawObj_t *msgBox = cm_draw_message(msg);
 			DrawPublish(msgBox);
 			int choice = 0;
@@ -64,12 +60,10 @@ static void cm_panel_load(cm_panel *panel) {
 				ret = CARD_Format(panel->slot);
 				DrawDispose(msgBox);
 				if (ret == CARD_ERROR_READY) {
-					cm_log("Slot %c: format successful, reloading", slot_ch);
 					ret = initialize_card(panel->slot);
 				} else {
 					char fmsg[128];
 					sprintf(fmsg, "Memory Card in Slot %c is damaged\nand cannot be used.", slot_ch);
-					cm_log("Slot %c: format failed (error=%d)", slot_ch, (int)ret);
 					cm_show_error(fmsg);
 				}
 			}
@@ -77,7 +71,6 @@ static void cm_panel_load(cm_panel *panel) {
 		else if (ret == CARD_ERROR_BROKEN) {
 			char msg[128];
 			sprintf(msg, "Memory Card in Slot %c has corrupted\ndata. Format the card?\n \nA: Format  |  B: Cancel", slot_ch);
-			cm_log("Slot %c: card broken/corrupted", slot_ch);
 			uiDrawObj_t *msgBox = cm_draw_message(msg);
 			DrawPublish(msgBox);
 			int choice = 0;
@@ -95,28 +88,18 @@ static void cm_panel_load(cm_panel *panel) {
 				ret = CARD_Format(panel->slot);
 				DrawDispose(msgBox);
 				if (ret == CARD_ERROR_READY) {
-					cm_log("Slot %c: format successful, reloading", slot_ch);
 					ret = initialize_card(panel->slot);
 				} else {
 					char fmsg[128];
 					sprintf(fmsg, "Memory Card in Slot %c is damaged\nand cannot be used.", slot_ch);
-					cm_log("Slot %c: format failed (error=%d)", slot_ch, (int)ret);
 					cm_show_error(fmsg);
 				}
 			}
 		}
-		else if (ret != CARD_ERROR_READY && ret != CARD_ERROR_NOCARD) {
-			cm_log("Slot %c: error=%d", slot_ch, (int)ret);
-		}
-
 		if (ret == CARD_ERROR_READY) {
 			CARD_ProbeEx(panel->slot, &panel->mem_size, &panel->sector_size);
 			panel->num_entries = card_manager_read_saves(panel->slot, panel->entries, 128);
 			panel->card_present = true;
-			cm_log_card_info(panel->slot, panel->mem_size, panel->sector_size, panel->num_entries);
-			for (int i = 0; i < panel->num_entries; i++) {
-				cm_log_entry(i, &panel->entries[i]);
-			}
 			for (int i = 0; i < panel->num_entries; i++) {
 				if (panel->entries[i].icon && panel->entries[i].icon->num_frames > 1) {
 					panel->has_animated_icons = true;
@@ -124,21 +107,12 @@ static void cm_panel_load(cm_panel *panel) {
 				}
 			}
 		}
-		else if (ret != CARD_ERROR_NOCARD) {
-			cm_log("No card detected in Slot %c (error=%d)", slot_ch, (int)ret);
-		}
 	}
 	else if (panel->source == CM_SRC_VMC) {
-		cm_log("Loading VMC: %s", panel->vmc_path);
 		panel->num_entries = vmc_read_saves(panel->vmc_path, panel->entries, 128,
 			&panel->mem_size, &panel->sector_size);
 		if (panel->num_entries >= 0) {
 			panel->card_present = true;
-			cm_log("VMC \"%s\": %d KB, %d entries",
-				panel->label, panel->mem_size / 1024, panel->num_entries);
-			for (int i = 0; i < panel->num_entries; i++) {
-				cm_log_entry(i, &panel->entries[i]);
-			}
 			for (int i = 0; i < panel->num_entries; i++) {
 				if (panel->entries[i].icon && panel->entries[i].icon->num_frames > 1) {
 					panel->has_animated_icons = true;
@@ -288,10 +262,6 @@ static void cm_handle_context_menu(cm_panel *ap, cm_panel *other, bool *needs_re
 			break;
 
 		dest_found: ;
-			cm_log("Copy \"%s\" from %s → %s",
-				sel->filename, ap->label,
-				dest_src == CM_SRC_VMC ? dest_vmc_path : (dest_slot == 0 ? "Slot A" : "Slot B"));
-
 			// Read source save as in-memory GCI
 			GCI gci;
 			u8 *savedata = NULL;
@@ -348,7 +318,6 @@ static void cm_handle_context_menu(cm_panel *ap, cm_panel *other, bool *needs_re
 			if (dest_panel) dest_panel->activity = CM_ACTIVITY_IDLE;
 
 			if (write_ok) {
-				cm_log("Copy successful");
 				// Add entry to any visible panel matching the destination
 				cm_panel *both[] = { ap, other };
 				for (int pi = 0; pi < 2; pi++) {
@@ -368,20 +337,11 @@ static void cm_handle_context_menu(cm_panel *ap, cm_panel *other, bool *needs_re
 		}
 
 		case CM_ACT_EXPORT:
-			cm_log("Exporting [%d] \"%s\" from %s",
-				ap->cursor, sel->filename, ap->label);
-
 			ap->activity = CM_ACTIVITY_READ;
 			if (ap->source == CM_SRC_VMC) {
-				if (vmc_export_save(ap->vmc_path, sel))
-					cm_log("VMC export successful");
-				else
-					cm_log("VMC export failed or cancelled");
+				vmc_export_save(ap->vmc_path, sel);
 			} else {
-				if (card_manager_export_save(ap->slot, sel, ap->sector_size))
-					cm_log("Export successful");
-				else
-					cm_log("Export failed or cancelled");
+				card_manager_export_save(ap->slot, sel, ap->sector_size);
 			}
 			ap->activity = CM_ACTIVITY_IDLE;
 			*needs_redraw = true;
@@ -401,9 +361,6 @@ static void cm_handle_context_menu(cm_panel *ap, cm_panel *other, bool *needs_re
 
 		case CM_ACT_DELETE:
 			if (card_manager_confirm_delete(sel->filename)) {
-				cm_log("Deleting [%d] \"%s\" from %s",
-					ap->cursor, sel->filename, ap->label);
-	
 				ap->activity = CM_ACTIVITY_WRITE;
 				bool deleted;
 				if (ap->source == CM_SRC_VMC)
@@ -412,14 +369,10 @@ static void cm_handle_context_menu(cm_panel *ap, cm_panel *other, bool *needs_re
 					deleted = card_manager_delete_save(ap->slot, sel);
 				ap->activity = CM_ACTIVITY_IDLE;
 				if (deleted) {
-					cm_log("Delete successful");
 					cm_panel_remove_entry(ap, ap->cursor);
 					*needs_redraw = true;
-				} else {
-					cm_log("Delete failed");
 				}
 			} else {
-				cm_log("Delete cancelled for \"%s\"", sel->filename);
 				*needs_redraw = true;
 			}
 			break;
@@ -471,8 +424,6 @@ static bool cm_pick_vmc(cm_panel *panel) {
 			panel->source = CM_SRC_PHYSICAL;
 			panel->vmc_path[0] = '\0';
 			panel->needs_reload = true;
-			cm_log("Switched panel to Physical Slot %c",
-				panel->slot == CARD_SLOTA ? 'A' : 'B');
 		}
 		free(vmcs);
 		return panel->needs_reload;
@@ -483,7 +434,6 @@ static bool cm_pick_vmc(cm_panel *panel) {
 		strlcpy(panel->vmc_path, vmcs[vi].path, PATHNAME_MAX);
 		strlcpy(panel->label, vmcs[vi].label, sizeof(panel->label));
 		panel->needs_reload = true;
-		cm_log("Switched panel to VMC: %s", vmcs[vi].label);
 		free(vmcs);
 		return true;
 	}
@@ -522,9 +472,6 @@ void show_card_manager(void) {
 	cm_led_update_card_status(
 		CARD_ProbeEx(CARD_SLOTA, NULL, NULL) == CARD_ERROR_READY,
 		CARD_ProbeEx(CARD_SLOTB, NULL, NULL) == CARD_ERROR_READY);
-	cm_log_open();
-	cm_log("Opened card manager");
-
 	// Wait for A button release
 	while (padsButtonsHeld() & PAD_BUTTON_A) { VIDEO_WaitVSync(); }
 
@@ -609,9 +556,6 @@ void show_card_manager(void) {
 					if (panels[p]->source == CM_SRC_PHYSICAL
 						&& panels[p]->slot == slot
 						&& panels[p]->card_present != slot_present[slot]) {
-						cm_log("Card %s in Slot %c",
-							slot_present[slot] ? "inserted" : "removed",
-							slot == 0 ? 'A' : 'B');
 						panels[p]->needs_reload = true;
 					}
 				}
@@ -639,10 +583,8 @@ void show_card_manager(void) {
 					lib_rebuild_index(lib);
 				}
 				view_mode = 1;
-				cm_log("Switched to library view");
 			} else {
 				view_mode = 0;
-				cm_log("Switched to cards view");
 			}
 			needs_redraw = true;
 			continue;
@@ -720,7 +662,6 @@ void show_card_manager(void) {
 			if (result == LIB_INPUT_EXIT) {
 				view_mode = 0;
 				needs_redraw = true;
-				cm_log("Library → cards (back)");
 			} else if (result == LIB_INPUT_REDRAW) {
 				needs_redraw = true;
 			}
@@ -754,7 +695,5 @@ debounce:
 		free(panels[p]);
 	}
 	cm_led_end();
-	cm_log("Closed card manager");
-	cm_log_close();
 	while (padsButtonsHeld() & PAD_BUTTON_B) { VIDEO_WaitVSync(); }
 }

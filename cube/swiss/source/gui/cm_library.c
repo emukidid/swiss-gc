@@ -883,7 +883,6 @@ bool lib_state_init(lib_state *st) {
 
 	st->initialized = true;
 	lib_update_selection(st);
-	cm_log("Library init: %d games, %d saves", st->num_groups, st->num_saves);
 	return true;
 }
 

@@ -153,8 +153,6 @@ bool cm_write_gci_to_sd(GCI *gci, u8 *savedata, u32 save_len) {
 
 	s32 write_ret = dev->writeFile(outFile, gcibuf, gci_total);
 	dev->closeFile(outFile);
-	cm_log("  Wrote GCI: %u bytes (header=%u + data=%u), writeFile ret=%d",
-		gci_total, (u32)sizeof(GCI), save_len, (int)write_ret);
 	free(gcibuf);
 	free(outFile);
 
@@ -231,7 +229,6 @@ bool card_manager_export_save(int slot, card_entry *entry, s32 sector_size) {
 			gci.copy_counter = raw->copy_counter;
 			gci.comment_addr = raw->comment_addr;
 			got_raw = true;
-			cm_log("  Read raw direntry from sys_area");
 		}
 	}
 	if (!got_raw) {
@@ -250,11 +247,7 @@ bool card_manager_export_save(int slot, card_entry *entry, s32 sector_size) {
 		gci.icon_speed = cardstat.icon_speed;
 		gci.permission = file_attr;
 		gci.comment_addr = cardstat.comment_addr;
-		cm_log("  WARNING: raw direntry not found, fell back to CARD_GetStatus");
 	}
-
-	cm_log("  GCI header: filesize8=%d banner_fmt=0x%02x icon_addr=0x%x icon_fmt=0x%04x icon_speed=0x%04x comment_addr=0x%x perms=0x%02x copy=%d",
-		gci.filesize8, gci.banner_fmt, gci.icon_addr, gci.icon_fmt, gci.icon_speed, gci.comment_addr, gci.permission, gci.copy_counter);
 
 	// Read save data from card
 	u8 *savedata = (u8 *)memalign(32, entry->filesize);
@@ -278,12 +271,6 @@ bool card_manager_export_save(int slot, card_entry *entry, s32 sector_size) {
 			cur_sector, total_sectors);
 		ret = CARD_Read(&cardfile, read_buf, sector_size, offset);
 		if (ret != CARD_ERROR_READY) {
-			// Retry once
-			usleep(2000);
-			ret = CARD_Read(&cardfile, read_buf, sector_size, offset);
-		}
-		cm_log("  CARD_Read offset=%u len=%d ret=%d", offset, sector_size, (int)ret);
-		if (ret != CARD_ERROR_READY) {
 			read_ok = false;
 			break;
 		}
@@ -296,15 +283,6 @@ bool card_manager_export_save(int slot, card_entry *entry, s32 sector_size) {
 	free(read_buf);
 	CARD_Close(&cardfile);
 	cm_led_hide();
-
-	// Log data fingerprint for verification
-	if (read_ok && entry->filesize >= 16) {
-		cm_log("  Export data: first4=%02x%02x%02x%02x last4=%02x%02x%02x%02x total=%u",
-			savedata[0], savedata[1], savedata[2], savedata[3],
-			savedata[entry->filesize-4], savedata[entry->filesize-3],
-			savedata[entry->filesize-2], savedata[entry->filesize-1],
-			entry->filesize);
-	}
 
 	if (!read_ok) {
 		free(savedata);
@@ -629,7 +607,6 @@ bool cm_backup_rename(gci_file_entry *gci) {
 	dev->deleteFile(src);
 	free(src);
 
-	cm_log("Renamed backup: %s -> %s", gci->path, full_new);
 	strlcpy(gci->path, full_new, PATHNAME_MAX);
 	return true;
 }
@@ -665,7 +642,6 @@ bool cm_backup_delete(gci_file_entry *gci) {
 	strlcpy(f->name, gci->path, PATHNAME_MAX);
 	dev->deleteFile(f);
 	free(f);
-	cm_log("Deleted backup: %s", gci->path);
 	return true;
 }
 
@@ -704,7 +680,6 @@ static bool cm_backup_duplicate(gci_file_entry *gci) {
 
 	dev->writeFile(dst, buf, total);
 	dev->closeFile(dst);
-	cm_log("Duplicated backup: %s -> %s", gci->path, dst->name);
 	free(dst);
 	free(buf);
 	return true;
@@ -869,8 +844,6 @@ bool card_manager_backups(cm_panel *panel) {
 	gci_file_entry *gci_files = calloc(MAX_GCI_FILES, sizeof(gci_file_entry));
 	if (!gci_files) return false;
 	int num_gci = card_manager_scan_gci_files(gci_files, MAX_GCI_FILES);
-	cm_log("Backups: found %d GCI files", num_gci);
-
 	if (num_gci == 0) {
 		uiDrawObj_t *msgBox = cm_draw_message("No backups found in swiss/saves/");
 		DrawPublish(msgBox);
@@ -1171,7 +1144,6 @@ bool card_manager_import_gci_buf(int slot, GCI *gci, u8 *savedata,
 			return false;
 		}
 		ret = CARD_Open(slot, filename, &cardfile);
-		cm_log("  Created new file on card");
 	}
 	else if (ret == CARD_ERROR_READY) {
 		// File exists — confirm overwrite
@@ -1196,7 +1168,6 @@ bool card_manager_import_gci_buf(int slot, GCI *gci, u8 *savedata,
 		// Re-open for writing
 		ret = CARD_Open(slot, filename, &cardfile);
 		is_overwrite = true;
-		cm_log("  Overwriting existing file on card");
 	}
 
 	if (ret != CARD_ERROR_READY) {
@@ -1227,7 +1198,6 @@ bool card_manager_import_gci_buf(int slot, GCI *gci, u8 *savedata,
 		memset(write_buf, 0, sector_size);
 		memcpy(write_buf, savedata + offset, chunk);
 		ret = CARD_Write(&cardfile, write_buf, sector_size, offset);
-		cm_log("  CARD_Write offset=%u len=%d ret=%d", offset, sector_size, (int)ret);
 		if (ret != CARD_ERROR_READY) {
 			write_ok = false;
 			break;
@@ -1259,22 +1229,12 @@ bool card_manager_import_gci_buf(int slot, GCI *gci, u8 *savedata,
 				cur_sector, total_sectors);
 			ret = CARD_Read(&cardfile, verify_buf, sector_size, offset);
 			if (ret != CARD_ERROR_READY) {
-				cm_log("  VERIFY: CARD_Read failed at offset=%u ret=%d", offset, (int)ret);
 				verify_ok = false;
 				break;
 			}
 			u32 chunk = expected_len - offset;
 			if (chunk > (u32)sector_size) chunk = sector_size;
 			if (memcmp(verify_buf, savedata + offset, chunk) != 0) {
-				cm_log("  VERIFY: DATA MISMATCH at offset=%u!", offset);
-				// Log first differing byte
-				for (u32 j = 0; j < chunk; j++) {
-					if (verify_buf[j] != savedata[offset + j]) {
-						cm_log("    byte %u: wrote=0x%02x read=0x%02x",
-							offset + j, savedata[offset + j], verify_buf[j]);
-						break;
-					}
-				}
 				verify_ok = false;
 				break;
 			}
@@ -1282,9 +1242,6 @@ bool card_manager_import_gci_buf(int slot, GCI *gci, u8 *savedata,
 			cur_sector++;
 		}
 		free(verify_buf);
-		if (verify_ok) {
-			cm_log("  VERIFY: all %u bytes match", expected_len);
-		}
 	}
 	cm_led_hide();
 
@@ -1308,12 +1265,6 @@ bool card_manager_import_gci_buf(int slot, GCI *gci, u8 *savedata,
 				if (memcmp(candidate->gamecode, gci->gamecode, 4) == 0
 					&& memcmp(candidate->company, gci->company, 2) == 0
 					&& memcmp(candidate->filename, gci->filename, CARD_FILENAMELEN) == 0) {
-					if (patches == 0) {
-						cm_log("  Before: banner_fmt=0x%02x time=0x%08x icon_addr=0x%08x icon_fmt=0x%04x icon_speed=0x%04x perm=0x%02x copy=%d comment=0x%08x",
-							candidate->banner_fmt, candidate->time, candidate->icon_addr,
-							candidate->icon_fmt, candidate->icon_speed, candidate->permission,
-							candidate->copy_counter, candidate->comment_addr);
-					}
 					candidate->banner_fmt = gci->banner_fmt;
 					candidate->time = gci->time;
 					candidate->icon_addr = gci->icon_addr;
@@ -1327,16 +1278,9 @@ bool card_manager_import_gci_buf(int slot, GCI *gci, u8 *savedata,
 			}
 		}
 		if (patches > 0) {
-			cm_log("  Patched %d direntry copies in sys_area", patches);
-			cm_log("  After:  banner_fmt=0x%02x time=0x%08x icon_addr=0x%08x icon_fmt=0x%04x icon_speed=0x%04x perm=0x%02x copy=%d comment=0x%08x",
-				gci->banner_fmt, gci->time, gci->icon_addr,
-				gci->icon_fmt, gci->icon_speed, gci->permission,
-				gci->copy_counter, gci->comment_addr);
 			// Flush directory to card via CARD_SetAttributes (triggers __card_updatedir)
-			s32 attr_ret = CARD_SetAttributes(slot, cardfile.filenum, gci->permission);
-			cm_log("  CARD_SetAttributes (flush) ret=%d", (int)attr_ret);
+			CARD_SetAttributes(slot, cardfile.filenum, gci->permission);
 		} else {
-			cm_log("  WARNING: Could not find direntry in sys_area, falling back to CARD_SetStatus");
 			card_stat cardstat;
 			CARD_GetStatus(slot, cardfile.filenum, &cardstat);
 			cardstat.banner_fmt = gci->banner_fmt;
@@ -1346,13 +1290,10 @@ bool card_manager_import_gci_buf(int slot, GCI *gci, u8 *savedata,
 			cardstat.comment_addr = gci->comment_addr;
 			u64 real_time = gettime();
 			settime(secs_to_ticks(gci->time));
-			s32 status_ret = CARD_SetStatus(slot, cardfile.filenum, &cardstat);
+			CARD_SetStatus(slot, cardfile.filenum, &cardstat);
 			settime(real_time);
-			cm_log("  CARD_SetStatus ret=%d", (int)status_ret);
 			CARD_SetAttributes(slot, cardfile.filenum, gci->permission);
 		}
-	} else {
-		cm_log("  Skipping directory update (overwrite mode)");
 	}
 
 	CARD_Close(&cardfile);

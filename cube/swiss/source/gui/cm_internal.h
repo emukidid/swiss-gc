@@ -140,14 +140,6 @@ typedef enum {
 	CM_ACT_COUNT
 } cm_action;
 
-// --- cm_log.c ---
-
-void cm_log_open(void);
-void cm_log(const char *fmt, ...);
-void cm_log_close(void);
-void cm_log_card_info(int slot, s32 mem_size, s32 sector_size, int num_entries);
-void cm_log_entry(int idx, card_entry *entry);
-
 // --- cm_card.c ---
 
 void cm_parse_save_graphics(u8 *gfx_data, u32 gfx_len,

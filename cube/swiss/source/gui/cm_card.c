@@ -183,6 +183,11 @@ static void card_manager_read_comment(int slot, card_entry *entry) {
 	CARD_SetGamecode(entry->gamecode);
 	CARD_SetCompany(entry->company);
 
+	s32 sector_size;
+	if (CARD_ProbeEx(slot, NULL, &sector_size) != CARD_ERROR_READY)
+		return;
+	u32 sector_mask = sector_size - 1;
+
 	card_file cardfile;
 	if (CARD_Open(slot, entry->filename, &cardfile) != CARD_ERROR_READY)
 		return;
@@ -190,10 +195,10 @@ static void card_manager_read_comment(int slot, card_entry *entry) {
 	card_stat cardstat;
 	if (CARD_GetStatus(slot, cardfile.filenum, &cardstat) == CARD_ERROR_READY
 		&& cardstat.comment_addr != (u32)-1) {
-		u32 sector_offset = cardstat.comment_addr & ~(8192 - 1);
-		u8 *buf = (u8 *)memalign(32, 8192);
+		u32 sector_offset = cardstat.comment_addr & ~sector_mask;
+		u8 *buf = (u8 *)memalign(32, sector_size);
 		if (buf) {
-			if (CARD_Read(&cardfile, buf, 8192, sector_offset) == CARD_ERROR_READY) {
+			if (CARD_Read(&cardfile, buf, sector_size, sector_offset) == CARD_ERROR_READY) {
 				u32 off_in_sector = cardstat.comment_addr - sector_offset;
 				char *comment = (char *)(buf + off_in_sector);
 				snprintf(entry->game_name, sizeof(entry->game_name), "%.32s", comment);
@@ -212,19 +217,24 @@ static void card_manager_read_graphics(int slot, card_entry *entry) {
 	CARD_SetGamecode(entry->gamecode);
 	CARD_SetCompany(entry->company);
 
+	s32 sector_size;
+	if (CARD_ProbeEx(slot, NULL, &sector_size) != CARD_ERROR_READY)
+		return;
+	u32 sector_mask = sector_size - 1;
+
 	card_file cardfile;
 	if (CARD_Open(slot, entry->filename, &cardfile) != CARD_ERROR_READY)
 		return;
 
-	// Read all graphics data from card in sector-aligned chunks
-	u32 sector_offset = entry->icon_addr & ~(8192 - 1);
+	// Read graphics data from card in a single aligned read
+	u32 sector_offset = entry->icon_addr & ~sector_mask;
 	u32 off_in_sector = entry->icon_addr - sector_offset;
 	// Estimate max graphics size: banner(6144) + 8 icons(2048 each) + tlut(512) ≈ 23KB
 	u32 est_size = 24576;
-	u32 read_len = (off_in_sector + est_size + 8191) & ~(8192 - 1);
+	u32 read_len = (off_in_sector + est_size + sector_mask) & ~sector_mask;
 	u32 max_read = entry->filesize > sector_offset ? entry->filesize - sector_offset : 0;
-	max_read &= ~(8192 - 1);
-	if (max_read == 0) max_read = 8192;
+	max_read &= ~sector_mask;
+	if (max_read == 0) max_read = (u32)sector_size;
 	if (read_len > max_read) read_len = max_read;
 
 	u8 *buf = (u8 *)memalign(32, read_len);
@@ -233,13 +243,7 @@ static void card_manager_read_graphics(int slot, card_entry *entry) {
 		return;
 	}
 
-	bool ok = true;
-	for (u32 off = 0; off < read_len; off += 8192) {
-		if (CARD_Read(&cardfile, buf + off, 8192, sector_offset + off) != CARD_ERROR_READY) {
-			ok = false;
-			break;
-		}
-	}
+	bool ok = (CARD_Read(&cardfile, buf, read_len, sector_offset) == CARD_ERROR_READY);
 	CARD_Close(&cardfile);
 
 	if (!ok) {
