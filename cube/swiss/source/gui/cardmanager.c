@@ -15,8 +15,7 @@
 static void cm_show_error(const char *msg) {
 	uiDrawObj_t *msgBox = cm_draw_message(msg);
 	DrawPublish(msgBox);
-	while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
-	while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
+	cm_wait_buttons(PAD_BUTTON_A | PAD_BUTTON_B);
 	DrawDispose(msgBox);
 }
 
@@ -45,16 +44,9 @@ static void cm_panel_load(cm_panel *panel) {
 			sprintf(msg, "Memory Card in Slot %c uses an\nincompatible format.\n \nA: Format  |  B: Cancel", slot_ch);
 			uiDrawObj_t *msgBox = cm_draw_message(msg);
 			DrawPublish(msgBox);
-			int choice = 0;
-			while (!choice) {
-				u16 btn = padsButtonsHeld();
-				if (btn & PAD_BUTTON_A) choice = 1;
-				if (btn & PAD_BUTTON_B) choice = 2;
-				VIDEO_WaitVSync();
-			}
-			while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
+			u16 btn = cm_wait_buttons(PAD_BUTTON_A | PAD_BUTTON_B);
 			DrawDispose(msgBox);
-			if (choice == 1) {
+			if (btn & PAD_BUTTON_A) {
 				msgBox = cm_draw_message("Formatting Memory Card...\nDo not remove the Memory Card.");
 				DrawPublish(msgBox);
 				ret = CARD_Format(panel->slot);
@@ -73,16 +65,9 @@ static void cm_panel_load(cm_panel *panel) {
 			sprintf(msg, "Memory Card in Slot %c has corrupted\ndata. Format the card?\n \nA: Format  |  B: Cancel", slot_ch);
 			uiDrawObj_t *msgBox = cm_draw_message(msg);
 			DrawPublish(msgBox);
-			int choice = 0;
-			while (!choice) {
-				u16 btn = padsButtonsHeld();
-				if (btn & PAD_BUTTON_A) choice = 1;
-				if (btn & PAD_BUTTON_B) choice = 2;
-				VIDEO_WaitVSync();
-			}
-			while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
+			u16 btn = cm_wait_buttons(PAD_BUTTON_A | PAD_BUTTON_B);
 			DrawDispose(msgBox);
-			if (choice == 1) {
+			if (btn & PAD_BUTTON_A) {
 				msgBox = cm_draw_message("Formatting Memory Card...\nDo not remove the Memory Card.");
 				DrawPublish(msgBox);
 				ret = CARD_Format(panel->slot);
@@ -98,27 +83,18 @@ static void cm_panel_load(cm_panel *panel) {
 		}
 		if (ret == CARD_ERROR_READY) {
 			CARD_ProbeEx(panel->slot, &panel->mem_size, &panel->sector_size);
-			panel->num_entries = card_manager_read_saves(panel->slot, panel->entries, 128);
 			panel->card_present = true;
-			for (int i = 0; i < panel->num_entries; i++) {
-				if (panel->entries[i].icon && panel->entries[i].icon->num_frames > 1) {
-					panel->has_animated_icons = true;
-					break;
-				}
-			}
+			panel->num_entries = card_manager_read_dir(panel->slot, panel->entries, 128);
+			panel->load_cursor = 0;
 		}
 	}
 	else if (panel->source == CM_SRC_VMC) {
-		panel->num_entries = vmc_read_saves(panel->vmc_path, panel->entries, 128,
-			&panel->mem_size, &panel->sector_size);
+		panel->num_entries = vmc_read_dir(panel->vmc_path, panel->entries, 128,
+			&panel->mem_size, &panel->sector_size,
+			&panel->_vmc_sysarea, &panel->_vmc_total_blocks);
 		if (panel->num_entries >= 0) {
 			panel->card_present = true;
-			for (int i = 0; i < panel->num_entries; i++) {
-				if (panel->entries[i].icon && panel->entries[i].icon->num_frames > 1) {
-					panel->has_animated_icons = true;
-					break;
-				}
-			}
+			panel->load_cursor = 0;
 		}
 	}
 
@@ -210,8 +186,7 @@ static void cm_handle_context_menu(cm_panel *ap, cm_panel *other, bool *needs_re
 			if (dest_count == 0) {
 				uiDrawObj_t *msg = cm_draw_message("No copy destinations available.");
 				DrawPublish(msg);
-				while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
-				while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
+				cm_wait_buttons(PAD_BUTTON_A | PAD_BUTTON_B);
 				DrawDispose(msg);
 				free(vmcs);
 				*needs_redraw = true;
@@ -306,8 +281,7 @@ static void cm_handle_context_menu(cm_panel *ap, cm_panel *other, bool *needs_re
 				if (init_ret != CARD_ERROR_READY) {
 					uiDrawObj_t *msg = cm_draw_message("Destination card not ready.");
 					DrawPublish(msg);
-					while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
-					while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
+					cm_wait_buttons(PAD_BUTTON_A | PAD_BUTTON_B);
 					DrawDispose(msg);
 					write_ok = false;
 				} else {
@@ -396,8 +370,7 @@ static bool cm_pick_vmc(cm_panel *panel) {
 	if (num == 0) {
 		uiDrawObj_t *msg = cm_draw_message("No virtual card files found\nin swiss/saves/");
 		DrawPublish(msg);
-		while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
-		while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
+		cm_wait_buttons(PAD_BUTTON_A | PAD_BUTTON_B);
 		DrawDispose(msg);
 		free(vmcs);
 		return false;
@@ -478,47 +451,61 @@ void show_card_manager(void) {
 	while (1) {
 		cm_retire_tick();
 
-		// Reload any panel that needs it
-		bool any_reload = false;
+		// Initiate reload for any panel that needs it
 		for (int p = 0; p < 2; p++) {
-			if (panels[p]->needs_reload) {
-				panels[p]->loading = true;
-				panels[p]->activity = CM_ACTIVITY_READ;
-				any_reload = true;
+			if (!panels[p]->needs_reload) continue;
+			card_manager_free_graphics(panels[p]->entries, panels[p]->num_entries);
+			panels[p]->loading = true;
+			panels[p]->activity = CM_ACTIVITY_READ;
+			cm_panel_load(panels[p]);
+			// If no entries to detail-load, complete immediately
+			if (!panels[p]->card_present || panels[p]->num_entries == 0) {
+				panels[p]->loading = false;
+				panels[p]->activity = CM_ACTIVITY_IDLE;
+				if (panels[p]->_vmc_sysarea) {
+					free(panels[p]->_vmc_sysarea);
+					panels[p]->_vmc_sysarea = NULL;
+				}
+				if (lib->initialized) lib->needs_rebuild = true;
 			}
+			needs_redraw = true;
 		}
-		if (any_reload) {
-			// Free panel graphics (snapshots go to retirement queue)
-			for (int p = 0; p < 2; p++) {
-				if (panels[p]->loading) {
-					card_manager_free_graphics(panels[p]->entries, panels[p]->num_entries);
-					panels[p]->num_entries = 0;
+
+		// Incremental detail loading — one save per frame per panel
+		for (int p = 0; p < 2; p++) {
+			if (!panels[p]->loading) continue;
+			if (panels[p]->load_cursor < panels[p]->num_entries) {
+				if (panels[p]->source == CM_SRC_VMC) {
+					vmc_read_save_detail(panels[p]->vmc_path,
+						&panels[p]->entries[panels[p]->load_cursor],
+						panels[p]->_vmc_sysarea, panels[p]->_vmc_total_blocks);
+					panels[p]->load_cursor++;
+				} else {
+					if (CARD_ProbeEx(panels[p]->slot, NULL, NULL) != CARD_ERROR_READY) {
+						panels[p]->load_cursor = panels[p]->num_entries;
+					} else {
+						card_manager_read_save_detail(panels[p]->slot,
+							&panels[p]->entries[panels[p]->load_cursor]);
+						panels[p]->load_cursor++;
+					}
 				}
 			}
-
-			// Show loading page — in library mode, keep the library visible.
-			// Library snapshots are in the retirement queue (not yet freed)
-			// so the video thread can safely render from them during CARD I/O.
-			uiDrawObj_t *loadPage;
-			if (view_mode == 0)
-				loadPage = card_manager_draw(panels[0], panels[1], active, anim_tick);
-			else
-				loadPage = lib_draw_view(lib, anim_tick);
-			cm_draw_status_leds(loadPage, panels);
-			DrawPublish(loadPage);
-			if (page) DrawDispose(page);
-			page = loadPage;
-
-			// CARD I/O
-			for (int p = 0; p < 2; p++) {
-				if (panels[p]->loading) {
-					cm_panel_load(panels[p]);
-					panels[p]->loading = false;
-					panels[p]->activity = CM_ACTIVITY_IDLE;
+			if (panels[p]->load_cursor >= panels[p]->num_entries) {
+				panels[p]->loading = false;
+				panels[p]->activity = CM_ACTIVITY_IDLE;
+				if (panels[p]->_vmc_sysarea) {
+					free(panels[p]->_vmc_sysarea);
+					panels[p]->_vmc_sysarea = NULL;
 				}
+				for (int i = 0; i < panels[p]->num_entries; i++) {
+					if (panels[p]->entries[i].icon
+						&& panels[p]->entries[i].icon->num_frames > 1) {
+						panels[p]->has_animated_icons = true;
+						break;
+					}
+				}
+				if (lib->initialized) lib->needs_rebuild = true;
 			}
-			if (lib->initialized)
-				lib->needs_rebuild = true;
 			needs_redraw = true;
 		}
 
@@ -531,7 +518,8 @@ void show_card_manager(void) {
 
 		// Draw current view
 		bool has_anim = (view_mode == 0 &&
-			(panels[0]->has_animated_icons || panels[1]->has_animated_icons))
+			(panels[0]->has_animated_icons || panels[1]->has_animated_icons
+			|| panels[0]->loading || panels[1]->loading))
 			|| view_mode == 1;
 		if (needs_redraw || has_anim) {
 			uiDrawObj_t *newPage;
@@ -595,8 +583,9 @@ void show_card_manager(void) {
 			stickX > 16 || stickX < -16;
 		if (!has_input) continue;
 
-		// --- View toggle (X) ---
-		if (btns & PAD_BUTTON_X) {
+		// --- View toggle (X) — blocked during incremental loading (CARD I/O conflict) ---
+		if ((btns & PAD_BUTTON_X)
+			&& !panels[0]->loading && !panels[1]->loading) {
 			while (padsButtonsHeld() & PAD_BUTTON_X) { VIDEO_WaitVSync(); }
 			if (view_mode == 0) {
 				if (!lib->initialized || lib->needs_rebuild) {
@@ -647,8 +636,9 @@ void show_card_manager(void) {
 				continue;
 			}
 
-			// Context menu (A) — requires a save selected
-			if ((btns & PAD_BUTTON_A) && ap->card_present && ap->num_entries > 0) {
+			// Context menu (A) — requires save selected and no loading (CARD I/O)
+			if ((btns & PAD_BUTTON_A) && ap->card_present && ap->num_entries > 0
+				&& !panels[0]->loading && !panels[1]->loading) {
 				while (padsButtonsHeld() & PAD_BUTTON_A) { VIDEO_WaitVSync(); }
 				cm_handle_context_menu(ap, other, &needs_redraw);
 				needs_redraw = true;
@@ -657,8 +647,9 @@ void show_card_manager(void) {
 				goto debounce;
 			}
 
-			// VMC picker (Z) — switch active panel between physical card and VMC
-			if (btns & PAD_TRIGGER_Z) {
+			// VMC picker (Z) — blocked during loading (CARD I/O conflict)
+			if ((btns & PAD_TRIGGER_Z)
+				&& !panels[0]->loading && !panels[1]->loading) {
 				while (padsButtonsHeld() & PAD_TRIGGER_Z) { VIDEO_WaitVSync(); }
 				cm_pick_vmc(ap);
 				if (lib->initialized)
@@ -706,6 +697,7 @@ debounce:
 		free(lib);
 	}
 	for (int p = 0; p < 2; p++) {
+		if (panels[p]->_vmc_sysarea) free(panels[p]->_vmc_sysarea);
 		card_manager_free_graphics(panels[p]->entries, panels[p]->num_entries);
 		free(panels[p]);
 	}

@@ -154,7 +154,7 @@ void cm_parse_comment(u8 *file_data, u32 file_len, u32 comment_addr,
 
 // --- Physical card reading ---
 
-static void card_manager_read_comment(int slot, card_entry *entry) {
+void card_manager_read_comment(int slot, card_entry *entry) {
 	CARD_SetGamecode(entry->gamecode);
 	CARD_SetCompany(entry->company);
 
@@ -307,7 +307,7 @@ void cm_gfx_cache_invalidate(const card_entry *entry) {
 	free(f);
 }
 
-static void card_manager_read_graphics(int slot, card_entry *entry) {
+void card_manager_read_graphics(int slot, card_entry *entry) {
 	if (entry->icon_addr == (u32)-1)
 		return;
 
@@ -530,6 +530,24 @@ void cm_retire_flush(void) {
 	s_retire.cap = 0;
 }
 
+// --- Button wait helper ---
+// Waits for any button in mask, ticks retirement during wait.
+// Returns which button(s) were pressed.
+u16 cm_wait_buttons(u16 mask) {
+	while (1) {
+		cm_retire_tick();
+		u16 btns = padsButtonsHeld();
+		if (btns & mask) {
+			while (padsButtonsHeld() & mask) {
+				cm_retire_tick();
+				VIDEO_WaitVSync();
+			}
+			return btns & mask;
+		}
+		VIDEO_WaitVSync();
+	}
+}
+
 // --- Incremental panel updates ---
 
 bool cm_panel_add_from_gci(cm_panel *panel, GCI *gci, u8 *savedata, u32 save_len) {
@@ -597,7 +615,10 @@ void cm_panel_remove_entry(cm_panel *panel, int index) {
 		panel->cursor = panel->num_entries - 1;
 }
 
-int card_manager_read_saves(int slot, card_entry *entries, int max_entries) {
+// Fast directory scan — RAM only, no CARD I/O.
+// Populates metadata (filename, gamecode, size, format descriptors) but
+// no comments or graphics. Returns entry count.
+int card_manager_read_dir(int slot, card_entry *entries, int max_entries) {
 	int count = 0;
 	card_dir carddir;
 
@@ -644,15 +665,23 @@ int card_manager_read_saves(int slot, card_entry *entries, int max_entries) {
 		}
 	}
 
+	return count;
+}
+
+// Read comment text and graphics for a single save entry.
+// This is the slow part — involves CARD I/O (or SD cache hit for graphics).
+void card_manager_read_save_detail(int slot, card_entry *entry) {
+	card_manager_read_comment(slot, entry);
+	card_manager_read_graphics(slot, entry);
+}
+
+// Convenience wrapper — reads everything in one blocking call.
+// Used by library view which doesn't need incremental loading.
+int card_manager_read_saves(int slot, card_entry *entries, int max_entries) {
+	int count = card_manager_read_dir(slot, entries, max_entries);
 	for (int i = 0; i < count; i++) {
-		card_manager_read_comment(slot, &entries[i]);
+		card_manager_read_save_detail(slot, &entries[i]);
 		cm_led_pulse();
 	}
-
-	for (int i = 0; i < count; i++) {
-		card_manager_read_graphics(slot, &entries[i]);
-		cm_led_pulse();
-	}
-
 	return count;
 }

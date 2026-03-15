@@ -217,8 +217,14 @@ static u8 *vmc_read_file_data(const char *vmc_path, const u8 *bat,
 	return data;
 }
 
-int vmc_read_saves(const char *vmc_path, card_entry *entries, int max_entries,
-	s32 *out_mem_size, s32 *out_sector_size) {
+// Fast phase: read sysarea + parse directory (no per-file I/O)
+// Caller must free *out_sysarea when incremental loading is complete.
+int vmc_read_dir(const char *vmc_path, card_entry *entries, int max_entries,
+	s32 *out_mem_size, s32 *out_sector_size,
+	u8 **out_sysarea, u32 *out_total_blocks) {
+
+	*out_sysarea = NULL;
+	*out_total_blocks = 0;
 
 	// Read entire system area (5 blocks = 40KB)
 	u32 sysarea_size = MC_FIRST_DATA_BLOCK * MC_BLOCK_SIZE;
@@ -228,7 +234,6 @@ int vmc_read_saves(const char *vmc_path, card_entry *entries, int max_entries,
 	// Get card size info from header block
 	const u8 *hdr = sysarea + MC_BLOCK_HEADER * MC_BLOCK_SIZE;
 	u16 card_mbits = *(const u16 *)(hdr + MC_HDR_CARD_SIZE);
-	// Convert Mbits to bytes: Mbits * 1024 * 1024 / 8
 	*out_mem_size = card_mbits * 131072;
 	*out_sector_size = MC_BLOCK_SIZE;
 
@@ -250,21 +255,17 @@ int vmc_read_saves(const char *vmc_path, card_entry *entries, int max_entries,
 		return 0;
 	}
 
-	// Pick active directory and BAT
+	// Pick active directory
 	int dir_blk = vmc_active_dir_block(sysarea);
-	int bat_blk = vmc_active_bat_block(sysarea);
 	const u8 *dir = sysarea + dir_blk * MC_BLOCK_SIZE;
-	const u8 *bat = sysarea + bat_blk * MC_BLOCK_SIZE;
 
-	// Parse directory entries
+	// Parse directory entries (metadata only, no file data reads)
 	int count = 0;
 	for (int i = 0; i < MC_DIR_ENTRIES && count < max_entries; i++) {
 		const GCI *raw = (const GCI *)(dir + i * MC_DIR_ENTRY_SIZE);
 
-		// Empty entry: gamecode starts with 0xFF
 		if (raw->gamecode[0] == 0xFF)
 			continue;
-		// Also skip entries with all-zero gamecode (cleared)
 		if (raw->gamecode[0] == 0x00)
 			continue;
 
@@ -288,31 +289,55 @@ int vmc_read_saves(const char *vmc_path, card_entry *entries, int max_entries,
 		e->blocks = e->filesize / MC_BLOCK_SIZE;
 		e->fileno = i;
 
-		u16 first_block = raw->first_block;
-		u32 comment_addr = raw->comment_addr;
-
-		// Read file data for graphics and comment
-		if (e->filesize > 0 && first_block >= MC_FIRST_DATA_BLOCK) {
-			u8 *file_data = vmc_read_file_data(vmc_path, bat,
-				first_block, e->filesize, total_blocks);
-			if (file_data) {
-				// Parse comment (game name + description)
-				cm_parse_comment(file_data, e->filesize, comment_addr, e);
-
-				// Parse graphics (banner + icons)
-				if (e->icon_addr != (u32)-1 && e->icon_addr < e->filesize) {
-					u8 *gfx = file_data + e->icon_addr;
-					u32 gfx_len = e->filesize - e->icon_addr;
-					cm_parse_save_graphics(gfx, gfx_len,
-						e->banner_fmt, e->icon_fmt, e->icon_speed, e);
-				}
-				free(file_data);
-			}
-		}
-
 		count++;
 	}
 
+	*out_sysarea = sysarea;
+	*out_total_blocks = total_blocks;
+	return count;
+}
+
+// Slow phase: read one save's file data for comment + graphics
+void vmc_read_save_detail(const char *vmc_path, card_entry *entry,
+	const u8 *sysarea, u32 total_blocks) {
+
+	int bat_blk = vmc_active_bat_block(sysarea);
+	int dir_blk = vmc_active_dir_block(sysarea);
+	const u8 *bat = sysarea + bat_blk * MC_BLOCK_SIZE;
+	const u8 *dir = sysarea + dir_blk * MC_BLOCK_SIZE;
+
+	// Get first_block and comment_addr from directory entry
+	const GCI *raw = (const GCI *)(dir + entry->fileno * MC_DIR_ENTRY_SIZE);
+	u16 first_block = raw->first_block;
+	u32 comment_addr = raw->comment_addr;
+
+	if (entry->filesize > 0 && first_block >= MC_FIRST_DATA_BLOCK) {
+		u8 *file_data = vmc_read_file_data(vmc_path, bat,
+			first_block, entry->filesize, total_blocks);
+		if (file_data) {
+			cm_parse_comment(file_data, entry->filesize, comment_addr, entry);
+
+			if (entry->icon_addr != (u32)-1 && entry->icon_addr < entry->filesize) {
+				u8 *gfx = file_data + entry->icon_addr;
+				u32 gfx_len = entry->filesize - entry->icon_addr;
+				cm_parse_save_graphics(gfx, gfx_len,
+					entry->banner_fmt, entry->icon_fmt, entry->icon_speed, entry);
+			}
+			free(file_data);
+		}
+	}
+}
+
+// Convenience wrapper for callers that don't need incremental loading
+int vmc_read_saves(const char *vmc_path, card_entry *entries, int max_entries,
+	s32 *out_mem_size, s32 *out_sector_size) {
+
+	u8 *sysarea;
+	u32 total_blocks;
+	int count = vmc_read_dir(vmc_path, entries, max_entries,
+		out_mem_size, out_sector_size, &sysarea, &total_blocks);
+	for (int i = 0; i < count; i++)
+		vmc_read_save_detail(vmc_path, &entries[i], sysarea, total_blocks);
 	free(sysarea);
 	return count;
 }

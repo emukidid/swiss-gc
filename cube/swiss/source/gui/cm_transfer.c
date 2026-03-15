@@ -51,15 +51,13 @@ bool card_manager_delete_save(int slot, card_entry *entry) {
 	if (ret != CARD_ERROR_READY) {
 		msgBox = cm_draw_message("Delete failed.");
 		DrawPublish(msgBox);
-		while (!(padsButtonsHeld() & PAD_BUTTON_A)) { VIDEO_WaitVSync(); }
-		while (padsButtonsHeld() & PAD_BUTTON_A) { VIDEO_WaitVSync(); }
+		cm_wait_buttons(PAD_BUTTON_A);
 		DrawDispose(msgBox);
 		return false;
 	}
 	msgBox = cm_draw_message("Save deleted.");
 	DrawPublish(msgBox);
-	while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
-	while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
+	cm_wait_buttons(PAD_BUTTON_A | PAD_BUTTON_B);
 	DrawDispose(msgBox);
 	return true;
 }
@@ -74,8 +72,7 @@ bool cm_write_gci_to_sd(GCI *gci, u8 *savedata, u32 save_len) {
 	if (!dev) {
 		uiDrawObj_t *msgBox = cm_draw_message("No storage device available.");
 		DrawPublish(msgBox);
-		while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
-		while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
+		cm_wait_buttons(PAD_BUTTON_A | PAD_BUTTON_B);
 		DrawDispose(msgBox);
 		return false;
 	}
@@ -109,23 +106,13 @@ bool cm_write_gci_to_sd(GCI *gci, u8 *savedata, u32 save_len) {
 			gamecode, filename);
 		uiDrawObj_t *msgBox = cm_draw_message(overwrite_msg);
 		DrawPublish(msgBox);
-		int choice = 0;
-		while (!choice) {
-			u16 btn = padsButtonsHeld();
-			if (btn & PAD_BUTTON_A) choice = 1;
-			else if (btn & PAD_BUTTON_X) choice = 2;
-			else if (btn & PAD_BUTTON_B) choice = 3;
-			VIDEO_WaitVSync();
-		}
-		while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_X | PAD_BUTTON_B)) {
-			VIDEO_WaitVSync();
-		}
+		u16 btn = cm_wait_buttons(PAD_BUTTON_A | PAD_BUTTON_X | PAD_BUTTON_B);
 		DrawDispose(msgBox);
-		if (choice == 3) {
+		if (btn & PAD_BUTTON_B) {
 			free(outFile);
 			return false;
 		}
-		if (choice == 2) {
+		if (btn & PAD_BUTTON_X) {
 			for (int n = 2; n <= 99; n++) {
 				snprintf(gci_name, sizeof(gci_name), "swiss/saves/%.4s-%.32s (%d).gci",
 					gamecode, filename, n);
@@ -145,8 +132,7 @@ bool cm_write_gci_to_sd(GCI *gci, u8 *savedata, u32 save_len) {
 		DrawDispose(msgBox);
 		msgBox = cm_draw_message("Out of memory.");
 		DrawPublish(msgBox);
-		while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
-		while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
+		cm_wait_buttons(PAD_BUTTON_A | PAD_BUTTON_B);
 		DrawDispose(msgBox);
 		return false;
 	}
@@ -164,8 +150,7 @@ bool cm_write_gci_to_sd(GCI *gci, u8 *savedata, u32 save_len) {
 		gamecode, filename);
 	msgBox = cm_draw_message(done_msg);
 	DrawPublish(msgBox);
-	while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
-	while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
+	cm_wait_buttons(PAD_BUTTON_A | PAD_BUTTON_B);
 	DrawDispose(msgBox);
 	return true;
 }
@@ -189,8 +174,7 @@ bool card_manager_export_save(int slot, card_entry *entry, s32 sector_size) {
 		cm_led_hide();
 		uiDrawObj_t *msgBox = cm_draw_message("Failed to open card file.");
 		DrawPublish(msgBox);
-		while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
-		while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
+		cm_wait_buttons(PAD_BUTTON_A | PAD_BUTTON_B);
 		DrawDispose(msgBox);
 		return false;
 	}
@@ -258,8 +242,7 @@ bool card_manager_export_save(int slot, card_entry *entry, s32 sector_size) {
 		cm_led_hide();
 		uiDrawObj_t *msgBox = cm_draw_message("Out of memory.");
 		DrawPublish(msgBox);
-		while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
-		while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
+		cm_wait_buttons(PAD_BUTTON_A | PAD_BUTTON_B);
 		DrawDispose(msgBox);
 		return false;
 	}
@@ -290,8 +273,7 @@ bool card_manager_export_save(int slot, card_entry *entry, s32 sector_size) {
 		free(savedata);
 		uiDrawObj_t *errBox = cm_draw_message("Failed to read card data.");
 		DrawPublish(errBox);
-		while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
-		while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
+		cm_wait_buttons(PAD_BUTTON_A | PAD_BUTTON_B);
 		DrawDispose(errBox);
 		return false;
 	}
@@ -578,8 +560,7 @@ bool cm_backup_rename(gci_file_entry *gci) {
 			free(check);
 			uiDrawObj_t *msgBox = cm_draw_message("A file with that name already exists.");
 			DrawPublish(msgBox);
-			while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
-			while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
+			cm_wait_buttons(PAD_BUTTON_A | PAD_BUTTON_B);
 			DrawDispose(msgBox);
 			return false;
 		}
@@ -849,8 +830,7 @@ bool card_manager_backups(cm_panel *panel) {
 	if (num_gci == 0) {
 		uiDrawObj_t *msgBox = cm_draw_message("No backups found in swiss/saves/");
 		DrawPublish(msgBox);
-		while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
-		while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
+		cm_wait_buttons(PAD_BUTTON_A | PAD_BUTTON_B);
 		DrawDispose(msgBox);
 		free(gci_files);
 		return card_modified;
@@ -989,8 +969,7 @@ bool cm_read_physical_save(int slot, card_entry *entry, s32 sector_size,
 		cm_led_hide();
 		uiDrawObj_t *msgBox = cm_draw_message("Failed to open card file.");
 		DrawPublish(msgBox);
-		while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
-		while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
+		cm_wait_buttons(PAD_BUTTON_A | PAD_BUTTON_B);
 		DrawDispose(msgBox);
 		return false;
 	}
@@ -1050,8 +1029,7 @@ bool cm_read_physical_save(int slot, card_entry *entry, s32 sector_size,
 		cm_led_hide();
 		uiDrawObj_t *msgBox = cm_draw_message("Out of memory.");
 		DrawPublish(msgBox);
-		while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
-		while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
+		cm_wait_buttons(PAD_BUTTON_A | PAD_BUTTON_B);
 		DrawDispose(msgBox);
 		return false;
 	}
@@ -1083,8 +1061,7 @@ bool cm_read_physical_save(int slot, card_entry *entry, s32 sector_size,
 		free(savedata);
 		uiDrawObj_t *errBox = cm_draw_message("Failed to read card data.");
 		DrawPublish(errBox);
-		while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
-		while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
+		cm_wait_buttons(PAD_BUTTON_A | PAD_BUTTON_B);
 		DrawDispose(errBox);
 		return false;
 	}
@@ -1111,8 +1088,7 @@ bool card_manager_import_gci_buf(int slot, GCI *gci, u8 *savedata,
 			(int)(save_len / 1024), (int)(expected_len / 1024));
 		msgBox = cm_draw_message(errmsg);
 		DrawPublish(msgBox);
-		while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
-		while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
+		cm_wait_buttons(PAD_BUTTON_A | PAD_BUTTON_B);
 		DrawDispose(msgBox);
 		return false;
 	}
@@ -1140,8 +1116,7 @@ bool card_manager_import_gci_buf(int slot, GCI *gci, u8 *savedata,
 			DrawDispose(msgBox);
 			msgBox = cm_draw_message("Failed to create file on card.\nCard may be full.");
 			DrawPublish(msgBox);
-			while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
-			while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
+			cm_wait_buttons(PAD_BUTTON_A | PAD_BUTTON_B);
 			DrawDispose(msgBox);
 			return false;
 		}
@@ -1153,16 +1128,9 @@ bool card_manager_import_gci_buf(int slot, GCI *gci, u8 *savedata,
 		DrawDispose(msgBox);
 		msgBox = cm_draw_message("Save already exists on card.\n \nA: Overwrite  |  B: Cancel");
 		DrawPublish(msgBox);
-		int choice = 0;
-		while (!choice) {
-			u16 btn = padsButtonsHeld();
-			if (btn & PAD_BUTTON_A) choice = 1;
-			if (btn & PAD_BUTTON_B) choice = 2;
-			VIDEO_WaitVSync();
-		}
-		while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
+		u16 btn = cm_wait_buttons(PAD_BUTTON_A | PAD_BUTTON_B);
 		DrawDispose(msgBox);
-		if (choice == 2) {
+		if (btn & PAD_BUTTON_B) {
 			return false;
 		}
 		msgBox = cm_draw_message("Importing save...\nDo not remove the Memory Card.");
@@ -1176,8 +1144,7 @@ bool card_manager_import_gci_buf(int slot, GCI *gci, u8 *savedata,
 		DrawDispose(msgBox);
 		uiDrawObj_t *errBox = cm_draw_message("Failed to open card file.");
 		DrawPublish(errBox);
-		while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
-		while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
+		cm_wait_buttons(PAD_BUTTON_A | PAD_BUTTON_B);
 		DrawDispose(errBox);
 		return false;
 	}
@@ -1214,8 +1181,7 @@ bool card_manager_import_gci_buf(int slot, GCI *gci, u8 *savedata,
 		CARD_Close(&cardfile);
 		uiDrawObj_t *errBox = cm_draw_message("Failed to write data to card.");
 		DrawPublish(errBox);
-		while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
-		while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
+		cm_wait_buttons(PAD_BUTTON_A | PAD_BUTTON_B);
 		DrawDispose(errBox);
 		return false;
 	}
@@ -1313,8 +1279,7 @@ bool card_manager_import_gci_buf(int slot, GCI *gci, u8 *savedata,
 	snprintf(done_msg, sizeof(done_msg), "Imported \"%s\" successfully.", filename);
 	uiDrawObj_t *doneBox = cm_draw_message(done_msg);
 	DrawPublish(doneBox);
-	while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
-	while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
+	cm_wait_buttons(PAD_BUTTON_A | PAD_BUTTON_B);
 	DrawDispose(doneBox);
 	return true;
 }
@@ -1335,8 +1300,7 @@ bool card_manager_import_gci(int slot, gci_file_entry *gci_entry, s32 sector_siz
 		free(inFile);
 		uiDrawObj_t *msgBox = cm_draw_message("File not found.");
 		DrawPublish(msgBox);
-		while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
-		while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
+		cm_wait_buttons(PAD_BUTTON_A | PAD_BUTTON_B);
 		DrawDispose(msgBox);
 		return false;
 	}
@@ -1346,8 +1310,7 @@ bool card_manager_import_gci(int slot, gci_file_entry *gci_entry, s32 sector_siz
 		free(inFile);
 		uiDrawObj_t *msgBox = cm_draw_message("Invalid GCI file (too small).");
 		DrawPublish(msgBox);
-		while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
-		while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
+		cm_wait_buttons(PAD_BUTTON_A | PAD_BUTTON_B);
 		DrawDispose(msgBox);
 		return false;
 	}
@@ -1357,8 +1320,7 @@ bool card_manager_import_gci(int slot, gci_file_entry *gci_entry, s32 sector_siz
 		free(inFile);
 		uiDrawObj_t *msgBox = cm_draw_message("Out of memory.");
 		DrawPublish(msgBox);
-		while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
-		while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
+		cm_wait_buttons(PAD_BUTTON_A | PAD_BUTTON_B);
 		DrawDispose(msgBox);
 		return false;
 	}

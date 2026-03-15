@@ -406,6 +406,7 @@ void cm_led_hide(void) {
 
 void cm_led_pulse(void) {
 	if (!s_led_msg_text[0]) return;
+	cm_retire_tick();
 	uiDrawObj_t *fresh = cm_draw_message(s_led_msg_text);
 	if (s_led_page) DrawDispose(s_led_page);
 	s_led_page = fresh;
@@ -414,6 +415,7 @@ void cm_led_pulse(void) {
 }
 
 void cm_led_progress(const char *msg, int current, int total) {
+	cm_retire_tick();
 	uiDrawObj_t *fresh = cm_draw_progress(msg, current, total);
 	if (s_led_page) DrawDispose(s_led_page);
 	s_led_page = fresh;
@@ -513,13 +515,18 @@ static void card_manager_draw_panel(uiDrawObj_t *container, cm_panel *panel,
 	DrawAddChild(container, DrawStyledLabel(grid_lx + 4, hdr_mid, panel->label,
 		0.55f, ALIGN_LEFT, hdr_color));
 
-	// Free blocks right-aligned with last icon
+	// Free blocks right-aligned with last icon (or progress during loading)
 	if (panel->card_present) {
-		int total = (panel->mem_size << 20 >> 3) / panel->sector_size - 5;
-		int used = 0;
-		for (int i = 0; i < panel->num_entries; i++) used += panel->entries[i].blocks;
 		char blocks[32];
-		snprintf(blocks, sizeof(blocks), "%d/%d free", total - used, total);
+		if (panel->loading) {
+			snprintf(blocks, sizeof(blocks), "Reading %d/%d...",
+				panel->load_cursor, panel->num_entries);
+		} else {
+			int total = (panel->mem_size << 20 >> 3) / panel->sector_size - 5;
+			int used = 0;
+			for (int i = 0; i < panel->num_entries; i++) used += panel->entries[i].blocks;
+			snprintf(blocks, sizeof(blocks), "%d/%d free", total - used, total);
+		}
 		DrawAddChild(container, DrawStyledLabel(grid_rx - 4, hdr_mid, blocks,
 			0.5f, ALIGN_RIGHT, hdr_color));
 	}
@@ -545,7 +552,7 @@ static void card_manager_draw_panel(uiDrawObj_t *container, cm_panel *panel,
 	cm_draw_9slice(container, frame_tex, px, PANEL_TOP_Y, pw,
 		PANEL_BOTTOM_Y - PANEL_TOP_Y, 24, 8);
 
-	if (panel->loading) {
+	if (panel->loading && panel->num_entries == 0) {
 		DrawAddChild(container, DrawStyledLabel(px + pw / 2, GRID_TOP_Y + 60,
 			"Reading...", 0.55f, ALIGN_CENTER, (GXColor){140, 140, 140, 255}));
 		return;

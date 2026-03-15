@@ -13,7 +13,7 @@
 
 // --- Constants ---
 
-#define CARD_POLL_INTERVAL 30
+#define CARD_POLL_INTERVAL 8
 #define ICON_SPEED_FAST_TICKS 4
 #define ICON_SPEED_MIDDLE_TICKS 8
 #define ICON_SPEED_SLOW_TICKS 12
@@ -108,6 +108,9 @@ typedef struct {
 	bool has_animated_icons;
 	bool needs_reload;
 	bool loading;
+	int load_cursor;	// Incremental load: next entry to read details for
+	u8 *_vmc_sysarea;	// Temp: sysarea buffer during VMC incremental load
+	u32 _vmc_total_blocks;	// Temp: block count for FAT chain walking
 	u8 activity;	// CM_ACTIVITY_*
 } cm_panel;
 
@@ -148,7 +151,10 @@ void cm_parse_save_graphics(u8 *gfx_data, u32 gfx_len,
 	u8 banner_fmt, u16 icon_fmt, u16 icon_speed, card_entry *entry);
 void cm_parse_comment(u8 *file_data, u32 file_len, u32 comment_addr,
 	card_entry *entry);
+int card_manager_read_dir(int slot, card_entry *entries, int max_entries);
+void card_manager_read_save_detail(int slot, card_entry *entry);
 int card_manager_read_saves(int slot, card_entry *entries, int max_entries);
+u16 cm_wait_buttons(u16 mask);
 void cm_deep_copy_graphics(card_entry *dst, const card_entry *src);
 void card_manager_free_graphics(card_entry *entries, int count);
 cm_tex_snapshot *cm_snap_create(const u8 *pixels, u16 size, u8 fmt,
@@ -302,6 +308,11 @@ void lib_state_free(lib_state *st);
 // --- cm_vmc.c ---
 
 int vmc_scan_files(vmc_file_entry *out, int max);
+int vmc_read_dir(const char *vmc_path, card_entry *entries, int max_entries,
+	s32 *out_mem_size, s32 *out_sector_size,
+	u8 **out_sysarea, u32 *out_total_blocks);
+void vmc_read_save_detail(const char *vmc_path, card_entry *entry,
+	const u8 *sysarea, u32 total_blocks);
 int vmc_read_saves(const char *vmc_path, card_entry *entries, int max_entries,
 	s32 *out_mem_size, s32 *out_sector_size);
 bool vmc_read_save(const char *vmc_path, card_entry *entry,
