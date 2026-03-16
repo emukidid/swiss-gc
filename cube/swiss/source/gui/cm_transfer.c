@@ -19,18 +19,23 @@
 bool card_manager_confirm_delete(const char *filename) {
 	char msg[256];
 	sprintf(msg, "Delete \"%s\"?\n \nPress L + A to confirm, or B to cancel.", filename);
-	uiDrawObj_t *msgBox = cm_draw_message(msg);
-	DrawPublish(msgBox);
 
 	bool confirmed = false;
+	uiDrawObj_t *msgBox = NULL;
 	while (1) {
+		cm_retire_tick();
+		uiDrawObj_t *fresh = cm_draw_message(msg);
+		if (msgBox) DrawDispose(msgBox);
+		msgBox = fresh;
+		DrawPublish(fresh);
+		VIDEO_WaitVSync();
+
 		u16 btns = padsButtonsHeld();
 		if ((btns & (PAD_BUTTON_A | PAD_TRIGGER_L)) == (PAD_BUTTON_A | PAD_TRIGGER_L)) {
 			confirmed = true;
 			break;
 		}
 		if (btns & PAD_BUTTON_B) break;
-		VIDEO_WaitVSync();
 	}
 	while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_TRIGGER_L | PAD_BUTTON_B)) {
 		VIDEO_WaitVSync();
@@ -601,17 +606,22 @@ bool cm_backup_delete(gci_file_entry *gci) {
 	char *rel = getRelativeName(gci->path);
 	char msg[256];
 	snprintf(msg, sizeof(msg), "Delete backup \"%s\"?\n \nPress L + A to confirm, or B to cancel.", rel);
-	uiDrawObj_t *msgBox = cm_draw_message(msg);
-	DrawPublish(msgBox);
 
 	bool confirmed = false;
+	uiDrawObj_t *msgBox = NULL;
 	while (1) {
+		cm_retire_tick();
+		uiDrawObj_t *fresh = cm_draw_message(msg);
+		if (msgBox) DrawDispose(msgBox);
+		msgBox = fresh;
+		DrawPublish(fresh);
+		VIDEO_WaitVSync();
+
 		u16 btns = padsButtonsHeld();
 		if ((btns & (PAD_BUTTON_A | PAD_TRIGGER_L)) == (PAD_BUTTON_A | PAD_TRIGGER_L)) {
 			confirmed = true; break;
 		}
 		if (btns & PAD_BUTTON_B) break;
-		VIDEO_WaitVSync();
 	}
 	while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_TRIGGER_L | PAD_BUTTON_B)) {
 		VIDEO_WaitVSync();

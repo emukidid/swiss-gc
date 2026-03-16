@@ -98,6 +98,9 @@ int vmc_scan_files(vmc_file_entry *out, int max) {
 					if (region_len > 6) region_len = 6;
 					snprintf(out[count].label, sizeof(out[count].label),
 						"%.*s (%.*s)", base_len, name, region_len, dot1 + 1);
+					// Mark non-USA as SJIS/foreign encoding
+					if (!(region_len == 3 && strncasecmp(dot1 + 1, "USA", 3) == 0))
+						out[count].encoding = 1;
 				} else {
 					snprintf(out[count].label, sizeof(out[count].label),
 						"%.31s", name);
@@ -109,14 +112,7 @@ int vmc_scan_files(vmc_file_entry *out, int max) {
 					out[count].user_blocks = out[count].total_blocks - MC_FIRST_DATA_BLOCK;
 				}
 
-				// Read encoding from card header
-				u8 *hdr = vmc_read_range(out[count].path, 0, MC_BLOCK_SIZE);
-				if (hdr) {
-					out[count].encoding = (hdr[MC_HDR_ENCODING] << 8) | hdr[MC_HDR_ENCODING + 1];
-					free(hdr);
-				}
-
-				count++;
+					count++;
 			}
 		}
 		free(dirEntries);

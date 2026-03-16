@@ -731,64 +731,72 @@ int cm_context_menu(const char *items[], const bool enabled[], int count) {
 	int menu_x = (640 - menu_w) / 2;
 	int menu_y = (480 - menu_h) / 2;
 
+	uiDrawObj_t *overlay = NULL;
+	bool needs_redraw = true;
+	bool debounce = false;
+
 	while (1) {
-		uiDrawObj_t *overlay = DrawEmptyBox(menu_x, menu_y,
-			menu_x + menu_w, menu_y + menu_h);
+		cm_retire_tick();
 
-		for (int i = 0; i < count; i++) {
-			int iy = menu_y + pad + i * item_h + item_h / 2;
-			GXColor color;
-			if (!enabled[i]) {
-				color = (GXColor){80, 80, 80, 255};
-			} else if (i == cursor) {
-				color = (GXColor){96, 107, 164, 255};
-				DrawAddChild(overlay, cm_draw_highlight(
-					menu_x + 6, menu_y + pad + i * item_h,
-					menu_w - 12, item_h));
-			} else {
-				color = defaultColor;
-			}
-			DrawAddChild(overlay, DrawStyledLabel(menu_x + 20, iy,
-				items[i], 0.55f, ALIGN_LEFT, color));
-		}
+		if (needs_redraw) {
+			uiDrawObj_t *fresh = DrawEmptyBox(menu_x, menu_y,
+				menu_x + menu_w, menu_y + menu_h);
 
-		DrawPublish(overlay);
-
-		while (1) {
-			VIDEO_WaitVSync();
-			u16 btns = padsButtonsHeld();
-			s8 stickY = padsStickY();
-			bool has_input = btns || stickY > 16 || stickY < -16;
-			if (!has_input) continue;
-
-			bool redraw = false;
-			if ((btns & PAD_BUTTON_UP) || stickY > 16) {
-				int next = cursor - 1;
-				while (next >= 0 && !enabled[next]) next--;
-				if (next >= 0) { cursor = next; redraw = true; }
-			}
-			if ((btns & PAD_BUTTON_DOWN) || stickY < -16) {
-				int next = cursor + 1;
-				while (next < count && !enabled[next]) next++;
-				if (next < count) { cursor = next; redraw = true; }
-			}
-			if (btns & PAD_BUTTON_A) {
-				while (padsButtonsHeld() & PAD_BUTTON_A) { VIDEO_WaitVSync(); }
-				DrawDispose(overlay);
-				return cursor;
-			}
-			if (btns & PAD_BUTTON_B) {
-				while (padsButtonsHeld() & PAD_BUTTON_B) { VIDEO_WaitVSync(); }
-				DrawDispose(overlay);
-				return -1;
-			}
-			if (redraw) {
-				while (padsButtonsHeld() & (PAD_BUTTON_UP | PAD_BUTTON_DOWN)) {
-					VIDEO_WaitVSync();
+			for (int i = 0; i < count; i++) {
+				int iy = menu_y + pad + i * item_h + item_h / 2;
+				GXColor color;
+				if (!enabled[i]) {
+					color = (GXColor){80, 80, 80, 255};
+				} else if (i == cursor) {
+					color = (GXColor){96, 107, 164, 255};
+					DrawAddChild(fresh, cm_draw_highlight(
+						menu_x + 6, menu_y + pad + i * item_h,
+						menu_w - 12, item_h));
+				} else {
+					color = defaultColor;
 				}
-				break;
+				DrawAddChild(fresh, DrawStyledLabel(menu_x + 20, iy,
+					items[i], 0.55f, ALIGN_LEFT, color));
 			}
+
+			if (s_led_panels)
+				cm_draw_status_leds(fresh, s_led_panels);
+
+			if (overlay) DrawDispose(overlay);
+			overlay = fresh;
+			DrawPublish(fresh);
+			needs_redraw = false;
 		}
-		DrawDispose(overlay);
+
+		VIDEO_WaitVSync();
+		u16 btns = padsButtonsHeld();
+		s8 stickY = padsStickY();
+
+		if (debounce) {
+			if (!(btns & (PAD_BUTTON_UP | PAD_BUTTON_DOWN)))
+				debounce = false;
+			continue;
+		}
+
+		if ((btns & PAD_BUTTON_UP) || stickY > 16) {
+			int next = cursor - 1;
+			while (next >= 0 && !enabled[next]) next--;
+			if (next >= 0) { cursor = next; needs_redraw = true; debounce = true; }
+		}
+		if ((btns & PAD_BUTTON_DOWN) || stickY < -16) {
+			int next = cursor + 1;
+			while (next < count && !enabled[next]) next++;
+			if (next < count) { cursor = next; needs_redraw = true; debounce = true; }
+		}
+		if (btns & PAD_BUTTON_A) {
+			while (padsButtonsHeld() & PAD_BUTTON_A) { VIDEO_WaitVSync(); }
+			DrawDispose(overlay);
+			return cursor;
+		}
+		if (btns & PAD_BUTTON_B) {
+			while (padsButtonsHeld() & PAD_BUTTON_B) { VIDEO_WaitVSync(); }
+			DrawDispose(overlay);
+			return -1;
+		}
 	}
 }

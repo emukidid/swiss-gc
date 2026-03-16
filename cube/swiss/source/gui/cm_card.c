@@ -531,11 +531,12 @@ void cm_retire_flush(void) {
 }
 
 // --- Button wait helper ---
-// Waits for any button in mask, ticks retirement during wait.
+// Waits for any button in mask, keeps LEDs alive during wait.
 // Returns which button(s) were pressed.
 u16 cm_wait_buttons(u16 mask) {
 	while (1) {
 		cm_retire_tick();
+		cm_led_pulse();
 		u16 btns = padsButtonsHeld();
 		if (btns & mask) {
 			while (padsButtonsHeld() & mask) {

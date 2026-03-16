@@ -142,7 +142,7 @@ static void lib_init_devices(lib_state *st) {
 		char *name = strrchr(vmcs[i].path, '/');
 		name = name ? name + 1 : vmcs[i].path;
 
-		// Only load ANSI-encoded VMCs (skip JPN/SJIS cards)
+		// Skip SJIS-encoded VMCs (JPN region) — can't render in ANSI font
 		if (vmcs[i].encoding != 0) continue;
 
 		if (strncasecmp(name, "MemoryCardA", 11) == 0 && vmcs[i].filesize > 0
@@ -695,8 +695,7 @@ static bool lib_handle_action(lib_state *st, lib_save *s, cm_panel *panels[2]) {
 			if (dest_count == 0) {
 				uiDrawObj_t *msg = cm_draw_message("No destinations available.");
 				DrawPublish(msg);
-				while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
-				while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B)) { VIDEO_WaitVSync(); }
+				cm_wait_buttons(PAD_BUTTON_A | PAD_BUTTON_B);
 				DrawDispose(msg);
 				free(vmcs);
 				return false;
