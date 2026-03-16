@@ -10,6 +10,7 @@
 #include <malloc.h>
 #include <gccore.h>
 #include "cm_internal.h"
+#include "config.h"
 #include "IPLFontWrite.h"
 
 // --- Raw memory card layout constants ---
@@ -85,6 +86,7 @@ int vmc_scan_files(vmc_file_entry *out, int max) {
 			if (len > 4 && !strcasecmp(name + len - 4, ".raw")) {
 				memset(&out[count], 0, sizeof(vmc_file_entry));
 				strlcpy(out[count].path, dirEntries[i].name, PATHNAME_MAX);
+				strlcpy(out[count].filename, name, sizeof(out[count].filename));
 				out[count].filesize = dirEntries[i].size;
 
 				// Build a human-readable label from filename
@@ -98,6 +100,8 @@ int vmc_scan_files(vmc_file_entry *out, int max) {
 					if (region_len > 6) region_len = 6;
 					snprintf(out[count].label, sizeof(out[count].label),
 						"%.*s (%.*s)", base_len, name, region_len, dot1 + 1);
+					snprintf(out[count].region, sizeof(out[count].region),
+						"%.*s", region_len, dot1 + 1);
 					// Mark non-USA as SJIS/foreign encoding
 					if (!(region_len == 3 && strncasecmp(dot1 + 1, "USA", 3) == 0))
 						out[count].encoding = 1;
@@ -241,7 +245,7 @@ int vmc_read_dir(const char *vmc_path, card_entry *entries, int max_entries,
 	// Get card size info from header block
 	const u8 *hdr = sysarea + MC_BLOCK_HEADER * MC_BLOCK_SIZE;
 	u16 card_mbits = *(const u16 *)(hdr + MC_HDR_CARD_SIZE);
-	*out_mem_size = card_mbits * 131072;
+	*out_mem_size = card_mbits;	// Mbits, matches CARD_ProbeEx format
 	*out_sector_size = MC_BLOCK_SIZE;
 
 	// Determine total blocks from file size (more reliable than header)
@@ -923,6 +927,358 @@ bool vmc_import_save_buf(const char *vmc_path, GCI *gci,
 	return true;
 }
 
+// --- VMC Creation ---
+
+// Create a new blank .raw VMC file.
+// Returns true and fills out_filename with the new filename on success.
+// Format a blank memory card system area (header + 2 dir blocks + 2 BAT blocks).
+// total_blocks = total blocks in the card image (including 5 system blocks).
+// encoding = 0 (ANSI/USA) or 1 (SJIS/JPN).
+static void vmc_format_sysarea(u8 *sysarea, u32 total_blocks, u16 encoding) {
+	u32 user_blocks = total_blocks - MC_FIRST_DATA_BLOCK;
+
+	// Card size in Mbits: total_blocks * 8192 * 8 / 1048576 = total_blocks / 16
+	u16 card_mbits = total_blocks / 16;
+	if (card_mbits < 1) card_mbits = 1;
+
+	memset(sysarea, 0, MC_FIRST_DATA_BLOCK * MC_BLOCK_SIZE);
+
+	// --- Header block (block 0) ---
+	u8 *hdr = sysarea;
+	// Serial number (bytes 0x00-0x11): random/unique; fill with non-zero pattern
+	for (int i = 0; i < 18; i++)
+		hdr[i] = (u8)(i * 0x13 + 0x42);
+	// Device ID (0x0012, u16): 0x0000 for standard card
+	// Card size in Mbits at 0x0022
+	*(u16 *)(hdr + MC_HDR_CARD_SIZE) = card_mbits;
+	// Encoding at 0x0024
+	*(u16 *)(hdr + MC_HDR_ENCODING) = encoding;
+	// Header checksum: covers 0x0000-0x01FB, stored at 0x01FC-0x01FF
+	{
+		u16 cs1, cs2;
+		vmc_checksum((const u16 *)hdr, 0x01FC / 2, &cs1, &cs2);
+		*(u16 *)(hdr + 0x01FC) = cs1;
+		*(u16 *)(hdr + 0x01FE) = cs2;
+	}
+
+	// --- Directory blocks (blocks 1 & 2) ---
+	// Empty directory: all entry bytes = 0xFF, then valid checksum
+	for (int d = 0; d < 2; d++) {
+		u8 *dir = sysarea + (MC_BLOCK_DIR_A + d) * MC_BLOCK_SIZE;
+		memset(dir, 0xFF, MC_BLOCK_SIZE);
+		// Update counter at 0x1FFA (u16): block A=0, block B=0
+		*(u16 *)(dir + MC_DIR_UPDATE_OFF) = 0;
+		// Checksum placeholder (will be computed below)
+		*(u16 *)(dir + MC_DIR_CHECKSUM_OFF) = 0;
+		*(u16 *)(dir + MC_DIR_CHECKSUM_OFF + 2) = 0;
+		vmc_update_dir_checksum(dir);
+	}
+
+	// --- BAT blocks (blocks 3 & 4) ---
+	for (int b = 0; b < 2; b++) {
+		u8 *bat = sysarea + (MC_BLOCK_BAT_A + b) * MC_BLOCK_SIZE;
+		memset(bat, 0, MC_BLOCK_SIZE);
+		// Update counter
+		*(u16 *)(bat + MC_BAT_UPDATE) = 0;
+		// Free blocks count
+		*(u16 *)(bat + MC_BAT_FREE_BLOCKS) = (u16)user_blocks;
+		// Last allocated block (points to last user block, or first data block - 1)
+		*(u16 *)(bat + MC_BAT_LAST_ALLOC) = MC_FIRST_DATA_BLOCK - 1;
+		// FAT entries: all free (0x0000) — already zeroed by memset
+		vmc_update_bat_checksum(bat);
+	}
+}
+
+bool cm_vmc_create(int game_region, char *out_filename, int out_size) {
+	DEVICEHANDLER_INTERFACE *dev = devices[DEVICE_CONFIG] ? devices[DEVICE_CONFIG] :
+		devices[DEVICE_CUR] ? devices[DEVICE_CUR] : NULL;
+	if (!dev) return false;
+
+	const char *region_str = "USA";
+	static const char *regions[] = {"JPN", "USA", "EUR", "ALL", "KOR"};
+	if (game_region >= 0 && game_region <= 4) region_str = regions[game_region];
+
+	// Auto-generate a unique filename: Card_001.USA.raw, Card_002.USA.raw, etc.
+	char filename[64];
+	for (int n = 1; n <= 999; n++) {
+		snprintf(filename, sizeof(filename), "Card_%03d.%s.raw", n, region_str);
+
+		file_handle *check = calloc(1, sizeof(file_handle));
+		if (!check) return false;
+		concatf_path(check->name, dev->initial->name, "swiss/saves/%s", filename);
+		int exists = !dev->statFile(check);
+		free(check);
+		if (!exists) break;
+		if (n == 999) return false;
+	}
+
+	// Size picker: 59 blocks (512KB) or 251 blocks (16MB file for emulation)
+	// User blocks / total blocks / file size
+	int user_blocks[] = {59, 251};
+	int total_blocks[] = {64, 2048};
+	int file_sizes[] = {64 * MC_BLOCK_SIZE, 16 * 1024 * 1024};
+	const char *size_labels[] = {"59 blocks (512KB)", "251 blocks (16MB)"};
+	int sel = 1;
+
+	uiDrawObj_t *overlay = NULL;
+	bool needs_redraw = true;
+	bool debounce = true;
+
+	while (1) {
+		if (needs_redraw) {
+			char msg[128];
+			snprintf(msg, sizeof(msg), "Create: %s\n\nSize: < %s >\n\nPress A to create, B to cancel",
+				filename, size_labels[sel]);
+			uiDrawObj_t *fresh = cm_draw_message(msg);
+			if (overlay) DrawDispose(overlay);
+			overlay = fresh;
+			DrawPublish(fresh);
+			needs_redraw = false;
+		}
+
+		VIDEO_WaitVSync();
+		u16 btns = padsButtonsHeld();
+
+		if (debounce) {
+			if (!(btns & (PAD_BUTTON_A | PAD_BUTTON_B | PAD_TRIGGER_L | PAD_TRIGGER_R | PAD_BUTTON_LEFT | PAD_BUTTON_RIGHT)))
+				debounce = false;
+			continue;
+		}
+
+		if ((btns & PAD_TRIGGER_L) || (btns & PAD_BUTTON_LEFT)) {
+			sel = 0;
+			needs_redraw = true;
+			debounce = true;
+		}
+		if ((btns & PAD_TRIGGER_R) || (btns & PAD_BUTTON_RIGHT)) {
+			sel = 1;
+			needs_redraw = true;
+			debounce = true;
+		}
+		if (btns & PAD_BUTTON_B) {
+			while (padsButtonsHeld() & PAD_BUTTON_B) { VIDEO_WaitVSync(); }
+			DrawDispose(overlay);
+			return false;
+		}
+		if (btns & PAD_BUTTON_A) {
+			while (padsButtonsHeld() & PAD_BUTTON_A) { VIDEO_WaitVSync(); }
+			DrawDispose(overlay);
+			break;
+		}
+	}
+
+	// Create the file with a properly formatted system area
+	uiDrawObj_t *prog = cm_draw_message("Creating memory card...");
+	DrawPublish(prog);
+
+	u16 encoding = (game_region == 0 || game_region == 4) ? 1 : 0; // JPN/KOR = SJIS
+
+	// Allocate and format the system area (5 blocks)
+	u32 sysarea_size = MC_FIRST_DATA_BLOCK * MC_BLOCK_SIZE;
+	u8 *sysarea = (u8 *)memalign(32, sysarea_size);
+	if (!sysarea) { DrawDispose(prog); return false; }
+	vmc_format_sysarea(sysarea, total_blocks[sel], encoding);
+
+	file_handle *newFile = calloc(1, sizeof(file_handle));
+	if (!newFile) { free(sysarea); DrawDispose(prog); return false; }
+	concatf_path(newFile->name, dev->initial->name, "swiss/saves/%s", filename);
+
+	int dev_slot = devices[DEVICE_CONFIG] ? DEVICE_CONFIG : DEVICE_CUR;
+	ensure_path(dev_slot, "swiss/saves", NULL, false);
+
+	// Write system area first, then extend to full file size
+	dev->writeFile(newFile, sysarea, sysarea_size);
+	dev->seekFile(newFile, file_sizes[sel], DEVICE_HANDLER_SEEK_SET);
+	dev->writeFile(newFile, NULL, 0);
+	dev->closeFile(newFile);
+	free(newFile);
+	free(sysarea);
+
+	DrawDispose(prog);
+
+	strlcpy(out_filename, filename, out_size);
+	return true;
+}
+
+// --- VMC Picker ---
+
+// Map GCMDisk.RegionCode to string for comparison with VMC region tag
+static const char *vmc_region_string(int region_code) {
+	static const char *regions[] = {"JPN", "USA", "EUR", "ALL", "KOR"};
+	if (region_code >= 0 && region_code <= 4) return regions[region_code];
+	return "UNK";
+}
+
+static char s_picked_filename[64];
+
+int cm_vmc_picker(const char *current_filename, int game_region) {
+	vmc_file_entry *vmcs = calloc(MAX_VMC_FILES, sizeof(vmc_file_entry));
+	if (!vmcs) return VMC_PICK_CANCEL;
+
+	int num = vmc_scan_files(vmcs, MAX_VMC_FILES);
+
+	// Items: Auto + N VMCs + Create New
+	int total_items = 1 + num + 1;
+	const char *game_region_str = vmc_region_string(game_region);
+
+	// Build display strings
+	char auto_label[48];
+	snprintf(auto_label, sizeof(auto_label), "Auto (%s)", game_region_str);
+
+	// Item labels with block info
+	char item_labels[MAX_VMC_FILES][48];
+	for (int i = 0; i < num; i++) {
+		if (vmcs[i].user_blocks > 0) {
+			bool mismatch = vmcs[i].region[0] &&
+				strcasecmp(vmcs[i].region, game_region_str) != 0;
+			snprintf(item_labels[i], sizeof(item_labels[i]),
+				"%s  %lu/%lu%s",
+				vmcs[i].label,
+				(unsigned long)(vmcs[i].user_blocks),
+				(unsigned long)(vmcs[i].user_blocks),
+				mismatch ? "  !" : "");
+		} else {
+			strlcpy(item_labels[i], vmcs[i].label, sizeof(item_labels[i]));
+		}
+	}
+
+	int cursor = 0;
+	// Pre-select current filename if set
+	if (current_filename && current_filename[0]) {
+		for (int i = 0; i < num; i++) {
+			if (!strcasecmp(vmcs[i].filename, current_filename)) {
+				cursor = 1 + i;
+				break;
+			}
+		}
+	}
+
+	// Menu dimensions
+	int item_h = 22;
+	int pad = 10;
+	int menu_w = 320;
+	int menu_h = total_items * item_h + pad * 2;
+	if (menu_h > 400) menu_h = 400;
+	int menu_x = (640 - menu_w) / 2;
+	int menu_y = (480 - menu_h) / 2;
+
+	int max_visible = (menu_h - pad * 2) / item_h;
+	int scroll = 0;
+	if (cursor >= max_visible) scroll = cursor - max_visible + 1;
+
+	uiDrawObj_t *overlay = NULL;
+	bool needs_redraw = true;
+	bool debounce = true; // Start debounced to avoid instant selection
+
+	int result = VMC_PICK_CANCEL;
+
+	while (1) {
+		cm_retire_tick();
+
+		if (needs_redraw) {
+			uiDrawObj_t *fresh = DrawEmptyBox(menu_x, menu_y,
+				menu_x + menu_w, menu_y + menu_h);
+
+			for (int vi = 0; vi < max_visible && scroll + vi < total_items; vi++) {
+				int idx = scroll + vi;
+				int iy = menu_y + pad + vi * item_h + item_h / 2;
+
+				const char *label;
+				GXColor color;
+				bool is_mismatch = false;
+
+				if (idx == 0) {
+					label = auto_label;
+				} else if (idx <= num) {
+					int vi2 = idx - 1;
+					label = item_labels[vi2];
+					is_mismatch = vmcs[vi2].region[0] &&
+						strcasecmp(vmcs[vi2].region, game_region_str) != 0;
+				} else {
+					label = "Create New...";
+				}
+
+				if (idx == cursor) {
+					color = (GXColor){96, 107, 164, 255};
+					DrawAddChild(fresh, cm_draw_highlight(
+						menu_x + 6, menu_y + pad + vi * item_h,
+						menu_w - 12, item_h));
+				} else if (is_mismatch) {
+					color = (GXColor){180, 160, 80, 255};
+				} else {
+					color = defaultColor;
+				}
+
+				DrawAddChild(fresh, DrawStyledLabel(menu_x + 16, iy,
+					label, 0.5f, ALIGN_LEFT, color));
+			}
+
+			if (overlay) DrawDispose(overlay);
+			overlay = fresh;
+			DrawPublish(fresh);
+			needs_redraw = false;
+		}
+
+		VIDEO_WaitVSync();
+		u16 btns = padsButtonsHeld();
+		s8 stickY = padsStickY();
+
+		if (debounce) {
+			if (!(btns & (PAD_BUTTON_UP | PAD_BUTTON_DOWN | PAD_BUTTON_A | PAD_BUTTON_B | PAD_BUTTON_LEFT | PAD_BUTTON_RIGHT)))
+				debounce = false;
+			continue;
+		}
+
+		if ((btns & PAD_BUTTON_UP) || stickY > 16) {
+			if (cursor > 0) {
+				cursor--;
+				if (cursor < scroll) scroll = cursor;
+				needs_redraw = true;
+			}
+			debounce = true;
+		}
+		if ((btns & PAD_BUTTON_DOWN) || stickY < -16) {
+			if (cursor < total_items - 1) {
+				cursor++;
+				if (cursor >= scroll + max_visible) scroll = cursor - max_visible + 1;
+				needs_redraw = true;
+			}
+			debounce = true;
+		}
+		if (btns & PAD_BUTTON_A) {
+			while (padsButtonsHeld() & PAD_BUTTON_A) { VIDEO_WaitVSync(); }
+			if (cursor == 0) {
+				result = VMC_PICK_AUTO;
+			} else if (cursor <= num) {
+				result = cursor - 1; // Index into vmcs array
+			} else {
+				result = VMC_PICK_CREATE;
+			}
+			break;
+		}
+		if (btns & PAD_BUTTON_B) {
+			while (padsButtonsHeld() & PAD_BUTTON_B) { VIDEO_WaitVSync(); }
+			result = VMC_PICK_CANCEL;
+			break;
+		}
+	}
+
+	DrawDispose(overlay);
+
+	// If a VMC was selected, copy its filename to a static buffer
+	// so the caller can retrieve it after vmcs is freed
+	if (result >= 0 && result < num) {
+		strlcpy(s_picked_filename, vmcs[result].filename, sizeof(s_picked_filename));
+	}
+	free(vmcs);
+
+	return result;
+}
+
+const char *cm_vmc_picker_filename(void) {
+	return s_picked_filename;
+}
+
 // --- Import GCI file from SD to VMC ---
 
 bool vmc_import_save(const char *vmc_path, gci_file_entry *gci_entry) {
@@ -967,4 +1323,268 @@ bool vmc_import_save(const char *vmc_path, gci_file_entry *gci_entry) {
 	bool result = vmc_import_save_buf(vmc_path, gci, savedata, save_len);
 	free(filebuf);
 	return result;
+}
+
+// --- Game config scanning and picker for "Assign to game..." ---
+
+int cm_scan_game_configs(cm_game_entry *out, int max) {
+	DEVICEHANDLER_INTERFACE *dev = devices[DEVICE_CONFIG] ? devices[DEVICE_CONFIG] :
+		devices[DEVICE_CUR] ? devices[DEVICE_CUR] : NULL;
+	if (!dev) return 0;
+
+	file_handle *dir = calloc(1, sizeof(file_handle));
+	if (!dir) return 0;
+	concat_path(dir->name, dev->initial->name, "swiss/settings/game");
+
+	if (dev->statFile(dir)) {
+		free(dir);
+		return 0;
+	}
+
+	file_handle *dirEntries = NULL;
+	int count = 0;
+
+	s32 num_dir = dev->readDir(dir, &dirEntries, -1);
+	if (num_dir > 0 && dirEntries) {
+		for (int i = 0; i < num_dir && count < max; i++) {
+			char *name = getRelativeName(dirEntries[i].name);
+			int len = strlen(name);
+			// Only look at .ini files with 4-char game IDs (e.g. "GALE.ini")
+			if (len == 8 && !strcasecmp(name + 4, ".ini")) {
+				// Read the file to extract the Name field
+				file_handle *iniFile = calloc(1, sizeof(file_handle));
+				if (!iniFile) continue;
+				strlcpy(iniFile->name, dirEntries[i].name, PATHNAME_MAX);
+
+				if (dev->statFile(iniFile) || iniFile->size == 0) {
+					free(iniFile);
+					continue;
+				}
+
+				char *buf = calloc(1, iniFile->size + 1);
+				if (!buf) { free(iniFile); continue; }
+				dev->readFile(iniFile, buf, iniFile->size);
+				dev->closeFile(iniFile);
+				free(iniFile);
+
+				// Extract game ID from filename
+				memset(&out[count], 0, sizeof(cm_game_entry));
+				memcpy(out[count].game_id, name, 4);
+				out[count].game_id[4] = '\0';
+
+				// Parse Name= from ini content
+				char *line, *ctx = NULL;
+				char *bufcopy = strdup(buf);
+				line = strtok_r(bufcopy, "\r\n", &ctx);
+				while (line) {
+					if (!strncmp(line, "Name=", 5)) {
+						strlcpy(out[count].game_name, line + 5, sizeof(out[count].game_name));
+						break;
+					}
+					line = strtok_r(NULL, "\r\n", &ctx);
+				}
+				free(bufcopy);
+				free(buf);
+
+				// Use game ID as fallback name
+				if (!out[count].game_name[0])
+					strlcpy(out[count].game_name, out[count].game_id, sizeof(out[count].game_name));
+
+				count++;
+			}
+		}
+		free(dirEntries);
+	}
+	free(dir);
+
+	// Merge in recent games that aren't already in the list
+	for (int r = 0; r < RECENT_MAX && count < max; r++) {
+		if (!swissSettings.recent[r][0]) continue;
+
+		DEVICEHANDLER_INTERFACE *rdev = getDeviceFromPath(swissSettings.recent[r]);
+		if (!rdev) continue;
+
+		// Read disc header to get game ID and name
+		file_handle *rf = calloc(1, sizeof(file_handle));
+		if (!rf) continue;
+		strlcpy(rf->name, swissSettings.recent[r], PATHNAME_MAX);
+		rf->device = rdev;
+
+		if (rdev->statFile(rf) || rf->size < 0x60) {
+			free(rf);
+			continue;
+		}
+
+		u8 *hdr = (u8 *)memalign(32, 0x60);
+		if (!hdr) { free(rf); continue; }
+		rdev->seekFile(rf, 0, DEVICE_HANDLER_SEEK_SET);
+		rdev->readFile(rf, hdr, 0x60);
+		rdev->closeFile(rf);
+		free(rf);
+
+		char rid[5] = {0};
+		memcpy(rid, hdr, 4);
+		rid[4] = '\0';
+
+		// Validate: first byte should be a console ID letter
+		if (rid[0] < 'A' || rid[0] > 'Z') { free(hdr); continue; }
+
+		// Check for duplicate
+		bool dup = false;
+		for (int d = 0; d < count; d++) {
+			if (!strcmp(out[d].game_id, rid)) { dup = true; break; }
+		}
+		if (!dup) {
+			memset(&out[count], 0, sizeof(cm_game_entry));
+			strlcpy(out[count].game_id, rid, sizeof(out[count].game_id));
+			// Game name starts at offset 0x20 in disc header
+			char gname[33] = {0};
+			memcpy(gname, hdr + 0x20, 32);
+			gname[32] = '\0';
+			if (gname[0])
+				strlcpy(out[count].game_name, gname, sizeof(out[count].game_name));
+			else
+				strlcpy(out[count].game_name, rid, sizeof(out[count].game_name));
+			count++;
+		}
+		free(hdr);
+	}
+
+	// Sort alphabetically by game name
+	for (int i = 0; i < count - 1; i++) {
+		for (int j = i + 1; j < count; j++) {
+			if (strcasecmp(out[i].game_name, out[j].game_name) > 0) {
+				cm_game_entry tmp = out[i];
+				out[i] = out[j];
+				out[j] = tmp;
+			}
+		}
+	}
+
+	return count;
+}
+
+int cm_game_picker(cm_game_entry *games, int count) {
+	if (count == 0) return -1;
+
+	int item_h = 22;
+	int pad = 10;
+	int menu_w = 380;
+	int hint_h = 16;
+	int menu_h = (count < 14 ? count : 14) * item_h + pad * 2 + hint_h;
+	if (menu_h > 400) menu_h = 400;
+	int menu_x = (640 - menu_w) / 2;
+	int menu_y = (480 - menu_h) / 2;
+	int max_visible = (menu_h - pad * 2 - hint_h) / item_h;
+
+	int cursor = 0, scroll = 0;
+	uiDrawObj_t *overlay = NULL;
+	bool needs_redraw = true;
+	bool debounce = true;
+
+	// Build display labels: "GAME NAME (GALE)"
+	char labels[MAX_GAME_ENTRIES][72];
+	for (int i = 0; i < count; i++) {
+		snprintf(labels[i], sizeof(labels[i]), "%.60s (%.4s)",
+			games[i].game_name, games[i].game_id);
+	}
+
+	while (1) {
+		cm_retire_tick();
+
+		if (needs_redraw) {
+			uiDrawObj_t *fresh = DrawEmptyBox(menu_x, menu_y,
+				menu_x + menu_w, menu_y + menu_h);
+
+			// Hint at bottom
+			DrawAddChild(fresh, DrawStyledLabel(
+				menu_x + menu_w / 2, menu_y + menu_h - pad - 2,
+				"Also configurable in per-game settings",
+				0.4f, ALIGN_CENTER, (GXColor){160, 160, 160, 255}));
+
+			for (int vi = 0; vi < max_visible && scroll + vi < count; vi++) {
+				int idx = scroll + vi;
+				int iy = menu_y + pad + vi * item_h + item_h / 2;
+				GXColor color;
+
+				if (idx == cursor) {
+					color = (GXColor){96, 107, 164, 255};
+					DrawAddChild(fresh, cm_draw_highlight(
+						menu_x + 6, menu_y + pad + vi * item_h,
+						menu_w - 12, item_h));
+				} else {
+					color = defaultColor;
+				}
+
+				DrawAddChild(fresh, DrawStyledLabel(menu_x + 16, iy,
+					labels[idx], 0.5f, ALIGN_LEFT, color));
+			}
+
+			if (overlay) DrawDispose(overlay);
+			overlay = fresh;
+			DrawPublish(fresh);
+			needs_redraw = false;
+		}
+
+		VIDEO_WaitVSync();
+		u16 btns = padsButtonsHeld();
+		s8 stickY = padsStickY();
+
+		if (debounce) {
+			if (!(btns & (PAD_BUTTON_UP | PAD_BUTTON_DOWN | PAD_BUTTON_A | PAD_BUTTON_B)))
+				debounce = false;
+			continue;
+		}
+
+		if ((btns & PAD_BUTTON_UP) || stickY > 16) {
+			if (cursor > 0) {
+				cursor--;
+				if (cursor < scroll) scroll = cursor;
+				needs_redraw = true;
+			}
+			debounce = true;
+		}
+		if ((btns & PAD_BUTTON_DOWN) || stickY < -16) {
+			if (cursor < count - 1) {
+				cursor++;
+				if (cursor >= scroll + max_visible) scroll = cursor - max_visible + 1;
+				needs_redraw = true;
+			}
+			debounce = true;
+		}
+		if (btns & PAD_BUTTON_A) {
+			while (padsButtonsHeld() & PAD_BUTTON_A) { VIDEO_WaitVSync(); }
+			DrawDispose(overlay);
+			return cursor;
+		}
+		if (btns & PAD_BUTTON_B) {
+			while (padsButtonsHeld() & PAD_BUTTON_B) { VIDEO_WaitVSync(); }
+			DrawDispose(overlay);
+			return -1;
+		}
+	}
+}
+
+bool cm_assign_vmc_to_game(const char *vmc_filename, const char *game_id, int slot) {
+	ConfigEntry entry;
+	memset(&entry, 0, sizeof(entry));
+	memcpy(entry.game_id, game_id, 4);
+	entry.game_id[4] = '\0';
+
+	// Load existing config for this game (fills defaults + any saved overrides)
+	config_find(&entry);
+
+	// Set the VMC filename for the requested slot
+	if (slot == 0)
+		strlcpy(entry.memoryCardA, vmc_filename, sizeof(entry.memoryCardA));
+	else
+		strlcpy(entry.memoryCardB, vmc_filename, sizeof(entry.memoryCardB));
+
+	// Save — need defaults to diff against
+	ConfigEntry defaults;
+	memset(&defaults, 0, sizeof(defaults));
+	memcpy(defaults.game_id, game_id, 4);
+	config_defaults(&defaults);
+
+	return config_update_game(&entry, &defaults, true) != 0;
 }

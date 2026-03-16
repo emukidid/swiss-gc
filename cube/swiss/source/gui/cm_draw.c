@@ -723,13 +723,19 @@ int cm_context_menu(const char *items[], const bool enabled[], int count) {
 	while (cursor < count && !enabled[cursor]) cursor++;
 	if (cursor >= count) return -1;
 
-	// Menu dimensions
+	// Menu dimensions — cap height so long lists scroll
 	int menu_w = 240;
 	int item_h = 26;
 	int pad = 12;
-	int menu_h = count * item_h + pad * 2;
+	int max_visible_items = 14;
+	int visible = count < max_visible_items ? count : max_visible_items;
+	int menu_h = visible * item_h + pad * 2;
+	if (menu_h > 400) menu_h = 400;
 	int menu_x = (640 - menu_w) / 2;
 	int menu_y = (480 - menu_h) / 2;
+	int max_visible = (menu_h - pad * 2) / item_h;
+	int scroll = 0;
+	if (cursor >= max_visible) scroll = cursor - max_visible + 1;
 
 	uiDrawObj_t *overlay = NULL;
 	bool needs_redraw = true;
@@ -742,15 +748,16 @@ int cm_context_menu(const char *items[], const bool enabled[], int count) {
 			uiDrawObj_t *fresh = DrawEmptyBox(menu_x, menu_y,
 				menu_x + menu_w, menu_y + menu_h);
 
-			for (int i = 0; i < count; i++) {
-				int iy = menu_y + pad + i * item_h + item_h / 2;
+			for (int vi = 0; vi < max_visible && scroll + vi < count; vi++) {
+				int i = scroll + vi;
+				int iy = menu_y + pad + vi * item_h + item_h / 2;
 				GXColor color;
 				if (!enabled[i]) {
 					color = (GXColor){80, 80, 80, 255};
 				} else if (i == cursor) {
 					color = (GXColor){96, 107, 164, 255};
 					DrawAddChild(fresh, cm_draw_highlight(
-						menu_x + 6, menu_y + pad + i * item_h,
+						menu_x + 6, menu_y + pad + vi * item_h,
 						menu_w - 12, item_h));
 				} else {
 					color = defaultColor;
@@ -781,12 +788,20 @@ int cm_context_menu(const char *items[], const bool enabled[], int count) {
 		if ((btns & PAD_BUTTON_UP) || stickY > 16) {
 			int next = cursor - 1;
 			while (next >= 0 && !enabled[next]) next--;
-			if (next >= 0) { cursor = next; needs_redraw = true; debounce = true; }
+			if (next >= 0) {
+				cursor = next;
+				if (cursor < scroll) scroll = cursor;
+				needs_redraw = true; debounce = true;
+			}
 		}
 		if ((btns & PAD_BUTTON_DOWN) || stickY < -16) {
 			int next = cursor + 1;
 			while (next < count && !enabled[next]) next++;
-			if (next < count) { cursor = next; needs_redraw = true; debounce = true; }
+			if (next < count) {
+				cursor = next;
+				if (cursor >= scroll + max_visible) scroll = cursor - max_visible + 1;
+				needs_redraw = true; debounce = true;
+			}
 		}
 		if (btns & PAD_BUTTON_A) {
 			while (padsButtonsHeld() & PAD_BUTTON_A) { VIDEO_WaitVSync(); }

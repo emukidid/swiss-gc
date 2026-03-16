@@ -121,15 +121,30 @@ typedef struct {
 #define CM_ACTIVITY_WRITE 2
 
 // VMC file entry for picker
-#define MAX_VMC_FILES 16
+#define MAX_VMC_FILES 64
 typedef struct {
 	char path[PATHNAME_MAX];
+	char filename[64];	// Just the filename (e.g. "MemoryCardA.USA.raw")
 	char label[32];
+	char region[8];		// Region tag from filename (e.g. "USA", "JPN", "EUR")
 	u32 filesize;
 	u32 total_blocks;
 	u32 user_blocks;
+	u32 free_blocks;	// Free blocks (from BAT), 0 if unknown
 	u16 encoding;	// 0=ANSI, 1=SJIS (from card header)
 } vmc_file_entry;
+
+// VMC picker return codes
+#define VMC_PICK_CANCEL -1
+#define VMC_PICK_AUTO   -2
+#define VMC_PICK_CREATE -3
+
+// Game entry for "Assign to game" picker
+#define MAX_GAME_ENTRIES 64
+typedef struct {
+	char game_id[5];
+	char game_name[65];
+} cm_game_entry;
 
 // GCI file entry for import picker (with parsed graphics)
 typedef struct {
@@ -144,6 +159,7 @@ typedef enum {
 	CM_ACT_EXPORT,
 	CM_ACT_IMPORT,
 	CM_ACT_DELETE,
+	CM_ACT_ASSIGN,
 	CM_ACT_COUNT
 } cm_action;
 
@@ -324,5 +340,11 @@ bool vmc_delete_save(const char *vmc_path, card_entry *entry);
 bool vmc_import_save_buf(const char *vmc_path, GCI *gci,
 	u8 *savedata, u32 save_len);
 bool vmc_import_save(const char *vmc_path, gci_file_entry *gci_entry);
+int cm_vmc_picker(const char *current_filename, int game_region);
+const char *cm_vmc_picker_filename(void);
+bool cm_vmc_create(int game_region, char *out_filename, int out_size);
+int cm_scan_game_configs(cm_game_entry *out, int max);
+int cm_game_picker(cm_game_entry *games, int count);
+bool cm_assign_vmc_to_game(const char *vmc_filename, const char *game_id, int slot);
 
 #endif

@@ -9,6 +9,7 @@
 #include <gccore.h>
 #include "cm_internal.h"
 #include "swiss.h"
+#include "IPLFontWrite.h"
 
 // --- Panel helpers ---
 
@@ -151,6 +152,9 @@ static void cm_handle_context_menu(cm_panel *ap, cm_panel *other, bool *needs_re
 
 	items[CM_ACT_DELETE] = "Delete";
 	enabled[CM_ACT_DELETE] = true;
+
+	items[CM_ACT_ASSIGN] = "Assign to game...";
+	enabled[CM_ACT_ASSIGN] = (ap->source == CM_SRC_VMC);
 
 	int choice = cm_context_menu(items, enabled, CM_ACT_COUNT);
 
@@ -351,6 +355,39 @@ static void cm_handle_context_menu(cm_panel *ap, cm_panel *other, bool *needs_re
 			}
 			break;
 
+		case CM_ACT_ASSIGN: {
+			cm_game_entry *games = calloc(MAX_GAME_ENTRIES, sizeof(cm_game_entry));
+			if (!games) { *needs_redraw = true; break; }
+			int num_games = cm_scan_game_configs(games, MAX_GAME_ENTRIES);
+			if (num_games == 0) {
+				cm_show_error("No games found.\nLaunch a game first.");
+				free(games);
+				*needs_redraw = true;
+				break;
+			}
+			int pick = cm_game_picker(games, num_games);
+			if (pick >= 0) {
+				// Determine slot from VMC filename: "MemoryCardB" → slot B, else slot A
+				char *vmc_name = getRelativeName(ap->vmc_path);
+				int assign_slot = (vmc_name && !strncasecmp(vmc_name, "MemoryCardB", 11)) ? 1 : 0;
+
+				if (cm_assign_vmc_to_game(vmc_name, games[pick].game_id, assign_slot)) {
+					char msg[128];
+					snprintf(msg, sizeof(msg), "Assigned to %.40s\n(Slot %c)",
+						games[pick].game_name, assign_slot ? 'B' : 'A');
+					uiDrawObj_t *ok = cm_draw_message(msg);
+					DrawPublish(ok);
+					cm_wait_buttons(PAD_BUTTON_A | PAD_BUTTON_B);
+					DrawDispose(ok);
+				} else {
+					cm_show_error("Failed to save assignment.");
+				}
+			}
+			free(games);
+			*needs_redraw = true;
+			break;
+		}
+
 		default:
 			*needs_redraw = true;
 			break;
@@ -360,7 +397,7 @@ static void cm_handle_context_menu(cm_panel *ap, cm_panel *other, bool *needs_re
 // --- Main loop ---
 
 // --- VMC picker ---
-// Shows a list of .raw VMC files and lets the user pick one to mount on the panel.
+// Shows a scrollable list of .raw VMC files and lets the user pick one to mount.
 // Returns true if panel was changed, false if cancelled.
 static bool cm_pick_vmc(cm_panel *panel) {
 	vmc_file_entry *vmcs = calloc(MAX_VMC_FILES, sizeof(vmc_file_entry));
@@ -376,30 +413,136 @@ static bool cm_pick_vmc(cm_panel *panel) {
 		return false;
 	}
 
-	// Add "Physical card" option at the top
-	const char *items[MAX_VMC_FILES + 1];
-	bool enabled[MAX_VMC_FILES + 1];
+	// Items: Physical slot + N VMC files + Create New
+	int total_items = 1 + num + 1;
 	char phys_label[48];
 	snprintf(phys_label, sizeof(phys_label), "Physical Slot %c",
 		panel->slot == CARD_SLOTA ? 'A' : 'B');
-	items[0] = phys_label;
-	enabled[0] = true;
+
+	// Build display labels with block info
+	char item_labels[MAX_VMC_FILES][48];
 	for (int i = 0; i < num; i++) {
-		items[i + 1] = vmcs[i].label;
-		enabled[i + 1] = true;
+		if (vmcs[i].free_blocks > 0 && vmcs[i].user_blocks > 0) {
+			snprintf(item_labels[i], sizeof(item_labels[i]),
+				"%s  %lu/%lu",
+				vmcs[i].label,
+				(unsigned long)(vmcs[i].user_blocks - vmcs[i].free_blocks),
+				(unsigned long)(vmcs[i].user_blocks));
+		} else {
+			strlcpy(item_labels[i], vmcs[i].label, sizeof(item_labels[i]));
+		}
 	}
 
-	int choice = cm_context_menu(items, enabled, num + 1);
+	int item_h = 22;
+	int pad = 10;
+	int menu_w = 320;
+	int menu_h = (total_items < 14 ? total_items : 14) * item_h + pad * 2;
+	if (menu_h > 400) menu_h = 400;
+	int menu_x = (640 - menu_w) / 2;
+	int menu_y = (480 - menu_h) / 2;
+	int max_visible = (menu_h - pad * 2) / item_h;
 
+	int cursor = 0, scroll = 0;
+	// Pre-select current VMC if mounted
+	if (panel->source == CM_SRC_VMC && panel->vmc_path[0]) {
+		for (int i = 0; i < num; i++) {
+			if (!strcmp(panel->vmc_path, vmcs[i].path)) {
+				cursor = 1 + i;
+				break;
+			}
+		}
+	}
+	if (cursor >= max_visible) scroll = cursor - max_visible + 1;
+
+	uiDrawObj_t *overlay = NULL;
+	bool needs_redraw = true;
+	bool debounce = true;
+	int choice = -1;
+
+	while (1) {
+		cm_retire_tick();
+
+		if (needs_redraw) {
+			uiDrawObj_t *fresh = DrawEmptyBox(menu_x, menu_y,
+				menu_x + menu_w, menu_y + menu_h);
+
+			for (int vi = 0; vi < max_visible && scroll + vi < total_items; vi++) {
+				int idx = scroll + vi;
+				int iy = menu_y + pad + vi * item_h + item_h / 2;
+				GXColor color;
+				const char *label;
+				if (idx == 0) label = phys_label;
+				else if (idx <= num) label = item_labels[idx - 1];
+				else label = "Create New...";
+
+				if (idx == cursor) {
+					color = (GXColor){96, 107, 164, 255};
+					DrawAddChild(fresh, cm_draw_highlight(
+						menu_x + 6, menu_y + pad + vi * item_h,
+						menu_w - 12, item_h));
+				} else {
+					color = defaultColor;
+				}
+
+				DrawAddChild(fresh, DrawStyledLabel(menu_x + 16, iy,
+					label, 0.5f, ALIGN_LEFT, color));
+			}
+
+			if (overlay) DrawDispose(overlay);
+			overlay = fresh;
+			DrawPublish(fresh);
+			needs_redraw = false;
+		}
+
+		VIDEO_WaitVSync();
+		u16 btns = padsButtonsHeld();
+		s8 stickY = padsStickY();
+
+		if (debounce) {
+			if (!(btns & (PAD_BUTTON_UP | PAD_BUTTON_DOWN | PAD_BUTTON_A | PAD_BUTTON_B)))
+				debounce = false;
+			continue;
+		}
+
+		if ((btns & PAD_BUTTON_UP) || stickY > 16) {
+			if (cursor > 0) {
+				cursor--;
+				if (cursor < scroll) scroll = cursor;
+				needs_redraw = true;
+			}
+			debounce = true;
+		}
+		if ((btns & PAD_BUTTON_DOWN) || stickY < -16) {
+			if (cursor < total_items - 1) {
+				cursor++;
+				if (cursor >= scroll + max_visible) scroll = cursor - max_visible + 1;
+				needs_redraw = true;
+			}
+			debounce = true;
+		}
+		if (btns & PAD_BUTTON_A) {
+			while (padsButtonsHeld() & PAD_BUTTON_A) { VIDEO_WaitVSync(); }
+			choice = cursor;
+			break;
+		}
+		if (btns & PAD_BUTTON_B) {
+			while (padsButtonsHeld() & PAD_BUTTON_B) { VIDEO_WaitVSync(); }
+			choice = -1;
+			break;
+		}
+	}
+
+	DrawDispose(overlay);
+
+	bool changed = false;
 	if (choice == 0) {
 		// Switch back to physical card
 		if (panel->source != CM_SRC_PHYSICAL) {
 			panel->source = CM_SRC_PHYSICAL;
 			panel->vmc_path[0] = '\0';
 			panel->needs_reload = true;
+			changed = true;
 		}
-		free(vmcs);
-		return panel->needs_reload;
 	}
 	else if (choice >= 1 && choice <= num) {
 		int vi = choice - 1;
@@ -407,12 +550,32 @@ static bool cm_pick_vmc(cm_panel *panel) {
 		strlcpy(panel->vmc_path, vmcs[vi].path, PATHNAME_MAX);
 		strlcpy(panel->label, vmcs[vi].label, sizeof(panel->label));
 		panel->needs_reload = true;
-		free(vmcs);
-		return true;
+		changed = true;
+	}
+	else if (choice == 1 + num) {
+		// Create New...
+		char new_filename[64];
+		// Use region 1 (USA) as default — no game context in panel view
+		if (cm_vmc_create(1, new_filename, sizeof(new_filename))) {
+			// Mount the newly created card
+			DEVICEHANDLER_INTERFACE *dev = devices[DEVICE_CONFIG] ? devices[DEVICE_CONFIG] :
+				devices[DEVICE_CUR] ? devices[DEVICE_CUR] : NULL;
+			if (dev) {
+				panel->source = CM_SRC_VMC;
+				concatf_path(panel->vmc_path, dev->initial->name,
+					"swiss/saves/%s", new_filename);
+				// Build label from filename (strip .raw extension)
+				strlcpy(panel->label, new_filename, sizeof(panel->label));
+				char *dot = strrchr(panel->label, '.');
+				if (dot) *dot = '\0';
+				panel->needs_reload = true;
+				changed = true;
+			}
+		}
 	}
 
 	free(vmcs);
-	return false;
+	return changed;
 }
 
 void show_card_manager(void) {
