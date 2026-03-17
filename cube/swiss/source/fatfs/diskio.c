@@ -145,11 +145,16 @@ DRESULT disk_ioctl (
 
 		case GET_SECTOR_COUNT:
 			*(LBA_t*)buff = disc[pdrv]->num_sectors;
-			res = ~disc[pdrv]->num_sectors != 0 ? RES_OK : RES_ERROR;
+			res = ~disc[pdrv]->num_sectors ? RES_OK : RES_ERROR;
 			break;
 
 		case GET_SECTOR_SIZE:
 			*(WORD*)buff = disc[pdrv]->sector_sz;
+			res = RES_OK;
+			break;
+
+		case GET_BLOCK_SIZE:
+			*(DWORD*)buff = disc[pdrv]->block_sz;
 			res = RES_OK;
 			break;
 
