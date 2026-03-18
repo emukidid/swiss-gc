@@ -112,6 +112,6 @@ int parse_tgc(file_handle *file, ExecutableFile *filesToPatch, u32 tgc_base, cha
 int patch_gcm(ExecutableFile *filesToPatch, int numToPatch);
 void parse_gcm_add(file_handle *file, ExecutableFile *filesToPatch, int *numToPatch, char *fileName);
 int read_fst(file_handle *file, file_handle** dir, u64 *usedSpace);
-void get_gcm_banner(file_handle *file, u32 *file_offset, u32 *file_size);
+void get_gcm_banner(file_handle *file, DiskHeader *diskHeader, u32 *file_offset, u32 *file_size);
 DiskHeader *get_gcm_header(file_handle *file);
 #endif

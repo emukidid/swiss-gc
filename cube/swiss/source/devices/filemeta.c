@@ -295,7 +295,7 @@ void populate_meta(file_handle *f) {
 				if(diskHeader) {
 					u32 bannerOffset = 0, bannerSize = f->size;
 					if(!get_gcm_banner_fast(diskHeader, &bannerOffset, &bannerSize))
-						get_gcm_banner(f, &bannerOffset, &bannerSize);
+						get_gcm_banner(f, diskHeader, &bannerOffset, &bannerSize);
 					populate_game_meta(f, bannerOffset, bannerSize);
 					get_gcm_title(diskHeader, f->meta);
 					// Assign GCM region texture

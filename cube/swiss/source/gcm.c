@@ -100,16 +100,12 @@ void get_fst_details(char *FST, char *searchFileName, u32 *file_offset, u32 *fil
 }
 
 //Lets parse the entire game FST in search for the banner
-void get_gcm_banner(file_handle *file, u32 *file_offset, u32 *file_size) {
-	DiskHeader *diskHeader = get_gcm_header(file);
-	if(!diskHeader) return;
-	
+void get_gcm_banner(file_handle *file, DiskHeader *diskHeader, u32 *file_offset, u32 *file_size) {
 	char *FST = get_fst(file, diskHeader->FSTOffset, diskHeader->FSTSize);
 	if(!FST) return;
 	
 	get_fst_details(FST, "opening.bnr", file_offset, file_size);
 	free(FST);
-	free(diskHeader);
 }
 
 // Add a file to our current filesToPatch based on fileName
