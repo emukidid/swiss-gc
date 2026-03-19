@@ -365,7 +365,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 		bool enabledHypervisor = devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->features & FEAT_HYPERVISOR);
 		bool enabledCleanBoot = devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->location & LOC_DVD_CONNECTOR);
 		bool rt4kEnable = is_rt4k_alive();
-		if(option < SET_DEFAULT_POLL_RATE) {
+		if(option < SET_DEFAULT_INVERT_CAMERA) {
 			drawSettingEntryString(page, &page_y_ofs, "Force NTSC Video Mode:", gameVModeStr[swissSettings.gameVModeNtsc], option == SET_DEFAULT_NTSC_VIDEOMODE, enabledVideoPatches);
 			drawSettingEntryString(page, &page_y_ofs, "Force PAL Video Mode:", gameVModeStr[swissSettings.gameVModePal], option == SET_DEFAULT_PAL_VIDEOMODE, enabledVideoPatches);
 			drawSettingEntryString(page, &page_y_ofs, "Force Horizontal Scale:", forceHScaleStr[swissSettings.forceHScale], option == SET_DEFAULT_HORIZ_SCALE, enabledVideoPatches);
@@ -377,8 +377,8 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 			drawSettingEntryBoolean(page, &page_y_ofs, "Disable Alpha Dithering:", swissSettings.disableDithering, option == SET_DEFAULT_ALPHA_DITHER, enabledVideoPatches);
 			drawSettingEntryBoolean(page, &page_y_ofs, "Force Anisotropic Filter:", swissSettings.forceAnisotropy, option == SET_DEFAULT_ANISO_FILTER, true);
 			drawSettingEntryString(page, &page_y_ofs, "Force Widescreen:", forceWidescreenStr[swissSettings.forceWidescreen], option == SET_DEFAULT_WIDESCREEN, true);
-		} else {
 			drawSettingEntryString(page, &page_y_ofs, "Force Polling Rate:", forcePollRateStr[swissSettings.forcePollRate], option == SET_DEFAULT_POLL_RATE, true);
+		} else {
 			drawSettingEntryString(page, &page_y_ofs, "Invert Camera Stick:", invertCStickStr[swissSettings.invertCStick], option == SET_DEFAULT_INVERT_CAMERA, true);
 			drawSettingEntryString(page, &page_y_ofs, "Swap Camera Stick:", swapCStickStr[swissSettings.swapCStick], option == SET_DEFAULT_SWAP_CAMERA, true);
 			sprintf(triggerLevelStr, "%hhu", swissSettings.triggerLevel);
@@ -408,7 +408,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 			bool enabledHypervisor = devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->features & FEAT_HYPERVISOR);
 			bool enabledCleanBoot = devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->location & LOC_DVD_CONNECTOR);
 			bool rt4kEnable = is_rt4k_alive();
-			if(option < SET_POLL_RATE) {
+			if(option < SET_INVERT_CAMERA) {
 				drawSettingEntryString(page, &page_y_ofs, "Game Language:", sramLanguageStr[gameConfig->gameLanguage], option == SET_GAME_LANG, true);
 				drawSettingEntryString(page, &page_y_ofs, "Force Video Mode:", gameVModeStr[gameConfig->gameVMode], option == SET_FORCE_VIDEOMODE, enabledVideoPatches);
 				drawSettingEntryString(page, &page_y_ofs, "Force Horizontal Scale:", forceHScaleStr[gameConfig->forceHScale], option == SET_HORIZ_SCALE, enabledVideoPatches);
@@ -420,8 +420,8 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 				drawSettingEntryBoolean(page, &page_y_ofs, "Disable Alpha Dithering:", gameConfig->disableDithering, option == SET_ALPHA_DITHER, enabledVideoPatches);
 				drawSettingEntryBoolean(page, &page_y_ofs, "Force Anisotropic Filter:", gameConfig->forceAnisotropy, option == SET_ANISO_FILTER, true);
 				drawSettingEntryString(page, &page_y_ofs, "Force Widescreen:", forceWidescreenStr[gameConfig->forceWidescreen], option == SET_WIDESCREEN, true);
-			} else if(option < SET_DISABLE_HYPERVISOR) {
 				drawSettingEntryString(page, &page_y_ofs, "Force Polling Rate:", forcePollRateStr[gameConfig->forcePollRate], option == SET_POLL_RATE, true);
+			} else if(option < SET_RT4K_PROFILE) {
 				drawSettingEntryString(page, &page_y_ofs, "Invert Camera Stick:", invertCStickStr[gameConfig->invertCStick], option == SET_INVERT_CAMERA, true);
 				drawSettingEntryString(page, &page_y_ofs, "Swap Camera Stick:", swapCStickStr[gameConfig->swapCStick], option == SET_SWAP_CAMERA, true);
 				sprintf(triggerLevelStr, "%hhu", gameConfig->triggerLevel);
@@ -435,16 +435,16 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 					drawSettingEntryString(page, &page_y_ofs, "Memory Card A:", gameConfig->memoryCardA[0] ? gameConfig->memoryCardA : "Auto", option == SET_MEMCARD_A, emcEnabled);
 					drawSettingEntryString(page, &page_y_ofs, "Memory Card B:", gameConfig->memoryCardB[0] ? gameConfig->memoryCardB : "Auto", option == SET_MEMCARD_B, emcEnabled);
 				}
-			} else {
 				drawSettingEntryBoolean(page, &page_y_ofs, "Disable Hypervisor:", gameConfig->disableHypervisor, option == SET_DISABLE_HYPERVISOR, enabledCleanBoot);
 				drawSettingEntryBoolean(page, &page_y_ofs, "Prefer Clean Boot:", gameConfig->preferCleanBoot, option == SET_CLEAN_BOOT, enabledCleanBoot);
+			} else {
 				drawSettingEntryNumeric(page, &page_y_ofs, "RetroTINK-4K Profile:", gameConfig->rt4kProfile, option == SET_RT4K_PROFILE, rt4kEnable);
 				drawSettingEntryString(page, &page_y_ofs, "Reset to defaults", NULL, option == SET_DEFAULTS, true);
 			}
 		}
 		else {
 			// Just draw the defaults again
-			if(option < SET_POLL_RATE) {
+			if(option < SET_INVERT_CAMERA) {
 				drawSettingEntryString(page, &page_y_ofs, "Game Language:", sramLanguageStr[SRAM_LANGUAGE_MAX], option == SET_GAME_LANG, false);
 				drawSettingEntryString(page, &page_y_ofs, "Force Video Mode:", gameVModeStr[swissSettings.gameVMode], option == SET_FORCE_VIDEOMODE, false);
 				drawSettingEntryString(page, &page_y_ofs, "Force Horizontal Scale:", forceHScaleStr[swissSettings.forceHScale], option == SET_HORIZ_SCALE, false);
@@ -456,8 +456,8 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 				drawSettingEntryBoolean(page, &page_y_ofs, "Disable Alpha Dithering:", swissSettings.disableDithering, option == SET_ALPHA_DITHER, false);
 				drawSettingEntryBoolean(page, &page_y_ofs, "Force Anisotropic Filter:", swissSettings.forceAnisotropy, option == SET_ANISO_FILTER, false);
 				drawSettingEntryString(page, &page_y_ofs, "Force Widescreen:", forceWidescreenStr[swissSettings.forceWidescreen], option == SET_WIDESCREEN, false);
-			} else if(option < SET_DISABLE_HYPERVISOR) {
 				drawSettingEntryString(page, &page_y_ofs, "Force Polling Rate:", forcePollRateStr[swissSettings.forcePollRate], option == SET_POLL_RATE, false);
+			} else if(option < SET_RT4K_PROFILE) {
 				drawSettingEntryString(page, &page_y_ofs, "Invert Camera Stick:", invertCStickStr[swissSettings.invertCStick], option == SET_INVERT_CAMERA, false);
 				drawSettingEntryString(page, &page_y_ofs, "Swap Camera Stick:", swapCStickStr[swissSettings.swapCStick], option == SET_SWAP_CAMERA, false);
 				sprintf(triggerLevelStr, "%hhu", swissSettings.triggerLevel);
@@ -468,9 +468,9 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 				drawSettingEntryString(page, &page_y_ofs, "Disable Memory Card:", disableMemoryCardStr[swissSettings.disableMemoryCard], option == SET_DISABLE_MEMCARD, false);
 				drawSettingEntryString(page, &page_y_ofs, "Memory Card A:", "Auto", option == SET_MEMCARD_A, false);
 				drawSettingEntryString(page, &page_y_ofs, "Memory Card B:", "Auto", option == SET_MEMCARD_B, false);
-			} else {
 				drawSettingEntryBoolean(page, &page_y_ofs, "Disable Hypervisor:", swissSettings.disableHypervisor, option == SET_DISABLE_HYPERVISOR, false);
 				drawSettingEntryBoolean(page, &page_y_ofs, "Prefer Clean Boot:", swissSettings.preferCleanBoot, option == SET_CLEAN_BOOT, false);
+			} else {
 				drawSettingEntryNumeric(page, &page_y_ofs, "RetroTINK-4K Profile:", swissSettings.rt4kProfile, option == SET_RT4K_PROFILE, false);
 				drawSettingEntryString(page, &page_y_ofs, "Reset to defaults", NULL, option == SET_DEFAULTS, false);
 			}
@@ -1091,17 +1091,25 @@ int show_settings(int page, int option, ConfigEntry *config) {
 	while (padsButtonsHeld() & PAD_BUTTON_A){ VIDEO_WaitVSync (); }
 	while(1) {
 		uiDrawObj_t* settingsPage = settings_draw_page(page, option, config);
-		while (!((padsButtonsHeld() & PAD_BUTTON_RIGHT) 
-			|| (padsButtonsHeld() & PAD_BUTTON_LEFT) 
-			|| (padsButtonsHeld() & PAD_BUTTON_UP) 
-			|| (padsButtonsHeld() & PAD_BUTTON_DOWN) 
+		while (!((padsButtonsHeld() & PAD_BUTTON_RIGHT)
+			|| (padsButtonsHeld() & PAD_BUTTON_LEFT)
+			|| (padsButtonsHeld() & PAD_BUTTON_UP)
+			|| (padsButtonsHeld() & PAD_BUTTON_DOWN)
 			|| (padsButtonsHeld() & PAD_BUTTON_B)
 			|| (padsButtonsHeld() & PAD_BUTTON_A)
 			|| (padsButtonsHeld() & PAD_BUTTON_Y)
 			|| (padsButtonsHeld() & PAD_TRIGGER_R)
-			|| (padsButtonsHeld() & PAD_TRIGGER_L)))
+			|| (padsButtonsHeld() & PAD_TRIGGER_L)
+			|| padsStickY() > 16 || padsStickY() < -16
+			|| padsStickX() > 16 || padsStickX() < -16))
 			{ VIDEO_WaitVSync (); }
 		u16 btns = padsButtonsHeld();
+		s8 stickY = padsStickY();
+		s8 stickX = padsStickX();
+		if(stickY > 16) btns |= PAD_BUTTON_UP;
+		if(stickY < -16) btns |= PAD_BUTTON_DOWN;
+		if(stickX > 16) btns |= PAD_BUTTON_RIGHT;
+		if(stickX < -16) btns |= PAD_BUTTON_LEFT;
 		if(btns & PAD_BUTTON_Y) {
 			char *tooltip = get_tooltip(page, option);
 			if(tooltip) {
@@ -1223,16 +1231,22 @@ int show_settings(int page, int option, ConfigEntry *config) {
 				settings_toggle(page, option, 0, config);
 			}
 		}
-		while ((padsButtonsHeld() & PAD_BUTTON_RIGHT) 
-				|| (padsButtonsHeld() & PAD_BUTTON_LEFT) 
-				|| (padsButtonsHeld() & PAD_BUTTON_UP) 
-				|| (padsButtonsHeld() & PAD_BUTTON_DOWN) 
-				|| (padsButtonsHeld() & PAD_BUTTON_B) 
-				|| (padsButtonsHeld() & PAD_BUTTON_A)
-				|| (padsButtonsHeld() & PAD_BUTTON_Y)
-				|| (padsButtonsHeld() & PAD_TRIGGER_R)
-				|| (padsButtonsHeld() & PAD_TRIGGER_L))
-			{ VIDEO_WaitVSync (); }
+		if(stickY > 16 || stickY < -16 || stickX > 16 || stickX < -16) {
+			int mag = abs(stickY) > abs(stickX) ? abs(stickY) : abs(stickX);
+			int wait = mag > 64 ? 2 : 5;
+			for(int w = 0; w < wait; w++) VIDEO_WaitVSync();
+		} else {
+			while ((padsButtonsHeld() & PAD_BUTTON_RIGHT)
+					|| (padsButtonsHeld() & PAD_BUTTON_LEFT)
+					|| (padsButtonsHeld() & PAD_BUTTON_UP)
+					|| (padsButtonsHeld() & PAD_BUTTON_DOWN)
+					|| (padsButtonsHeld() & PAD_BUTTON_B)
+					|| (padsButtonsHeld() & PAD_BUTTON_A)
+					|| (padsButtonsHeld() & PAD_BUTTON_Y)
+					|| (padsButtonsHeld() & PAD_TRIGGER_R)
+					|| (padsButtonsHeld() & PAD_TRIGGER_L))
+				{ VIDEO_WaitVSync (); }
+		}
 		DrawDispose(settingsPage);
 	}
 }
