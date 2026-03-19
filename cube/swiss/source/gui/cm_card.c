@@ -531,12 +531,12 @@ void cm_retire_flush(void) {
 }
 
 // --- Button wait helper ---
-// Waits for any button in mask, keeps LEDs alive during wait.
+// Waits for any button in mask, keeps activity display refreshed during wait.
 // Returns which button(s) were pressed.
 u16 cm_wait_buttons(u16 mask) {
 	while (1) {
 		cm_retire_tick();
-		cm_led_pulse();
+		cm_activity_pulse();
 		u16 btns = padsButtonsHeld();
 		if (btns & mask) {
 			while (padsButtonsHeld() & mask) {
@@ -682,7 +682,7 @@ int card_manager_read_saves(int slot, card_entry *entries, int max_entries) {
 	int count = card_manager_read_dir(slot, entries, max_entries);
 	for (int i = 0; i < count; i++) {
 		card_manager_read_save_detail(slot, &entries[i]);
-		cm_led_pulse();
+		cm_activity_pulse();
 	}
 	return count;
 }

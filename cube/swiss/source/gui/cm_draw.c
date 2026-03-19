@@ -89,12 +89,9 @@ uiDrawObj_t *cm_draw_highlight(int x, int y, int w, int h) {
 #define CM_MSG_LINE_H   20
 #define CM_MSG_FONT     0.55f
 
-// LED global context
-static cm_panel **s_led_panels = NULL;
-static char s_led_msg_text[256];
-static uiDrawObj_t *s_led_page = NULL;
-static bool s_vmc_present[2] = {false, false};  // MemoryCardA/B.*.raw exists
-static bool s_phys_present[2] = {false, false}; // Cached CARD_ProbeEx results
+// Activity display context — keeps screen refreshed during blocking I/O
+static char s_activity_msg[256];
+static uiDrawObj_t *s_activity_page = NULL;
 
 uiDrawObj_t *cm_draw_message(const char *msg) {
 	char buf[512];
@@ -118,15 +115,11 @@ uiDrawObj_t *cm_draw_message(const char *msg) {
 
 	for (int i = 0; i < num_lines; i++) {
 		if (lines[i][0] == ' ' && lines[i][1] == '\0') continue;
-		float scale = GetTextScaleToFitInWidthWithMax(lines[i], content_w, CM_MSG_FONT);
+		float scale = GetTextScaleToFitInWidthWithMax((char *)lines[i], content_w, CM_MSG_FONT);
 		int ly = box_y + CM_MSG_PAD_Y + i * CM_MSG_LINE_H + CM_MSG_LINE_H / 2;
 		DrawAddChild(box, DrawStyledLabel(640 / 2, ly,
 			lines[i], scale, ALIGN_CENTER, defaultColor));
 	}
-
-	// Auto-include status LEDs when context is set
-	if (s_led_panels)
-		cm_draw_status_leds(box, s_led_panels);
 
 	return box;
 }
@@ -159,7 +152,7 @@ uiDrawObj_t *cm_draw_progress(const char *msg, int current, int total) {
 
 	for (int i = 0; i < num_lines && i < CM_PROG_LINES; i++) {
 		if (lines[i][0] == ' ' && lines[i][1] == '\0') continue;
-		float scale = GetTextScaleToFitInWidthWithMax(lines[i], content_w, CM_MSG_FONT);
+		float scale = GetTextScaleToFitInWidthWithMax((char *)lines[i], content_w, CM_MSG_FONT);
 		int ly = box_y + CM_MSG_PAD_Y + i * CM_MSG_LINE_H + CM_MSG_LINE_H / 2;
 		DrawAddChild(box, DrawStyledLabel(640 / 2, ly,
 			lines[i], scale, ALIGN_CENTER, defaultColor));
@@ -181,9 +174,6 @@ uiDrawObj_t *cm_draw_progress(const char *msg, int current, int total) {
 		GXColor fill = {100, 180, 100, 255};
 		DrawAddChild(box, DrawFlatColorRect(bar_x, bar_y, fill_w, CM_PROG_BAR_H, fill));
 	}
-
-	if (s_led_panels)
-		cm_draw_status_leds(box, s_led_panels);
 
 	return box;
 }
@@ -243,182 +233,63 @@ void cm_draw_title_bar(uiDrawObj_t *container, int view_mode) {
 	DrawAddChild(container, cm_draw_icon_rect(lt, ix, iy + 8, 14, 2));
 }
 
-// --- Status LEDs ---
+// --- Toast notification ---
+// Non-blocking transient message in the title bar area.
 
-#define LED_SZ     5
-#define LED_GAP_X  16
+static char s_toast_msg[64];
+static int s_toast_frames = 0;
+#define TOAST_FADE_FRAMES 30
 
-static float cm_led_phase(void) {
-	return (float)(ticks_to_millisecs(gettime()) % 2000) / 2000.0f * 6.2832f;
+void cm_toast(const char *msg, int frames) {
+	strlcpy(s_toast_msg, msg, sizeof(s_toast_msg));
+	s_toast_frames = frames;
 }
 
-void cm_led_update_card_status(bool slot_a, bool slot_b) {
-	s_phys_present[0] = slot_a;
-	s_phys_present[1] = slot_b;
+bool cm_toast_tick(void) {
+	if (s_toast_frames > 0) s_toast_frames--;
+	return s_toast_frames > 0;
 }
 
-// Scan swiss/saves/ for MemoryCardA/B.*.raw presence
-void cm_led_scan_vmc(void) {
-	vmc_file_entry vmcs[MAX_VMC_FILES];
-	int n = vmc_scan_files(vmcs, MAX_VMC_FILES);
-	s_vmc_present[0] = false;
-	s_vmc_present[1] = false;
-	for (int i = 0; i < n; i++) {
-		char *name = strrchr(vmcs[i].path, '/');
-		name = name ? name + 1 : vmcs[i].path;
-		if (strncasecmp(name, "MemoryCardA", 11) == 0 && vmcs[i].filesize > 0)
-			s_vmc_present[0] = true;
-		else if (strncasecmp(name, "MemoryCardB", 11) == 0 && vmcs[i].filesize > 0)
-			s_vmc_present[1] = true;
+void cm_draw_toast(uiDrawObj_t *container) {
+	if (s_toast_frames <= 0) return;
+	u8 alpha = s_toast_frames > TOAST_FADE_FRAMES
+		? 220 : (u8)(220 * s_toast_frames / TOAST_FADE_FRAMES);
+	GXColor color = {180, 200, 220, alpha};
+	DrawAddChild(container, DrawStyledLabel(BOX_X2 - 46, TITLE_Y + 12,
+		s_toast_msg, 0.4f, ALIGN_RIGHT, color));
+}
+
+// --- Activity display ---
+// Keeps the screen refreshed during blocking I/O (save reads, writes, etc.)
+
+void cm_activity_show(const char *msg) {
+	strlcpy(s_activity_msg, msg, sizeof(s_activity_msg));
+	cm_activity_pulse();
+}
+
+void cm_activity_hide(void) {
+	if (s_activity_page) {
+		DrawDispose(s_activity_page);
+		s_activity_page = NULL;
 	}
+	s_activity_msg[0] = '\0';
 }
 
-// Find panel activity targeting a specific device
-static u8 cm_device_activity(cm_panel *panels[2],
-	cm_source_type src, int slot, const char *vmc_prefix) {
-	u8 act = CM_ACTIVITY_IDLE;
-	for (int p = 0; p < 2; p++) {
-		if (src == CM_SRC_PHYSICAL) {
-			if (panels[p]->source == CM_SRC_PHYSICAL && panels[p]->slot == slot) {
-				if (panels[p]->loading || panels[p]->activity == CM_ACTIVITY_READ)
-					act = act < CM_ACTIVITY_READ ? CM_ACTIVITY_READ : act;
-				if (panels[p]->activity == CM_ACTIVITY_WRITE)
-					act = CM_ACTIVITY_WRITE;
-			}
-		} else {
-			if (panels[p]->source == CM_SRC_VMC && vmc_prefix) {
-				char *name = strrchr(panels[p]->vmc_path, '/');
-				name = name ? name + 1 : panels[p]->vmc_path;
-				if (strncasecmp(name, vmc_prefix, strlen(vmc_prefix)) == 0) {
-					if (panels[p]->loading || panels[p]->activity == CM_ACTIVITY_READ)
-						act = act < CM_ACTIVITY_READ ? CM_ACTIVITY_READ : act;
-					if (panels[p]->activity == CM_ACTIVITY_WRITE)
-						act = CM_ACTIVITY_WRITE;
-				}
-			}
-		}
-	}
-	return act;
-}
-
-static void cm_draw_one_led(uiDrawObj_t *container, int x, int y,
-	const char *label, bool present, u8 activity, float phase) {
-	GXColor led_color;
-	GXColor glow_color = {0};
-	u8 glow_i = 0;
-	float glow_w = 0;
-
-	if (activity != CM_ACTIVITY_IDLE) {
-		float pulse = 0.5f + 0.5f * sinf(phase);
-		u8 a = (u8)(140.0f + 115.0f * pulse);
-		if (activity == CM_ACTIVITY_WRITE) {
-			led_color = (GXColor){255, 80, 40, a};
-			glow_color = (GXColor){255, 80, 40, 255};
-		} else {
-			led_color = (GXColor){255, 140, 40, a};
-			glow_color = (GXColor){255, 140, 40, 255};
-		}
-		glow_i = (u8)(180.0f * pulse);
-		glow_w = 3.0f;
-	} else if (present) {
-		led_color = (GXColor){60, 200, 80, 220};
-		glow_color = (GXColor){60, 200, 80, 255};
-		glow_i = 40;
-		glow_w = 2.0f;
-	} else {
-		led_color = (GXColor){60, 60, 60, 100};
-	}
-
-	DrawAddChild(container, DrawFlatColorRect(x, y, LED_SZ, LED_SZ, led_color));
-	if (glow_w > 0)
-		DrawAddChild(container, DrawEdgeGlow(x, y, LED_SZ, LED_SZ,
-			glow_w, glow_color, glow_i));
-	DrawAddChild(container, DrawStyledLabel(x + LED_SZ + 2, y + LED_SZ / 2,
-		label, 0.35f, ALIGN_LEFT, (GXColor){120, 120, 120, 200}));
-}
-
-void cm_draw_status_leds(uiDrawObj_t *container, cm_panel *panels[2]) {
-	float phase = cm_led_phase();
-
-	// Count visible indicators
-	int num_leds = 2;  // Physical A + B always
-	if (s_vmc_present[0]) num_leds++;
-	if (s_vmc_present[1]) num_leds++;
-
-	// Dock LEDs immediately left of view mode icons (icons start at BOX_X2 - 40)
-	int total_w = num_leds * LED_GAP_X;
-	int base_x = BOX_X2 - 46 - total_w;
-	int base_y = TITLE_Y + 7;
-	int slot_idx = 0;
-
-	// Use cached probe results — never touch CARD hardware from draw code
-	u8 act_a = cm_device_activity(panels, CM_SRC_PHYSICAL, CARD_SLOTA, NULL);
-	cm_draw_one_led(container, base_x + slot_idx * LED_GAP_X, base_y,
-		"A", s_phys_present[0], act_a, phase);
-	slot_idx++;
-
-	u8 act_b = cm_device_activity(panels, CM_SRC_PHYSICAL, CARD_SLOTB, NULL);
-	cm_draw_one_led(container, base_x + slot_idx * LED_GAP_X, base_y,
-		"B", s_phys_present[1], act_b, phase);
-	slot_idx++;
-
-	// Virtual A (if MemoryCardA.*.raw exists)
-	if (s_vmc_present[0]) {
-		u8 act_va = cm_device_activity(panels, CM_SRC_VMC, 0, "MemoryCardA");
-		cm_draw_one_led(container, base_x + slot_idx * LED_GAP_X, base_y,
-			"VA", true, act_va, phase);
-		slot_idx++;
-	}
-
-	// Virtual B (if MemoryCardB.*.raw exists)
-	if (s_vmc_present[1]) {
-		u8 act_vb = cm_device_activity(panels, CM_SRC_VMC, 0, "MemoryCardB");
-		cm_draw_one_led(container, base_x + slot_idx * LED_GAP_X, base_y,
-			"VB", true, act_vb, phase);
-		slot_idx++;
-	}
-}
-
-// --- LED managed display ---
-
-void cm_led_begin(cm_panel *panels[2]) {
-	s_led_panels = panels;
-	cm_led_scan_vmc();
-}
-
-void cm_led_end(void) {
-	cm_led_hide();
-	s_led_panels = NULL;
-}
-
-void cm_led_show(const char *msg) {
-	strlcpy(s_led_msg_text, msg, sizeof(s_led_msg_text));
-	cm_led_pulse();
-}
-
-void cm_led_hide(void) {
-	if (s_led_page) {
-		DrawDispose(s_led_page);
-		s_led_page = NULL;
-	}
-	s_led_msg_text[0] = '\0';
-}
-
-void cm_led_pulse(void) {
-	if (!s_led_msg_text[0]) return;
+void cm_activity_pulse(void) {
+	if (!s_activity_msg[0]) return;
 	cm_retire_tick();
-	uiDrawObj_t *fresh = cm_draw_message(s_led_msg_text);
-	if (s_led_page) DrawDispose(s_led_page);
-	s_led_page = fresh;
+	uiDrawObj_t *fresh = cm_draw_message(s_activity_msg);
+	if (s_activity_page) DrawDispose(s_activity_page);
+	s_activity_page = fresh;
 	DrawPublish(fresh);
 	VIDEO_WaitVSync();
 }
 
-void cm_led_progress(const char *msg, int current, int total) {
+void cm_activity_progress(const char *msg, int current, int total) {
 	cm_retire_tick();
 	uiDrawObj_t *fresh = cm_draw_progress(msg, current, total);
-	if (s_led_page) DrawDispose(s_led_page);
-	s_led_page = fresh;
+	if (s_activity_page) DrawDispose(s_activity_page);
+	s_activity_page = fresh;
 	DrawPublish(fresh);
 	VIDEO_WaitVSync();
 }
@@ -498,7 +369,7 @@ static int icon_anim_get_frame(icon_anim *icon, u32 tick) {
 // --- Panel drawing ---
 
 static void card_manager_draw_panel(uiDrawObj_t *container, cm_panel *panel,
-	int px, int pw, bool active, u32 anim_tick) {
+	int px, int pw, bool active, u32 anim_tick, int cols) {
 
 	bool is_vmc = (panel->source == CM_SRC_VMC);
 	GXColor hdr_color;
@@ -510,7 +381,7 @@ static void card_manager_draw_panel(uiDrawObj_t *container, cm_panel *panel,
 		hdr_color = defaultColor;
 
 	// Align header text with icon grid edges
-	int grid_w = GRID_COLS * GRID_CELL;
+	int grid_w = cols * GRID_CELL;
 	int grid_lx = px + (pw - grid_w) / 2;
 	int grid_rx = grid_lx + grid_w;
 
@@ -582,14 +453,14 @@ static void card_manager_draw_panel(uiDrawObj_t *container, cm_panel *panel,
 	}
 
 	// Icon grid
-	int grid_x = px + (pw - GRID_COLS * GRID_CELL) / 2;
-	int total_rows = (panel->num_entries + GRID_COLS - 1) / GRID_COLS;
+	int grid_x = px + (pw - cols * GRID_CELL) / 2;
+	int total_rows = (panel->num_entries + cols - 1) / cols;
 	int vis_rows = total_rows - panel->scroll_row;
 	if (vis_rows > CARDS_GRID_ROWS) vis_rows = CARDS_GRID_ROWS;
 
 	for (int row = 0; row < vis_rows; row++) {
-		for (int col = 0; col < GRID_COLS; col++) {
-			int idx = (panel->scroll_row + row) * GRID_COLS + col;
+		for (int col = 0; col < cols; col++) {
+			int idx = (panel->scroll_row + row) * cols + col;
 			if (idx >= panel->num_entries) break;
 
 			int cx = grid_x + col * GRID_CELL;
@@ -634,33 +505,128 @@ static void card_manager_draw_panel(uiDrawObj_t *container, cm_panel *panel,
 	}
 }
 
-uiDrawObj_t *card_manager_draw(cm_panel *left, cm_panel *right,
-	int active_panel, u32 anim_tick) {
+// --- Card shelf drawing ---
+
+static void cm_draw_shelf(uiDrawObj_t *container, cm_shelf *shelf,
+	cm_focus focus, u32 anim_tick) {
+
+	int sx = BOX_X1;
+	int sy = PANEL_TOP_Y;
+	int sw = SHELF_WIDTH;
+	int sh = PANEL_BOTTOM_Y - PANEL_TOP_Y;
+
+	// Panel frame
+	cm_draw_panel_frame(container, false, sx, sy, sw, sh);
+
+	// Edge glow when shelf is focused
+	if (focus == CM_FOCUS_SHELF) {
+		float flicker = 0.85f + 0.15f * sinf((float)anim_tick * 0.08f);
+		u8 glow_i = (u8)(240.0f * flicker);
+		DrawAddChild(container, DrawEdgeGlow(sx, sy, sw, sh,
+			6.0f, (GXColor){80, 100, 180, 255}, glow_i));
+	}
+
+	// Header: "Cards"
+	GXColor hdr_color = focus == CM_FOCUS_SHELF ? defaultColor
+		: (GXColor){140, 140, 140, 255};
+	DrawAddChild(container, DrawStyledLabel(sx + sw / 2, sy + SHELF_HDR_H / 2 + 2,
+		"Cards", 0.55f, ALIGN_CENTER, hdr_color));
+
+	// Separator
+	int sep_y = sy + SHELF_HDR_H - 2;
+	DrawAddChild(container, DrawFlatColorRect(sx + 8, sep_y, sw - 16, 1,
+		(GXColor){120, 120, 120, 80}));
+
+	// List items
+	int max_vis = SHELF_MAX_VIS;
+	int visible = shelf->count - shelf->scroll;
+	if (visible > max_vis) visible = max_vis;
+
+	for (int i = 0; i < visible; i++) {
+		int idx = shelf->scroll + i;
+		shelf_item *item = &shelf->items[idx];
+		int ry = SHELF_LIST_TOP + i * SHELF_ROW_H;
+		int rmid = ry + SHELF_ROW_H / 2;
+
+		// Highlight selected item
+		if (focus == CM_FOCUS_SHELF && idx == shelf->cursor)
+			DrawAddChild(container, cm_draw_highlight(
+				sx + 4, ry, sw - 8, SHELF_ROW_H));
+
+		// Presence dot or "+" marker
+		int dot_x = sx + 10;
+		int dot_y = rmid - 2;
+		int dot_sz = 5;
+
+		if (item->type == SHELF_ITEM_CREATE) {
+			DrawAddChild(container, DrawStyledLabel(dot_x + 2, rmid,
+				"+", 0.5f, ALIGN_CENTER, (GXColor){180, 180, 180, 255}));
+		} else {
+			GXColor dot_color;
+			if (item->present) {
+				dot_color = (GXColor){60, 200, 80, 220};
+				DrawAddChild(container, DrawFlatColorRect(
+					dot_x, dot_y, dot_sz, dot_sz, dot_color));
+				DrawAddChild(container, DrawEdgeGlow(
+					dot_x, dot_y, dot_sz, dot_sz,
+					2.0f, (GXColor){60, 200, 80, 255}, 40));
+			} else {
+				dot_color = (GXColor){60, 60, 60, 100};
+				DrawAddChild(container, DrawFlatColorRect(
+					dot_x, dot_y, dot_sz, dot_sz, dot_color));
+			}
+		}
+
+		// Label
+		int label_x = sx + 22;
+		int label_w = sw - 28;
+		GXColor label_color;
+		if (focus == CM_FOCUS_SHELF && idx == shelf->cursor)
+			label_color = (GXColor){96, 107, 164, 255};
+		else if (item->type == SHELF_ITEM_VMC)
+			label_color = (GXColor){140, 200, 255, 255};
+		else
+			label_color = defaultColor;
+
+		float ls = GetTextScaleToFitInWidthWithMax(item->label, label_w, 0.45f);
+		DrawAddChild(container, DrawStyledLabel(label_x, rmid,
+			item->label, ls, ALIGN_LEFT, label_color));
+	}
+
+	// Scroll indicator
+	if (shelf->count > max_vis) {
+		float pct = (float)shelf->scroll / (float)(shelf->count - max_vis);
+		DrawAddChild(container, DrawVertScrollBar(
+			sx + sw - 8, SHELF_LIST_TOP, 6,
+			max_vis * SHELF_ROW_H, pct, 12));
+	}
+}
+
+uiDrawObj_t *card_manager_draw(cm_shelf *shelf, cm_panel *detail,
+	cm_focus focus, u32 anim_tick) {
 
 	cm_draw_init();
 
-	cm_panel *active_p = active_panel == 0 ? left : right;
-	bool has_sel = active_p->card_present && active_p->num_entries > 0 &&
-		active_p->cursor >= 0 && active_p->cursor < active_p->num_entries;
+	bool has_sel = detail->card_present && detail->num_entries > 0 &&
+		detail->cursor >= 0 && detail->cursor < detail->num_entries;
 
 	uiDrawObj_t *container = DrawEmptyBox(BOX_X1, BOX_TOP_Y, BOX_X2, BOX_BOTTOM_Y);
 
 	cm_draw_title_bar(container, 0);
 
-	int left_x = BOX_X1;
-	int right_x = BOX_X1 + PANEL_WIDTH + PANEL_GAP;
+	// Draw shelf on the left
+	cm_draw_shelf(container, shelf, focus, anim_tick);
 
-	card_manager_draw_panel(container, left, left_x, PANEL_WIDTH,
-		active_panel == 0, anim_tick);
-	card_manager_draw_panel(container, right, right_x, PANEL_WIDTH,
-		active_panel == 1, anim_tick);
+	// Draw detail panel on the right
+	card_manager_draw_panel(container, detail, DETAIL_X, DETAIL_WIDTH,
+		focus == CM_FOCUS_DETAIL, anim_tick, DETAIL_GRID_COLS);
 
-	// Detail bar — selected save info below the panels
+	// Detail bar — selected save info below the grid
 	if (has_sel) {
-		card_entry *sel = &active_p->entries[active_p->cursor];
-		int dx = BOX_X1 + 8;
+		card_entry *sel = &detail->entries[detail->cursor];
+		int dx = DETAIL_X + 8;
 		int dy = DETAIL_Y;
-		int detail_w = BOX_INNER_W - 16;
+		int detail_w = DETAIL_WIDTH - 16;
 
 		// Banner or animated icon as thumbnail
 		int thumb_w = 0;
@@ -671,7 +637,7 @@ uiDrawObj_t *card_manager_draw(cm_panel *left, cm_panel *right,
 			thumb_w = DETAIL_BANNER_W + 8;
 		} else if (sel->icon && sel->icon->num_frames > 0) {
 			int frame = icon_anim_get_frame(sel->icon,
-				anim_tick - active_p->anim_start);
+				anim_tick - detail->anim_start);
 			if (sel->icon->frames[frame].snap) {
 				DrawAddChild(container, DrawTexObj(
 					&sel->icon->frames[frame].snap->tex,
@@ -704,9 +670,17 @@ uiDrawObj_t *card_manager_draw(cm_panel *left, cm_panel *right,
 	}
 
 	// Hint bar
-	const char *hints = has_sel
-		? "A: Actions  L/R: Switch  Z: Card Source  X: Library  B: Back"
-		: "L/R: Switch  Z: Card Source  X: Library  B: Back";
+	const char *hints;
+	if (focus == CM_FOCUS_SHELF) {
+		shelf_item *sel_item = &shelf->items[shelf->cursor];
+		if (sel_item->type == SHELF_ITEM_VMC)
+			hints = "A: View Card  Y: Delete  X: Library  B: Back";
+		else
+			hints = "A: View Card  X: Library  B: Back";
+	} else if (has_sel)
+		hints = "A: Actions  B: Cards  X: Library";
+	else
+		hints = "B: Cards  X: Library";
 	DrawAddChild(container, DrawStyledLabel(640 / 2, HINTS_Y,
 		hints, 0.55f, ALIGN_CENTER, (GXColor){140, 140, 140, 255}));
 
@@ -765,9 +739,6 @@ int cm_context_menu(const char *items[], const bool enabled[], int count) {
 				DrawAddChild(fresh, DrawStyledLabel(menu_x + 20, iy,
 					items[i], 0.55f, ALIGN_LEFT, color));
 			}
-
-			if (s_led_panels)
-				cm_draw_status_leds(fresh, s_led_panels);
 
 			if (overlay) DrawDispose(overlay);
 			overlay = fresh;

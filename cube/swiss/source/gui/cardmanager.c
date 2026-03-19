@@ -102,19 +102,19 @@ static void cm_panel_load(cm_panel *panel) {
 	panel->needs_reload = false;
 }
 
-static void cm_panel_navigate(cm_panel *panel, u16 btns) {
+static void cm_panel_navigate(cm_panel *panel, u16 btns, int cols) {
 	if (panel->num_entries == 0) return;
-	int cy = panel->cursor / GRID_COLS;
-	int total_rows = (panel->num_entries + GRID_COLS - 1) / GRID_COLS;
+	int cy = panel->cursor / cols;
+	int total_rows = (panel->num_entries + cols - 1) / cols;
 
 	if (btns & PAD_BUTTON_UP) {
 		if (cy > 0) {
-			panel->cursor -= GRID_COLS;
+			panel->cursor -= cols;
 		}
 	}
 	if (btns & PAD_BUTTON_DOWN) {
 		if (cy < total_rows - 1) {
-			int new_cursor = panel->cursor + GRID_COLS;
+			int new_cursor = panel->cursor + cols;
 			panel->cursor = (new_cursor < panel->num_entries) ? new_cursor : panel->num_entries - 1;
 		}
 	}
@@ -125,16 +125,99 @@ static void cm_panel_navigate(cm_panel *panel, u16 btns) {
 		if (panel->cursor < panel->num_entries - 1) panel->cursor++;
 	}
 
-	cy = panel->cursor / GRID_COLS;
+	cy = panel->cursor / cols;
 	if (cy < panel->scroll_row)
 		panel->scroll_row = cy;
 	if (cy >= panel->scroll_row + CARDS_GRID_ROWS)
 		panel->scroll_row = cy - CARDS_GRID_ROWS + 1;
 }
 
+// --- Shelf ---
+
+static void cm_shelf_populate(cm_shelf *shelf) {
+	int saved_cursor = shelf->cursor;
+	shelf->count = 0;
+
+	// Physical Slot A
+	shelf_item *it = &shelf->items[shelf->count++];
+	memset(it, 0, sizeof(*it));
+	it->type = SHELF_ITEM_PHYSICAL;
+	it->slot = CARD_SLOTA;
+	strlcpy(it->label, "Slot A", sizeof(it->label));
+	s32 probe = CARD_ProbeEx(CARD_SLOTA, NULL, NULL);
+	it->present = (probe == CARD_ERROR_READY || probe == CARD_ERROR_BUSY);
+
+	// Physical Slot B
+	it = &shelf->items[shelf->count++];
+	memset(it, 0, sizeof(*it));
+	it->type = SHELF_ITEM_PHYSICAL;
+	it->slot = CARD_SLOTB;
+	strlcpy(it->label, "Slot B", sizeof(it->label));
+	probe = CARD_ProbeEx(CARD_SLOTB, NULL, NULL);
+	it->present = (probe == CARD_ERROR_READY || probe == CARD_ERROR_BUSY);
+
+	// VMC files
+	vmc_file_entry vmcs[MAX_VMC_FILES];
+	int num = vmc_scan_files(vmcs, MAX_VMC_FILES);
+	for (int i = 0; i < num && shelf->count < SHELF_MAX_ITEMS - 1; i++) {
+		if (vmcs[i].encoding != 0) continue;
+		it = &shelf->items[shelf->count++];
+		memset(it, 0, sizeof(*it));
+		it->type = SHELF_ITEM_VMC;
+		it->slot = -1;
+		strlcpy(it->path, vmcs[i].path, PATHNAME_MAX);
+		strlcpy(it->label, vmcs[i].label, sizeof(it->label));
+		it->present = true;
+		it->used_blocks = (vmcs[i].user_blocks > vmcs[i].free_blocks)
+			? vmcs[i].user_blocks - vmcs[i].free_blocks : 0;
+		it->total_blocks = vmcs[i].user_blocks;
+	}
+
+	// Create New...
+	it = &shelf->items[shelf->count++];
+	memset(it, 0, sizeof(*it));
+	it->type = SHELF_ITEM_CREATE;
+	strlcpy(it->label, "Create New...", sizeof(it->label));
+
+	// Preserve cursor position
+	if (saved_cursor < shelf->count) shelf->cursor = saved_cursor;
+	else shelf->cursor = shelf->count > 0 ? shelf->count - 1 : 0;
+	if (shelf->cursor < shelf->scroll)
+		shelf->scroll = shelf->cursor;
+	if (shelf->cursor >= shelf->scroll + SHELF_MAX_VIS)
+		shelf->scroll = shelf->cursor - SHELF_MAX_VIS + 1;
+}
+
+static bool cm_shelf_apply(cm_shelf *shelf, cm_panel *detail) {
+	shelf_item *item = &shelf->items[shelf->cursor];
+
+	if (item->type == SHELF_ITEM_PHYSICAL) {
+		if (detail->source == CM_SRC_PHYSICAL && detail->slot == item->slot)
+			return false;
+		detail->source = CM_SRC_PHYSICAL;
+		detail->slot = item->slot;
+		detail->vmc_path[0] = '\0';
+		snprintf(detail->label, sizeof(detail->label), "Slot %c",
+			item->slot == CARD_SLOTA ? 'A' : 'B');
+		detail->needs_reload = true;
+		return true;
+	}
+	else if (item->type == SHELF_ITEM_VMC) {
+		if (detail->source == CM_SRC_VMC
+			&& strcmp(detail->vmc_path, item->path) == 0)
+			return false;
+		detail->source = CM_SRC_VMC;
+		strlcpy(detail->vmc_path, item->path, PATHNAME_MAX);
+		strlcpy(detail->label, item->label, sizeof(detail->label));
+		detail->needs_reload = true;
+		return true;
+	}
+	return false;
+}
+
 // --- Context menu handling ---
 
-static void cm_handle_context_menu(cm_panel *ap, cm_panel *other, bool *needs_redraw) {
+static void cm_handle_context_menu(cm_panel *ap, bool *needs_redraw) {
 	card_entry *sel = &ap->entries[ap->cursor];
 
 	// Build context menu items
@@ -261,19 +344,15 @@ static void cm_handle_context_menu(cm_panel *ap, cm_panel *other, bool *needs_re
 				break;
 			}
 
-			// Write to destination — find dest panel for LED
+			// Write to destination — check if detail panel matches dest for LED
 			cm_panel *dest_panel = NULL;
-			cm_panel *both_wr[] = { ap, other };
-			for (int pi = 0; pi < 2; pi++) {
-				if (dest_src == CM_SRC_PHYSICAL
-					&& both_wr[pi]->source == CM_SRC_PHYSICAL
-					&& both_wr[pi]->slot == dest_slot)
-					dest_panel = both_wr[pi];
-				else if (dest_src == CM_SRC_VMC && dest_vmc_path
-					&& both_wr[pi]->source == CM_SRC_VMC
-					&& strcmp(both_wr[pi]->vmc_path, dest_vmc_path) == 0)
-					dest_panel = both_wr[pi];
-			}
+			if (dest_src == CM_SRC_PHYSICAL
+				&& ap->source == CM_SRC_PHYSICAL && ap->slot == dest_slot)
+				dest_panel = ap;
+			else if (dest_src == CM_SRC_VMC && dest_vmc_path
+				&& ap->source == CM_SRC_VMC
+				&& strcmp(ap->vmc_path, dest_vmc_path) == 0)
+				dest_panel = ap;
 			if (dest_panel) dest_panel->activity = CM_ACTIVITY_WRITE;
 			bool write_ok;
 			if (dest_src == CM_SRC_VMC)
@@ -296,16 +375,13 @@ static void cm_handle_context_menu(cm_panel *ap, cm_panel *other, bool *needs_re
 			if (dest_panel) dest_panel->activity = CM_ACTIVITY_IDLE;
 
 			if (write_ok) {
-				// Add entry to any visible panel matching the destination
-				cm_panel *both[] = { ap, other };
-				for (int pi = 0; pi < 2; pi++) {
-					cm_panel *pp = both[pi];
-					if (pp->source != dest_src) continue;
-					if (dest_src == CM_SRC_PHYSICAL && pp->slot == dest_slot)
-						cm_panel_add_from_gci(pp, &gci, savedata, save_len);
+				// Add entry to detail panel if it matches the destination
+				if (ap->source == dest_src) {
+					if (dest_src == CM_SRC_PHYSICAL && ap->slot == dest_slot)
+						cm_panel_add_from_gci(ap, &gci, savedata, save_len);
 					else if (dest_src == CM_SRC_VMC && dest_vmc_path
-						&& strcmp(pp->vmc_path, dest_vmc_path) == 0)
-						cm_panel_add_from_gci(pp, &gci, savedata, save_len);
+						&& strcmp(ap->vmc_path, dest_vmc_path) == 0)
+						cm_panel_add_from_gci(ap, &gci, savedata, save_len);
 				}
 			}
 			free(savedata);
@@ -356,26 +432,28 @@ static void cm_handle_context_menu(cm_panel *ap, cm_panel *other, bool *needs_re
 			break;
 
 		case CM_ACT_ASSIGN: {
-			cm_game_entry *games = calloc(MAX_GAME_ENTRIES, sizeof(cm_game_entry));
-			if (!games) { *needs_redraw = true; break; }
-			int num_games = cm_scan_game_configs(games, MAX_GAME_ENTRIES);
-			if (num_games == 0) {
-				cm_show_error("No games found.\nLaunch a game first.");
-				free(games);
-				*needs_redraw = true;
-				break;
-			}
-			int pick = cm_game_picker(games, num_games);
-			if (pick >= 0) {
-				// Determine slot from VMC filename: "MemoryCardB" → slot B, else slot A
-				char *vmc_name = getRelativeName(ap->vmc_path);
-				int assign_slot = (vmc_name && !strncasecmp(vmc_name, "MemoryCardB", 11)) ? 1 : 0;
+			char *vmc_name = getRelativeName(ap->vmc_path);
+			int assign_slot = (vmc_name && !strncasecmp(vmc_name, "MemoryCardB", 11)) ? 1 : 0;
 
-				if (cm_assign_vmc_to_game(vmc_name, games[pick].game_id, assign_slot)) {
-					char msg[128];
-					snprintf(msg, sizeof(msg), "Assigned to %.40s\n(Slot %c)",
-						games[pick].game_name, assign_slot ? 'B' : 'A');
-					uiDrawObj_t *ok = cm_draw_message(msg);
+			// Use the selected save's game code directly
+			char game_label[48];
+			if (sel->game_name[0])
+				strlcpy(game_label, sel->game_name, sizeof(game_label));
+			else
+				strlcpy(game_label, sel->gamecode, sizeof(game_label));
+
+			char msg[196];
+			snprintf(msg, sizeof(msg),
+				"%.40s will use this card\nas Slot %c.\n \nA: Confirm  |  B: Cancel",
+				game_label, assign_slot ? 'B' : 'A');
+			uiDrawObj_t *confirm = cm_draw_message(msg);
+			DrawPublish(confirm);
+			u16 btn = cm_wait_buttons(PAD_BUTTON_A | PAD_BUTTON_B);
+			DrawDispose(confirm);
+
+			if (btn & PAD_BUTTON_A) {
+				if (cm_assign_vmc_to_game(vmc_name, sel->gamecode, assign_slot)) {
+					uiDrawObj_t *ok = cm_draw_message("Assignment saved.");
 					DrawPublish(ok);
 					cm_wait_buttons(PAD_BUTTON_A | PAD_BUTTON_B);
 					DrawDispose(ok);
@@ -383,7 +461,6 @@ static void cm_handle_context_menu(cm_panel *ap, cm_panel *other, bool *needs_re
 					cm_show_error("Failed to save assignment.");
 				}
 			}
-			free(games);
 			*needs_redraw = true;
 			break;
 		}
@@ -396,274 +473,95 @@ static void cm_handle_context_menu(cm_panel *ap, cm_panel *other, bool *needs_re
 
 // --- Main loop ---
 
-// --- VMC picker ---
-// Shows a scrollable list of .raw VMC files and lets the user pick one to mount.
-// Returns true if panel was changed, false if cancelled.
-static bool cm_pick_vmc(cm_panel *panel) {
-	vmc_file_entry *vmcs = calloc(MAX_VMC_FILES, sizeof(vmc_file_entry));
-	if (!vmcs) return false;
-
-	int num = vmc_scan_files(vmcs, MAX_VMC_FILES);
-	if (num == 0) {
-		uiDrawObj_t *msg = cm_draw_message("No virtual card files found\nin swiss/saves/");
-		DrawPublish(msg);
-		cm_wait_buttons(PAD_BUTTON_A | PAD_BUTTON_B);
-		DrawDispose(msg);
-		free(vmcs);
-		return false;
-	}
-
-	// Items: Physical slot + N VMC files + Create New
-	int total_items = 1 + num + 1;
-	char phys_label[48];
-	snprintf(phys_label, sizeof(phys_label), "Physical Slot %c",
-		panel->slot == CARD_SLOTA ? 'A' : 'B');
-
-	// Build display labels with block info
-	char item_labels[MAX_VMC_FILES][48];
-	for (int i = 0; i < num; i++) {
-		if (vmcs[i].free_blocks > 0 && vmcs[i].user_blocks > 0) {
-			snprintf(item_labels[i], sizeof(item_labels[i]),
-				"%s  %lu/%lu",
-				vmcs[i].label,
-				(unsigned long)(vmcs[i].user_blocks - vmcs[i].free_blocks),
-				(unsigned long)(vmcs[i].user_blocks));
-		} else {
-			strlcpy(item_labels[i], vmcs[i].label, sizeof(item_labels[i]));
-		}
-	}
-
-	int item_h = 22;
-	int pad = 10;
-	int menu_w = 320;
-	int menu_h = (total_items < 14 ? total_items : 14) * item_h + pad * 2;
-	if (menu_h > 400) menu_h = 400;
-	int menu_x = (640 - menu_w) / 2;
-	int menu_y = (480 - menu_h) / 2;
-	int max_visible = (menu_h - pad * 2) / item_h;
-
-	int cursor = 0, scroll = 0;
-	// Pre-select current VMC if mounted
-	if (panel->source == CM_SRC_VMC && panel->vmc_path[0]) {
-		for (int i = 0; i < num; i++) {
-			if (!strcmp(panel->vmc_path, vmcs[i].path)) {
-				cursor = 1 + i;
-				break;
-			}
-		}
-	}
-	if (cursor >= max_visible) scroll = cursor - max_visible + 1;
-
-	uiDrawObj_t *overlay = NULL;
-	bool needs_redraw = true;
-	bool debounce = true;
-	int choice = -1;
-
-	while (1) {
-		cm_retire_tick();
-
-		if (needs_redraw) {
-			uiDrawObj_t *fresh = DrawEmptyBox(menu_x, menu_y,
-				menu_x + menu_w, menu_y + menu_h);
-
-			for (int vi = 0; vi < max_visible && scroll + vi < total_items; vi++) {
-				int idx = scroll + vi;
-				int iy = menu_y + pad + vi * item_h + item_h / 2;
-				GXColor color;
-				const char *label;
-				if (idx == 0) label = phys_label;
-				else if (idx <= num) label = item_labels[idx - 1];
-				else label = "Create New...";
-
-				if (idx == cursor) {
-					color = (GXColor){96, 107, 164, 255};
-					DrawAddChild(fresh, cm_draw_highlight(
-						menu_x + 6, menu_y + pad + vi * item_h,
-						menu_w - 12, item_h));
-				} else {
-					color = defaultColor;
-				}
-
-				DrawAddChild(fresh, DrawStyledLabel(menu_x + 16, iy,
-					label, 0.5f, ALIGN_LEFT, color));
-			}
-
-			if (overlay) DrawDispose(overlay);
-			overlay = fresh;
-			DrawPublish(fresh);
-			needs_redraw = false;
-		}
-
-		VIDEO_WaitVSync();
-		u16 btns = padsButtonsHeld();
-		s8 stickY = padsStickY();
-
-		if (debounce) {
-			if (!(btns & (PAD_BUTTON_UP | PAD_BUTTON_DOWN | PAD_BUTTON_A | PAD_BUTTON_B)))
-				debounce = false;
-			continue;
-		}
-
-		if ((btns & PAD_BUTTON_UP) || stickY > 16) {
-			if (cursor > 0) {
-				cursor--;
-				if (cursor < scroll) scroll = cursor;
-				needs_redraw = true;
-			}
-			debounce = true;
-		}
-		if ((btns & PAD_BUTTON_DOWN) || stickY < -16) {
-			if (cursor < total_items - 1) {
-				cursor++;
-				if (cursor >= scroll + max_visible) scroll = cursor - max_visible + 1;
-				needs_redraw = true;
-			}
-			debounce = true;
-		}
-		if (btns & PAD_BUTTON_A) {
-			while (padsButtonsHeld() & PAD_BUTTON_A) { VIDEO_WaitVSync(); }
-			choice = cursor;
-			break;
-		}
-		if (btns & PAD_BUTTON_B) {
-			while (padsButtonsHeld() & PAD_BUTTON_B) { VIDEO_WaitVSync(); }
-			choice = -1;
-			break;
-		}
-	}
-
-	DrawDispose(overlay);
-
-	bool changed = false;
-	if (choice == 0) {
-		// Switch back to physical card
-		if (panel->source != CM_SRC_PHYSICAL) {
-			panel->source = CM_SRC_PHYSICAL;
-			panel->vmc_path[0] = '\0';
-			panel->needs_reload = true;
-			changed = true;
-		}
-	}
-	else if (choice >= 1 && choice <= num) {
-		int vi = choice - 1;
-		panel->source = CM_SRC_VMC;
-		strlcpy(panel->vmc_path, vmcs[vi].path, PATHNAME_MAX);
-		strlcpy(panel->label, vmcs[vi].label, sizeof(panel->label));
-		panel->needs_reload = true;
-		changed = true;
-	}
-	else if (choice == 1 + num) {
-		// Create New...
-		char new_filename[64];
-		// Use region 1 (USA) as default — no game context in panel view
-		if (cm_vmc_create(1, new_filename, sizeof(new_filename))) {
-			// Mount the newly created card
-			DEVICEHANDLER_INTERFACE *dev = devices[DEVICE_CONFIG] ? devices[DEVICE_CONFIG] :
-				devices[DEVICE_CUR] ? devices[DEVICE_CUR] : NULL;
-			if (dev) {
-				panel->source = CM_SRC_VMC;
-				concatf_path(panel->vmc_path, dev->initial->name,
-					"swiss/saves/%s", new_filename);
-				// Build label from filename (strip .raw extension)
-				strlcpy(panel->label, new_filename, sizeof(panel->label));
-				char *dot = strrchr(panel->label, '.');
-				if (dot) *dot = '\0';
-				panel->needs_reload = true;
-				changed = true;
-			}
-		}
-	}
-
-	free(vmcs);
-	return changed;
-}
-
 void show_card_manager(void) {
-	cm_panel *panels[2];
-	panels[0] = calloc(1, sizeof(cm_panel));
-	panels[1] = calloc(1, sizeof(cm_panel));
-	if (!panels[0] || !panels[1]) {
-		free(panels[0]);
-		free(panels[1]);
+	cm_panel *detail = calloc(1, sizeof(cm_panel));
+	cm_shelf *shelf = calloc(1, sizeof(cm_shelf));
+	if (!detail || !shelf) {
+		free(detail);
+		free(shelf);
 		return;
 	}
-	panels[0]->source = CM_SRC_PHYSICAL;
-	panels[0]->slot = CARD_SLOTA;
-	panels[0]->needs_reload = true;
-	panels[1]->source = CM_SRC_PHYSICAL;
-	panels[1]->slot = CARD_SLOTB;
-	panels[1]->needs_reload = true;
 
+	cm_focus focus = CM_FOCUS_SHELF;
 	int view_mode = 0;	// 0=cards, 1=library
-	int active = 0;
 	bool needs_redraw = false;
 	int poll_counter = 0;
+	int shelf_settle = 0;	// Debounce: frames until shelf selection applies
 	u32 anim_tick = 0;
 	uiDrawObj_t *page = NULL;
 
 	lib_state *lib = calloc(1, sizeof(lib_state));
 
 	cm_draw_init();
-	cm_led_begin(panels);
-	cm_led_update_card_status(
-		CARD_ProbeEx(CARD_SLOTA, NULL, NULL) == CARD_ERROR_READY,
-		CARD_ProbeEx(CARD_SLOTB, NULL, NULL) == CARD_ERROR_READY);
+
+	// Populate shelf and load initial card
+	cm_shelf_populate(shelf);
+	detail->source = CM_SRC_PHYSICAL;
+	detail->slot = CARD_SLOTA;
+	detail->needs_reload = true;
+
 	// Wait for A button release
 	while (padsButtonsHeld() & PAD_BUTTON_A) { VIDEO_WaitVSync(); }
 
 	while (1) {
 		cm_retire_tick();
+		bool toast_active = cm_toast_tick();
 
-		// Initiate reload for any panel that needs it
-		for (int p = 0; p < 2; p++) {
-			if (!panels[p]->needs_reload) continue;
-			card_manager_free_graphics(panels[p]->entries, panels[p]->num_entries);
-			panels[p]->loading = true;
-			panels[p]->activity = CM_ACTIVITY_READ;
-			cm_panel_load(panels[p]);
-			// If no entries to detail-load, complete immediately
-			if (!panels[p]->card_present || panels[p]->num_entries == 0) {
-				panels[p]->loading = false;
-				panels[p]->activity = CM_ACTIVITY_IDLE;
-				if (panels[p]->_vmc_sysarea) {
-					free(panels[p]->_vmc_sysarea);
-					panels[p]->_vmc_sysarea = NULL;
+		// Shelf settle timer — debounce card loads while scrolling
+		if (shelf_settle > 0) {
+			shelf_settle--;
+			if (shelf_settle == 0)
+				cm_shelf_apply(shelf, detail);
+		}
+
+		// Reload detail panel if needed
+		if (detail->needs_reload) {
+			cm_toast(detail->label, 90);
+			card_manager_free_graphics(detail->entries, detail->num_entries);
+			detail->loading = true;
+			detail->activity = CM_ACTIVITY_READ;
+			cm_panel_load(detail);
+			if (!detail->card_present || detail->num_entries == 0) {
+				detail->loading = false;
+				detail->activity = CM_ACTIVITY_IDLE;
+				if (detail->_vmc_sysarea) {
+					free(detail->_vmc_sysarea);
+					detail->_vmc_sysarea = NULL;
 				}
 				if (lib->initialized) lib->needs_rebuild = true;
 			}
 			needs_redraw = true;
 		}
 
-		// Incremental detail loading — one save per frame per panel
-		for (int p = 0; p < 2; p++) {
-			if (!panels[p]->loading) continue;
-			if (panels[p]->load_cursor < panels[p]->num_entries) {
-				if (panels[p]->source == CM_SRC_VMC) {
-					vmc_read_save_detail(panels[p]->vmc_path,
-						&panels[p]->entries[panels[p]->load_cursor],
-						panels[p]->_vmc_sysarea, panels[p]->_vmc_total_blocks);
-					panels[p]->load_cursor++;
+		// Incremental detail loading — one save per frame
+		if (detail->loading) {
+			if (detail->load_cursor < detail->num_entries) {
+				if (detail->source == CM_SRC_VMC) {
+					vmc_read_save_detail(detail->vmc_path,
+						&detail->entries[detail->load_cursor],
+						detail->_vmc_sysarea, detail->_vmc_total_blocks);
+					detail->load_cursor++;
 				} else {
-					if (CARD_ProbeEx(panels[p]->slot, NULL, NULL) != CARD_ERROR_READY) {
-						panels[p]->load_cursor = panels[p]->num_entries;
+					if (CARD_ProbeEx(detail->slot, NULL, NULL) != CARD_ERROR_READY) {
+						detail->load_cursor = detail->num_entries;
 					} else {
-						card_manager_read_save_detail(panels[p]->slot,
-							&panels[p]->entries[panels[p]->load_cursor]);
-						panels[p]->load_cursor++;
+						card_manager_read_save_detail(detail->slot,
+							&detail->entries[detail->load_cursor]);
+						detail->load_cursor++;
 					}
 				}
 			}
-			if (panels[p]->load_cursor >= panels[p]->num_entries) {
-				panels[p]->loading = false;
-				panels[p]->activity = CM_ACTIVITY_IDLE;
-				if (panels[p]->_vmc_sysarea) {
-					free(panels[p]->_vmc_sysarea);
-					panels[p]->_vmc_sysarea = NULL;
+			if (detail->load_cursor >= detail->num_entries) {
+				detail->loading = false;
+				detail->activity = CM_ACTIVITY_IDLE;
+				if (detail->_vmc_sysarea) {
+					free(detail->_vmc_sysarea);
+					detail->_vmc_sysarea = NULL;
 				}
-				for (int i = 0; i < panels[p]->num_entries; i++) {
-					if (panels[p]->entries[i].icon
-						&& panels[p]->entries[i].icon->num_frames > 1) {
-						panels[p]->has_animated_icons = true;
+				for (int i = 0; i < detail->num_entries; i++) {
+					if (detail->entries[i].icon
+						&& detail->entries[i].icon->num_frames > 1) {
+						detail->has_animated_icons = true;
 						break;
 					}
 				}
@@ -674,6 +572,7 @@ void show_card_manager(void) {
 
 		// Reload any library devices that need it
 		if (lib->initialized && lib->needs_rebuild) {
+			cm_toast("Updating library...", 90);
 			lib_state_rebuild(lib);
 			lib->needs_rebuild = false;
 			needs_redraw = true;
@@ -681,17 +580,16 @@ void show_card_manager(void) {
 
 		// Draw current view
 		bool has_anim = (view_mode == 0 &&
-			(panels[0]->has_animated_icons || panels[1]->has_animated_icons
-			|| panels[0]->loading || panels[1]->loading))
+			(detail->has_animated_icons || detail->loading))
 			|| view_mode == 1;
-		if (needs_redraw || has_anim) {
+		if (needs_redraw || has_anim || toast_active) {
 			uiDrawObj_t *newPage;
 			if (view_mode == 0)
-				newPage = card_manager_draw(panels[0], panels[1], active, anim_tick);
+				newPage = card_manager_draw(shelf, detail, focus, anim_tick);
 			else
 				newPage = lib_draw_view(lib, anim_tick);
 
-			cm_draw_status_leds(newPage, panels);
+			cm_draw_toast(newPage);
 			if (page) DrawDispose(page);
 			page = newPage;
 			DrawPublish(page);
@@ -701,7 +599,7 @@ void show_card_manager(void) {
 		VIDEO_WaitVSync();
 		anim_tick++;
 
-		// Poll both physical slots for hotswap
+		// Poll physical slots for hotswap
 		poll_counter++;
 		if (poll_counter >= CARD_POLL_INTERVAL) {
 			poll_counter = 0;
@@ -710,17 +608,25 @@ void show_card_manager(void) {
 				s32 probe = CARD_ProbeEx(slot, NULL, NULL);
 				slot_present[slot] = (probe == CARD_ERROR_READY || probe == CARD_ERROR_BUSY);
 
-				for (int p = 0; p < 2; p++) {
-					if (panels[p]->source == CM_SRC_PHYSICAL
-						&& panels[p]->slot == slot
-						&& panels[p]->card_present != slot_present[slot]) {
-						panels[p]->needs_reload = true;
+				// Update shelf presence for physical slots
+				if (slot < shelf->count && shelf->items[slot].type == SHELF_ITEM_PHYSICAL) {
+					bool was_present = shelf->items[slot].present;
+					shelf->items[slot].present = slot_present[slot];
+					if (slot_present[slot] != was_present) {
+						cm_toast(slot_present[slot]
+							? (slot == 0 ? "Slot A detected" : "Slot B detected")
+							: (slot == 0 ? "Slot A removed" : "Slot B removed"), 120);
 					}
 				}
-			}
-			cm_led_update_card_status(slot_present[0], slot_present[1]);
 
-			// Library polls independently — check if physical slots changed
+				// Reload detail if showing this physical card and presence changed
+				if (detail->source == CM_SRC_PHYSICAL
+					&& detail->slot == slot
+					&& detail->card_present != slot_present[slot]) {
+					detail->needs_reload = true;
+				}
+			}
+			// Library card polling
 			if (lib->initialized) {
 				for (int d = 0; d < LIB_DEV_VMC_A; d++) {
 					bool present = slot_present[lib->devices[d].slot];
@@ -735,7 +641,7 @@ void show_card_manager(void) {
 				}
 			}
 
-			if (panels[0]->needs_reload || panels[1]->needs_reload)
+			if (detail->needs_reload)
 				continue;
 		}
 
@@ -746,9 +652,8 @@ void show_card_manager(void) {
 			stickX > 16 || stickX < -16;
 		if (!has_input) continue;
 
-		// --- View toggle (X) — blocked during incremental loading (CARD I/O conflict) ---
-		if ((btns & PAD_BUTTON_X)
-			&& !panels[0]->loading && !panels[1]->loading) {
+		// --- View toggle (X) — blocked during loading (CARD I/O conflict) ---
+		if ((btns & PAD_BUTTON_X) && !detail->loading) {
 			while (padsButtonsHeld() & PAD_BUTTON_X) { VIDEO_WaitVSync(); }
 			if (view_mode == 0) {
 				if (!lib->initialized || lib->needs_rebuild) {
@@ -772,62 +677,201 @@ void show_card_manager(void) {
 
 		// --- Cards view input ---
 		if (view_mode == 0) {
-			cm_panel *ap = panels[active];
-			cm_panel *other = panels[active ^ 1];
+			if (focus == CM_FOCUS_SHELF) {
+				// Shelf navigation (up/down)
+				u16 nav = 0;
+				if ((btns & PAD_BUTTON_UP) || stickY > 16)   nav |= PAD_BUTTON_UP;
+				if ((btns & PAD_BUTTON_DOWN) || stickY < -16) nav |= PAD_BUTTON_DOWN;
 
-			// Grid navigation (d-pad + analog stick)
-			u16 nav = btns & (PAD_BUTTON_UP | PAD_BUTTON_DOWN | PAD_BUTTON_LEFT | PAD_BUTTON_RIGHT);
-			if (stickY > 16)  nav |= PAD_BUTTON_UP;
-			if (stickY < -16) nav |= PAD_BUTTON_DOWN;
-			if (stickX < -16) nav |= PAD_BUTTON_LEFT;
-			if (stickX > 16)  nav |= PAD_BUTTON_RIGHT;
-			if (nav) {
-				cm_panel_navigate(ap, nav);
-				if (ap->cursor != ap->prev_cursor) {
-					ap->anim_start = anim_tick;
-					ap->prev_cursor = ap->cursor;
+				if (nav) {
+					int prev = shelf->cursor;
+					if ((nav & PAD_BUTTON_UP) && shelf->cursor > 0)
+						shelf->cursor--;
+					if ((nav & PAD_BUTTON_DOWN) && shelf->cursor < shelf->count - 1)
+						shelf->cursor++;
+
+					if (shelf->cursor < shelf->scroll)
+						shelf->scroll = shelf->cursor;
+					if (shelf->cursor >= shelf->scroll + SHELF_MAX_VIS)
+						shelf->scroll = shelf->cursor - SHELF_MAX_VIS + 1;
+
+					if (shelf->cursor != prev) {
+						shelf_settle = 10;
+						if (detail->loading) {
+							detail->loading = false;
+							detail->activity = CM_ACTIVITY_IDLE;
+							if (detail->_vmc_sysarea) {
+								free(detail->_vmc_sysarea);
+								detail->_vmc_sysarea = NULL;
+							}
+						}
+					}
+					needs_redraw = true;
 				}
-				needs_redraw = true;
-			}
 
-			// Switch active panel (L/R)
-			if (btns & (PAD_TRIGGER_L | PAD_TRIGGER_R)) {
-				while (padsButtonsHeld() & (PAD_TRIGGER_L | PAD_TRIGGER_R)) { VIDEO_WaitVSync(); }
-				active ^= 1;
-				panels[active]->anim_start = anim_tick;
-				needs_redraw = true;
-				continue;
-			}
+				// Enter detail or create VMC (A or Right)
+				if (btns & (PAD_BUTTON_A | PAD_BUTTON_RIGHT)) {
+					while (padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_RIGHT)) { VIDEO_WaitVSync(); }
+					// Flush pending settle so the correct card loads
+					if (shelf_settle > 0) {
+						shelf_settle = 0;
+						cm_shelf_apply(shelf, detail);
+					}
+					shelf_item *item = &shelf->items[shelf->cursor];
+					if (item->type == SHELF_ITEM_CREATE && !detail->loading) {
+						char new_filename[64];
+						if (cm_vmc_create(1, new_filename, sizeof(new_filename))) {
+							cm_shelf_populate(shelf);
+							DEVICEHANDLER_INTERFACE *dev = devices[DEVICE_CONFIG]
+								? devices[DEVICE_CONFIG]
+								: devices[DEVICE_CUR] ? devices[DEVICE_CUR] : NULL;
+							if (dev) {
+								char new_path[PATHNAME_MAX];
+								concatf_path(new_path, dev->initial->name,
+									"swiss/saves/%s", new_filename);
+								for (int i = 0; i < shelf->count; i++) {
+									if (shelf->items[i].type == SHELF_ITEM_VMC
+										&& strcmp(shelf->items[i].path, new_path) == 0) {
+										shelf->cursor = i;
+										break;
+									}
+								}
+							}
+							cm_shelf_apply(shelf, detail);
+						}
+						needs_redraw = true;
+					} else if (detail->card_present && detail->num_entries > 0
+						&& !detail->loading) {
+						focus = CM_FOCUS_DETAIL;
+						detail->anim_start = anim_tick;
+						needs_redraw = true;
+					}
+					goto debounce;
+				}
 
-			// Context menu (A) — requires save selected and no loading (CARD I/O)
-			if ((btns & PAD_BUTTON_A) && ap->card_present && ap->num_entries > 0
-				&& !panels[0]->loading && !panels[1]->loading) {
-				while (padsButtonsHeld() & PAD_BUTTON_A) { VIDEO_WaitVSync(); }
-				cm_handle_context_menu(ap, other, &needs_redraw);
-				needs_redraw = true;
-				if (lib->initialized)
-					lib->needs_rebuild = true;
-				goto debounce;
-			}
+				// Delete VMC (Y) — only on VMC shelf items
+				if ((btns & PAD_BUTTON_Y) && !detail->loading && shelf_settle == 0) {
+					shelf_item *item = &shelf->items[shelf->cursor];
+					if (item->type == SHELF_ITEM_VMC) {
+						while (padsButtonsHeld() & PAD_BUTTON_Y) { VIDEO_WaitVSync(); }
 
-			// VMC picker (Z) — blocked during loading (CARD I/O conflict)
-			if ((btns & PAD_TRIGGER_Z)
-				&& !panels[0]->loading && !panels[1]->loading) {
-				while (padsButtonsHeld() & PAD_TRIGGER_Z) { VIDEO_WaitVSync(); }
-				cm_pick_vmc(ap);
-				if (lib->initialized)
-					lib->needs_rebuild = true;
-				needs_redraw = true;
-				goto debounce;
-			}
+						// Check if any games reference this VMC
+						char *vmc_name = getRelativeName(item->path);
+						cm_game_entry assigned[MAX_GAME_ENTRIES];
+						int num_assigned = cm_vmc_find_assignments(
+							vmc_name, assigned, MAX_GAME_ENTRIES);
 
-			if (btns & PAD_BUTTON_B)
-				break;
+						char msg[256];
+						if (num_assigned > 0) {
+							char game_list[128] = "";
+							for (int i = 0; i < num_assigned && i < 3; i++) {
+								if (i > 0) strlcat(game_list, ", ", sizeof(game_list));
+								strlcat(game_list, assigned[i].game_name, sizeof(game_list));
+							}
+							if (num_assigned > 3)
+								strlcat(game_list, ", ...", sizeof(game_list));
+							snprintf(msg, sizeof(msg),
+								"Delete %s?\nUsed by: %s\nAll saves will be lost.\n \nHold L + A to delete  |  B: Cancel",
+								item->label, game_list);
+						} else {
+							snprintf(msg, sizeof(msg),
+								"Delete %s?\nAll saves on this card will be lost.\n \nHold L + A to delete  |  B: Cancel",
+								item->label);
+						}
+
+						uiDrawObj_t *confirm = cm_draw_message(msg);
+						DrawPublish(confirm);
+						u16 btn = cm_wait_buttons(PAD_BUTTON_A | PAD_BUTTON_B);
+						DrawDispose(confirm);
+						if ((btn & PAD_BUTTON_A)
+							&& (padsButtonsHeld() & PAD_TRIGGER_L)) {
+							// Clear game config references
+							if (num_assigned > 0)
+								cm_vmc_clear_assignments(vmc_name);
+
+							DEVICEHANDLER_INTERFACE *dev = devices[DEVICE_CONFIG]
+								? devices[DEVICE_CONFIG]
+								: devices[DEVICE_CUR] ? devices[DEVICE_CUR] : NULL;
+							if (dev && dev->deleteFile) {
+								file_handle *f = calloc(1, sizeof(file_handle));
+								if (f) {
+									strlcpy(f->name, item->path, PATHNAME_MAX);
+									dev->deleteFile(f);
+									free(f);
+								}
+							}
+							// If detail was showing this VMC, switch to slot A
+							if (detail->source == CM_SRC_VMC
+								&& strcmp(detail->vmc_path, item->path) == 0) {
+								detail->source = CM_SRC_PHYSICAL;
+								detail->slot = CARD_SLOTA;
+								detail->vmc_path[0] = '\0';
+								detail->needs_reload = true;
+								shelf->cursor = 0;
+							}
+							cm_shelf_populate(shelf);
+							cm_shelf_apply(shelf, detail);
+							if (lib->initialized) lib->needs_rebuild = true;
+						}
+						needs_redraw = true;
+						goto debounce;
+					}
+				}
+
+				if (btns & PAD_BUTTON_B)
+					break;
+
+			} else {
+				// --- CM_FOCUS_DETAIL ---
+
+				// Check for return to shelf: Left at column 0 or B
+				bool left_pressed = (btns & PAD_BUTTON_LEFT) || stickX < -16;
+				bool at_left_edge = (detail->cursor % DETAIL_GRID_COLS == 0);
+				if (left_pressed && at_left_edge) {
+					focus = CM_FOCUS_SHELF;
+					needs_redraw = true;
+					goto debounce;
+				}
+				if (btns & PAD_BUTTON_B) {
+					while (padsButtonsHeld() & PAD_BUTTON_B) { VIDEO_WaitVSync(); }
+					focus = CM_FOCUS_SHELF;
+					needs_redraw = true;
+					goto debounce;
+				}
+
+				// Grid navigation (d-pad + analog stick)
+				u16 nav = btns & (PAD_BUTTON_UP | PAD_BUTTON_DOWN | PAD_BUTTON_LEFT | PAD_BUTTON_RIGHT);
+				if (stickY > 16)  nav |= PAD_BUTTON_UP;
+				if (stickY < -16) nav |= PAD_BUTTON_DOWN;
+				if (stickX < -16) nav |= PAD_BUTTON_LEFT;
+				if (stickX > 16)  nav |= PAD_BUTTON_RIGHT;
+				if (nav) {
+					cm_panel_navigate(detail, nav, DETAIL_GRID_COLS);
+					if (detail->cursor != detail->prev_cursor) {
+						detail->anim_start = anim_tick;
+						detail->prev_cursor = detail->cursor;
+					}
+					needs_redraw = true;
+				}
+
+				// Context menu (A)
+				if ((btns & PAD_BUTTON_A) && detail->card_present
+					&& detail->num_entries > 0 && !detail->loading) {
+					while (padsButtonsHeld() & PAD_BUTTON_A) { VIDEO_WaitVSync(); }
+					cm_handle_context_menu(detail, &needs_redraw);
+					needs_redraw = true;
+					if (lib->initialized)
+						lib->needs_rebuild = true;
+					cm_shelf_populate(shelf);
+					goto debounce;
+				}
+			}
 		}
 
 		// --- Library view input ---
 		if (view_mode == 1) {
-			int result = lib_handle_input(lib, panels, btns, stickY);
+			cm_panel *lib_panels[2] = { detail, detail };
+			int result = lib_handle_input(lib, lib_panels, btns, stickY);
 			if (result == LIB_INPUT_EXIT) {
 				view_mode = 0;
 				needs_redraw = true;
@@ -859,12 +903,11 @@ debounce:
 		if (lib->initialized) lib_state_free(lib);
 		free(lib);
 	}
-	for (int p = 0; p < 2; p++) {
-		if (panels[p]->_vmc_sysarea) free(panels[p]->_vmc_sysarea);
-		card_manager_free_graphics(panels[p]->entries, panels[p]->num_entries);
-		free(panels[p]);
-	}
+	if (detail->_vmc_sysarea) free(detail->_vmc_sysarea);
+	card_manager_free_graphics(detail->entries, detail->num_entries);
+	free(detail);
+	free(shelf);
 	cm_retire_flush();
-	cm_led_end();
+	cm_activity_hide();
 	while (padsButtonsHeld() & PAD_BUTTON_B) { VIDEO_WaitVSync(); }
 }

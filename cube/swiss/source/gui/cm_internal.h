@@ -41,8 +41,15 @@
 #define BOX_BOTTOM_Y (PANEL_BOTTOM_Y + 31)
 #define HINTS_Y (PANEL_BOTTOM_Y + 17)
 
-// Cards view: two equal-width panels
-#define PANEL_WIDTH ((BOX_INNER_W - PANEL_GAP) / 2)
+// Shelf + Detail layout
+#define SHELF_WIDTH     148
+#define SHELF_ROW_H     24
+#define SHELF_HDR_H     24
+#define SHELF_LIST_TOP  (PANEL_TOP_Y + SHELF_HDR_H)
+#define SHELF_MAX_VIS   ((PANEL_BOTTOM_Y - SHELF_LIST_TOP) / SHELF_ROW_H)
+#define DETAIL_X        (BOX_X1 + SHELF_WIDTH + PANEL_GAP)
+#define DETAIL_WIDTH    (BOX_X2 - DETAIL_X)
+#define DETAIL_GRID_COLS 8
 
 // Import
 #define MAX_GCI_FILES 64
@@ -139,6 +146,37 @@ typedef struct {
 #define VMC_PICK_AUTO   -2
 #define VMC_PICK_CREATE -3
 
+// Shelf item types (card shelf in cards view)
+typedef enum {
+	SHELF_ITEM_PHYSICAL,
+	SHELF_ITEM_VMC,
+	SHELF_ITEM_CREATE,
+} shelf_item_type;
+
+typedef struct {
+	shelf_item_type type;
+	int slot;
+	char path[PATHNAME_MAX];
+	char label[32];
+	u16 used_blocks;
+	u16 total_blocks;
+	bool present;
+} shelf_item;
+
+#define SHELF_MAX_ITEMS (2 + MAX_VMC_FILES + 1)
+
+typedef struct {
+	shelf_item items[SHELF_MAX_ITEMS];
+	int count;
+	int cursor;
+	int scroll;
+} cm_shelf;
+
+typedef enum {
+	CM_FOCUS_SHELF,
+	CM_FOCUS_DETAIL,
+} cm_focus;
+
 // Game entry for "Assign to game" picker
 #define MAX_GAME_ENTRIES 64
 typedef struct {
@@ -193,17 +231,15 @@ uiDrawObj_t *cm_draw_rect(int x, int y, int w, int h);
 uiDrawObj_t *cm_draw_highlight(int x, int y, int w, int h);
 void cm_draw_panel_frame(uiDrawObj_t *container, bool is_vmc, int x, int y, int w, int h);
 void cm_draw_title_bar(uiDrawObj_t *container, int view_mode);
-void cm_draw_status_leds(uiDrawObj_t *container, cm_panel *panels[2]);
-void cm_led_update_card_status(bool slot_a, bool slot_b);
-void cm_led_scan_vmc(void);
-void cm_led_begin(cm_panel *panels[2]);
-void cm_led_end(void);
-void cm_led_show(const char *msg);
-void cm_led_hide(void);
-void cm_led_pulse(void);
-void cm_led_progress(const char *msg, int current, int total);
-uiDrawObj_t *card_manager_draw(cm_panel *left, cm_panel *right,
-	int active_panel, u32 anim_tick);
+void cm_toast(const char *msg, int frames);
+bool cm_toast_tick(void);
+void cm_draw_toast(uiDrawObj_t *container);
+void cm_activity_show(const char *msg);
+void cm_activity_hide(void);
+void cm_activity_pulse(void);
+void cm_activity_progress(const char *msg, int current, int total);
+uiDrawObj_t *card_manager_draw(cm_shelf *shelf, cm_panel *detail,
+	cm_focus focus, u32 anim_tick);
 int cm_context_menu(const char *items[], const bool enabled[], int count);
 
 // --- cm_transfer.c ---
@@ -345,6 +381,8 @@ const char *cm_vmc_picker_filename(void);
 bool cm_vmc_create(int game_region, char *out_filename, int out_size);
 int cm_scan_game_configs(cm_game_entry *out, int max);
 int cm_game_picker(cm_game_entry *games, int count);
+int cm_vmc_find_assignments(const char *vmc_filename, cm_game_entry *out, int max);
+void cm_vmc_clear_assignments(const char *vmc_filename);
 bool cm_assign_vmc_to_game(const char *vmc_filename, const char *game_id, int slot);
 
 #endif

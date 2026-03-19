@@ -770,11 +770,12 @@ bool vmc_import_save_buf(const char *vmc_path, GCI *gci,
 
 	// Check free space
 	if (*free_count < need_blocks) {
+		u16 avail = *free_count;
 		free(new_dir); free(new_bat); free(sysarea);
 		DrawDispose(msgBox);
 		char errmsg[128];
 		snprintf(errmsg, sizeof(errmsg), "Not enough space.\nNeed %d blocks, have %d free.",
-			need_blocks, *free_count);
+			need_blocks, avail);
 		msgBox = cm_draw_message(errmsg);
 		DrawPublish(msgBox);
 		while (!(padsButtonsHeld() & (PAD_BUTTON_A | PAD_BUTTON_B))) { VIDEO_WaitVSync(); }
@@ -1012,13 +1013,19 @@ bool cm_vmc_create(int game_region, char *out_filename, int out_size) {
 		if (n == 999) return false;
 	}
 
-	// Size picker: 59 blocks (512KB) or 251 blocks (16MB file for emulation)
-	// User blocks / total blocks / file size
-	int user_blocks[] = {59, 251};
-	int total_blocks[] = {64, 2048};
-	int file_sizes[] = {64 * MC_BLOCK_SIZE, 16 * 1024 * 1024};
-	const char *size_labels[] = {"59 blocks (512KB)", "251 blocks (16MB)"};
-	int sel = 1;
+	// Size picker — covers the full range of real memory card sizes
+	// total_blocks includes 5 system blocks; user_blocks = total - 5
+	#define NUM_VMC_SIZES 6
+	int total_blocks[] = {64, 128, 256, 512, 1024, 2048};
+	const char *size_labels[] = {
+		"59 blocks (512KB)",
+		"123 blocks (1MB)",
+		"251 blocks (2MB)",
+		"507 blocks (4MB)",
+		"1019 blocks (8MB)",
+		"2043 blocks (16MB)"
+	};
+	int sel = NUM_VMC_SIZES - 1;
 
 	uiDrawObj_t *overlay = NULL;
 	bool needs_redraw = true;
@@ -1046,12 +1053,12 @@ bool cm_vmc_create(int game_region, char *out_filename, int out_size) {
 		}
 
 		if ((btns & PAD_TRIGGER_L) || (btns & PAD_BUTTON_LEFT)) {
-			sel = 0;
+			if (sel > 0) sel--;
 			needs_redraw = true;
 			debounce = true;
 		}
 		if ((btns & PAD_TRIGGER_R) || (btns & PAD_BUTTON_RIGHT)) {
-			sel = 1;
+			if (sel < NUM_VMC_SIZES - 1) sel++;
 			needs_redraw = true;
 			debounce = true;
 		}
@@ -1087,8 +1094,9 @@ bool cm_vmc_create(int game_region, char *out_filename, int out_size) {
 	ensure_path(dev_slot, "swiss/saves", NULL, false);
 
 	// Write system area first, then extend to full file size
+	u32 file_size = (u32)total_blocks[sel] * MC_BLOCK_SIZE;
 	dev->writeFile(newFile, sysarea, sysarea_size);
-	dev->seekFile(newFile, file_sizes[sel], DEVICE_HANDLER_SEEK_SET);
+	dev->seekFile(newFile, file_size, DEVICE_HANDLER_SEEK_SET);
 	dev->writeFile(newFile, NULL, 0);
 	dev->closeFile(newFile);
 	free(newFile);
@@ -1562,6 +1570,53 @@ int cm_game_picker(cm_game_entry *games, int count) {
 			DrawDispose(overlay);
 			return -1;
 		}
+	}
+}
+
+int cm_vmc_find_assignments(const char *vmc_filename, cm_game_entry *out, int max) {
+	cm_game_entry *all = calloc(MAX_GAME_ENTRIES, sizeof(cm_game_entry));
+	if (!all) return 0;
+	int num = cm_scan_game_configs(all, MAX_GAME_ENTRIES);
+	int found = 0;
+
+	for (int i = 0; i < num && found < max; i++) {
+		ConfigEntry cfg;
+		memset(&cfg, 0, sizeof(cfg));
+		memcpy(cfg.game_id, all[i].game_id, 4);
+		cfg.game_id[4] = '\0';
+		config_find(&cfg);
+
+		if ((cfg.memoryCardA[0] && strcmp(cfg.memoryCardA, vmc_filename) == 0)
+			|| (cfg.memoryCardB[0] && strcmp(cfg.memoryCardB, vmc_filename) == 0)) {
+			memcpy(&out[found], &all[i], sizeof(cm_game_entry));
+			found++;
+		}
+	}
+	free(all);
+	return found;
+}
+
+void cm_vmc_clear_assignments(const char *vmc_filename) {
+	cm_game_entry games[MAX_GAME_ENTRIES];
+	int n = cm_vmc_find_assignments(vmc_filename, games, MAX_GAME_ENTRIES);
+
+	for (int i = 0; i < n; i++) {
+		ConfigEntry cfg;
+		memset(&cfg, 0, sizeof(cfg));
+		memcpy(cfg.game_id, games[i].game_id, 4);
+		cfg.game_id[4] = '\0';
+		config_find(&cfg);
+
+		if (cfg.memoryCardA[0] && strcmp(cfg.memoryCardA, vmc_filename) == 0)
+			cfg.memoryCardA[0] = '\0';
+		if (cfg.memoryCardB[0] && strcmp(cfg.memoryCardB, vmc_filename) == 0)
+			cfg.memoryCardB[0] = '\0';
+
+		ConfigEntry defaults;
+		memset(&defaults, 0, sizeof(defaults));
+		memcpy(defaults.game_id, games[i].game_id, 4);
+		config_defaults(&defaults);
+		config_update_game(&cfg, &defaults, true);
 	}
 }
 
