@@ -148,8 +148,8 @@ static char *tooltips_game[PAGE_GAME_MAX+1] = {
 	"Emulate Read Speed:\n\nNo - Start transfer immediately (default)\nYes - Delay transfer to simulate the GameCube disc drive\nWii - Delay transfer to simulate the Wii disc drive\n\nThis is necessary to avoid programming mistakes obfuscated by\nthe original medium, or for speedrunning.",
 	"Emulate Broadband Adapter:\n\nOnly available with the File Service Protocol or an initialised\nETH2GC/GCNET module, where memory constraints permit.\n\nPackets not destined for the hypervisor are forwarded to the\nvirtual MAC. The virtual MAC address is the same as the\nphysical MAC. The physical MAC/PHY retain their configuration\nfrom Swiss, including link speed.",
 	"Disable Memory Card:\n\nSome games misbehave when unexpected devices are present in\nthe memory card slots. When selected, the device will be hidden\nfrom the game if present at boot time.",
-	NULL,
-	NULL,
+	"Memory Card A:\n\nSelect which virtual memory card file to use as Slot A\nfor this game. Requires Emulate Memory Card to be enabled\nin Global Game Settings.\n\nAuto - Use the default card based on game region.",
+	"Memory Card B:\n\nSelect which virtual memory card file to use as Slot B\nfor this game. Requires Emulate Memory Card to be enabled\nin Global Game Settings.\n\nAuto - Use the default card based on game region.",
 	"Disable Hypervisor:\n\nDisables all features and bugfixes relying upon the hypervisor,\nalong with prepatching and patch persistence.\n\nOnly available to devices attached to the DVD Interface.",
 	"Prefer Clean Boot:\n\nWhen enabled, the GameCube will be reset and the game booted\nthrough normal processes with no changes applied.\nRegion restrictions may be applicable.\n\nOnly available to devices attached to the DVD Interface.",
 	"RetroTINK-4K Profile:\n\nPresses a profile button through a configured ser2net TCP\nconnection to the RetroTINK-4K's serial port."
@@ -365,7 +365,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 		bool enabledHypervisor = devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->features & FEAT_HYPERVISOR);
 		bool enabledCleanBoot = devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->location & LOC_DVD_CONNECTOR);
 		bool rt4kEnable = is_rt4k_alive();
-		if(option < SET_DEFAULT_INVERT_CAMERA) {
+		if(option < SET_DEFAULT_POLL_RATE) {
 			drawSettingEntryString(page, &page_y_ofs, "Force NTSC Video Mode:", gameVModeStr[swissSettings.gameVModeNtsc], option == SET_DEFAULT_NTSC_VIDEOMODE, enabledVideoPatches);
 			drawSettingEntryString(page, &page_y_ofs, "Force PAL Video Mode:", gameVModeStr[swissSettings.gameVModePal], option == SET_DEFAULT_PAL_VIDEOMODE, enabledVideoPatches);
 			drawSettingEntryString(page, &page_y_ofs, "Force Horizontal Scale:", forceHScaleStr[swissSettings.forceHScale], option == SET_DEFAULT_HORIZ_SCALE, enabledVideoPatches);
@@ -377,8 +377,8 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 			drawSettingEntryBoolean(page, &page_y_ofs, "Disable Alpha Dithering:", swissSettings.disableDithering, option == SET_DEFAULT_ALPHA_DITHER, enabledVideoPatches);
 			drawSettingEntryBoolean(page, &page_y_ofs, "Force Anisotropic Filter:", swissSettings.forceAnisotropy, option == SET_DEFAULT_ANISO_FILTER, true);
 			drawSettingEntryString(page, &page_y_ofs, "Force Widescreen:", forceWidescreenStr[swissSettings.forceWidescreen], option == SET_DEFAULT_WIDESCREEN, true);
-			drawSettingEntryString(page, &page_y_ofs, "Force Polling Rate:", forcePollRateStr[swissSettings.forcePollRate], option == SET_DEFAULT_POLL_RATE, true);
 		} else {
+			drawSettingEntryString(page, &page_y_ofs, "Force Polling Rate:", forcePollRateStr[swissSettings.forcePollRate], option == SET_DEFAULT_POLL_RATE, true);
 			drawSettingEntryString(page, &page_y_ofs, "Invert Camera Stick:", invertCStickStr[swissSettings.invertCStick], option == SET_DEFAULT_INVERT_CAMERA, true);
 			drawSettingEntryString(page, &page_y_ofs, "Swap Camera Stick:", swapCStickStr[swissSettings.swapCStick], option == SET_DEFAULT_SWAP_CAMERA, true);
 			sprintf(triggerLevelStr, "%hhu", swissSettings.triggerLevel);
@@ -408,7 +408,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 			bool enabledHypervisor = devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->features & FEAT_HYPERVISOR);
 			bool enabledCleanBoot = devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->location & LOC_DVD_CONNECTOR);
 			bool rt4kEnable = is_rt4k_alive();
-			if(option < SET_TRIGGER_LEVEL) {
+			if(option < SET_POLL_RATE) {
 				drawSettingEntryString(page, &page_y_ofs, "Game Language:", sramLanguageStr[gameConfig->gameLanguage], option == SET_GAME_LANG, true);
 				drawSettingEntryString(page, &page_y_ofs, "Force Video Mode:", gameVModeStr[gameConfig->gameVMode], option == SET_FORCE_VIDEOMODE, enabledVideoPatches);
 				drawSettingEntryString(page, &page_y_ofs, "Force Horizontal Scale:", forceHScaleStr[gameConfig->forceHScale], option == SET_HORIZ_SCALE, enabledVideoPatches);
@@ -420,10 +420,10 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 				drawSettingEntryBoolean(page, &page_y_ofs, "Disable Alpha Dithering:", gameConfig->disableDithering, option == SET_ALPHA_DITHER, enabledVideoPatches);
 				drawSettingEntryBoolean(page, &page_y_ofs, "Force Anisotropic Filter:", gameConfig->forceAnisotropy, option == SET_ANISO_FILTER, true);
 				drawSettingEntryString(page, &page_y_ofs, "Force Widescreen:", forceWidescreenStr[gameConfig->forceWidescreen], option == SET_WIDESCREEN, true);
+			} else if(option < SET_DISABLE_HYPERVISOR) {
 				drawSettingEntryString(page, &page_y_ofs, "Force Polling Rate:", forcePollRateStr[gameConfig->forcePollRate], option == SET_POLL_RATE, true);
 				drawSettingEntryString(page, &page_y_ofs, "Invert Camera Stick:", invertCStickStr[gameConfig->invertCStick], option == SET_INVERT_CAMERA, true);
 				drawSettingEntryString(page, &page_y_ofs, "Swap Camera Stick:", swapCStickStr[gameConfig->swapCStick], option == SET_SWAP_CAMERA, true);
-			} else {
 				sprintf(triggerLevelStr, "%hhu", gameConfig->triggerLevel);
 				drawSettingEntryString(page, &page_y_ofs, "Digital Trigger Level:", triggerLevelStr, option == SET_TRIGGER_LEVEL, true);
 				drawSettingEntryString(page, &page_y_ofs, "Emulate Audio Streaming:", emulateAudioStreamStr[gameConfig->emulateAudioStream], option == SET_AUDIO_STREAM, emulatedAudioStream);
@@ -435,6 +435,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 					drawSettingEntryString(page, &page_y_ofs, "Memory Card A:", gameConfig->memoryCardA[0] ? gameConfig->memoryCardA : "Auto", option == SET_MEMCARD_A, emcEnabled);
 					drawSettingEntryString(page, &page_y_ofs, "Memory Card B:", gameConfig->memoryCardB[0] ? gameConfig->memoryCardB : "Auto", option == SET_MEMCARD_B, emcEnabled);
 				}
+			} else {
 				drawSettingEntryBoolean(page, &page_y_ofs, "Disable Hypervisor:", gameConfig->disableHypervisor, option == SET_DISABLE_HYPERVISOR, enabledCleanBoot);
 				drawSettingEntryBoolean(page, &page_y_ofs, "Prefer Clean Boot:", gameConfig->preferCleanBoot, option == SET_CLEAN_BOOT, enabledCleanBoot);
 				drawSettingEntryNumeric(page, &page_y_ofs, "RetroTINK-4K Profile:", gameConfig->rt4kProfile, option == SET_RT4K_PROFILE, rt4kEnable);
@@ -443,7 +444,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 		}
 		else {
 			// Just draw the defaults again
-			if(option < SET_TRIGGER_LEVEL) {
+			if(option < SET_POLL_RATE) {
 				drawSettingEntryString(page, &page_y_ofs, "Game Language:", sramLanguageStr[SRAM_LANGUAGE_MAX], option == SET_GAME_LANG, false);
 				drawSettingEntryString(page, &page_y_ofs, "Force Video Mode:", gameVModeStr[swissSettings.gameVMode], option == SET_FORCE_VIDEOMODE, false);
 				drawSettingEntryString(page, &page_y_ofs, "Force Horizontal Scale:", forceHScaleStr[swissSettings.forceHScale], option == SET_HORIZ_SCALE, false);
@@ -455,10 +456,10 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 				drawSettingEntryBoolean(page, &page_y_ofs, "Disable Alpha Dithering:", swissSettings.disableDithering, option == SET_ALPHA_DITHER, false);
 				drawSettingEntryBoolean(page, &page_y_ofs, "Force Anisotropic Filter:", swissSettings.forceAnisotropy, option == SET_ANISO_FILTER, false);
 				drawSettingEntryString(page, &page_y_ofs, "Force Widescreen:", forceWidescreenStr[swissSettings.forceWidescreen], option == SET_WIDESCREEN, false);
+			} else if(option < SET_DISABLE_HYPERVISOR) {
 				drawSettingEntryString(page, &page_y_ofs, "Force Polling Rate:", forcePollRateStr[swissSettings.forcePollRate], option == SET_POLL_RATE, false);
 				drawSettingEntryString(page, &page_y_ofs, "Invert Camera Stick:", invertCStickStr[swissSettings.invertCStick], option == SET_INVERT_CAMERA, false);
 				drawSettingEntryString(page, &page_y_ofs, "Swap Camera Stick:", swapCStickStr[swissSettings.swapCStick], option == SET_SWAP_CAMERA, false);
-			} else {
 				sprintf(triggerLevelStr, "%hhu", swissSettings.triggerLevel);
 				drawSettingEntryString(page, &page_y_ofs, "Digital Trigger Level:", triggerLevelStr, option == SET_TRIGGER_LEVEL, false);
 				drawSettingEntryString(page, &page_y_ofs, "Emulate Audio Streaming:", emulateAudioStreamStr[swissSettings.emulateAudioStream], option == SET_AUDIO_STREAM, false);
@@ -467,9 +468,10 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 				drawSettingEntryString(page, &page_y_ofs, "Disable Memory Card:", disableMemoryCardStr[swissSettings.disableMemoryCard], option == SET_DISABLE_MEMCARD, false);
 				drawSettingEntryString(page, &page_y_ofs, "Memory Card A:", "Auto", option == SET_MEMCARD_A, false);
 				drawSettingEntryString(page, &page_y_ofs, "Memory Card B:", "Auto", option == SET_MEMCARD_B, false);
+			} else {
 				drawSettingEntryBoolean(page, &page_y_ofs, "Disable Hypervisor:", swissSettings.disableHypervisor, option == SET_DISABLE_HYPERVISOR, false);
 				drawSettingEntryBoolean(page, &page_y_ofs, "Prefer Clean Boot:", swissSettings.preferCleanBoot, option == SET_CLEAN_BOOT, false);
-				drawSettingEntryNumeric(page, &page_y_ofs, "RetroTINK-4K Profile:", swissSettings.rt4kProfile, option == SET_DEFAULT_RT4K_PROFILE, false);
+				drawSettingEntryNumeric(page, &page_y_ofs, "RetroTINK-4K Profile:", swissSettings.rt4kProfile, option == SET_RT4K_PROFILE, false);
 				drawSettingEntryString(page, &page_y_ofs, "Reset to defaults", NULL, option == SET_DEFAULTS, false);
 			}
 		}
