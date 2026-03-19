@@ -644,25 +644,22 @@ int card_manager_read_dir(int slot, card_entry *entries, int max_entries) {
 		ret = CARD_FindNext(&carddir);
 	}
 
-	// Read banner_fmt and icon_addr from raw directory entries in sys_area
-	unsigned char *sysarea = get_card_sys_area(slot);
+	// Read banner/icon metadata via CARD_GetStatus
 	for (int i = 0; i < count; i++) {
 		entries[i].icon_addr = (u32)-1;
-		if (sysarea) {
-			u32 entry_off = entries[i].fileno * 64;
-			for (int blk = 0; blk < 5; blk++) {
-				GCI *raw = (GCI *)(sysarea + blk * 8192 + entry_off);
-				if (memcmp(raw->gamecode, entries[i].gamecode, 4) == 0
-					&& memcmp(raw->company, entries[i].company, 2) == 0
-					&& strncmp(raw->filename, entries[i].filename, CARD_FILENAMELEN) == 0) {
-					entries[i].banner_fmt = raw->banner_fmt;
-					entries[i].time = raw->time;
-					entries[i].icon_addr = raw->icon_addr;
-					entries[i].icon_fmt = raw->icon_fmt;
-					entries[i].icon_speed = raw->icon_speed;
-					break;
-				}
+		CARD_SetGamecode(entries[i].gamecode);
+		CARD_SetCompany(entries[i].company);
+		card_file cardfile;
+		if (CARD_Open(slot, entries[i].filename, &cardfile) == CARD_ERROR_READY) {
+			card_stat cardstat;
+			if (CARD_GetStatus(slot, cardfile.filenum, &cardstat) == CARD_ERROR_READY) {
+				entries[i].banner_fmt = cardstat.banner_fmt;
+				entries[i].time = cardstat.time;
+				entries[i].icon_addr = cardstat.icon_addr;
+				entries[i].icon_fmt = cardstat.icon_fmt;
+				entries[i].icon_speed = cardstat.icon_speed;
 			}
+			CARD_Close(&cardfile);
 		}
 	}
 

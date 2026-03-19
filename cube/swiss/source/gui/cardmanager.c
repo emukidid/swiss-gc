@@ -34,32 +34,10 @@ static void cm_panel_load(cm_panel *panel) {
 		snprintf(panel->label, sizeof(panel->label), "Slot %c", slot_ch);
 		s32 ret = initialize_card(panel->slot);
 
-		// Handle mount errors per Nintendo Memory Card Guidelines §3.6-3.8
 		if (ret == CARD_ERROR_WRONGDEVICE) {
 			char msg[128];
 			sprintf(msg, "The device in Slot %c is not a\nMemory Card.", slot_ch);
 			cm_show_error(msg);
-		}
-		else if (ret == CARD_ERROR_ENCODING) {
-			char msg[128];
-			sprintf(msg, "Memory Card in Slot %c uses an\nincompatible format.\n \nA: Format  |  B: Cancel", slot_ch);
-			uiDrawObj_t *msgBox = cm_draw_message(msg);
-			DrawPublish(msgBox);
-			u16 btn = cm_wait_buttons(PAD_BUTTON_A | PAD_BUTTON_B);
-			DrawDispose(msgBox);
-			if (btn & PAD_BUTTON_A) {
-				msgBox = cm_draw_message("Formatting Memory Card...\nDo not remove the Memory Card.");
-				DrawPublish(msgBox);
-				ret = CARD_Format(panel->slot);
-				DrawDispose(msgBox);
-				if (ret == CARD_ERROR_READY) {
-					ret = initialize_card(panel->slot);
-				} else {
-					char fmsg[128];
-					sprintf(fmsg, "Memory Card in Slot %c is damaged\nand cannot be used.", slot_ch);
-					cm_show_error(fmsg);
-				}
-			}
 		}
 		else if (ret == CARD_ERROR_BROKEN) {
 			char msg[128];
