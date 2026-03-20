@@ -261,12 +261,8 @@ bool card_manager_backups(cm_panel *panel);
 
 // --- cm_library.c ---
 
-// Device indices — the 4 fixed sources the library tracks independently
-#define LIB_DEV_PHYS_A  0
-#define LIB_DEV_PHYS_B  1
-#define LIB_DEV_VMC_A   2
-#define LIB_DEV_VMC_B   3
-#define LIB_NUM_DEVICES 4
+// Physical device count (Slot A + Slot B)
+#define LIB_NUM_PHYSICAL 2
 
 // Per-device owned data (library loads independently from panels)
 typedef struct {
@@ -275,18 +271,18 @@ typedef struct {
 	bool present;
 	bool loaded;
 	bool needs_reload;
-	int slot;					// CARD_SLOTA/B (physical only)
+	bool is_physical;				// true = physical slot, false = VMC
+	int slot;						// CARD_SLOTA/B (physical only)
 	char vmc_path[PATHNAME_MAX];
-	char label[32];				// "Slot A", "MemoryCardA (USA)", etc.
+	char label[32];					// "Slot A", "MemoryCardA (USA)", etc.
 	s32 mem_size;
 	s32 sector_size;
-	u8 activity;				// CM_ACTIVITY_*
+	u8 activity;					// CM_ACTIVITY_*
 } lib_device;
 
 // Save source: where a save lives
 typedef enum {
-	LIB_SRC_SLOT_A,
-	LIB_SRC_SLOT_B,
+	LIB_SRC_PHYSICAL,
 	LIB_SRC_VMC,
 	LIB_SRC_GCI,		// Backup on SD
 } lib_source_type;
@@ -295,9 +291,9 @@ typedef enum {
 typedef struct {
 	lib_source_type source;
 	card_entry *entry;			// Points into lib_device.entries[] or gci_files[].entry
-	char source_label[32];		// "Slot A", "Slot B", "MemoryCardA (USA)", "SD Backup"
+	char source_label[32];		// "Slot A", "Card_001 (USA)", "SD Backup"
 	char display_name[48];		// Row label: filename for card/VMC, .gci basename for SD
-	int device_idx;				// 0-3 = LIB_DEV_*, -1 = GCI
+	int device_idx;				// Index into devices[], -1 = GCI
 	int gci_idx;				// Index into gci_files array (-1 if not GCI)
 } lib_save;
 
@@ -310,21 +306,13 @@ typedef struct {
 	int num_saves;				// Number of saves for this game
 } lib_game_group;
 
-#define LIB_MAX_SAVES 640		// 128 per device × 4 + GCI
+#define LIB_MAX_SAVES 1024		// Dynamic device count needs headroom
 #define LIB_MAX_GROUPS 128
-#define LIB_MAX_CARD_SAVES 64
-
-// A unique save filename across card/VMC sources (grouped view)
-typedef struct {
-	char filename[CARD_FILENAMELEN + 1];
-	u16 blocks;
-	u32 time;				// Most recent modification time
-	int save_idx[LIB_NUM_DEVICES];	// Index into all_saves per device (-1 if absent)
-} lib_card_save;
 
 // Library view state (managed from main loop, not a standalone page)
 typedef struct {
-	lib_device devices[LIB_NUM_DEVICES];
+	lib_device *devices;		// Heap: 2 physical + N VMCs
+	int num_devices;
 	gci_file_entry *gci_files;
 	int num_gci;
 	lib_save *saves;
@@ -335,15 +323,12 @@ typedef struct {
 	int focus;				// 0=game list, 1=save list
 	bool initialized;
 	bool needs_rebuild;		// Deferred rebuild after cards-view mutations
-	int save_indices[LIB_MAX_SAVES];
-	int save_count;
 	lib_game_group *sel_group;
-	// Grouped card/VMC saves and separate GCI list for selected game
-	lib_card_save card_saves[LIB_MAX_CARD_SAVES];
-	int num_card_saves;
-	int gci_save_indices[LIB_MAX_SAVES];
-	int num_gci_saves;
-	int total_rows;			// card rows + divider(1) + gci rows
+	// For selected game: flat save list sorted by time (most recent first)
+	int *game_save_indices;		// Indices into saves[]
+	int num_game_saves;			// Card/VMC saves
+	int num_game_gci;			// GCI backup saves
+	int total_rows;				// game_saves + divider(1) + gci
 } lib_state;
 
 #define LIB_INPUT_NONE   0

@@ -505,7 +505,6 @@ void show_card_manager(void) {
 					free(detail->_vmc_sysarea);
 					detail->_vmc_sysarea = NULL;
 				}
-				if (lib->initialized) lib->needs_rebuild = true;
 			}
 			needs_redraw = true;
 		}
@@ -542,7 +541,6 @@ void show_card_manager(void) {
 						break;
 					}
 				}
-				if (lib->initialized) lib->needs_rebuild = true;
 			}
 			needs_redraw = true;
 		}
@@ -604,13 +602,13 @@ void show_card_manager(void) {
 				}
 			}
 			// Library card polling
-			if (lib->initialized) {
-				for (int d = 0; d < LIB_DEV_VMC_A; d++) {
+			if (lib->initialized && lib->devices) {
+				for (int d = 0; d < lib->num_devices && d < LIB_NUM_PHYSICAL; d++) {
 					bool present = slot_present[lib->devices[d].slot];
 					if (present != lib->devices[d].present)
 						lib->devices[d].needs_reload = true;
 				}
-				for (int d = 0; d < LIB_NUM_DEVICES; d++) {
+				for (int d = 0; d < lib->num_devices; d++) {
 					if (lib->devices[d].needs_reload) {
 						lib->needs_rebuild = true;
 						break;

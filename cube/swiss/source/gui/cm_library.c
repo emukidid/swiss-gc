@@ -46,12 +46,8 @@
 // GC epoch for date formatting
 #define GC_EPOCH_OFFSET 946684800ULL
 
-// Device indicator box dimensions (4 per save row)
-#define LIB_IND_W   14
-#define LIB_IND_H   14
-#define LIB_IND_GAP 2
-
-static const char *lib_ind_labels[LIB_NUM_DEVICES] = {"A", "B", "vA", "vB"};
+// Source dot dimensions (per save row)
+#define LIB_DOT_SZ  8
 
 static void lib_draw_thin_scrollbar(uiDrawObj_t *container,
 	int x, int top_y, int track_h, int total, int visible, int scroll) {
@@ -124,42 +120,43 @@ static void lib_load_physical_device(lib_device *dev) {
 }
 
 static void lib_init_devices(lib_state *st) {
-	memset(st->devices, 0, sizeof(st->devices));
-
-	st->devices[LIB_DEV_PHYS_A].slot = CARD_SLOTA;
-	strlcpy(st->devices[LIB_DEV_PHYS_A].label, "Slot A", 32);
-
-	st->devices[LIB_DEV_PHYS_B].slot = CARD_SLOTB;
-	strlcpy(st->devices[LIB_DEV_PHYS_B].label, "Slot B", 32);
-
-	st->devices[LIB_DEV_VMC_A].slot = -1;
-	st->devices[LIB_DEV_VMC_B].slot = -1;
-
 	vmc_file_entry vmcs[MAX_VMC_FILES];
-	int n = vmc_scan_files(vmcs, MAX_VMC_FILES);
+	int num_vmcs = vmc_scan_files(vmcs, MAX_VMC_FILES);
 
-	for (int i = 0; i < n; i++) {
-		char *name = strrchr(vmcs[i].path, '/');
-		name = name ? name + 1 : vmcs[i].path;
+	// Count ANSI-encoded VMCs with valid size
+	int vmc_count = 0;
+	for (int i = 0; i < num_vmcs; i++) {
+		if (vmcs[i].encoding == 0 && vmcs[i].filesize > 0)
+			vmc_count++;
+	}
 
-		// Skip SJIS-encoded VMCs (JPN region) — can't render in ANSI font
-		if (vmcs[i].encoding != 0) continue;
+	st->num_devices = LIB_NUM_PHYSICAL + vmc_count;
+	st->devices = calloc(st->num_devices, sizeof(lib_device));
+	if (!st->devices) { st->num_devices = 0; return; }
 
-		if (strncasecmp(name, "MemoryCardA", 11) == 0 && vmcs[i].filesize > 0
-			&& !st->devices[LIB_DEV_VMC_A].vmc_path[0]) {
-			strlcpy(st->devices[LIB_DEV_VMC_A].vmc_path, vmcs[i].path, PATHNAME_MAX);
-			strlcpy(st->devices[LIB_DEV_VMC_A].label, vmcs[i].label, 32);
-		}
-		else if (strncasecmp(name, "MemoryCardB", 11) == 0 && vmcs[i].filesize > 0
-			&& !st->devices[LIB_DEV_VMC_B].vmc_path[0]) {
-			strlcpy(st->devices[LIB_DEV_VMC_B].vmc_path, vmcs[i].path, PATHNAME_MAX);
-			strlcpy(st->devices[LIB_DEV_VMC_B].label, vmcs[i].label, 32);
-		}
+	// Physical slots
+	st->devices[0].is_physical = true;
+	st->devices[0].slot = CARD_SLOTA;
+	strlcpy(st->devices[0].label, "Slot A", 32);
+
+	st->devices[1].is_physical = true;
+	st->devices[1].slot = CARD_SLOTB;
+	strlcpy(st->devices[1].label, "Slot B", 32);
+
+	// All ANSI VMCs
+	int di = LIB_NUM_PHYSICAL;
+	for (int i = 0; i < num_vmcs && di < st->num_devices; i++) {
+		if (vmcs[i].encoding != 0 || vmcs[i].filesize == 0)
+			continue;
+		st->devices[di].slot = -1;
+		strlcpy(st->devices[di].vmc_path, vmcs[i].path, PATHNAME_MAX);
+		strlcpy(st->devices[di].label, vmcs[i].label, 32);
+		di++;
 	}
 
 	// Load all devices independently
-	for (int d = 0; d < LIB_NUM_DEVICES; d++) {
-		if (d < LIB_DEV_VMC_A)
+	for (int d = 0; d < st->num_devices; d++) {
+		if (st->devices[d].is_physical)
 			lib_load_physical_device(&st->devices[d]);
 		else if (st->devices[d].vmc_path[0])
 			lib_load_vmc_device(&st->devices[d]);
@@ -171,7 +168,7 @@ static void lib_init_devices(lib_state *st) {
 static int lib_build_index(lib_state *st) {
 	int ns = 0;
 
-	for (int d = 0; d < LIB_NUM_DEVICES; d++) {
+	for (int d = 0; d < st->num_devices; d++) {
 		lib_device *dev = &st->devices[d];
 		if (!dev->present) continue;
 
@@ -180,14 +177,7 @@ static int lib_build_index(lib_state *st) {
 			s->entry = &dev->entries[i];
 			s->device_idx = d;
 			s->gci_idx = -1;
-
-			if (d == LIB_DEV_PHYS_A)
-				s->source = LIB_SRC_SLOT_A;
-			else if (d == LIB_DEV_PHYS_B)
-				s->source = LIB_SRC_SLOT_B;
-			else
-				s->source = LIB_SRC_VMC;
-
+			s->source = dev->is_physical ? LIB_SRC_PHYSICAL : LIB_SRC_VMC;
 			strlcpy(s->source_label, dev->label, sizeof(s->source_label));
 			strlcpy(s->display_name, dev->entries[i].filename,
 				sizeof(s->display_name));
@@ -254,74 +244,75 @@ static int lib_build_index(lib_state *st) {
 	return ng;
 }
 
-static int lib_get_saves_for_game(lib_save *all_saves, int num_saves,
-	const char *gamecode, int *indices, int max) {
-	int count = 0;
-	for (int i = 0; i < num_saves && count < max; i++) {
-		if (strcmp(all_saves[i].entry->gamecode, gamecode) == 0)
-			indices[count++] = i;
-	}
-	return count;
-}
-
 // --- Selection update ---
 
+// Simple insertion sort by time descending (save lists are small)
+static void lib_sort_indices(int *indices, int count, lib_save *saves) {
+	for (int i = 1; i < count; i++) {
+		int key = indices[i];
+		u32 key_time = saves[key].entry->time;
+		int j = i - 1;
+		while (j >= 0 && saves[indices[j]].entry->time < key_time) {
+			indices[j + 1] = indices[j];
+			j--;
+		}
+		indices[j + 1] = key;
+	}
+}
+
 static void lib_update_selection(lib_state *st) {
-	st->save_count = 0;
 	st->sel_group = NULL;
-	st->num_card_saves = 0;
-	st->num_gci_saves = 0;
+	st->num_game_saves = 0;
+	st->num_game_gci = 0;
 	st->total_rows = 0;
 
-	if (st->num_groups > 0 && st->game_cursor < st->num_groups) {
-		st->sel_group = &st->groups[st->game_cursor];
-		st->save_count = lib_get_saves_for_game(st->saves, st->num_saves,
-			st->sel_group->gamecode, st->save_indices, LIB_MAX_SAVES);
+	if (st->num_groups == 0 || st->game_cursor >= st->num_groups)
+		return;
 
-		for (int i = 0; i < st->save_count; i++) {
-			int si = st->save_indices[i];
-			lib_save *s = &st->saves[si];
+	st->sel_group = &st->groups[st->game_cursor];
+	const char *gc = st->sel_group->gamecode;
 
-			if (s->source == LIB_SRC_GCI) {
-				st->gci_save_indices[st->num_gci_saves++] = si;
-				continue;
-			}
+	// Collect card/VMC saves and GCI saves separately
+	int card_start = 0;
+	int gci_start = 0;
 
-			// Group by filename
-			int found = -1;
-			for (int c = 0; c < st->num_card_saves; c++) {
-				if (strcmp(st->card_saves[c].filename, s->entry->filename) == 0) {
-					found = c;
-					break;
-				}
-			}
-			if (found < 0 && st->num_card_saves < LIB_MAX_CARD_SAVES) {
-				found = st->num_card_saves++;
-				lib_card_save *cs = &st->card_saves[found];
-				strlcpy(cs->filename, s->entry->filename, sizeof(cs->filename));
-				cs->blocks = s->entry->blocks;
-				cs->time = s->entry->time;
-				for (int d = 0; d < LIB_NUM_DEVICES; d++)
-					cs->save_idx[d] = -1;
-			}
-			if (found >= 0) {
-				if (s->device_idx >= 0 && s->device_idx < LIB_NUM_DEVICES)
-					st->card_saves[found].save_idx[s->device_idx] = si;
-				if (s->entry->time > st->card_saves[found].time)
-					st->card_saves[found].time = s->entry->time;
-			}
+	for (int i = 0; i < st->num_saves; i++) {
+		lib_save *s = &st->saves[i];
+		if (strcmp(s->entry->gamecode, gc) != 0) continue;
+
+		if (s->source == LIB_SRC_GCI) {
+			if (gci_start + st->num_game_gci < LIB_MAX_SAVES)
+				st->game_save_indices[LIB_MAX_SAVES / 2 + st->num_game_gci++] = i;
+		} else {
+			if (card_start + st->num_game_saves < LIB_MAX_SAVES / 2)
+				st->game_save_indices[st->num_game_saves++] = i;
 		}
 	}
 
-	st->total_rows = st->num_card_saves;
-	if (st->num_gci_saves > 0)
-		st->total_rows += 1 + st->num_gci_saves;
+	// Sort card/VMC saves by time (most recent first)
+	lib_sort_indices(st->game_save_indices, st->num_game_saves, st->saves);
+
+	// Sort GCI saves by time (most recent first)
+	lib_sort_indices(st->game_save_indices + LIB_MAX_SAVES / 2,
+		st->num_game_gci, st->saves);
+
+	// Compact: move GCI indices right after card indices
+	if (st->num_game_gci > 0)
+		memmove(st->game_save_indices + st->num_game_saves,
+			st->game_save_indices + LIB_MAX_SAVES / 2,
+			st->num_game_gci * sizeof(int));
+
+	st->total_rows = st->num_game_saves;
+	if (st->num_game_gci > 0)
+		st->total_rows += 1 + st->num_game_gci;
 
 	if (st->save_cursor >= st->total_rows)
 		st->save_cursor = st->total_rows > 0 ? st->total_rows - 1 : 0;
-	if (st->num_card_saves > 0 && st->num_gci_saves > 0
-		&& st->save_cursor == st->num_card_saves)
-		st->save_cursor = st->num_card_saves > 0 ? st->num_card_saves - 1 : st->num_card_saves + 1;
+	// Skip divider row
+	if (st->num_game_saves > 0 && st->num_game_gci > 0
+		&& st->save_cursor == st->num_game_saves)
+		st->save_cursor = st->num_game_saves > 0
+			? st->num_game_saves - 1 : st->num_game_saves + 1;
 }
 
 // --- Rebuild helpers ---
@@ -436,23 +427,11 @@ static void lib_draw_game_list(uiDrawObj_t *container,
 			LIB_MAX_VIS * LIB_ROW_H, num_groups, LIB_MAX_VIS, scroll);
 }
 
-static void lib_draw_indicator(uiDrawObj_t *container, int x, int y,
-	bool save_present, bool device_present, bool is_vmc, const char *label) {
-	if (!device_present) {
-		DrawAddChild(container, DrawFlatColorRect(x, y, LIB_IND_W, LIB_IND_H,
-			(GXColor){40, 40, 40, 64}));
-	} else if (save_present) {
-		GXColor fill = is_vmc ? (GXColor){100, 160, 220, 255}
-			: (GXColor){180, 180, 180, 255};
-		DrawAddChild(container, DrawFlatColorRect(x, y, LIB_IND_W, LIB_IND_H, fill));
-		DrawAddChild(container, DrawStyledLabel(x + LIB_IND_W / 2, y + LIB_IND_H / 2,
-			label, 0.35f, ALIGN_CENTER, (GXColor){20, 20, 20, 255}));
-	} else {
-		DrawAddChild(container, DrawFlatColorRect(x, y, LIB_IND_W, LIB_IND_H,
-			(GXColor){60, 60, 60, 128}));
-		DrawAddChild(container, DrawStyledLabel(x + LIB_IND_W / 2, y + LIB_IND_H / 2,
-			label, 0.35f, ALIGN_CENTER, (GXColor){60, 60, 60, 128}));
-	}
+static void lib_draw_source_dot(uiDrawObj_t *container, int x, int y,
+	bool is_vmc) {
+	GXColor fill = is_vmc ? (GXColor){100, 160, 220, 255}
+		: (GXColor){180, 180, 180, 255};
+	DrawAddChild(container, DrawFlatColorRect(x, y, LIB_DOT_SZ, LIB_DOT_SZ, fill));
 }
 
 static void lib_draw_save_list(uiDrawObj_t *container, lib_state *st,
@@ -500,15 +479,17 @@ static void lib_draw_save_list(uiDrawObj_t *container, lib_state *st,
 	}
 
 	char info[64];
-	snprintf(info, sizeof(info), "%s  %d on cards  %d backup%s",
-		group->gamecode, st->num_card_saves, st->num_gci_saves,
-		st->num_gci_saves != 1 ? "s" : "");
+	snprintf(info, sizeof(info), "%s  %d save%s  %d backup%s",
+		group->gamecode, st->num_game_saves,
+		st->num_game_saves != 1 ? "s" : "",
+		st->num_game_gci,
+		st->num_game_gci != 1 ? "s" : "");
 	DrawAddChild(container, DrawStyledLabel(text_x, hdr_y + 36,
 		info, 0.4f, ALIGN_LEFT, (GXColor){120, 120, 120, 255}));
 
 	DrawAddChild(container, cm_draw_rect(lx, LIB_SAVE_LIST_TOP - 4, lw, 1));
 
-	// --- Two-section save list ---
+	// --- Two-section save list (card/VMC saves, then GCI backups) ---
 	if (st->total_rows == 0) {
 		DrawAddChild(container, DrawStyledLabel(lx + lw / 2, LIB_SAVE_LIST_TOP + 20,
 			"No saves", 0.5f, ALIGN_CENTER, (GXColor){140, 140, 140, 255}));
@@ -520,64 +501,46 @@ static void lib_draw_save_list(uiDrawObj_t *container, lib_state *st,
 	if (visible > max_vis) visible = max_vis;
 	int cw = (st->total_rows > max_vis) ? lw - 8 : lw;
 
-	// 4 device indicators per card row
-	int ind_total_w = LIB_NUM_DEVICES * LIB_IND_W + (LIB_NUM_DEVICES - 1) * LIB_IND_GAP;
-	int ind_x = lx + cw - ind_total_w - 4;
+	int divider_row = (st->num_game_saves > 0 && st->num_game_gci > 0)
+		? st->num_game_saves : -1;
 
 	for (int i = 0; i < visible; i++) {
 		int vi = st->save_scroll + i;
 		int ry = LIB_SAVE_LIST_TOP + i * LIB_SAVE_ROW_H;
 
-		if (vi < st->num_card_saves) {
-			// --- Card status row ---
-			lib_card_save *cs = &st->card_saves[vi];
-
-			if (active && vi == st->save_cursor)
-				DrawAddChild(container, cm_draw_highlight(lx, ry, cw, LIB_SAVE_ROW_H));
-
-			GXColor name_color = (active && vi == st->save_cursor)
-				? (GXColor){96, 107, 164, 255} : defaultColor;
-
-			char row_text[80];
-			snprintf(row_text, sizeof(row_text), "%s  %d blk", cs->filename, cs->blocks);
-			int text_w = ind_x - lx - 8;
-			float rs = GetTextScaleToFitInWidthWithMax(row_text, text_w, 0.42f);
-			DrawAddChild(container, DrawStyledLabel(lx + 4, ry + LIB_SAVE_ROW_H / 2,
-				row_text, rs, ALIGN_LEFT, name_color));
-
-			// 4 device indicators
-			int iy = ry + (LIB_SAVE_ROW_H - LIB_IND_H) / 2;
-			for (int d = 0; d < LIB_NUM_DEVICES; d++) {
-				int ix = ind_x + d * (LIB_IND_W + LIB_IND_GAP);
-				lib_draw_indicator(container, ix, iy,
-					cs->save_idx[d] >= 0,
-					st->devices[d].present,
-					d >= LIB_DEV_VMC_A,
-					lib_ind_labels[d]);
-			}
-
-		} else if (st->num_card_saves > 0 && st->num_gci_saves > 0
-				&& vi == st->num_card_saves) {
+		if (divider_row >= 0 && vi == divider_row) {
 			// --- Divider row ---
 			DrawAddChild(container, DrawStyledLabel(lx + 4, ry + LIB_SAVE_ROW_H / 2,
 				"SD Backups", 0.4f, ALIGN_LEFT, (GXColor){140, 140, 140, 255}));
 			DrawAddChild(container, cm_draw_rect(lx, ry + LIB_SAVE_ROW_H - 2, lw, 1));
+			continue;
+		}
 
+		// Map visual row to save index
+		int save_list_idx;
+		bool is_gci_row;
+		if (vi < st->num_game_saves) {
+			save_list_idx = vi;
+			is_gci_row = false;
 		} else {
-			// --- GCI backup row ---
-			int gci_row = (st->num_card_saves > 0 && st->num_gci_saves > 0)
-				? vi - st->num_card_saves - 1 : vi;
-			if (gci_row < 0 || gci_row >= st->num_gci_saves) continue;
+			int gci_row = (divider_row >= 0) ? vi - divider_row - 1 : vi - st->num_game_saves;
+			save_list_idx = st->num_game_saves + gci_row;
+			is_gci_row = true;
+		}
+		if (save_list_idx < 0 || save_list_idx >= st->num_game_saves + st->num_game_gci)
+			continue;
 
-			int si = st->gci_save_indices[gci_row];
-			lib_save *s = &st->saves[si];
+		int si = st->game_save_indices[save_list_idx];
+		lib_save *s = &st->saves[si];
 
-			if (active && vi == st->save_cursor)
-				DrawAddChild(container, cm_draw_highlight(lx, ry, cw, LIB_SAVE_ROW_H));
+		if (active && vi == st->save_cursor)
+			DrawAddChild(container, cm_draw_highlight(lx, ry, cw, LIB_SAVE_ROW_H));
 
-			GXColor name_color = (active && vi == st->save_cursor)
-				? (GXColor){96, 107, 164, 255} : defaultColor;
+		GXColor name_color = (active && vi == st->save_cursor)
+			? (GXColor){96, 107, 164, 255} : defaultColor;
 
+		if (is_gci_row) {
+			// GCI backup row: "SD" badge + filename + date
 			DrawAddChild(container, DrawStyledLabel(lx + 4, ry + LIB_SAVE_ROW_H / 2,
 				"SD", 0.4f, ALIGN_LEFT, (GXColor){200, 200, 140, 255}));
 
@@ -587,6 +550,21 @@ static void lib_draw_save_list(uiDrawObj_t *container, lib_state *st,
 			snprintf(row_text, sizeof(row_text), "%s  %s", s->display_name, datebuf);
 			int tx = lx + 28;
 			int text_w = cw - 36;
+			float rs = GetTextScaleToFitInWidthWithMax(row_text, text_w, 0.42f);
+			DrawAddChild(container, DrawStyledLabel(tx, ry + LIB_SAVE_ROW_H / 2,
+				row_text, rs, ALIGN_LEFT, name_color));
+		} else {
+			// Card/VMC save row: dot + filename + blocks + source label
+			int dot_x = lx + 4;
+			int dot_y = ry + (LIB_SAVE_ROW_H - LIB_DOT_SZ) / 2;
+			bool is_vmc = (s->source == LIB_SRC_VMC);
+			lib_draw_source_dot(container, dot_x, dot_y, is_vmc);
+
+			char row_text[128];
+			snprintf(row_text, sizeof(row_text), "%s  %d blk  %s",
+				s->display_name, s->entry->blocks, s->source_label);
+			int tx = lx + LIB_DOT_SZ + 8;
+			int text_w = cw - LIB_DOT_SZ - 12;
 			float rs = GetTextScaleToFitInWidthWithMax(row_text, text_w, 0.42f);
 			DrawAddChild(container, DrawStyledLabel(tx, ry + LIB_SAVE_ROW_H / 2,
 				row_text, rs, ALIGN_LEFT, name_color));
@@ -609,11 +587,11 @@ enum {
 
 // Set activity LED on device and any matching panel
 static void lib_set_activity(lib_state *st, int dev_idx, cm_panel *panels[2], u8 activity) {
-	if (dev_idx < 0) return;
+	if (dev_idx < 0 || dev_idx >= st->num_devices) return;
 	lib_device *dev = &st->devices[dev_idx];
 	dev->activity = activity;
 	for (int p = 0; p < 2; p++) {
-		if (dev_idx < LIB_DEV_VMC_A) {
+		if (dev->is_physical) {
 			if (panels[p]->source == CM_SRC_PHYSICAL && panels[p]->slot == dev->slot)
 				panels[p]->activity = activity;
 		} else {
@@ -626,11 +604,11 @@ static void lib_set_activity(lib_state *st, int dev_idx, cm_panel *panels[2], u8
 
 // Flag device + matching panel(s) for reload after mutation
 static void lib_flag_reload(lib_state *st, int dev_idx, cm_panel *panels[2]) {
-	if (dev_idx < 0) return;
+	if (dev_idx < 0 || dev_idx >= st->num_devices) return;
 	lib_device *dev = &st->devices[dev_idx];
 	dev->needs_reload = true;
 	for (int p = 0; p < 2; p++) {
-		if (dev_idx < LIB_DEV_VMC_A) {
+		if (dev->is_physical) {
 			if (panels[p]->source == CM_SRC_PHYSICAL && panels[p]->slot == dev->slot)
 				panels[p]->needs_reload = true;
 		} else {
@@ -646,7 +624,8 @@ static bool lib_handle_action(lib_state *st, lib_save *s, cm_panel *panels[2]) {
 	bool enabled[LIB_ACT_COUNT];
 
 	bool is_gci = (s->source == LIB_SRC_GCI);
-	lib_device *src_dev = (s->device_idx >= 0) ? &st->devices[s->device_idx] : NULL;
+	lib_device *src_dev = (s->device_idx >= 0 && s->device_idx < st->num_devices)
+		? &st->devices[s->device_idx] : NULL;
 
 	items[LIB_ACT_COPY] = "Copy to...";
 	enabled[LIB_ACT_COPY] = true;
@@ -713,7 +692,7 @@ static bool lib_handle_action(lib_state *st, lib_save *s, cm_panel *panels[2]) {
 
 			lib_set_activity(st, s->device_idx, panels, CM_ACTIVITY_READ);
 
-			if (s->source == LIB_SRC_SLOT_A || s->source == LIB_SRC_SLOT_B)
+			if (s->source == LIB_SRC_PHYSICAL)
 				read_ok = cm_read_physical_save(src_dev->slot, s->entry,
 					src_dev->sector_size, &gci, &savedata, &save_len);
 			else if (s->source == LIB_SRC_VMC)
@@ -756,7 +735,7 @@ static bool lib_handle_action(lib_state *st, lib_save *s, cm_panel *panels[2]) {
 				if (s->device_idx == slot)
 					continue;
 				if (dest_choice == phys_offset) {
-					int dest_dev_idx = (slot == 0) ? LIB_DEV_PHYS_A : LIB_DEV_PHYS_B;
+					int dest_dev_idx = slot;  // 0=Slot A, 1=Slot B
 					lib_set_activity(st, dest_dev_idx, panels, CM_ACTIVITY_WRITE);
 					s32 dest_sector = 8192;
 					CARD_ProbeEx(slot, NULL, &dest_sector);
@@ -783,7 +762,7 @@ static bool lib_handle_action(lib_state *st, lib_save *s, cm_panel *panels[2]) {
 				if (dest_choice == vmc_offset) {
 					// Find matching lib device for LED
 					int dest_dev_idx = -1;
-					for (int d = LIB_DEV_VMC_A; d <= LIB_DEV_VMC_B; d++) {
+					for (int d = LIB_NUM_PHYSICAL; d < st->num_devices; d++) {
 						if (strcmp(st->devices[d].vmc_path, vmcs[i].path) == 0) {
 							dest_dev_idx = d;
 							break;
@@ -871,8 +850,10 @@ bool lib_state_init(lib_state *st) {
 	st->gci_files = calloc(MAX_GCI_FILES, sizeof(gci_file_entry));
 	st->saves = calloc(LIB_MAX_SAVES, sizeof(lib_save));
 	st->groups = calloc(LIB_MAX_GROUPS, sizeof(lib_game_group));
-	if (!st->gci_files || !st->saves || !st->groups) {
+	st->game_save_indices = calloc(LIB_MAX_SAVES, sizeof(int));
+	if (!st->gci_files || !st->saves || !st->groups || !st->game_save_indices) {
 		free(st->gci_files); free(st->saves); free(st->groups);
+		free(st->game_save_indices);
 		memset(st, 0, sizeof(*st));
 		return false;
 	}
@@ -888,9 +869,9 @@ bool lib_state_init(lib_state *st) {
 }
 
 void lib_state_rebuild(lib_state *st) {
-	for (int d = 0; d < LIB_NUM_DEVICES; d++) {
+	for (int d = 0; d < st->num_devices; d++) {
 		if (!st->devices[d].needs_reload) continue;
-		if (d < LIB_DEV_VMC_A)
+		if (st->devices[d].is_physical)
 			lib_load_physical_device(&st->devices[d]);
 		else if (st->devices[d].vmc_path[0])
 			lib_load_vmc_device(&st->devices[d]);
@@ -899,8 +880,9 @@ void lib_state_rebuild(lib_state *st) {
 }
 
 void lib_reload_device(lib_state *st, int dev_idx) {
+	if (dev_idx < 0 || dev_idx >= st->num_devices) return;
 	lib_device *dev = &st->devices[dev_idx];
-	if (dev_idx < LIB_DEV_VMC_A)
+	if (dev->is_physical)
 		lib_load_physical_device(dev);
 	else if (dev->vmc_path[0])
 		lib_load_vmc_device(dev);
@@ -909,7 +891,7 @@ void lib_reload_device(lib_state *st, int dev_idx) {
 
 void lib_poll_cards(lib_state *st) {
 	if (!st->initialized) return;
-	for (int d = 0; d < LIB_DEV_VMC_A; d++) {
+	for (int d = 0; d < st->num_devices && d < LIB_NUM_PHYSICAL; d++) {
 		s32 probe = CARD_ProbeEx(st->devices[d].slot, NULL, NULL);
 		bool present = (probe == CARD_ERROR_READY || probe == CARD_ERROR_BUSY);
 		if (present != st->devices[d].present)
@@ -964,8 +946,8 @@ int lib_handle_input(lib_state *st, cm_panel *panels[2], u16 btns, s8 stickY) {
 			return LIB_INPUT_EXIT;
 		}
 	} else {
-		int divider_row = (st->num_card_saves > 0 && st->num_gci_saves > 0)
-			? st->num_card_saves : -1;
+		int divider_row = (st->num_game_saves > 0 && st->num_game_gci > 0)
+			? st->num_game_saves : -1;
 
 		if (((btns & PAD_BUTTON_UP) || stickY > 16) && st->save_cursor > 0) {
 			st->save_cursor--;
@@ -994,37 +976,21 @@ int lib_handle_input(lib_state *st, cm_panel *panels[2], u16 btns, s8 stickY) {
 		if ((btns & PAD_BUTTON_A) && st->total_rows > 0) {
 			while (padsButtonsHeld() & PAD_BUTTON_A) { VIDEO_WaitVSync(); }
 
+			// Map visual row directly to a save — no source picker needed
 			lib_save *target = NULL;
-			if (st->save_cursor < st->num_card_saves) {
-				// Card save row — pick source if on multiple devices
-				lib_card_save *cs = &st->card_saves[st->save_cursor];
-				int sources[LIB_NUM_DEVICES];
-				int nsrc = 0;
-				for (int d = 0; d < LIB_NUM_DEVICES; d++) {
-					if (cs->save_idx[d] >= 0)
-						sources[nsrc++] = d;
-				}
-				if (nsrc == 1) {
-					target = &st->saves[cs->save_idx[sources[0]]];
-				} else if (nsrc > 1) {
-					const char *pick_items[LIB_NUM_DEVICES];
-					bool pick_enabled[LIB_NUM_DEVICES];
-					for (int i = 0; i < nsrc; i++) {
-						pick_items[i] = st->saves[cs->save_idx[sources[i]]].source_label;
-						pick_enabled[i] = true;
-					}
-					int pick = cm_context_menu(pick_items, pick_enabled, nsrc);
-					if (pick >= 0)
-						target = &st->saves[cs->save_idx[sources[pick]]];
-				}
+			int save_list_idx;
+			if (st->save_cursor < st->num_game_saves) {
+				save_list_idx = st->save_cursor;
 			} else {
 				int gci_row = (divider_row >= 0)
-					? st->save_cursor - st->num_card_saves - 1
-					: st->save_cursor;
-				if (gci_row >= 0 && gci_row < st->num_gci_saves) {
-					int si = st->gci_save_indices[gci_row];
-					target = &st->saves[si];
-				}
+					? st->save_cursor - divider_row - 1
+					: st->save_cursor - st->num_game_saves;
+				save_list_idx = st->num_game_saves + gci_row;
+			}
+			if (save_list_idx >= 0
+				&& save_list_idx < st->num_game_saves + st->num_game_gci) {
+				int si = st->game_save_indices[save_list_idx];
+				target = &st->saves[si];
 			}
 
 			if (target && lib_handle_action(st, target, panels)) {
@@ -1045,13 +1011,17 @@ int lib_handle_input(lib_state *st, cm_panel *panels[2], u16 btns, s8 stickY) {
 }
 
 void lib_state_free(lib_state *st) {
-	for (int d = 0; d < LIB_NUM_DEVICES; d++)
-		card_manager_free_graphics(st->devices[d].entries, st->devices[d].num_entries);
+	if (st->devices) {
+		for (int d = 0; d < st->num_devices; d++)
+			card_manager_free_graphics(st->devices[d].entries, st->devices[d].num_entries);
+		free(st->devices);
+	}
 	if (st->gci_files) {
 		card_manager_free_gci_files(st->gci_files, st->num_gci);
 		free(st->gci_files);
 	}
 	free(st->saves);
 	free(st->groups);
+	free(st->game_save_indices);
 	memset(st, 0, sizeof(*st));
 }
