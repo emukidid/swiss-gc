@@ -100,9 +100,8 @@ void cm_parse_save_graphics(u8 *gfx_data, u32 gfx_len,
 				entry->icon->frames[i].speed = ispeeds[i];
 
 				if (ifmts[i] == CARD_ICON_NONE) {
-					// Borrowed frame — share snapshot pointer from last valid
-					if (last_valid >= 0)
-						entry->icon->frames[i].snap = entry->icon->frames[last_valid].snap;
+					// NONE frame — contributes to timing but has no texture.
+					// icon_resolve_frame maps it to the nearest real frame at render time.
 					continue;
 				}
 
@@ -644,22 +643,25 @@ int card_manager_read_dir(int slot, card_entry *entries, int max_entries) {
 		ret = CARD_FindNext(&carddir);
 	}
 
-	// Read banner/icon metadata via CARD_GetStatus
+	// Read banner_fmt and icon_addr from raw directory entries in sys_area
+	unsigned char *sysarea = get_card_sys_area(slot);
 	for (int i = 0; i < count; i++) {
 		entries[i].icon_addr = (u32)-1;
-		CARD_SetGamecode(entries[i].gamecode);
-		CARD_SetCompany(entries[i].company);
-		card_file cardfile;
-		if (CARD_Open(slot, entries[i].filename, &cardfile) == CARD_ERROR_READY) {
-			card_stat cardstat;
-			if (CARD_GetStatus(slot, cardfile.filenum, &cardstat) == CARD_ERROR_READY) {
-				entries[i].banner_fmt = cardstat.banner_fmt;
-				entries[i].time = cardstat.time;
-				entries[i].icon_addr = cardstat.icon_addr;
-				entries[i].icon_fmt = cardstat.icon_fmt;
-				entries[i].icon_speed = cardstat.icon_speed;
+		if (sysarea) {
+			u32 entry_off = entries[i].fileno * 64;
+			for (int blk = 0; blk < 5; blk++) {
+				GCI *raw = (GCI *)(sysarea + blk * 8192 + entry_off);
+				if (memcmp(raw->gamecode, entries[i].gamecode, 4) == 0
+					&& memcmp(raw->company, entries[i].company, 2) == 0
+					&& strncmp(raw->filename, entries[i].filename, CARD_FILENAMELEN) == 0) {
+					entries[i].banner_fmt = raw->banner_fmt;
+					entries[i].time = raw->time;
+					entries[i].icon_addr = raw->icon_addr;
+					entries[i].icon_fmt = raw->icon_fmt;
+					entries[i].icon_speed = raw->icon_speed;
+					break;
+				}
 			}
-			CARD_Close(&cardfile);
 		}
 	}
 

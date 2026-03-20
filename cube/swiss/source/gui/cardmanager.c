@@ -494,7 +494,6 @@ void show_card_manager(void) {
 
 		// Reload detail panel if needed
 		if (detail->needs_reload) {
-			cm_toast(detail->label, 90);
 			card_manager_free_graphics(detail->entries, detail->num_entries);
 			detail->loading = true;
 			detail->activity = CM_ACTIVITY_READ;

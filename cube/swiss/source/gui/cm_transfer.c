@@ -184,27 +184,61 @@ bool card_manager_export_save(int slot, card_entry *entry, s32 sector_size) {
 		return false;
 	}
 
-	// Build GCI header from CARD_GetStatus
+	// Build GCI header from the raw directory entry in sys_area.
+	// CARD_GetStatus transforms some fields (strips banner animation bits),
+	// so we read directly from sys_area for a faithful copy.
 	GCI gci;
 	memset(&gci, 0, sizeof(GCI));
 	gci.reserved01 = 0xFF;
 	gci.reserved02 = 0xFFFF;
 	gci.filesize8 = entry->filesize / 8192;
 
-	card_stat cardstat;
-	CARD_GetStatus(slot, cardfile.filenum, &cardstat);
-	u8 file_attr = 0;
-	CARD_GetAttributes(slot, cardfile.filenum, &file_attr);
-	memcpy(gci.gamecode, cardstat.gamecode, 4);
-	memcpy(gci.company, cardstat.company, 2);
-	memcpy(gci.filename, cardstat.filename, CARD_FILENAMELEN);
-	gci.banner_fmt = cardstat.banner_fmt;
-	gci.time = cardstat.time;
-	gci.icon_addr = cardstat.icon_addr;
-	gci.icon_fmt = cardstat.icon_fmt;
-	gci.icon_speed = cardstat.icon_speed;
-	gci.permission = file_attr;
-	gci.comment_addr = cardstat.comment_addr;
+	bool got_raw = false;
+	unsigned char *sysarea = get_card_sys_area(slot);
+	if (sysarea) {
+		// Find raw directory entry at the specific fileno position
+		u32 entry_off = cardfile.filenum * 64;
+		GCI *raw = NULL;
+		for (int blk = 0; blk < 5; blk++) {
+			GCI *candidate = (GCI *)(sysarea + blk * 8192 + entry_off);
+			if (memcmp(candidate->gamecode, entry->gamecode, 4) == 0
+				&& memcmp(candidate->company, entry->company, 2) == 0
+				&& memcmp(candidate->filename, entry->filename, CARD_FILENAMELEN) == 0) {
+				raw = candidate;
+			}
+		}
+		if (raw) {
+			memcpy(gci.gamecode, raw->gamecode, 4);
+			memcpy(gci.company, raw->company, 2);
+			memcpy(gci.filename, raw->filename, CARD_FILENAMELEN);
+			gci.banner_fmt = raw->banner_fmt;
+			gci.time = raw->time;
+			gci.icon_addr = raw->icon_addr;
+			gci.icon_fmt = raw->icon_fmt;
+			gci.icon_speed = raw->icon_speed;
+			gci.permission = raw->permission;
+			gci.copy_counter = raw->copy_counter;
+			gci.comment_addr = raw->comment_addr;
+			got_raw = true;
+		}
+	}
+	if (!got_raw) {
+		// Fallback to CARD_GetStatus (may lose banner animation bits)
+		card_stat cardstat;
+		CARD_GetStatus(slot, cardfile.filenum, &cardstat);
+		u8 file_attr = 0;
+		CARD_GetAttributes(slot, cardfile.filenum, &file_attr);
+		memcpy(gci.gamecode, cardstat.gamecode, 4);
+		memcpy(gci.company, cardstat.company, 2);
+		memcpy(gci.filename, cardstat.filename, CARD_FILENAMELEN);
+		gci.banner_fmt = cardstat.banner_fmt;
+		gci.time = cardstat.time;
+		gci.icon_addr = cardstat.icon_addr;
+		gci.icon_fmt = cardstat.icon_fmt;
+		gci.icon_speed = cardstat.icon_speed;
+		gci.permission = file_attr;
+		gci.comment_addr = cardstat.comment_addr;
+	}
 
 	// Read save data from card
 	u8 *savedata = (u8 *)memalign(32, entry->filesize);
@@ -950,27 +984,54 @@ bool cm_read_physical_save(int slot, card_entry *entry, s32 sector_size,
 		return false;
 	}
 
-	// Build GCI header from CARD_GetStatus
+	// Build GCI header from raw sys_area directory entry
 	GCI gci;
 	memset(&gci, 0, sizeof(GCI));
 	gci.reserved01 = 0xFF;
 	gci.reserved02 = 0xFFFF;
 	gci.filesize8 = entry->filesize / 8192;
 
-	card_stat cardstat;
-	CARD_GetStatus(slot, cardfile.filenum, &cardstat);
-	u8 file_attr = 0;
-	CARD_GetAttributes(slot, cardfile.filenum, &file_attr);
-	memcpy(gci.gamecode, cardstat.gamecode, 4);
-	memcpy(gci.company, cardstat.company, 2);
-	memcpy(gci.filename, cardstat.filename, CARD_FILENAMELEN);
-	gci.banner_fmt = cardstat.banner_fmt;
-	gci.time = cardstat.time;
-	gci.icon_addr = cardstat.icon_addr;
-	gci.icon_fmt = cardstat.icon_fmt;
-	gci.icon_speed = cardstat.icon_speed;
-	gci.permission = file_attr;
-	gci.comment_addr = cardstat.comment_addr;
+	bool got_raw = false;
+	unsigned char *sysarea = get_card_sys_area(slot);
+	if (sysarea) {
+		u32 entry_off = cardfile.filenum * 64;
+		for (int blk = 0; blk < 5; blk++) {
+			GCI *candidate = (GCI *)(sysarea + blk * 8192 + entry_off);
+			if (memcmp(candidate->gamecode, entry->gamecode, 4) == 0
+				&& memcmp(candidate->company, entry->company, 2) == 0
+				&& memcmp(candidate->filename, entry->filename, CARD_FILENAMELEN) == 0) {
+				memcpy(gci.gamecode, candidate->gamecode, 4);
+				memcpy(gci.company, candidate->company, 2);
+				memcpy(gci.filename, candidate->filename, CARD_FILENAMELEN);
+				gci.banner_fmt = candidate->banner_fmt;
+				gci.time = candidate->time;
+				gci.icon_addr = candidate->icon_addr;
+				gci.icon_fmt = candidate->icon_fmt;
+				gci.icon_speed = candidate->icon_speed;
+				gci.permission = candidate->permission;
+				gci.copy_counter = candidate->copy_counter;
+				gci.comment_addr = candidate->comment_addr;
+				got_raw = true;
+				break;
+			}
+		}
+	}
+	if (!got_raw) {
+		card_stat cardstat;
+		CARD_GetStatus(slot, cardfile.filenum, &cardstat);
+		u8 file_attr = 0;
+		CARD_GetAttributes(slot, cardfile.filenum, &file_attr);
+		memcpy(gci.gamecode, cardstat.gamecode, 4);
+		memcpy(gci.company, cardstat.company, 2);
+		memcpy(gci.filename, cardstat.filename, CARD_FILENAMELEN);
+		gci.banner_fmt = cardstat.banner_fmt;
+		gci.time = cardstat.time;
+		gci.icon_addr = cardstat.icon_addr;
+		gci.icon_fmt = cardstat.icon_fmt;
+		gci.icon_speed = cardstat.icon_speed;
+		gci.permission = file_attr;
+		gci.comment_addr = cardstat.comment_addr;
+	}
 
 	u8 *savedata = (u8 *)memalign(32, entry->filesize);
 	if (!savedata) {
