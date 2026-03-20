@@ -1100,16 +1100,12 @@ int show_settings(int page, int option, ConfigEntry *config) {
 			|| (padsButtonsHeld() & PAD_BUTTON_Y)
 			|| (padsButtonsHeld() & PAD_TRIGGER_R)
 			|| (padsButtonsHeld() & PAD_TRIGGER_L)
-			|| padsStickY() > 16 || padsStickY() < -16
-			|| padsStickX() > 16 || padsStickX() < -16))
+			|| padsStickY() > 16 || padsStickY() < -16))
 			{ VIDEO_WaitVSync (); }
 		u16 btns = padsButtonsHeld();
 		s8 stickY = padsStickY();
-		s8 stickX = padsStickX();
 		if(stickY > 16) btns |= PAD_BUTTON_UP;
 		if(stickY < -16) btns |= PAD_BUTTON_DOWN;
-		if(stickX > 16) btns |= PAD_BUTTON_RIGHT;
-		if(stickX < -16) btns |= PAD_BUTTON_LEFT;
 		if(btns & PAD_BUTTON_Y) {
 			char *tooltip = get_tooltip(page, option);
 			if(tooltip) {
@@ -1231,9 +1227,8 @@ int show_settings(int page, int option, ConfigEntry *config) {
 				settings_toggle(page, option, 0, config);
 			}
 		}
-		if(stickY > 16 || stickY < -16 || stickX > 16 || stickX < -16) {
-			int mag = abs(stickY) > abs(stickX) ? abs(stickY) : abs(stickX);
-			int wait = mag > 64 ? 2 : 5;
+		if(stickY > 16 || stickY < -16) {
+			int wait = abs(stickY) > 64 ? 2 : 5;
 			for(int w = 0; w < wait; w++) VIDEO_WaitVSync();
 		} else {
 			while ((padsButtonsHeld() & PAD_BUTTON_RIGHT)
