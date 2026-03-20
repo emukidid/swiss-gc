@@ -118,11 +118,20 @@ bool cm_write_gci_to_sd(GCI *gci, u8 *savedata, u32 save_len) {
 			return false;
 		}
 		if (btn & PAD_BUTTON_X) {
+			bool found_slot = false;
 			for (int n = 2; n <= 99; n++) {
 				snprintf(gci_name, sizeof(gci_name), "swiss/saves/%.4s-%.32s (%d).gci",
 					gamecode, filename, n);
 				concat_path(outFile->name, dev->initial->name, gci_name);
-				if (dev->statFile(outFile)) break;
+				if (dev->statFile(outFile)) { found_slot = true; break; }
+			}
+			if (!found_slot) {
+				free(outFile);
+				uiDrawObj_t *err = cm_draw_message("Too many copies of this file.");
+				DrawPublish(err);
+				cm_wait_buttons(PAD_BUTTON_A | PAD_BUTTON_B);
+				DrawDispose(err);
+				return false;
 			}
 		}
 	}
@@ -1268,17 +1277,16 @@ bool card_manager_import_gci_buf(int slot, GCI *gci, u8 *savedata,
 			// Flush directory to card via CARD_SetAttributes (triggers __card_updatedir)
 			CARD_SetAttributes(slot, cardfile.filenum, gci->permission);
 		} else {
+			// Fallback: use CARD_SetStatus (may lose some metadata fidelity)
 			card_stat cardstat;
 			CARD_GetStatus(slot, cardfile.filenum, &cardstat);
 			cardstat.banner_fmt = gci->banner_fmt;
+			cardstat.time = gci->time;
 			cardstat.icon_addr = gci->icon_addr;
 			cardstat.icon_fmt = gci->icon_fmt;
 			cardstat.icon_speed = gci->icon_speed;
 			cardstat.comment_addr = gci->comment_addr;
-			u64 real_time = gettime();
-			settime(secs_to_ticks(gci->time));
 			CARD_SetStatus(slot, cardfile.filenum, &cardstat);
-			settime(real_time);
 			CARD_SetAttributes(slot, cardfile.filenum, gci->permission);
 		}
 	}
