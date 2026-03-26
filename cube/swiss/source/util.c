@@ -300,6 +300,8 @@ int find_existing_entry(char *entry, bool load) {
 			devices[DEVICE_CUR] = entryDevice;
 			memcpy(&curDir, devices[DEVICE_CUR]->initial, sizeof(file_handle));
 			getParentPath(entry, curDir.name);
+			if(endsWith(entry, "/default.dol"))
+				getParentPath(curDir.name, curDir.name);
 			while(!fnmatch(swissSettings.flattenDir, curDir.name, FNM_PATHNAME | FNM_CASEFOLD | FNM_LEADING_DIR)
 				&& fnmatch(swissSettings.flattenDir, curDir.name, FNM_PATHNAME | FNM_CASEFOLD) == FNM_NOMATCH)
 				getParentPath(curDir.name, curDir.name);
@@ -315,6 +317,8 @@ int find_existing_entry(char *entry, bool load) {
 			file_handle *dirEntries = getCurrentDirEntries();
 			int dirEntryCount = getCurrentDirEntryCount();
 			for(int i = 0; i < dirEntryCount; i++) {
+				if(dirEntries[i].fileType == IS_DIR)
+					populate_meta(&dirEntries[i]);
 				if(!strcmp(entry, dirEntries[i].name)
 				|| !fnmatch(entry, dirEntries[i].name, FNM_PATHNAME)) {
 					curSelection = getSortedDirEntryIndex(&dirEntries[i]);

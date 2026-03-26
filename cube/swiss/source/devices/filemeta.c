@@ -324,6 +324,7 @@ void populate_meta(file_handle *f) {
 				getParentPath(f->name, bannerFile->name);
 				concat_path(bannerFile->name, bannerFile->name, "opening.bnr");
 				bannerFile->meta = f->meta;
+				bannerFile->device = f->device;
 				
 				if (f->device->readFile(bannerFile, NULL, 0) == 0 && bannerFile->size)
 					populate_game_meta(bannerFile, 0, bannerFile->size);
