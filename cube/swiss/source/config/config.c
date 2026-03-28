@@ -164,7 +164,7 @@ int config_update_global(bool checkConfigDevice) {
 	fprintf(fp, "Disable MemCard PRO GameID=%s\r\n", disableMCPGameIDStr[swissSettings.disableMCPGameID]);
 	fprintf(fp, "Disable Video Patches=%s\r\n", disableVideoPatchesStr[swissSettings.disableVideoPatches]);
 	fprintf(fp, "Force Video Active=%s\r\n", swissSettings.forceVideoActive ? "Yes":"No");
-	fprintf(fp, "Force DTV Status=%s\r\n", swissSettings.forceDTVStatus ? "Yes":"No");
+	fprintf(fp, "Force DTV Status=%s\r\n", forceDTVStatusStr[swissSettings.forceDTVStatus]);
 	fprintf(fp, "Last DTV Status=%s\r\n", getRawDTVStatus() ? "Yes":"No");
 	fprintf(fp, "Pause for resolution change=%s\r\n", swissSettings.pauseAVOutput ? "Yes":"No");
 	fprintf(fp, "AutoBoot=%s\r\n", swissSettings.autoBoot ? "Yes":"No");
@@ -534,7 +534,12 @@ void config_parse_legacy(char *configData, void (*progress_indicator)(char*, int
 					swissSettings.forceVideoActive = !strcmp("Yes", value);
 				}
 				else if(!strcmp("Force DTV Status", name)) {
-					swissSettings.forceDTVStatus = !strcmp("Yes", value);
+					for(int i = 0; i < 3; i++) {
+						if(!strcmp(forceDTVStatusStr[i], value)) {
+							swissSettings.forceDTVStatus = i;
+							break;
+						}
+					}
 				}
 				else if(!strcmp("SMBUserName", name)) {
 					strlcpy(swissSettings.smbUser, value, sizeof(swissSettings.smbUser));
@@ -898,7 +903,12 @@ void config_parse_global(char *configData) {
 					swissSettings.forceVideoActive = !strcmp("Yes", value);
 				}
 				else if(!strcmp("Force DTV Status", name)) {
-					swissSettings.forceDTVStatus = !strcmp("Yes", value);
+					for(int i = 0; i < 3; i++) {
+						if(!strcmp(forceDTVStatusStr[i], value)) {
+							swissSettings.forceDTVStatus = i;
+							break;
+						}
+					}
 				}
 				else if(!strcmp("Last DTV Status", name)) {
 					swissSettings.lastDTVStatus = !strcmp("Yes", value);

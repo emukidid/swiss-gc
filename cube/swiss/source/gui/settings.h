@@ -169,6 +169,7 @@ extern char *swapCStickStr[];
 extern char *configAudioBufferStr[];
 extern char *disableMCPGameIDStr[];
 extern char *disableVideoPatchesStr[];
+extern char *forceDTVStatusStr[];
 extern char *emulateAudioStreamStr[];
 extern char *emulateReadSpeedStr[];
 extern char *disableMemoryCardStr[];

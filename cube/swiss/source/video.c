@@ -111,7 +111,12 @@ int getDTVStatus() {
 		return 0;
 	else if(in_range(swissSettings.aveCompat, GCDIGITAL_COMPAT, GCVIDEO_COMPAT) && swissSettings.rt4kOptim)
 		return 1;
-	return getRawDTVStatus() || swissSettings.forceDTVStatus;
+	else if(swissSettings.forceDTVStatus == 1)
+		return 1;
+	else if(swissSettings.forceDTVStatus > 1)
+		return getFontEncode() == SYS_FONTENC_SJIS;
+	else
+		return getRawDTVStatus();
 }
 
 int getFontEncode() {

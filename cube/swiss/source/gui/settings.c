@@ -42,6 +42,7 @@ char *swapCStickStr[] = {"No", "X", "Y", "X&Y"};
 char *configAudioBufferStr[] = {"Off", "Auto", "On"};
 char *disableMCPGameIDStr[] = {"No", "Slot A", "Slot B", "Slot A&B"};
 char *disableVideoPatchesStr[] = {"None", "Game", "All"};
+char *forceDTVStatusStr[] = {"No", "Yes", "Region Switch"};
 char *emulateAudioStreamStr[] = {"Off", "Auto", "On"};
 char *emulateReadSpeedStr[] = {"No", "Yes", "Wii"};
 char *disableMemoryCardStr[] = {"No", "Slot A", "Slot B"};
@@ -72,7 +73,7 @@ static char *tooltips_global[PAGE_GLOBAL_MAX+1] = {
 	"Configure Audio Buffer:\n\nOff - Disable audio streaming\nAuto - Enable audio streaming if the disc is known to use it\nOn - Enable audio streaming if the disc asks for it (default)\n\nThe audio buffer consumes a large portion of the GameCube\ndisc drive's read-ahead cache, lengthening load times.",
 	"SD/IDE-EXI Speed:\n\nThe clock speed to try using on the EXI bus for SD cards and\nIDE-EXI devices. 27 MHz may not work with some SD cards or\nSD card adapters.",
 	"AVE Compatibility:\n\nSets the compatibility mode for the used audio/video encoder.\n\nAVE N-DOL - Output PAL as NTSC 50\nAVE P-DOL - Disable progressive scan mode\nCMPV-DOL - Enable 1080i & 540p\nGCDigital - Apply input filtering in OSD\nGCVideo - Apply general workarounds for GCVideo (default)\nAVE-RVL - Support 960i & 1152i without WiiVideo",
-	"Force DTV Status:\n\nDisabled - Use detect signal from the Digital AV Out (default)\nEnabled - Force detection in the case of a hardware fault",
+	"Force DTV Status:\n\nDisabled - Use detect signal from the Digital AV Out (default)\nEnabled - Force detection in the case of a hardware fault\nRegion Switch - Ease transition between SD/ED TV setups",
 	"RetroTINK-4K HDMI Input:\n\nFor GCDigital compatibility mode:\n Requires FX-Framework firmware version 3.9.46.178 or later\n and RetroTINK-4K firmware version 1.9.4 or later, and using\n DV1-Direct mode.\n\nFor GCVideo compatibility mode:\n Requires GCVideo-DVI firmware version 3.0 or later.",
 	"Enable USB Gecko:\n\nIf a USB Gecko is present, messages output to the debug UART\nby Swiss/games will be redirected. When the USB host isn't\nactively reading from the USB Gecko, it may cause the system\nto hang.\n\nwiiload is also made available for iterative development.",
 	"Wait for USB Gecko:\n\nWait for the transmit buffer to be read by the USB host when full."
@@ -260,7 +261,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 			drawSettingEntryString(page, &page_y_ofs, "Configure Audio Buffer:", configAudioBufferStr[swissSettings.configAudioBuffer], option == SET_AUDIO_BUFFER, dvdEnable);
 			drawSettingEntryString(page, &page_y_ofs, "SD/IDE-EXI Speed:", swissSettings.exiSpeed ? "27 MHz" : "13.5 MHz", option == SET_EXI_SPEED, true);
 			drawSettingEntryString(page, &page_y_ofs, "AVE Compatibility:", aveCompatStr[swissSettings.aveCompat], option == SET_AVE_COMPAT, true);
-			drawSettingEntryBoolean(page, &page_y_ofs, "Force DTV Status:", swissSettings.forceDTVStatus, option == SET_FORCE_DTVSTATUS, dtvEnable);
+			drawSettingEntryString(page, &page_y_ofs, "Force DTV Status:", forceDTVStatusStr[swissSettings.forceDTVStatus], option == SET_FORCE_DTVSTATUS, dtvEnable);
 			drawSettingEntryBoolean(page, &page_y_ofs, "RetroTINK-4K HDMI Input:", swissSettings.rt4kOptim, option == SET_RT4K_OPTIM, rt4kEnable);
 			drawSettingEntryString(page, &page_y_ofs, "Enable USB Gecko:", enableUSBGeckoStr[swissSettings.enableUSBGecko], option == SET_ENABLE_USBGECKO, true);
 			drawSettingEntryBoolean(page, &page_y_ofs, "Wait for USB Gecko:", swissSettings.waitForUSBGecko, option == SET_WAIT_USBGECKO, true);
@@ -554,8 +555,10 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 				swissSettings.aveCompat = (swissSettings.aveCompat + AVE_COMPAT_MAX) % AVE_COMPAT_MAX;
 			break;
 			case SET_FORCE_DTVSTATUS:
-				if(!in_range(swissSettings.aveCompat, AVE_N_DOL_COMPAT, AVE_P_DOL_COMPAT))
-					swissSettings.forceDTVStatus ^= 1;
+				if(!in_range(swissSettings.aveCompat, AVE_N_DOL_COMPAT, AVE_P_DOL_COMPAT)) {
+					swissSettings.forceDTVStatus += direction;
+					swissSettings.forceDTVStatus = (swissSettings.forceDTVStatus + 3) % 3;
+				}
 			break;
 			case SET_RT4K_OPTIM:
 				if(in_range(swissSettings.aveCompat, GCDIGITAL_COMPAT, GCVIDEO_COMPAT)) {

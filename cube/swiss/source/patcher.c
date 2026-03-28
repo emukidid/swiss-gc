@@ -8087,9 +8087,10 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 		{ 42, 10, 3, 2, 2, 8, NULL, 0, "VIGetNextField" },
 		{ 39, 13, 4, 3, 2, 6, NULL, 0, "VIGetNextField" }
 	};
-	FuncPattern VIGetDTVStatusSigs[2] = {
+	FuncPattern VIGetDTVStatusSigs[3] = {
 		{ 17, 3, 2, 2, 0, 3, NULL, 0, "VIGetDTVStatusD" },
-		{ 15, 4, 3, 2, 0, 2, NULL, 0, "VIGetDTVStatus" }
+		{ 15, 4, 3, 2, 0, 2, NULL, 0, "VIGetDTVStatus" },
+		{ 15, 4, 3, 2, 0, 2, NULL, 0, "VIGetDTVStatus" }	// SN Systems ProDG
 	};
 	FuncPattern __GXInitGXSigs[11] = {
 		{ 1130, 567, 66, 133, 46, 46, NULL, 0, "__GXInitGXD" },
@@ -9016,13 +9017,25 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 					case 0:
 						if (findx_pattern(data, dataType, i +  4, length, &OSDisableInterruptsSig) &&
 							get_immediate(data,   i +  6, i +  7, &address) && address == 0xCC00206E &&
-							findx_pattern(data, dataType, i + 10, length, &OSRestoreInterruptsSig))
+							(data[i +  8] & 0xFC00FFFF) == 0x540007BE &&
+							findx_pattern(data, dataType, i + 10, length, &OSRestoreInterruptsSig) &&
+							(data[i + 11] & 0xFC00FFFF) == 0x540007FE)
 							VIGetDTVStatusSigs[j].offsetFoundAt = i;
 						break;
 					case 1:
 						if (findx_pattern(data, dataType, i +  4, length, &OSDisableInterruptsSig) &&
 							get_immediate(data,   i +  5, i +  6, &address) && address == 0xCC00206E &&
-							findx_pattern(data, dataType, i +  8, length, &OSRestoreInterruptsSig))
+							(data[i +  7] & 0xFC00FFFF) == 0x540007BE &&
+							findx_pattern(data, dataType, i +  8, length, &OSRestoreInterruptsSig) &&
+							(data[i +  9] & 0xFC00FFFF) == 0x540007FE)
+							VIGetDTVStatusSigs[j].offsetFoundAt = i;
+						break;
+					case 2:
+						if (findx_pattern(data, dataType, i +  4, length, &OSDisableInterruptsSig) &&
+							get_immediate(data,   i +  5, i +  6, &address) && address == 0xCC00206E &&
+							(data[i +  7] & 0xFC00FFFF) == 0x540007BE &&
+							findx_pattern(data, dataType, i +  8, length, &OSRestoreInterruptsSig) &&
+							(data[i + 10] & 0xFC00FFFF) == 0x540007FE)
 							VIGetDTVStatusSigs[j].offsetFoundAt = i;
 						break;
 				}
@@ -10719,11 +10732,17 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 				
 				data[i + 0] = 0x38600000;	// li		r3, 0
 				data[i + 1] = 0x4E800020;	// blr
-			} else if (swissSettings.forceDTVStatus) {
+			} else if (swissSettings.forceDTVStatus == 1) {
 				memset(data + i, 0, VIGetDTVStatusSigs[j].Length * sizeof(u32));
 				
 				data[i + 0] = 0x38600001;	// li		r3, 1
 				data[i + 1] = 0x4E800020;	// blr
+			} else if (swissSettings.forceDTVStatus > 1) {
+				switch (j) {
+					case 0: data[i + 11] = 0x57E3FFFE; break;	// extrwi	r3, r31, 1, 30
+					case 1: data[i +  9] = 0x57E3FFFE; break;	// extrwi	r3, r31, 1, 30
+					case 2: data[i + 10] = 0x57E3FFFE; break;	// extrwi	r3, r31, 1, 30
+				}
 			}
 			print_debug("Found:[%s$%i] @ %08X\n", VIGetDTVStatusSigs[j].Name, j, VIGetDTVStatus);
 		}
