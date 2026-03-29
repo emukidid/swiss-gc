@@ -1353,6 +1353,10 @@ void config_init_environ() {
 	if(value != NULL) {
 		swissSettings.waitForUSBGecko = !!atoi(value);
 	}
+	value = getenv("VIDEO_PIXEL_PERFECT");
+	if(value != NULL) {
+		swissSettings.rt4kOptim = !!atoi(value);
+	}
 }
 
 void config_update_environ() {
@@ -1369,6 +1373,11 @@ void config_update_environ() {
 		unsetenv("USBGECKO_CHANNEL");
 		unsetenv("USBGECKO_SAFE");
 	}
+	
+	if(in_range(swissSettings.aveCompat, GCDIGITAL_COMPAT, GCVIDEO_COMPAT) && swissSettings.rt4kOptim)
+		setenv("VIDEO_PIXEL_PERFECT", "1", 1);
+	else
+		unsetenv("VIDEO_PIXEL_PERFECT");
 }
 
 SwissSettings backup;
