@@ -2870,14 +2870,23 @@ void menu_loop()
 			DrawUpdateMenuButtons((curMenuLocation == ON_OPTIONS) ? curMenuSelection : MENU_NOSELECT);
 		}
 		if(devices[DEVICE_CUR] != NULL && curMenuLocation==ON_FILLIST) {
-			if(swissSettings.fileBrowserType == BROWSER_CAROUSEL) {
-				filePanel = renderFileCarousel(getSortedDirEntries(), getSortedDirEntryCount(), filePanel);
+			int fileBrowserType = swissSettings.fileBrowserType;
+			if(!fnmatch("*/apps", curDir.name, FNM_PATHNAME | FNM_CASEFOLD | FNM_LEADING_DIR)) {
+				fileBrowserType = swissSettings.appsBrowserType;
 			}
-			else if(swissSettings.fileBrowserType == BROWSER_FULLWIDTH) {
-				filePanel = renderFileFullwidth(getSortedDirEntries(), getSortedDirEntryCount(), filePanel);
+			else if(!fnmatch("*/games", curDir.name, FNM_PATHNAME | FNM_CASEFOLD | FNM_LEADING_DIR)) {
+				fileBrowserType = swissSettings.gameBrowserType;
 			}
-			else {
-				filePanel = renderFileBrowser(getSortedDirEntries(), getSortedDirEntryCount(), filePanel);
+			switch(fileBrowserType) {
+				default:
+					filePanel = renderFileBrowser(getSortedDirEntries(), getSortedDirEntryCount(), filePanel);
+					break;
+				case BROWSER_CAROUSEL:
+					filePanel = renderFileCarousel(getSortedDirEntries(), getSortedDirEntryCount(), filePanel);
+					break;
+				case BROWSER_FULLWIDTH:
+					filePanel = renderFileFullwidth(getSortedDirEntries(), getSortedDirEntryCount(), filePanel);
+					break;
 			}
 			while(padsButtonsHeld() & (PAD_BUTTON_B | PAD_BUTTON_A | PAD_BUTTON_RIGHT | PAD_BUTTON_LEFT | PAD_BUTTON_START)) {
 				VIDEO_WaitVSync (); 

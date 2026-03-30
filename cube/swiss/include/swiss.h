@@ -167,6 +167,8 @@ typedef struct {
 	int rt4kProfile;
 	u8 configDeviceId;	// see deviceHandler.h
 	int fileBrowserType;
+	int appsBrowserType;
+	int gameBrowserType;
 	int bs2Boot;
 	int showHiddenFiles;
 	int recentListLevel;	// off, lazy, on

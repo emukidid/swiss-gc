@@ -172,7 +172,9 @@ int config_update_global(bool checkConfigDevice) {
 	fprintf(fp, "InitNetwork=%s\r\n", swissSettings.initNetworkAtStart ? "Yes":"No");
 	fprintf(fp, "IGRType=%s\r\n", igrTypeStr[swissSettings.igrType]);
 	fprintf(fp, "AVECompat=%s\r\n", aveCompatStr[swissSettings.aveCompat]);
-	fprintf(fp, "FileBrowserType=%s\r\n", fileBrowserStr[swissSettings.fileBrowserType]);
+	fprintf(fp, "FileBrowserType=%s\r\n", fileBrowserTypeStr[swissSettings.fileBrowserType]);
+	fprintf(fp, "AppsBrowserType=%s\r\n", fileBrowserTypeStr[swissSettings.appsBrowserType]);
+	fprintf(fp, "GameBrowserType=%s\r\n", fileBrowserTypeStr[swissSettings.gameBrowserType]);
 	fprintf(fp, "BS2Boot=%s\r\n", bs2BootStr[swissSettings.bs2Boot]);
 	fprintf(fp, "RT4KHostIP=%s\r\n", swissSettings.rt4kHostIp);
 	fprintf(fp, "RT4KPort=%hu\r\n", swissSettings.rt4kPort);
@@ -577,7 +579,7 @@ void config_parse_legacy(char *configData, void (*progress_indicator)(char*, int
 				}
 				else if(!strcmp("FileBrowserType", name)) {
 					for(int i = 0; i < BROWSER_MAX; i++) {
-						if(!strcmp(fileBrowserStr[i], value)) {
+						if(!strcmp(fileBrowserTypeStr[i], value)) {
 							swissSettings.fileBrowserType = i;
 							break;
 						}
@@ -943,8 +945,24 @@ void config_parse_global(char *configData) {
 				}
 				else if(!strcmp("FileBrowserType", name)) {
 					for(int i = 0; i < BROWSER_MAX; i++) {
-						if(!strcmp(fileBrowserStr[i], value)) {
+						if(!strcmp(fileBrowserTypeStr[i], value)) {
 							swissSettings.fileBrowserType = i;
+							break;
+						}
+					}
+				}
+				else if(!strcmp("AppsBrowserType", name)) {
+					for(int i = 0; i < BROWSER_MAX; i++) {
+						if(!strcmp(fileBrowserTypeStr[i], value)) {
+							swissSettings.appsBrowserType = i;
+							break;
+						}
+					}
+				}
+				else if(!strcmp("GameBrowserType", name)) {
+					for(int i = 0; i < BROWSER_MAX; i++) {
+						if(!strcmp(fileBrowserTypeStr[i], value)) {
+							swissSettings.gameBrowserType = i;
 							break;
 						}
 					}
