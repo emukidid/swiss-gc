@@ -91,7 +91,7 @@ static char *tooltips_network[PAGE_NETWORK_MAX+1] = {
 
 static char *tooltips_game_global[PAGE_GAME_GLOBAL_MAX+1] = {
 	"In-Game Reset: (A + Z + Start)\n\nReboot - Perform hot reset with a compatible device\nApploader - Requires /swiss/patches/apploader.img",
-	"Load GameCube Main Menu:\n\nWhen enabled, games will be booted with the GameCube\nlogo screen and Main Menu accessible with patches applied.",
+	"Load GameCube Main Menu:\n\nWhen enabled, games will be booted with the GameCube logo\nscreen and Main Menu accessible with patches applied.\n\nRequires /swiss/patches/ipl.bin on Wii.",
 	NULL,
 	NULL,
 	"Force Video Active:\n\nA workaround for GCVideo-DVI firmware version series 3.0,\nrendered obsolete by 3.1 and later.",
@@ -110,7 +110,7 @@ static char *tooltips_game[PAGE_GAME_DEFAULTS_MAX+1] = {
 	NULL,
 	"Fix Pixel Center:\n\nNot to be confused with the \223480p Pixel Fix\224 on Wii.",
 	NULL,
-	NULL,
+	"Force Anisotropic Filter:\n\nThe GameCube's texture sampling hardware is optimised for the\ntrilinear filtering of 16 bpp textures and the bilinear filtering of\n32 bpp textures.\n\nIt is not unusual for the performance to randomly plummet once\nanisotropic filtering is enabled, so do so sparingly.",
 	NULL,
 	"Force Polling Rate:\n\nVSync - Highest compatibility\n1000Hz - Lowest input latency",
 	"Invert Camera Stick:\n\nNo - Leave C Stick as-is (default)\nX - Invert X-axis of the C Stick\nY - Invert Y-axis of the C Stick\nX&Y - Invert both axes of the C Stick",
