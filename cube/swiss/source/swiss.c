@@ -1039,6 +1039,10 @@ void load_app(ExecutableFile *fileToPatch)
 		*(vu32*)(VAR_AREA+0x30C0) = 
 		*(vu32*)(VAR_AREA+0x30C4) = ticks_to_millisecs(gettime()) / 100 + 1;
 	}
+	else {
+		initialize_card(CARD_SLOTA);
+		initialize_card(CARD_SLOTB);
+	}
 	
 	// Copy the game header to 0x80000000
 	memcpy(VAR_AREA,(void*)&GCMDisk,0x20);
