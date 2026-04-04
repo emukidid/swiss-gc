@@ -526,9 +526,7 @@ bool deviceHandler_CARD_test_a() {
 	while ((ret = CARD_ProbeEx(CARD_SLOTA, NULL, NULL)) == CARD_ERROR_BUSY);
 	if (ret == CARD_ERROR_READY) {
 		u32 id;
-
-		ret = MMCE_GetDeviceID(CARD_SLOTA, &id);
-
+		s32 ret = MMCE_GetDeviceID(CARD_SLOTA, &id);
 		if ((ret == MMCE_RESULT_VERSION && (id << 16) == EXI_MEMCARDPRO) ||
 			ret == MMCE_RESULT_READY)
 			__device_card_a.hwName = "MemCard PRO GC";
@@ -543,9 +541,7 @@ bool deviceHandler_CARD_test_b() {
 	while ((ret = CARD_ProbeEx(CARD_SLOTB, NULL, NULL)) == CARD_ERROR_BUSY);
 	if (ret == CARD_ERROR_READY) {
 		u32 id;
-
-		ret = MMCE_GetDeviceID(CARD_SLOTB, &id);
-
+		s32 ret = MMCE_GetDeviceID(CARD_SLOTB, &id);
 		if ((ret == MMCE_RESULT_VERSION && (id << 16) == EXI_MEMCARDPRO) ||
 			ret == MMCE_RESULT_READY)
 			__device_card_b.hwName = "MemCard PRO GC";
