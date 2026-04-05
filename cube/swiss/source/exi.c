@@ -22,6 +22,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ogc/exi.h>
+#include <ogc/timesupp.h>
 #include "exi.h"
 
 static void* exi_last_addr;
@@ -127,6 +128,11 @@ unsigned int exi_get_id(int chn, int dev)
 	u32 cid = 0;
 	EXI_GetID(chn,dev,&cid);
 	return cid;
+}
+
+unsigned int exi_probe(int chn)
+{
+	return EXI_Probe(chn) ? ticks_to_millisecs(gettime()) / 100 + 1 : 0;
 }
 
 unsigned char rom_read(int addr)

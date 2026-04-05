@@ -1042,6 +1042,9 @@ void load_app(ExecutableFile *fileToPatch)
 	else {
 		initialize_card(CARD_SLOTA);
 		initialize_card(CARD_SLOTB);
+		
+		*(vu32*)(VAR_AREA+0x30C0) = exi_probe(0);
+		*(vu32*)(VAR_AREA+0x30C4) = exi_probe(1);
 	}
 	
 	// Copy the game header to 0x80000000

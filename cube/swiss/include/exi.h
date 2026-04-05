@@ -23,5 +23,6 @@ void exi_read(int channel, void* data, int len);
 void exi_write(int channel, void* data, int len);
 void ipl_set_config(unsigned char c);
 unsigned int exi_get_id(int chn, int dev);
+unsigned int exi_probe(int chn);
 
 #endif
