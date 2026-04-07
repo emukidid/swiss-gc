@@ -91,6 +91,7 @@ typedef struct {
 	int cubebootInvoked;
 	int enableUSBGecko; // Debug prints over USBGecko
 	int waitForUSBGecko;
+	int simulatedMemSize;
 	int hasDVDDrive;	// 0 if none, 1 if something
 	int hasFlippyDrive;
 	int exiSpeed;

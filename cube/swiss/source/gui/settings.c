@@ -29,6 +29,7 @@
 ConfigEntry tempConfig;
 SwissSettings tempSettings;
 char *enableUSBGeckoStr[] = {"No", "Slot A", "Slot B", "Serial Port 2"};
+char *simulatedMemSizeStr[] = {"None", "16 MiB", "24 MiB", "32 MiB", "48 MiB", "64 MiB"};
 char *uiVModeStr[] = {"Auto", "480i", "480sf", "480p", "576i", "576sf", "576p"};
 char *gameVModeStr[] = {"Auto", "480i", "480sf", "240p", "960i", "480p", "1080i60", "540p60", "576i", "576sf", "288p", "1152i", "576p", "1080i50", "540p50"};
 char *forceHScaleStr[] = {"Auto", "1:1", "11:10", "9:8", "640px", "656px", "672px", "704px", "720px"};
@@ -54,6 +55,15 @@ char *fileBrowserTypeStr[] = {"Standard", "Fullwidth", "Carousel"};
 char *bs2BootStr[] = {"No", "Yes", "Sound 1", "Sound 2"};
 char *recentListLevelStr[] = {"Off", "Lazy", "On"};
 
+const int simulatedMemSizeInt[] = {
+	0,
+	16 << 20,
+	24 << 20,
+	32 << 20,
+	48 << 20,
+	64 << 20
+};
+
 static char *tooltips_global[PAGE_GLOBAL_MAX+1] = {
 	"System Boot Mode:\n\nSets development or production mode on development hardware.\nOn retail hardware with GC Loader or PicoLoader, the default\nskips the GameCube logo screen.",
 	"System Sound:\n\nSets the default audio output type used by most games",
@@ -70,7 +80,8 @@ static char *tooltips_global[PAGE_GLOBAL_MAX+1] = {
 	"Force DTV Status:\n\nDisabled - Use detect signal from the Digital AV Out (default)\nEnabled - Force detection in the case of a hardware fault\nRegion Switch - Ease transition between SD/ED TV setups",
 	"RetroTINK-4K HDMI Input:\n\nFor GCDigital compatibility mode:\n Requires FX-Framework firmware version 3.9.46.178 or later\n and RetroTINK-4K firmware version 1.9.4 or later, and using\n DV1-Direct mode.\n\nFor GCVideo compatibility mode:\n Requires GCVideo-DVI firmware version 3.0 or later.",
 	"Enable USB Gecko:\n\nIf a USB Gecko is present, messages output to the debug UART\nby Swiss/games will be redirected. When the USB host isn't\nactively reading from the USB Gecko, it may cause the system\nto hang.\n\nwiiload is also made available for iterative development.",
-	"Wait for USB Gecko:\n\nWait for the transmit buffer to be read by the USB host when full."
+	"Wait for USB Gecko:\n\nWait for the transmit buffer to be read by the USB host when full.",
+	"Simulated Memory Size:\n\nLimits the amount of memory available on development hardware."
 };
 
 static char *tooltips_interface[PAGE_INTERFACE_MAX+1] = {
@@ -267,6 +278,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 			drawSettingEntryBoolean(page, &page_y_ofs, "RetroTINK-4K HDMI Input:", swissSettings.rt4kOptim, option == SET_RT4K_OPTIM, rt4kEnable);
 			drawSettingEntryString(page, &page_y_ofs, "Enable USB Gecko:", enableUSBGeckoStr[swissSettings.enableUSBGecko], option == SET_ENABLE_USBGECKO, true);
 			drawSettingEntryBoolean(page, &page_y_ofs, "Wait for USB Gecko:", swissSettings.waitForUSBGecko, option == SET_WAIT_USBGECKO, true);
+			drawSettingEntryString(page, &page_y_ofs, "Simulated Memory Size:", simulatedMemSizeStr[swissSettings.simulatedMemSize], option == SET_SIMMEMSIZE, true);
 		}
 	}
 	else if(page_num == PAGE_INTERFACE) {
@@ -575,6 +587,12 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 			break;
 			case SET_WAIT_USBGECKO:
 				swissSettings.waitForUSBGecko ^= 1;
+			break;
+			case SET_SIMMEMSIZE:
+				do {
+					swissSettings.simulatedMemSize += direction;
+					swissSettings.simulatedMemSize = (swissSettings.simulatedMemSize + 6) % 6;
+				} while(simulatedMemSizeInt[swissSettings.simulatedMemSize] > SYS_GetPhysicalMemSize());
 			break;
 		}
 		switch(option) {

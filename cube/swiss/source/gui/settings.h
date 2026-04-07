@@ -38,6 +38,7 @@ enum SETTINGS_GLOBAL {
 	SET_RT4K_OPTIM,
 	SET_ENABLE_USBGECKO,
 	SET_WAIT_USBGECKO,
+	SET_SIMMEMSIZE,
 	SET_PAGE_1_NEXT,
 	SET_PAGE_1_SAVE,
 	SET_PAGE_1_CANCEL
@@ -167,6 +168,8 @@ enum SETTINGS_GAME {
 #define PAGE_GAME_MAX (SET_PAGE_6_CANCEL)
 
 extern char *enableUSBGeckoStr[];
+extern char *simulatedMemSizeStr[];
+extern const int simulatedMemSizeInt[];
 extern char *uiVModeStr[];
 extern char *gameVModeStr[];
 extern char *forceHScaleStr[];

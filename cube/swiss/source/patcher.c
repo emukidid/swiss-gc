@@ -23,6 +23,7 @@
 #include "ata.h"
 #include "bba.h"
 #include "cheats.h"
+#include "settings.h"
 
 char VAR_AREA[0x3100];
 
@@ -172,7 +173,7 @@ int install_code(int final)
 	
 	if (final) {
 		if (!top_addr) {
-			u32 size = SYS_GetPhysicalMemSize();
+			u32 size = simulatedMemSizeInt[swissSettings.simulatedMemSize] ? : SYS_GetPhysicalMemSize();
 			*(u32 *)0x80000034 = (u32)MEM_PHYSICAL_TO_K0(size);
 			*(u32 *)0x800000CC = VIDEO_GetCurrentTvMode();
 			*(u32 *)0x800000F0 = size;

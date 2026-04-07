@@ -155,6 +155,7 @@ int config_update_global(bool checkConfigDevice) {
 	fprintf(fp, "Swiss Video Mode=%s\r\n", uiVModeStr[swissSettings.uiVMode]);
 	fprintf(fp, "Enable USB Gecko=%s\r\n", enableUSBGeckoStr[swissSettings.enableUSBGecko]);
 	fprintf(fp, "Wait for USB Gecko=%s\r\n", swissSettings.waitForUSBGecko ? "Yes":"No");
+	fprintf(fp, "Simulated Memory Size=%s\r\n", simulatedMemSizeStr[swissSettings.simulatedMemSize]);
 	fprintf(fp, "Hide Unknown file types=%s\r\n", swissSettings.hideUnknownFileTypes ? "Yes":"No");
 	fprintf(fp, "Init DVD Drive at startup=%s\r\n", swissSettings.initDVDDriveAtStart ? "Yes":"No");
 	fprintf(fp, "Stop DVD Drive motor=%s\r\n", swissSettings.stopMotor ? "Yes":"No");
@@ -861,6 +862,15 @@ void config_parse_global(char *configData) {
 				}
 				else if(!strcmp("Wait for USB Gecko", name)) {
 					swissSettings.waitForUSBGecko = !strcmp("Yes", value);
+				}
+				else if(!strcmp("Simulated Memory Size", name)) {
+					for(int i = 0; i < 6; i++) {
+						if(!strcmp(simulatedMemSizeStr[i], value)) {
+							if(simulatedMemSizeInt[i] <= SYS_GetPhysicalMemSize())
+								swissSettings.simulatedMemSize = i;
+							break;
+						}
+					}
 				}
 				else if(!strcmp("Hide Unknown file types", name)) {
 					swissSettings.hideUnknownFileTypes = !strcmp("Yes", value);
