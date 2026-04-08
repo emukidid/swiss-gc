@@ -234,7 +234,7 @@ int install_code(int final)
 	}
 	// SD Card over EXI
 	else if(devices[DEVICE_CUR] == &__device_sd_a || devices[DEVICE_CUR] == &__device_sd_b || devices[DEVICE_CUR] == &__device_sd_c) {
-		if (strcmp(devices[DEVICE_CUR]->hwName, "Semi-Passive SD Card Adapter")) {
+		if (devices[DEVICE_CUR]->quirks & QUIRK_EXI_NO_DMA) {
 			switch (devices[DEVICE_CUR]->emulated()) {
 				case EMU_READ | EMU_BUS_ARBITER:
 				case EMU_READ | EMU_READ_SPEED | EMU_BUS_ARBITER:

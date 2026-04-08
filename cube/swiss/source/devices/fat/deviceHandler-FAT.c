@@ -342,6 +342,11 @@ s32 deviceHandler_FAT_init(file_handle* file) {
 	}
 	file->status = fatFs_Mount(file);
 	if(isSDCard) {
+		if(sdgecko_getTransferMode(slot) != CARDIO_TRANSFER_DMA)
+			file->device->quirks |=  QUIRK_EXI_NO_DMA;
+		else
+			file->device->quirks &= ~QUIRK_EXI_NO_DMA;
+		
 		if(sdgecko_getSpeed(slot) < EXI_SPEED32MHZ)
 			file->device->quirks |=  QUIRK_EXI_SPEED;
 		else

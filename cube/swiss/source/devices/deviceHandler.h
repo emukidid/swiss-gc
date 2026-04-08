@@ -126,13 +126,14 @@ typedef char* (* _fn_details)(file_handle*);
 
 // Device quirks
 #define QUIRK_NONE						0x0
-#define QUIRK_EXI_SPEED					0x1
-#define QUIRK_FDI_BYTESWAP_SIZE			0x2
-#define QUIRK_FDI_EXCLUSIVE_OPEN		0x4
-#define QUIRK_GCLOADER_NO_DISC_2		0x8
-#define QUIRK_GCLOADER_NO_PARTIAL_READ	0x10
-#define QUIRK_GCLOADER_WRITE_CONFLICT	0x20
-#define QUIRK_NO_DEINIT					0x40
+#define QUIRK_EXI_NO_DMA				0x1
+#define QUIRK_EXI_SPEED					0x2
+#define QUIRK_FDI_BYTESWAP_SIZE			0x4
+#define QUIRK_FDI_EXCLUSIVE_OPEN		0x8
+#define QUIRK_GCLOADER_NO_DISC_2		0x10
+#define QUIRK_GCLOADER_NO_PARTIAL_READ	0x20
+#define QUIRK_GCLOADER_WRITE_CONFLICT	0x40
+#define QUIRK_NO_DEINIT					0x80
 
 // Device emulated features
 #define EMU_READ			0x80000000
