@@ -213,7 +213,7 @@ typedef struct {
 
 
 
-/* File object structure (FIL) */
+/* File object structure (FFFIL) */
 
 typedef struct {
 	FFOBJID	obj;		/* Object identifier (must be the 1st member to detect invalid object pointer) */
@@ -232,7 +232,7 @@ typedef struct {
 #if !FF_FS_TINY
 	BYTE	buf[FF_MAX_SS];	/* File private data read/write window */
 #endif
-} FIL;
+} FFFIL;
 
 
 
@@ -323,13 +323,13 @@ typedef enum {
 /* FatFs Module Application Interface                           */
 /*--------------------------------------------------------------*/
 
-FRESULT f_open (FIL* fp, const TCHAR* path, BYTE mode);				/* Open or create a file */
-FRESULT f_close (FIL* fp);											/* Close an open file object */
-FRESULT f_read (FIL* fp, void* buff, UINT btr, UINT* br);			/* Read data from the file */
-FRESULT f_write (FIL* fp, const void* buff, UINT btw, UINT* bw);	/* Write data to the file */
-FRESULT f_lseek (FIL* fp, FSIZE_t ofs);								/* Move file pointer of the file object */
-FRESULT f_truncate (FIL* fp);										/* Truncate the file */
-FRESULT f_sync (FIL* fp);											/* Flush cached data of the writing file */
+FRESULT f_open (FFFIL* fp, const TCHAR* path, BYTE mode);			/* Open or create a file */
+FRESULT f_close (FFFIL* fp);										/* Close an open file object */
+FRESULT f_read (FFFIL* fp, void* buff, UINT btr, UINT* br);			/* Read data from the file */
+FRESULT f_write (FFFIL* fp, const void* buff, UINT btw, UINT* bw);	/* Write data to the file */
+FRESULT f_lseek (FFFIL* fp, FSIZE_t ofs);							/* Move file pointer of the file object */
+FRESULT f_truncate (FFFIL* fp);										/* Truncate the file */
+FRESULT f_sync (FFFIL* fp);											/* Flush cached data of the writing file */
 FRESULT f_opendir (FFDIR* dp, const TCHAR* path);					/* Open a directory */
 FRESULT f_closedir (FFDIR* dp);										/* Close an open directory */
 FRESULT f_readdir (FFDIR* dp, FILINFO* fno);						/* Read a directory item */
@@ -347,16 +347,16 @@ FRESULT f_getcwd (TCHAR* buff, UINT len);							/* Get current directory */
 FRESULT f_getfree (const TCHAR* path, DWORD* nclst, FATFS** fatfs);	/* Get number of free clusters on the drive */
 FRESULT f_getlabel (const TCHAR* path, TCHAR* label, DWORD* vsn);	/* Get volume label */
 FRESULT f_setlabel (const TCHAR* label);							/* Set volume label */
-FRESULT f_forward (FIL* fp, UINT(*func)(const BYTE*,UINT), UINT btf, UINT* bf);	/* Forward data to the stream */
-FRESULT f_expand (FIL* fp, FSIZE_t fsz, BYTE opt);					/* Allocate a contiguous block to the file */
+FRESULT f_forward (FFFIL* fp, UINT(*func)(const BYTE*,UINT), UINT btf, UINT* bf);	/* Forward data to the stream */
+FRESULT f_expand (FFFIL* fp, FSIZE_t fsz, BYTE opt);				/* Allocate a contiguous block to the file */
 FRESULT f_mount (FATFS* fs, const TCHAR* path, BYTE opt);			/* Mount/Unmount a logical drive */
 FRESULT f_mkfs (const TCHAR* path, const MKFS_PARM* opt, void* work, UINT len);	/* Create a FAT volume */
 FRESULT f_fdisk (BYTE pdrv, const LBA_t ptbl[], void* work);		/* Divide a physical drive into some partitions */
 FRESULT f_setcp (WORD cp);											/* Set current code page */
-int f_putc (TCHAR c, FIL* fp);										/* Put a character to the file */
-int f_puts (const TCHAR* str, FIL* cp);								/* Put a string to the file */
-int f_printf (FIL* fp, const TCHAR* str, ...);						/* Put a formatted string to the file */
-TCHAR* f_gets (TCHAR* buff, int len, FIL* fp);						/* Get a string from the file */
+int f_putc (TCHAR c, FFFIL* fp);									/* Put a character to the file */
+int f_puts (const TCHAR* str, FFFIL* cp);							/* Put a string to the file */
+int f_printf (FFFIL* fp, const TCHAR* str, ...);					/* Put a formatted string to the file */
+TCHAR* f_gets (TCHAR* buff, int len, FFFIL* fp);					/* Get a string from the file */
 LBA_t clst2sect (FATFS* fs, DWORD clst);							/* Get physical sector number from cluster number */
 
 /* Some API fucntions are implemented as macro */

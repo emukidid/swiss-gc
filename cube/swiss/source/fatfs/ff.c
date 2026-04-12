@@ -59,7 +59,7 @@
 /* Additional file access control and file status flags for internal use */
 #define FA_SEEKEND	0x20	/* Seek to end of the file on file open */
 #define FA_MODIFIED	0x40	/* File has been modified */
-#define FA_DIRTY	0x80	/* FIL.buf[] needs to be written-back */
+#define FA_DIRTY	0x80	/* FFFIL.buf[] needs to be written-back */
 
 
 /* Additional file attribute bits for internal use */
@@ -1652,7 +1652,7 @@ static DWORD create_chain (	/* 0:No free cluster, 1:Internal error, 0xFFFFFFFF:D
 /*-----------------------------------------------------------------------*/
 
 static DWORD clmt_clust (	/* <2:Error, >=2:Cluster number */
-	FIL* fp,		/* Pointer to the file object */
+	FFFIL* fp,		/* Pointer to the file object */
 	FSIZE_t ofs		/* File offset to be converted to cluster# */
 )
 {
@@ -3709,7 +3709,7 @@ static FRESULT mount_volume (	/* FR_OK(0): successful, !=0: an error occurred */
 /*-----------------------------------------------------------------------*/
 
 static FRESULT validate (	/* Returns FR_OK or FR_INVALID_OBJECT */
-	FFOBJID* obj,			/* Pointer to the FFOBJID, the 1st member in the FIL/FFDIR structure, to check validity */
+	FFOBJID* obj,			/* Pointer to the FFOBJID, the 1st member in the FFFIL/FFDIR structure, to check validity */
 	FATFS** rfs				/* Pointer to pointer to the owner filesystem object to return */
 )
 {
@@ -3814,7 +3814,7 @@ FRESULT f_mount (
 /*-----------------------------------------------------------------------*/
 
 FRESULT f_open (
-	FIL* fp,			/* Pointer to the blank file object */
+	FFFIL* fp,			/* Pointer to the blank file object */
 	const TCHAR* path,	/* Pointer to the file name */
 	BYTE mode			/* Access mode and open mode flags */
 )
@@ -4011,7 +4011,7 @@ FRESULT f_open (
 /*-----------------------------------------------------------------------*/
 
 FRESULT f_read (
-	FIL* fp, 	/* Open file to be read */
+	FFFIL* fp, 	/* Open file to be read */
 	void* buff,	/* Data buffer to store the read data */
 	UINT btr,	/* Number of bytes to read */
 	UINT* br	/* Number of bytes read */
@@ -4135,7 +4135,7 @@ FRESULT f_read (
 /*-----------------------------------------------------------------------*/
 
 FRESULT f_write (
-	FIL* fp,			/* Open file to be written */
+	FFFIL* fp,			/* Open file to be written */
 	const void* buff,	/* Data to be written */
 	UINT btw,			/* Number of bytes to write */
 	UINT* bw			/* Number of bytes written */
@@ -4284,7 +4284,7 @@ FRESULT f_write (
 /*-----------------------------------------------------------------------*/
 
 FRESULT f_sync (
-	FIL* fp		/* Open file to be synced */
+	FFFIL* fp		/* Open file to be synced */
 )
 {
 	FRESULT res;
@@ -4365,7 +4365,7 @@ FRESULT f_sync (
 /*-----------------------------------------------------------------------*/
 
 FRESULT f_close (
-	FIL* fp		/* Open file to be closed */
+	FFFIL* fp		/* Open file to be closed */
 )
 {
 	FRESULT res;
@@ -4621,7 +4621,7 @@ FRESULT f_getcwd (
 /*-----------------------------------------------------------------------*/
 
 FRESULT f_lseek (
-	FIL* fp,		/* Pointer to the file object */
+	FFFIL* fp,		/* Pointer to the file object */
 	FSIZE_t ofs		/* File pointer from top of file */
 )
 {
@@ -5125,7 +5125,7 @@ FRESULT f_getfree (
 /*-----------------------------------------------------------------------*/
 
 FRESULT f_truncate (
-	FIL* fp		/* Pointer to the file object */
+	FFFIL* fp		/* Pointer to the file object */
 )
 {
 	FRESULT res;
@@ -5822,7 +5822,7 @@ FRESULT f_setlabel (
 /*-----------------------------------------------------------------------*/
 
 FRESULT f_expand (
-	FIL* fp,		/* Pointer to the file object */
+	FFFIL* fp,		/* Pointer to the file object */
 	FSIZE_t fsz,	/* File size to be expanded to */
 	BYTE opt		/* Operation mode 0:Find and prepare or 1:Find and allocate */
 )
@@ -5918,7 +5918,7 @@ FRESULT f_expand (
 /*-----------------------------------------------------------------------*/
 
 FRESULT f_forward (
-	FIL* fp, 						/* Pointer to the file object */
+	FFFIL* fp, 						/* Pointer to the file object */
 	UINT (*func)(const BYTE*,UINT),	/* Pointer to the streaming function */
 	UINT btf,						/* Number of bytes to forward */
 	UINT* bf						/* Pointer to number of bytes forwarded */
@@ -6687,7 +6687,7 @@ FRESULT f_fdisk (
 TCHAR* f_gets (
 	TCHAR* buff,	/* Pointer to the buffer to store read string */
 	int len,		/* Size of string buffer (items) */
-	FIL* fp			/* Pointer to the file object */
+	FFFIL* fp		/* Pointer to the file object */
 )
 {
 	int nc = 0;
@@ -6822,7 +6822,7 @@ TCHAR* f_gets (
 /* Output buffer and work area */
 
 typedef struct {
-	FIL *fp;		/* Pointer to the writing file */
+	FFFIL *fp;		/* Pointer to the writing file */
 	int idx, nchr;	/* Write index of buf[] (-1:error), number of written encoding units */
 #if FF_USE_LFN && FF_LFN_UNICODE == 1
 	WCHAR hs;
@@ -6982,7 +6982,7 @@ static int putc_flush (putbuff* pb)
 
 /* Initialize write buffer */
 
-static void putc_init (putbuff* pb, FIL* fp)
+static void putc_init (putbuff* pb, FFFIL* fp)
 {
 	memset(pb, 0, sizeof (putbuff));
 	pb->fp = fp;
@@ -6992,7 +6992,7 @@ static void putc_init (putbuff* pb, FIL* fp)
 
 int f_putc (
 	TCHAR c,	/* A character to be output */
-	FIL* fp		/* Pointer to the file object */
+	FFFIL* fp	/* Pointer to the file object */
 )
 {
 	putbuff pb;
@@ -7012,7 +7012,7 @@ int f_putc (
 
 int f_puts (
 	const TCHAR* str,	/* Pointer to the string to be output */
-	FIL* fp				/* Pointer to the file object */
+	FFFIL* fp			/* Pointer to the file object */
 )
 {
 	putbuff pb;
@@ -7154,7 +7154,7 @@ static void ftoa (
 
 
 int f_printf (
-	FIL* fp,			/* Pointer to the file object */
+	FFFIL* fp,			/* Pointer to the file object */
 	const TCHAR* fmt,	/* Pointer to the format string */
 	...					/* Optional arguments... */
 )

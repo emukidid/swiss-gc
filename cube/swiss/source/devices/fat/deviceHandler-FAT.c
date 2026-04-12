@@ -166,7 +166,7 @@ s64 deviceHandler_FAT_seekFile(file_handle* file, s64 where, u32 type){
 
 s32 deviceHandler_FAT_readFile(file_handle* file, void* buffer, u32 length) {
 	if(!file->ffsFp) {
-		FIL* fp = malloc(sizeof(FIL));
+		FFFIL* fp = malloc(sizeof(FFFIL));
 		if(f_open(fp, file->name, FA_READ) != FR_OK) {
 			free(fp);
 			return -1;
@@ -191,7 +191,7 @@ s32 deviceHandler_FAT_readFile(file_handle* file, void* buffer, u32 length) {
 
 s32 deviceHandler_FAT_writeFile(file_handle* file, const void* buffer, u32 length) {
 	if(!file->ffsFp) {
-		FIL* fp = malloc(sizeof(FIL));
+		FFFIL* fp = malloc(sizeof(FFFIL));
 		if(f_open(fp, file->name, FA_CREATE_ALWAYS | FA_WRITE) != FR_OK) {
 			free(fp);
 			return -1;

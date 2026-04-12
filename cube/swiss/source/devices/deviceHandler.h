@@ -62,7 +62,7 @@ typedef struct {
 	u16 blockSize;
 	s32 status;            	// is the device ok
 	void *fp;				// file pointer
-	FIL* ffsFp;				// file pointer (FATFS)
+	FFFIL* ffsFp;			// file pointer (FATFS)
 	file_meta *meta;
 	u8 other[128];			// Store anything else we want here
 	void* uiObj;			// UI associated with this file_handle
