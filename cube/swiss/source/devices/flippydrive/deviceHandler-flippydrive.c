@@ -80,7 +80,7 @@ s32 deviceHandler_Flippy_statFile(file_handle* file) {
 	flippyfileinfo* fp = memalign(32, sizeof(flippyfileinfo));
 	int ret = flippy_open(fp, getDevicePath(file->name), FLIPPY_FLAG_DEFAULT);
 	if(ret == FLIPPY_RESULT_OK) {
-		file->size = fp->file.size;
+		file->size     = fp->file.size;
 		file->fileType = IS_FILE;
 		flippy_close(fp);
 	}
@@ -114,21 +114,20 @@ s32 deviceHandler_Flippy_readFile(file_handle* file, void* buffer, u32 length) {
 		if(endsWith(file->name,".fdi") && (getDeviceFromPath(file->name)->quirks & QUIRK_FDI_EXCLUSIVE_OPEN)) {
 			return -1;
 		}
-		file->fp = memalign(32, sizeof(flippyfileinfo));
+		flippyfileinfo* fp = memalign(32, sizeof(flippyfileinfo));
 		if((getDeviceFromPath(file->name) == &__device_flippyflash ?
-			flippy_flash_open(file->fp, getDevicePath(file->name), defaultFlags(file)) :
-			flippy_open(file->fp, getDevicePath(file->name), defaultFlags(file))) != FLIPPY_RESULT_OK) {
-			free(file->fp);
-			file->fp = NULL;
+			flippy_flash_open(fp, getDevicePath(file->name), defaultFlags(file)) :
+			flippy_open(fp, getDevicePath(file->name), defaultFlags(file))) != FLIPPY_RESULT_OK) {
+			free(fp);
 			return -1;
 		}
-		flippyfileinfo* fp = file->fp;
 		if(endsWith(file->name,".fdi") && (getDeviceFromPath(file->name)->quirks & QUIRK_FDI_BYTESWAP_SIZE)) {
 			if(fp->file.size != file->size) {
 				fp->file.size = __builtin_bswap32(fp->file.size >> 9 << 8) << 9;
 			}
 		}
-		file->size = fp->file.size;
+		file->fp       = fp;
+		file->size     = fp->file.size;
 		file->fileType = IS_FILE;
 	}
 	if(file->offset > file->size) {
@@ -146,16 +145,15 @@ s32 deviceHandler_Flippy_readFile(file_handle* file, void* buffer, u32 length) {
 
 s32 deviceHandler_Flippy_writeFile(file_handle* file, const void* buffer, u32 length) {
 	if(!file->fp) {
-		file->fp = memalign(32, sizeof(flippyfileinfo));
+		flippyfileinfo* fp = memalign(32, sizeof(flippyfileinfo));
 		if((getDeviceFromPath(file->name) == &__device_flippyflash ?
-			flippy_flash_open(file->fp, getDevicePath(file->name), FLIPPY_FLAG_DEFAULT | FLIPPY_FLAG_WRITE) :
-			flippy_open(file->fp, getDevicePath(file->name), FLIPPY_FLAG_DEFAULT | FLIPPY_FLAG_WRITE)) != FLIPPY_RESULT_OK) {
-			free(file->fp);
-			file->fp = NULL;
+			flippy_flash_open(fp, getDevicePath(file->name), FLIPPY_FLAG_DEFAULT | FLIPPY_FLAG_WRITE) :
+			flippy_open(fp, getDevicePath(file->name), FLIPPY_FLAG_DEFAULT | FLIPPY_FLAG_WRITE)) != FLIPPY_RESULT_OK) {
+			free(fp);
 			return -1;
 		}
-		flippyfileinfo* fp = file->fp;
-		file->size = fp->file.size;
+		file->fp       = fp;
+		file->size     = fp->file.size;
 		file->fileType = IS_FILE;
 	}
 	if(flippy_pwrite(file->fp, buffer, length, file->offset) != FLIPPY_RESULT_OK) {

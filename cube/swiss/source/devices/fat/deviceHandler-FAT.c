@@ -145,12 +145,14 @@ s32 deviceHandler_FAT_readDir(file_handle* ffile, file_handle** dir, u32 type) {
 
 s32 deviceHandler_FAT_statFile(file_handle* file) {
 	FILINFO entry;
-	int ret = f_stat(file->name, &entry);
+	FATFS* fatfs;
+	int ret = f_stat(file->name, &entry, &fatfs);
 	if(ret == FR_OK) {
 		file->fileBase   = entry.fclust;
 		file->size       = entry.fsize;
 		file->fileAttrib = entry.fattrib;
 		file->fileType   = (entry.fattrib & AM_DIR) ? IS_DIR : IS_FILE;
+		file->blockSize  = fatfs->ssize;
 	}
 	return ret;
 }
@@ -164,15 +166,17 @@ s64 deviceHandler_FAT_seekFile(file_handle* file, s64 where, u32 type){
 
 s32 deviceHandler_FAT_readFile(file_handle* file, void* buffer, u32 length) {
 	if(!file->ffsFp) {
-		file->ffsFp = malloc(sizeof(FIL));
-		if(f_open(file->ffsFp, file->name, FA_READ) != FR_OK) {
-			free(file->ffsFp);
-			file->ffsFp = NULL;
+		FIL* fp = malloc(sizeof(FIL));
+		if(f_open(fp, file->name, FA_READ) != FR_OK) {
+			free(fp);
 			return -1;
 		}
-		file->fileBase = file->ffsFp->obj.sclust;
-		file->size     = file->ffsFp->obj.objsize;
-		file->fileType = IS_FILE;
+		file->ffsFp     = fp;
+		FATFS* fatfs    = fp->obj.fs;
+		file->fileBase  = fp->obj.sclust;
+		file->size      = fp->obj.objsize;
+		file->fileType  = IS_FILE;
+		file->blockSize = fatfs->ssize;
 	}
 	f_lseek(file->ffsFp, file->offset);
 	
@@ -187,15 +191,17 @@ s32 deviceHandler_FAT_readFile(file_handle* file, void* buffer, u32 length) {
 
 s32 deviceHandler_FAT_writeFile(file_handle* file, const void* buffer, u32 length) {
 	if(!file->ffsFp) {
-		file->ffsFp = malloc(sizeof(FIL));
-		if(f_open(file->ffsFp, file->name, FA_CREATE_ALWAYS | FA_WRITE) != FR_OK) {
-			free(file->ffsFp);
-			file->ffsFp = NULL;
+		FIL* fp = malloc(sizeof(FIL));
+		if(f_open(fp, file->name, FA_CREATE_ALWAYS | FA_WRITE) != FR_OK) {
+			free(fp);
 			return -1;
 		}
-		file->fileBase = file->ffsFp->obj.sclust;
-		file->size     = file->ffsFp->obj.objsize;
-		file->fileType = IS_FILE;
+		file->ffsFp     = fp;
+		FATFS* fatfs    = fp->obj.fs;
+		file->fileBase  = fp->obj.sclust;
+		file->size      = fp->obj.objsize;
+		file->fileType  = IS_FILE;
+		file->blockSize = fatfs->ssize;
 		
 		f_expand(file->ffsFp, file->offset + length, 1);
 	}
@@ -390,7 +396,8 @@ s32 deviceHandler_FAT_renameFile(file_handle* file, char* name) {
 
 s32 deviceHandler_FAT_hideFile(file_handle* file, bool hide) {
 	FILINFO entry;
-	int ret = f_stat(file->name, &entry);
+	FATFS* fatfs;
+	int ret = f_stat(file->name, &entry, &fatfs);
 	if(ret == FR_OK && !!(entry.fattrib & AM_HID) ^ hide)
 		ret = f_chmod(file->name, hide ? AM_HID : 0, AM_HID);
 	return ret;

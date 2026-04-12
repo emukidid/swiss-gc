@@ -105,8 +105,9 @@ s32 deviceHandler_KunaiGC_statFile(file_handle* file) {
     struct lfs_info entry;
     int ret = lfs_stat(lfs, getDevicePath(file->name), &entry);
     if (ret == LFS_ERR_OK) {
-        file->size     = entry.size;
-        file->fileType = (entry.type == LFS_TYPE_DIR) ? IS_DIR : IS_FILE;
+        file->size      = entry.size;
+        file->fileType  = (entry.type == LFS_TYPE_DIR) ? IS_DIR : IS_FILE;
+        file->blockSize = lfs->cfg->block_size;
     }
     return ret;
 }
@@ -120,13 +121,14 @@ s64 deviceHandler_KunaiGC_seekFile(file_handle* file, s64 where, u32 type) {
 
 s32 deviceHandler_KunaiGC_readFile(file_handle* file, void* buffer, u32 length) {
     if (!file->fp) {
-        file->fp = malloc(sizeof(lfs_file_t));
-        if (lfs_file_open(lfs, file->fp, getDevicePath(file->name), LFS_O_RDONLY) != LFS_ERR_OK) {
-            free(file->fp);
-            file->fp = NULL;
+        lfs_file_t *fp = malloc(sizeof(lfs_file_t));
+        if (lfs_file_open(lfs, fp, getDevicePath(file->name), LFS_O_RDONLY) != LFS_ERR_OK) {
+            free(fp);
             return -1;
         }
-        file->fileType = IS_FILE;
+        file->fp        = fp;
+        file->fileType  = IS_FILE;
+        file->blockSize = lfs->cfg->block_size;
     }
     
     lfs_file_seek(lfs, file->fp, file->offset, LFS_SEEK_SET);
@@ -138,13 +140,14 @@ s32 deviceHandler_KunaiGC_readFile(file_handle* file, void* buffer, u32 length) 
 
 s32 deviceHandler_KunaiGC_writeFile(file_handle* file, const void* buffer, u32 length) {
     if (!file->fp) {
-        file->fp = malloc(sizeof(lfs_file_t));
-        if (lfs_file_open(lfs, file->fp, getDevicePath(file->name), LFS_O_WRONLY | LFS_O_CREAT | LFS_O_TRUNC) != LFS_ERR_OK) {
-            free(file->fp);
-            file->fp = NULL;
+        lfs_file_t *fp = malloc(sizeof(lfs_file_t));
+        if (lfs_file_open(lfs, fp, getDevicePath(file->name), LFS_O_WRONLY | LFS_O_CREAT | LFS_O_TRUNC) != LFS_ERR_OK) {
+            free(fp);
             return -1;
         }
-        file->fileType = IS_FILE;
+        file->fp        = fp;
+        file->fileType  = IS_FILE;
+        file->blockSize = lfs->cfg->block_size;
     }
     
     lfs_file_seek(lfs, file->fp, file->offset, LFS_SEEK_SET);

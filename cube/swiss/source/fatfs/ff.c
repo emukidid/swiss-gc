@@ -4969,7 +4969,8 @@ FRESULT f_findfirst (
 
 FRESULT f_stat (
 	const TCHAR* path,	/* Pointer to the file path */
-	FILINFO* fno		/* Pointer to file information to return */
+	FILINFO* fno,		/* Pointer to file information to return */
+	FATFS** fatfs		/* Pointer to a pointer to return corresponding filesystem object */
 )
 {
 	FRESULT res;
@@ -4982,6 +4983,7 @@ FRESULT f_stat (
 	res = mount_volume(&path, &fs, 0);
 
 	if (res == FR_OK) {
+		*fatfs = fs;
 		dj.obj.fs = fs;
 		INIT_NAMEBUFF(fs);
 		res = follow_path(&dj, path);	/* Follow the file path */
