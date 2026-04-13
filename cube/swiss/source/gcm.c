@@ -593,13 +593,9 @@ int patch_gcm(ExecutableFile *filesToPatch, int numToPatch) {
 		uiDrawObj_t* progBox = DrawPublish(DrawProgressBar(true, 0, txtbuffer));
 		const char* message = NULL;
 		
-		u32 sizeToRead = (fileToPatch->size + 31) & ~31;
-		void *buffer = memalign(32, sizeToRead);
-		
-		devices[DEVICE_CUR]->seekFile(fileToPatch->file,fileToPatch->offset,DEVICE_HANDLER_SEEK_SET);
-		int ret = devices[DEVICE_CUR]->readFile(fileToPatch->file,buffer,sizeToRead);
-		print_debug("Read from %08X Size %08X - Result: %08X\n", fileToPatch->offset, sizeToRead, ret);
-		if(ret != sizeToRead) {
+		u32 sizeToRead = (fileToPatch->size + 31) & ~31, sizeToWrite;
+		void* buffer = readFileBlockAligned(fileToPatch->file, fileToPatch->offset, sizeToRead);
+		if(!buffer) {
 			message = "Failed to read file!";
 			goto fail;
 		}
@@ -615,6 +611,7 @@ int patch_gcm(ExecutableFile *filesToPatch, int numToPatch) {
 				filesToPatch[i].size = filesToPatch[j].size;
 				if(filesToPatch[j].patchFile) {
 					filesToPatch[i].patchFile = calloc(1, sizeof(file_handle));
+					filesToPatch[i].patchFile->device = filesToPatch[j].patchFile->device;
 					strcpy(filesToPatch[i].patchFile->name, filesToPatch[j].patchFile->name);
 				}
 				goto fail;
@@ -685,15 +682,21 @@ int patch_gcm(ExecutableFile *filesToPatch, int numToPatch) {
 			
 			// File handle for a patch we might need to write
 			fileToPatch->patchFile = calloc(1, sizeof(file_handle));
+			fileToPatch->patchFile->device = devices[DEVICE_PATCHES];
 			
-			if(devices[DEVICE_PATCHES] == &__device_fsp)
+			if(fileToPatch->patchFile->device == &__device_fsp) {
 				concatf_path(fileToPatch->patchFile->name, devices[DEVICE_PATCHES]->initial->name, "swiss/patches/game/%016llx%016llx.bin", new_hash.high64, new_hash.low64);
-			else
+				sizeToWrite = sizeToRead;
+			}
+			else {
 				concatf_path(fileToPatch->patchFile->name, devices[DEVICE_PATCHES]->initial->name, "swiss/patches/game/%08x.bin", (u32)fileToPatch->hash);
+				sizeToWrite = malloc_usable_size(buffer);
+				memset(buffer + sizeToRead, 0, sizeToWrite - sizeToRead);
+			}
 			
 			// See if this file already exists, if it does, match hash
 			if(!devices[DEVICE_PATCHES]->statFile(fileToPatch->patchFile)) {
-				if(devices[DEVICE_PATCHES]->seekFile(fileToPatch->patchFile, -sizeof(old_hash), DEVICE_HANDLER_SEEK_END) == sizeToRead &&
+				if(devices[DEVICE_PATCHES]->seekFile(fileToPatch->patchFile, -sizeof(old_hash), DEVICE_HANDLER_SEEK_END) == sizeToWrite &&
 					devices[DEVICE_PATCHES]->readFile(fileToPatch->patchFile, &old_hash, sizeof(old_hash)) == sizeof(old_hash) &&
 					XXH128_isEqual(old_hash, new_hash)) {
 					print_debug("Hash matched, no need to patch again\n");
@@ -710,14 +713,14 @@ int patch_gcm(ExecutableFile *filesToPatch, int numToPatch) {
 			// Otherwise, write a file out for this game with the patched buffer inside.
 			print_debug("Writing patch file: %s %i bytes (disc offset %08X)\n", fileToPatch->patchFile->name, fileToPatch->size, fileToPatch->offset);
 			devices[DEVICE_PATCHES]->seekFile(fileToPatch->patchFile, 0, DEVICE_HANDLER_SEEK_SET);
-			if(devices[DEVICE_PATCHES]->writeFile(fileToPatch->patchFile, buffer, sizeToRead) == sizeToRead &&
+			if(devices[DEVICE_PATCHES]->writeFile(fileToPatch->patchFile, buffer, sizeToWrite) == sizeToWrite &&
 				devices[DEVICE_PATCHES]->writeFile(fileToPatch->patchFile, &new_hash, sizeof(new_hash)) == sizeof(new_hash) &&
 				!devices[DEVICE_PATCHES]->closeFile(fileToPatch->patchFile)) {
 				num_patched++;
 			}
 			else {
 				devices[DEVICE_PATCHES]->deleteFile(fileToPatch->patchFile);
-				message = "Failed to write file!";
+				message = "Failed to write patched file!";
 				goto fail;
 			}
 		}

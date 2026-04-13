@@ -218,20 +218,16 @@ bool load_rom_ipl(DEVICEHANDLER_INTERFACE* device, void** buffer, u32* length) {
 
 		if(in_range(bs2Header.bss, 0x81300000, 0x814AF6E0)) {
 			u32 sizeToRead = (bs2Header.bss - 0x812FFFE0 + 31) & ~31;
-			void* bs2Image = memalign(32, sizeToRead);
+			void* bs2Image = readFileBlockAligned(file, 0x800, sizeToRead);
 
 			if(bs2Image) {
-				device->seekFile(file, 0x800, DEVICE_HANDLER_SEEK_SET);
-				if(device->readFile(file, bs2Image, sizeToRead) == sizeToRead) {
-					device->closeFile(file);
-					free(file);
+				device->closeFile(file);
+				free(file);
 
-					descrambler(0x800, bs2Image, sizeToRead);
-					*buffer = bs2Image;
-					*length = bs2Header.bss - 0x812FFFE0;
-					return true;
-				}
-				free(bs2Image);
+				descrambler(0x800, bs2Image, sizeToRead);
+				*buffer = bs2Image;
+				*length = bs2Header.bss - 0x812FFFE0;
+				return true;
 			}
 		}
 	}

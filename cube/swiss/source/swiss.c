@@ -1064,7 +1064,7 @@ void load_app(ExecutableFile *fileToPatch)
 				message = "Failed to read FST!";
 				goto fail_early;
 			}
-			if(devices[DEVICE_CUR] == &__device_dvd) {
+			if(fileToPatch->file->device == &__device_dvd) {
 				adjust_tgc_fst((void*)fstAddr, fileToPatch->file->fileBase + fileToPatch->tgcBase, fileToPatch->tgcFileStartArea, fileToPatch->tgcFakeOffset);
 				*(vu32*)(VAR_AREA+0x30F4) = fileToPatch->file->fileBase + fileToPatch->tgcBase;
 			}
@@ -1125,18 +1125,15 @@ void load_app(ExecutableFile *fileToPatch)
 		type = fileToPatch->type;
 		print_debug("DOL size %i\n", sizeToRead);
 		
-		buffer = memalign(32, sizeToRead);
-		print_debug("DOL buffer %08X\n", (u32)buffer);
-		if(buffer == NULL) goto fail;
-		
 		if(fileToPatch->patchFile != NULL) {
-			devices[DEVICE_PATCHES]->seekFile(fileToPatch->patchFile,0,DEVICE_HANDLER_SEEK_SET);
-			if(devices[DEVICE_PATCHES]->readFile(fileToPatch->patchFile,buffer,sizeToRead) != sizeToRead) {
-				message = "Failed to read DOL!";
+			buffer = readFileBlockAligned(fileToPatch->patchFile, 0, sizeToRead);
+			if(!buffer) {
+				message = "Failed to read patched file!";
 				goto fail;
 			}
 			
 			XXH128_hash_t old_hash, new_hash = XXH3_128bits(buffer, sizeToRead);
+			devices[DEVICE_PATCHES]->seekFile(fileToPatch->patchFile, -sizeof(old_hash), DEVICE_HANDLER_SEEK_END);
 			if(devices[DEVICE_PATCHES]->readFile(fileToPatch->patchFile, &old_hash, sizeof(old_hash)) != sizeof(old_hash) ||
 				!XXH128_isEqual(old_hash, new_hash)) {
 				devices[DEVICE_PATCHES]->deleteFile(fileToPatch->patchFile);
@@ -1146,8 +1143,8 @@ void load_app(ExecutableFile *fileToPatch)
 			}
 		}
 		else {
-			devices[DEVICE_CUR]->seekFile(fileToPatch->file,fileToPatch->offset,DEVICE_HANDLER_SEEK_SET);
-			if(devices[DEVICE_CUR]->readFile(fileToPatch->file,buffer,sizeToRead) != sizeToRead) {
+			buffer = readFileBlockAligned(fileToPatch->file, fileToPatch->offset, sizeToRead);
+			if(!buffer) {
 				message = "Failed to read DOL!";
 				goto fail;
 			}

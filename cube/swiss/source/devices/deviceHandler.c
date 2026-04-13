@@ -348,7 +348,7 @@ void* readFileBlockAligned(file_handle *file, u32 offset, u32 length) {
 		u32 sizeToRead = blockOffset + length;
 		u32 alignedLength = (sizeToRead + file->blockSize - 1) & ~(file->blockSize - 1);
 
-		void *buffer = memalign(32, alignedLength);
+		void *buffer = memalign(32, (alignedLength + 512 - 1) & ~(512 - 1));
 		if(!buffer) return NULL;
 
 		file->device->seekFile(file, alignedOffset, DEVICE_HANDLER_SEEK_SET);
@@ -356,10 +356,10 @@ void* readFileBlockAligned(file_handle *file, u32 offset, u32 length) {
 			free(buffer);
 			return NULL;
 		}
-		return memmove(buffer, buffer + blockOffset, length);
+		return blockOffset ? memmove(buffer, buffer + blockOffset, length) : buffer;
 	}
 
-	void *buffer = memalign(32, length);
+	void *buffer = memalign(32, (length + 512 - 1) & ~(512 - 1));
 	if(!buffer) return NULL;
 
 	file->device->seekFile(file, offset, DEVICE_HANDLER_SEEK_SET);

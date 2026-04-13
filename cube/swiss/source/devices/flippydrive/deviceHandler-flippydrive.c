@@ -80,8 +80,9 @@ s32 deviceHandler_Flippy_statFile(file_handle* file) {
 	flippyfileinfo* fp = memalign(32, sizeof(flippyfileinfo));
 	int ret = flippy_open(fp, getDevicePath(file->name), FLIPPY_FLAG_DEFAULT);
 	if(ret == FLIPPY_RESULT_OK) {
-		file->size     = fp->file.size;
-		file->fileType = IS_FILE;
+		file->size      = fp->file.size;
+		file->fileType  = IS_FILE;
+		file->blockSize = endsWith(file->name,".fdi") ? 4096 : 512;
 		flippy_close(fp);
 	}
 	free(fp);
