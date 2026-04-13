@@ -3,7 +3,9 @@
 *.elf
 *.map
 *.o
+/apploader.img
 /cube/packer/SDLOADER.BIN
+/cube/packer/SDLOADER.ELF
 /cube/patches/disassembly
 /cube/swiss/source/patches/*.bin.s
 /cube/swiss/source/patches/*_bin.h
@@ -12,3 +14,5 @@
 /swiss_r*
 build
 dist
+.devkitpro
+.vscode

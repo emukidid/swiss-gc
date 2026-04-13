@@ -19,6 +19,14 @@
 #include "sram.h"
 #include "rt4k.h"
 
+// VMC picker and creation (from cm_vmc.c)
+#define VMC_PICK_CANCEL -1
+#define VMC_PICK_AUTO   -2
+#define VMC_PICK_CREATE -3
+int cm_vmc_picker(const char *current_filename, int game_region);
+const char *cm_vmc_picker_filename(void);
+bool cm_vmc_create(int game_region, char *out_filename, int out_size);
+
 #define page_x_ofs_key (30)
 #define page_x_ofs_val (410)
 #define page_y_line (25)
@@ -112,7 +120,8 @@ static char *tooltips_game_global[PAGE_GAME_GLOBAL_MAX+1] = {
 	"WiiRD debugging:\n\nDisabled - Boot as normal (default)\nEnabled - This will start a game with the WiiRD debugger enabled & paused\n\nThe WiiRD debugger takes up more memory and can cause issues."
 };
 
-static char *tooltips_game[PAGE_GAME_DEFAULTS_MAX+1] = {
+// Tooltips for PAGE_GAME_DEFAULTS (no Memory Card A/B entries)
+static char *tooltips_game_defaults[PAGE_GAME_DEFAULTS_MAX+1] = {
 	NULL,
 	NULL,
 	NULL,
@@ -131,6 +140,33 @@ static char *tooltips_game[PAGE_GAME_DEFAULTS_MAX+1] = {
 	"Emulate Read Speed:\n\nNo - Start transfer immediately (default)\nYes - Delay transfer to simulate the GameCube disc drive\nWii - Delay transfer to simulate the Wii disc drive\n\nThis is necessary to avoid programming mistakes obfuscated by\nthe original medium, or for speedrunning.",
 	"Emulate Broadband Adapter:\n\nOnly available with the File Service Protocol or an initialised\nETH2GC/GCNET module, where memory constraints permit.\n\nPackets not destined for the hypervisor are forwarded to the\nvirtual MAC. The virtual MAC address is the same as the\nphysical MAC. The physical MAC/PHY retain their configuration\nfrom Swiss, including link speed.",
 	"Disable Memory Card:\n\nSome games misbehave when unexpected devices are present in\nthe memory card slots. When selected, the device will be hidden\nfrom the game if present at boot time.",
+	"Disable Hypervisor:\n\nDisables all features and bugfixes relying upon the hypervisor,\nalong with prepatching and patch persistence.\n\nOnly available to devices attached to the DVD Interface.",
+	"Prefer Clean Boot:\n\nWhen enabled, the GameCube will be reset and the game booted\nthrough normal processes with no changes applied.\nRegion restrictions may be applicable.\n\nOnly available to devices attached to the DVD Interface.",
+	"RetroTINK-4K Profile:\n\nPresses a profile button through a configured ser2net TCP\nconnection to the RetroTINK-4K's serial port."
+};
+
+// Tooltips for PAGE_GAME (has Memory Card A/B entries at indices 18-19)
+static char *tooltips_game[PAGE_GAME_MAX+1] = {
+	NULL,
+	NULL,
+	NULL,
+	"Force Vertical Offset:\n\n+0 - Standard value\n-2 - GCVideo-DVI compatible (480i)\n-3 - GCVideo-DVI compatible (default)\n-4 - GCVideo-DVI compatible (240p)\n-12 - Datapath VisionRGB (480p)",
+	"Force Vertical Filter:\n\nFor 480i & 576i:\n Auto - Do nothing (default)\n\nFor 240p & 288p:\n Auto - Equivalent to 0 (default)\n 0 - 50%/50% blend with lower lines\n 1 - 50%/50% blend with upper lines\n 2 - Discard even lines\n\nFor other video modes:\n Auto - Equivalent to 0 (default)\n 0 - 3\327MSAA resolve only\n 1 - 18.75%/62.5%/18.75% blend\n 2 - 25%/50%/25% blend (deflicker)",
+	NULL,
+	"Fix Pixel Center:\n\nNot to be confused with the \223480p Pixel Fix\224 on Wii.",
+	NULL,
+	NULL,
+	NULL,
+	"Force Polling Rate:\n\nVSync - Highest compatibility\n1000Hz - Lowest input latency",
+	"Invert Camera Stick:\n\nNo - Leave C Stick as-is (default)\nX - Invert X-axis of the C Stick\nY - Invert Y-axis of the C Stick\nX&Y - Invert both axes of the C Stick",
+	"Swap Camera Stick:\n\nNo - Leave C Stick as-is (default)\nX - Swap X-axis of the C Stick with the Control Stick\nY - Swap Y-axis of the C Stick with the Control Stick\nX&Y - Swap both axes of the C Stick with the Control Stick",
+	"Digital Trigger Level:\n\nSets the threshold where the L/R Button is fully pressed.",
+	"Emulate Audio Streaming:\n\nAudio streaming is a hardware feature that allows a compressed\naudio track to be played in the background by the disc drive.\n\nEmulation is necessary for devices not attached to the\nDVD Interface, or for those not implementing it regardless.",
+	"Emulate Read Speed:\n\nNo - Start transfer immediately (default)\nYes - Delay transfer to simulate the GameCube disc drive\nWii - Delay transfer to simulate the Wii disc drive\n\nThis is necessary to avoid programming mistakes obfuscated by\nthe original medium, or for speedrunning.",
+	"Emulate Broadband Adapter:\n\nOnly available with the File Service Protocol or an initialised\nETH2GC/GCNET module, where memory constraints permit.\n\nPackets not destined for the hypervisor are forwarded to the\nvirtual MAC. The virtual MAC address is the same as the\nphysical MAC. The physical MAC/PHY retain their configuration\nfrom Swiss, including link speed.",
+	"Disable Memory Card:\n\nSome games misbehave when unexpected devices are present in\nthe memory card slots. When selected, the device will be hidden\nfrom the game if present at boot time.",
+	"Memory Card A:\n\nSelect which virtual memory card file to use as Slot A\nfor this game. Requires Emulate Memory Card to be enabled\nin Global Game Settings.\n\nAuto - Use the default card based on game region.",
+	"Memory Card B:\n\nSelect which virtual memory card file to use as Slot B\nfor this game. Requires Emulate Memory Card to be enabled\nin Global Game Settings.\n\nAuto - Use the default card based on game region.",
 	"Disable Hypervisor:\n\nDisables all features and bugfixes relying upon the hypervisor,\nalong with prepatching and patch persistence.\n\nOnly available to devices attached to the DVD Interface.",
 	"Prefer Clean Boot:\n\nWhen enabled, the GameCube will be reset and the game booted\nthrough normal processes with no changes applied.\nRegion restrictions may be applicable.\n\nOnly available to devices attached to the DVD Interface.",
 	"RetroTINK-4K Profile:\n\nPresses a profile button through a configured ser2net TCP\nconnection to the RetroTINK-4K's serial port."
@@ -159,7 +195,7 @@ char* get_tooltip(int page_num, int option) {
 		textPtr = tooltips_game_global[option];
 	}
 	else if(page_num == PAGE_GAME_DEFAULTS) {
-		textPtr = tooltips_game[option];
+		textPtr = tooltips_game_defaults[option];
 	}
 	else if(page_num == PAGE_GAME) {
 		textPtr = tooltips_game[option];
@@ -411,7 +447,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 				drawSettingEntryBoolean(page, &page_y_ofs, "Force Anisotropic Filter:", gameConfig->forceAnisotropy, option == SET_ANISO_FILTER, true);
 				drawSettingEntryString(page, &page_y_ofs, "Force Widescreen:", forceWidescreenStr[gameConfig->forceWidescreen], option == SET_WIDESCREEN, true);
 				drawSettingEntryString(page, &page_y_ofs, "Force Polling Rate:", forcePollRateStr[gameConfig->forcePollRate], option == SET_POLL_RATE, true);
-			} else {
+			} else if(option < SET_RT4K_PROFILE) {
 				drawSettingEntryString(page, &page_y_ofs, "Invert Camera Stick:", invertCStickStr[gameConfig->invertCStick], option == SET_INVERT_CAMERA, true);
 				drawSettingEntryString(page, &page_y_ofs, "Swap Camera Stick:", swapCStickStr[gameConfig->swapCStick], option == SET_SWAP_CAMERA, true);
 				sprintf(triggerLevelStr, "%hhu", gameConfig->triggerLevel);
@@ -420,8 +456,14 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 				drawSettingEntryString(page, &page_y_ofs, "Emulate Read Speed:", emulateReadSpeedStr[gameConfig->emulateReadSpeed], option == SET_READ_SPEED, emulatedReadSpeed);
 				drawSettingEntryBoolean(page, &page_y_ofs, "Emulate Broadband Adapter:", gameConfig->emulateEthernet, option == SET_EMULATE_ETHERNET, emulatedEthernet);
 				drawSettingEntryString(page, &page_y_ofs, "Disable Memory Card:", disableMemoryCardStr[gameConfig->disableMemoryCard], option == SET_DISABLE_MEMCARD, enabledHypervisor);
+				{
+					bool emcEnabled = swissSettings.emulateMemoryCard != 0;
+					drawSettingEntryString(page, &page_y_ofs, "Memory Card A:", gameConfig->memoryCardA[0] ? gameConfig->memoryCardA : "Auto", option == SET_MEMCARD_A, emcEnabled);
+					drawSettingEntryString(page, &page_y_ofs, "Memory Card B:", gameConfig->memoryCardB[0] ? gameConfig->memoryCardB : "Auto", option == SET_MEMCARD_B, emcEnabled);
+				}
 				drawSettingEntryBoolean(page, &page_y_ofs, "Disable Hypervisor:", gameConfig->disableHypervisor, option == SET_DISABLE_HYPERVISOR, enabledCleanBoot);
 				drawSettingEntryBoolean(page, &page_y_ofs, "Prefer Clean Boot:", gameConfig->preferCleanBoot, option == SET_CLEAN_BOOT, enabledCleanBoot);
+			} else {
 				drawSettingEntryNumeric(page, &page_y_ofs, "RetroTINK-4K Profile:", gameConfig->rt4kProfile, option == SET_RT4K_PROFILE, rt4kEnable);
 				drawSettingEntryString(page, &page_y_ofs, "Reset to defaults", NULL, option == SET_DEFAULTS, true);
 			}
@@ -441,7 +483,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 				drawSettingEntryBoolean(page, &page_y_ofs, "Force Anisotropic Filter:", swissSettings.forceAnisotropy, option == SET_ANISO_FILTER, false);
 				drawSettingEntryString(page, &page_y_ofs, "Force Widescreen:", forceWidescreenStr[swissSettings.forceWidescreen], option == SET_WIDESCREEN, false);
 				drawSettingEntryString(page, &page_y_ofs, "Force Polling Rate:", forcePollRateStr[swissSettings.forcePollRate], option == SET_POLL_RATE, false);
-			} else {
+			} else if(option < SET_RT4K_PROFILE) {
 				drawSettingEntryString(page, &page_y_ofs, "Invert Camera Stick:", invertCStickStr[swissSettings.invertCStick], option == SET_INVERT_CAMERA, false);
 				drawSettingEntryString(page, &page_y_ofs, "Swap Camera Stick:", swapCStickStr[swissSettings.swapCStick], option == SET_SWAP_CAMERA, false);
 				sprintf(triggerLevelStr, "%hhu", swissSettings.triggerLevel);
@@ -450,9 +492,12 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 				drawSettingEntryString(page, &page_y_ofs, "Emulate Read Speed:", emulateReadSpeedStr[swissSettings.emulateReadSpeed], option == SET_READ_SPEED, false);
 				drawSettingEntryBoolean(page, &page_y_ofs, "Emulate Broadband Adapter:", swissSettings.emulateEthernet, option == SET_EMULATE_ETHERNET, false);
 				drawSettingEntryString(page, &page_y_ofs, "Disable Memory Card:", disableMemoryCardStr[swissSettings.disableMemoryCard], option == SET_DISABLE_MEMCARD, false);
+				drawSettingEntryString(page, &page_y_ofs, "Memory Card A:", "Auto", option == SET_MEMCARD_A, false);
+				drawSettingEntryString(page, &page_y_ofs, "Memory Card B:", "Auto", option == SET_MEMCARD_B, false);
 				drawSettingEntryBoolean(page, &page_y_ofs, "Disable Hypervisor:", swissSettings.disableHypervisor, option == SET_DISABLE_HYPERVISOR, false);
 				drawSettingEntryBoolean(page, &page_y_ofs, "Prefer Clean Boot:", swissSettings.preferCleanBoot, option == SET_CLEAN_BOOT, false);
-				drawSettingEntryNumeric(page, &page_y_ofs, "RetroTINK-4K Profile:", swissSettings.rt4kProfile, option == SET_DEFAULT_RT4K_PROFILE, false);
+			} else {
+				drawSettingEntryNumeric(page, &page_y_ofs, "RetroTINK-4K Profile:", swissSettings.rt4kProfile, option == SET_RT4K_PROFILE, false);
 				drawSettingEntryString(page, &page_y_ofs, "Reset to defaults", NULL, option == SET_DEFAULTS, false);
 			}
 		}
@@ -1019,6 +1064,44 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 					gameConfig->disableMemoryCard = (gameConfig->disableMemoryCard + 3) % 3;
 				}
 			break;
+			case SET_MEMCARD_A:
+				if(swissSettings.emulateMemoryCard) {
+					int pick;
+					do {
+						pick = cm_vmc_picker(gameConfig->memoryCardA, GCMDisk.RegionCode);
+						if (pick == VMC_PICK_CREATE) {
+							char newname[64];
+							if (cm_vmc_create(GCMDisk.RegionCode, newname, sizeof(newname))) {
+								strlcpy(gameConfig->memoryCardA, newname, sizeof(gameConfig->memoryCardA));
+								pick = 0; // Exit loop
+							}
+						}
+					} while (pick == VMC_PICK_CREATE);
+					if (pick == VMC_PICK_AUTO)
+						gameConfig->memoryCardA[0] = '\0';
+					else if (pick >= 0)
+						strlcpy(gameConfig->memoryCardA, cm_vmc_picker_filename(), sizeof(gameConfig->memoryCardA));
+				}
+			break;
+			case SET_MEMCARD_B:
+				if(swissSettings.emulateMemoryCard) {
+					int pick;
+					do {
+						pick = cm_vmc_picker(gameConfig->memoryCardB, GCMDisk.RegionCode);
+						if (pick == VMC_PICK_CREATE) {
+							char newname[64];
+							if (cm_vmc_create(GCMDisk.RegionCode, newname, sizeof(newname))) {
+								strlcpy(gameConfig->memoryCardB, newname, sizeof(gameConfig->memoryCardB));
+								pick = 0; // Exit loop
+							}
+						}
+					} while (pick == VMC_PICK_CREATE);
+					if (pick == VMC_PICK_AUTO)
+						gameConfig->memoryCardB[0] = '\0';
+					else if (pick >= 0)
+						strlcpy(gameConfig->memoryCardB, cm_vmc_picker_filename(), sizeof(gameConfig->memoryCardB));
+				}
+			break;
 			case SET_DISABLE_HYPERVISOR:
 				if(devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->location & LOC_DVD_CONNECTOR))
 					gameConfig->disableHypervisor ^= 1;
@@ -1053,17 +1136,21 @@ int show_settings(int page, int option, ConfigEntry *config) {
 	while (padsButtonsHeld() & PAD_BUTTON_A){ VIDEO_WaitVSync (); }
 	while(1) {
 		uiDrawObj_t* settingsPage = settings_draw_page(page, option, config);
-		while (!((padsButtonsHeld() & PAD_BUTTON_RIGHT) 
-			|| (padsButtonsHeld() & PAD_BUTTON_LEFT) 
-			|| (padsButtonsHeld() & PAD_BUTTON_UP) 
-			|| (padsButtonsHeld() & PAD_BUTTON_DOWN) 
+		while (!((padsButtonsHeld() & PAD_BUTTON_RIGHT)
+			|| (padsButtonsHeld() & PAD_BUTTON_LEFT)
+			|| (padsButtonsHeld() & PAD_BUTTON_UP)
+			|| (padsButtonsHeld() & PAD_BUTTON_DOWN)
 			|| (padsButtonsHeld() & PAD_BUTTON_B)
 			|| (padsButtonsHeld() & PAD_BUTTON_A)
 			|| (padsButtonsHeld() & PAD_BUTTON_Y)
 			|| (padsButtonsHeld() & PAD_TRIGGER_R)
-			|| (padsButtonsHeld() & PAD_TRIGGER_L)))
+			|| (padsButtonsHeld() & PAD_TRIGGER_L)
+			|| padsStickY() > 16 || padsStickY() < -16))
 			{ VIDEO_WaitVSync (); }
 		u16 btns = padsButtonsHeld();
+		s8 stickY = padsStickY();
+		if(stickY > 16) btns |= PAD_BUTTON_UP;
+		if(stickY < -16) btns |= PAD_BUTTON_DOWN;
 		if(btns & PAD_BUTTON_Y) {
 			char *tooltip = get_tooltip(page, option);
 			if(tooltip) {
@@ -1181,17 +1268,25 @@ int show_settings(int page, int option, ConfigEntry *config) {
 			if(page == PAGE_GAME && option == SET_DEFAULTS) {
 				settings_toggle(page, option, 0, config);
 			}
+			if(page == PAGE_GAME && (option == SET_MEMCARD_A || option == SET_MEMCARD_B)) {
+				settings_toggle(page, option, 0, config);
+			}
 		}
-		while ((padsButtonsHeld() & PAD_BUTTON_RIGHT) 
-				|| (padsButtonsHeld() & PAD_BUTTON_LEFT) 
-				|| (padsButtonsHeld() & PAD_BUTTON_UP) 
-				|| (padsButtonsHeld() & PAD_BUTTON_DOWN) 
-				|| (padsButtonsHeld() & PAD_BUTTON_B) 
-				|| (padsButtonsHeld() & PAD_BUTTON_A)
-				|| (padsButtonsHeld() & PAD_BUTTON_Y)
-				|| (padsButtonsHeld() & PAD_TRIGGER_R)
-				|| (padsButtonsHeld() & PAD_TRIGGER_L))
-			{ VIDEO_WaitVSync (); }
+		if(stickY > 16 || stickY < -16) {
+			int wait = abs(stickY) > 64 ? 2 : 5;
+			for(int w = 0; w < wait; w++) VIDEO_WaitVSync();
+		} else {
+			while ((padsButtonsHeld() & PAD_BUTTON_RIGHT)
+					|| (padsButtonsHeld() & PAD_BUTTON_LEFT)
+					|| (padsButtonsHeld() & PAD_BUTTON_UP)
+					|| (padsButtonsHeld() & PAD_BUTTON_DOWN)
+					|| (padsButtonsHeld() & PAD_BUTTON_B)
+					|| (padsButtonsHeld() & PAD_BUTTON_A)
+					|| (padsButtonsHeld() & PAD_BUTTON_Y)
+					|| (padsButtonsHeld() & PAD_TRIGGER_R)
+					|| (padsButtonsHeld() & PAD_TRIGGER_L))
+				{ VIDEO_WaitVSync (); }
+		}
 		DrawDispose(settingsPage);
 	}
 }
