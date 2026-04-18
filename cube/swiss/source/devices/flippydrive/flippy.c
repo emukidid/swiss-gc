@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2024-2025, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2024-2026, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -397,8 +397,8 @@ static flippyresult flippy_pwrite_dma(flippyfileinfo *info, const void *buf, u32
 
 	do {
 		u32 xlen = len;
-		if (xlen > 16352)
-			xlen = 16352;
+		if (xlen > 16384 - 32)
+			xlen = 16384 - 512;
 
 		DVD_SetUserData(&block, file);
 		if (!DVD_WriteDmaAsyncPrio(&block, FLIPPY_CMD_WRITE(file->handle, offset, xlen), buf, xlen ? (xlen + 31) & ~31 : 32, command_callback, 2)) {
