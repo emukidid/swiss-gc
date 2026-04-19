@@ -1406,6 +1406,8 @@ void config_update_environ() {
 		setenv("VIDEO_PIXEL_PERFECT", "1", 1);
 	else
 		unsetenv("VIDEO_PIXEL_PERFECT");
+	
+	unsetenv("WIILOAD");
 }
 
 SwissSettings backup;
