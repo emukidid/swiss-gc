@@ -1952,10 +1952,10 @@ void verify_game()
 	if(!cancelled) {
 		uiDrawObj_t *msgBox = NULL;
 		if(valid_gcm_crc32(&GCMDisk, crc)) {
-			msgBox = DrawMessageBox(D_PASS,"Passed integrity verification!\nPress A to continue.");
+			msgBox = DrawMessageBox(D_PASS,"Passed verification!\nPress A to continue.");
 		}
 		else {
-			msgBox = DrawMessageBox(D_FAIL,"Failed integrity verification!\nPress A to continue.");
+			msgBox = DrawMessageBox(D_FAIL,"Failed verification!\nPress A to continue.");
 		}
 		DrawPublish(msgBox);
 		wait_press_A();
@@ -2529,7 +2529,7 @@ uiDrawObj_t* draw_game_info() {
 	}
 	if(GCMDisk.DVDMagicWord == DVD_MAGIC) {
 		if(is_verifiable_disc(&GCMDisk)) {
-			DrawAddChild(container, DrawStyledLabel(640/2, 180, "(R) Verify", 0.6f, ALIGN_CENTER, defaultColor));
+			DrawAddChild(container, DrawStyledLabel(640/2, 180, "(R) Verify data integrity", 0.6f, ALIGN_CENTER, defaultColor));
 		}
 		sprintf(txtbuffer, "Game ID: [%.6s] Audio Streaming: [%s]", (char*)&GCMDisk, GCMDisk.AudioStreaming ? swissSettings.audioStreaming ? "Enabled" : "Unused" : "Disabled");
 		DrawAddChild(container, DrawStyledLabel(640/2, 200, txtbuffer, 0.8f, ALIGN_CENTER, defaultColor));

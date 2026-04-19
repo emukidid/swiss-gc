@@ -324,8 +324,8 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 		drawSettingEntryString(page, &page_y_ofs, "Load GameCube Main Menu:", bs2BootStr[swissSettings.bs2Boot], option == SET_BS2BOOT, true);
 		drawSettingEntryBoolean(page, &page_y_ofs, "Emulate Memory Card:", swissSettings.emulateMemoryCard, option == SET_EMULATE_MEMCARD, emulatedMemoryCard);
 		drawSettingEntryString(page, &page_y_ofs, "Disable MemCard PRO GameID:", disableMCPGameIDStr[swissSettings.disableMCPGameID], option == SET_DISABLE_MCPGAMEID, true);
-		drawSettingEntryBoolean(page, &page_y_ofs, "Force Video Active:", swissSettings.forceVideoActive, option == SET_FORCE_VIDACTIVE, enabledVideoPatches);
 		drawSettingEntryString(page, &page_y_ofs, "Disable Video Patches:", disableVideoPatchesStr[swissSettings.disableVideoPatches], option == SET_DISABLE_VIDPATCH, true);
+		drawSettingEntryBoolean(page, &page_y_ofs, "Force Video Active:", swissSettings.forceVideoActive, option == SET_FORCE_VIDACTIVE, enabledVideoPatches);
 		drawSettingEntryBoolean(page, &page_y_ofs, "Pause for resolution change:", swissSettings.pauseAVOutput, option == SET_PAUSE_AVOUTPUT, enabledHypervisor);
 		drawSettingEntryBoolean(page, &page_y_ofs, "Auto-load cheats:", swissSettings.autoCheats, option == SET_ALL_CHEATS, true);
 		drawSettingEntryBoolean(page, &page_y_ofs, "WiiRD debugging:", swissSettings.wiirdDebug, option == SET_WIIRDDBG, dbgEnable);
@@ -717,13 +717,13 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 				swissSettings.disableMCPGameID += direction;
 				swissSettings.disableMCPGameID = (swissSettings.disableMCPGameID + 4) % 4;
 			break;
-			case SET_FORCE_VIDACTIVE:
-				if(swissSettings.disableVideoPatches < 2)
-					swissSettings.forceVideoActive ^= 1;
-			break;
 			case SET_DISABLE_VIDPATCH:
 				swissSettings.disableVideoPatches += direction;
 				swissSettings.disableVideoPatches = (swissSettings.disableVideoPatches + 3) % 3;
+			break;
+			case SET_FORCE_VIDACTIVE:
+				if(swissSettings.disableVideoPatches < 2)
+					swissSettings.forceVideoActive ^= 1;
 			break;
 			case SET_PAUSE_AVOUTPUT:
 				if(devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->features & FEAT_HYPERVISOR))
@@ -742,8 +742,8 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 					swissSettings.bs2Boot = 0;
 					swissSettings.emulateMemoryCard = 0;
 					swissSettings.disableMCPGameID = 0;
-					swissSettings.forceVideoActive = 0;
 					swissSettings.disableVideoPatches = 0;
+					swissSettings.forceVideoActive = 0;
 					swissSettings.pauseAVOutput = 0;
 					swissSettings.autoCheats = 0;
 					swissSettings.wiirdDebug = 0;
@@ -1122,13 +1122,13 @@ int show_settings(int page, int option, ConfigEntry *config) {
 				if(config_update_global(true)) {
 					rt4k_init();
 					DrawDispose(msgBox);
-					msgBox = DrawPublish(DrawMessageBox(D_INFO,"Config Saved Successfully!"));
+					msgBox = DrawPublish(DrawMessageBox(D_INFO, "Successfully saved configuration!"));
 					sleep(1);
 					DrawDispose(msgBox);
 				}
 				else {
 					DrawDispose(msgBox);
-					msgBox = DrawPublish(DrawMessageBox(D_INFO,"Config Failed to Save!"));
+					msgBox = DrawPublish(DrawMessageBox(D_INFO, "Failed to save configuration!"));
 					sleep(1);
 					DrawDispose(msgBox);
 				}
