@@ -59,19 +59,17 @@ void parseParameterValue(char *tuple, ParameterValue* val) {
 	char* valEnd = NULL;
 	
 	// Check for a key and for a value
-	if((keyStart=strchr(tuple, '{'))!=NULL && (keyEnd=strchr(keyStart, ','))!=NULL) {
-		// Trim whitespace
-		keyStart++;
-		while(*keyStart==' ') keyStart++;
-		while(*keyEnd==' ') keyEnd--;
+	if((keyStart=strchr(tuple, '{'))!=NULL && (valEnd=strchr(keyStart++, '}'))!=NULL &&
+		(keyEnd=memrchr(keyStart, ',', (int)((u32)valEnd-(u32)keyStart)))!=NULL) {
 		valStart = keyEnd+1;
-		while(*valStart==' ') valStart++;	// avoid whitespace at the start of the value
-		if(((valEnd=strchr(valStart, '}'))!=NULL)) {
-			while(*valEnd==' ') valEnd--;
-			val->value = strndup(keyStart, (int)((u32)keyEnd-(u32)keyStart));
-			val->name = strndup(valStart, (int)((u32)valEnd-(u32)valStart));
-			//print_debug("Parameter with screen name: [%s] and value [%s]\n",val->name, val->value);
-		}
+		// Trim whitespace
+		while(keyStart[0]==' ') keyStart++;
+		while(keyEnd[-1]==' ') keyEnd--;
+		while(valStart[0]==' ') valStart++;	// avoid whitespace at the start of the value
+		while(valEnd[-1]==' ') valEnd--;
+		val->value = strndup(keyStart, (int)((u32)keyEnd-(u32)keyStart));
+		val->name = strndup(valStart, (int)((u32)valEnd-(u32)valStart));
+		//print_debug("Parameter with screen name: [%s] and value [%s]\n",val->name, val->value);
 	}
 }
 
