@@ -59,7 +59,17 @@ void parseParameterValue(char *tuple, ParameterValue* val) {
 	char* valEnd = NULL;
 	
 	// Check for a key and for a value
-	if((keyStart=strchr(tuple, '{'))!=NULL && (keyEnd=strchr(keyStart, ','))!=NULL) {
+	if((keyStart=strchr(tuple, '{'))!=NULL) {
+		// Find the closing brace to bound our search
+		char* closingBrace = strchr(keyStart, '}');
+		if(closingBrace == NULL) return;
+		
+		// Find the last comma before the closing brace
+		keyEnd = closingBrace - 1;
+		while(keyEnd > keyStart && *keyEnd != ',') keyEnd--;
+		
+		if(*keyEnd != ',') return; // malformed input
+		
 		// Trim whitespace
 		keyStart++;
 		while(*keyStart==' ') keyStart++;
