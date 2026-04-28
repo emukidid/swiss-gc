@@ -15,7 +15,6 @@
 #include <malloc.h>
 #include <gcm.h>
 #include <main.h>
-#include <ogc/lwp_heap.h>
 #include "dvd.h"
 #include "filelock.h"
 #include "filemeta.h"
@@ -30,26 +29,29 @@ extern BNR blankbanner;
 #define NUM_META_MAX (512)
 #define META_CACHE_SIZE (sizeof(file_meta) * NUM_META_MAX)
 
-static heap_cntrl* meta_cache = NULL;
+static void* meta_cache = NULL;
+static mspace meta_mspace = NULL;
 static lwp_t meta_thread = LWP_THREAD_NULL;
 
 void meta_free(file_meta* meta) {
-	if(meta_cache && meta) {
+	if(meta) {
 		if(meta->banner) {
 			free(meta->banner);
 			meta->banner = NULL;
 		}
-		__lwp_heap_free(meta_cache, meta);
+		free(meta);
 	}
 }
 
 file_meta* meta_alloc() {
-	if(!meta_cache){
-		meta_cache = memalign(32, sizeof(heap_cntrl));
-		__lwp_heap_init(meta_cache, memalign(32,META_CACHE_SIZE), META_CACHE_SIZE, 32);
+	if(!meta_cache) {
+		meta_cache = malloc(META_CACHE_SIZE);
+		if(meta_cache) meta_mspace = create_mspace_with_base(meta_cache, META_CACHE_SIZE, 1);
+		if(meta_mspace) mspace_set_footprint_limit(meta_mspace, META_CACHE_SIZE);
 	}
+	if(!meta_mspace) return NULL;
 
-	file_meta* meta = __lwp_heap_allocate(meta_cache, sizeof(file_meta));
+	file_meta* meta = mspace_calloc(meta_mspace, 1, sizeof(file_meta));
 	// When there's no room to allocate, kill thread
 	if(!meta) {
 		lwp_t thread = meta_thread;
@@ -73,9 +75,8 @@ file_meta* meta_alloc() {
 				}
 			}
 		}
-		meta = __lwp_heap_allocate(meta_cache, sizeof(file_meta));
+		meta = mspace_calloc(meta_mspace, 1, sizeof(file_meta));
 	}
-	memset(meta, 0, sizeof(file_meta));
 	return meta;
 }
 
