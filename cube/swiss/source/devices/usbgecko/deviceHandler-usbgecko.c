@@ -44,8 +44,8 @@ s32 deviceHandler_USBGecko_readDir(file_handle* ffile, file_handle** dir, u32 ty
 	if(!res) return -1;
 	while( (entry = usbgecko_get_entry()) != NULL ){
 		// Make sure we have room for this one
-		if(i == num_entries) {
-			++num_entries;
+		if(num_entries == i) {
+			num_entries *= 2;
 			*dir = reallocarray(*dir, num_entries, sizeof(file_handle));
 		}
 		memset(&(*dir)[i], 0, sizeof(file_handle));
@@ -56,8 +56,13 @@ s32 deviceHandler_USBGecko_readDir(file_handle* ffile, file_handle** dir, u32 ty
 			++i;
 		}
 	}
+	if(num_entries != i) {
+		num_entries = i;
+		*dir = reallocarray(*dir, num_entries, sizeof(file_handle));
+	}
+	
 	DrawDispose(msgBox);
-	return i;
+	return num_entries;
 }
 
 s64 deviceHandler_USBGecko_seekFile(file_handle* file, s64 where, u32 type){

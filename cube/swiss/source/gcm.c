@@ -822,8 +822,8 @@ int read_fst(file_handle *file, file_handle** dir, u64 *usedSpace) {
 		if(FST[offset]) {
 			if(file_offset == parent_dir_offset) {
 				//print_debug("Adding: [%03i]%s:%s offset %08X length %08X\n",i,!FST[offset] ? "File" : "Dir",filename,file_offset,size);
-				if(idx == numFiles){
-					++numFiles;
+				if(numFiles == idx) {
+					numFiles *= 2;
 					*dir = reallocarray(*dir, numFiles, sizeof(file_handle));
 				}
 				memset(&(*dir)[idx], 0, sizeof(file_handle));
@@ -842,8 +842,8 @@ int read_fst(file_handle *file, file_handle** dir, u64 *usedSpace) {
 		else {
 			// File, add it.
 			//print_debug("Adding: [%03i]%s:%s offset %08X length %08X\n",i,!FST[offset] ? "File" : "Dir",filename,file_offset,size);
-			if(idx == numFiles){
-				++numFiles;
+			if(numFiles == idx) {
+				numFiles *= 2;
 				*dir = reallocarray(*dir, numFiles, sizeof(file_handle));
 			}
 			memset(&(*dir)[idx], 0, sizeof(file_handle));
@@ -856,6 +856,10 @@ int read_fst(file_handle *file, file_handle** dir, u64 *usedSpace) {
 			(*dir)[idx].device = file->device;
 			idx++;
 		}
+	}
+	if(numFiles != idx) {
+		numFiles = idx;
+		*dir = reallocarray(*dir, numFiles, sizeof(file_handle));
 	}
 	
 	free(FST);

@@ -121,8 +121,8 @@ s32 deviceHandler_FAT_readDir(file_handle* ffile, file_handle** dir, u32 type) {
 		// Do we want this one?
 		if((type == -1 || ((entry.fattrib & AM_DIR) ? (type==IS_DIR) : (type==IS_FILE)))) {
 			// Make sure we have room for this one
-			if(i == num_entries){
-				++num_entries;
+			if(num_entries == i) {
+				num_entries *= 2;
 				*dir = reallocarray(*dir, num_entries, sizeof(file_handle));
 			}
 			memset(&(*dir)[i], 0, sizeof(file_handle));
@@ -137,10 +137,14 @@ s32 deviceHandler_FAT_readDir(file_handle* ffile, file_handle** dir, u32 type) {
 			}
 		}
 	}
+	if(num_entries != i) {
+		num_entries = i;
+		*dir = reallocarray(*dir, num_entries, sizeof(file_handle));
+	}
 	
 	f_closedir(dp);
 	free(dp);
-	return i;
+	return num_entries;
 }
 
 s32 deviceHandler_FAT_statFile(file_handle* file) {

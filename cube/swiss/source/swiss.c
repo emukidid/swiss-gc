@@ -1611,8 +1611,7 @@ bool manage_file() {
 			deviceHandler_setStatEnabled(1);
 		}
 		// Traverse this destination device and let the user select a directory to dump the file in
-		file_handle *destFile = memalign(32,sizeof(file_handle));
-		memset(destFile, 0, sizeof(file_handle));
+		file_handle *destFile = calloc(1, sizeof(file_handle));
 		
 		// Show a directory only browser and get the destination file location
 		ret = select_dest_dir(devices[DEVICE_DEST]->initial, destFile);

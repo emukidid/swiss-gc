@@ -119,8 +119,8 @@ s32 deviceHandler_Qoob_readDir(file_handle* ffile, file_handle** dir, u32 type) 
 			case QOOB_FILE_SWIS:
 			{
 				// Make sure we have room for this one
-				if(i == num_entries){
-					++num_entries;
+				if(num_entries == i) {
+					num_entries *= 2;
 					*dir = reallocarray(*dir, num_entries, sizeof(file_handle));
 				}
 				memset(&(*dir)[i], 0, sizeof(file_handle));
@@ -171,9 +171,14 @@ s32 deviceHandler_Qoob_readDir(file_handle* ffile, file_handle** dir, u32 type) 
 				break;
 		}
 	}
+	if(num_entries != i) {
+		num_entries = i;
+		*dir = reallocarray(*dir, num_entries, sizeof(file_handle));
+	}
+	
 	initial_Qoob_info.freeSpace = initial_Qoob_info.totalSpace - usedSpace;
 	DrawDispose(msgBox);
-	return i;
+	return num_entries;
 }
 
 s64 deviceHandler_Qoob_seekFile(file_handle* file, s64 where, u32 type) {

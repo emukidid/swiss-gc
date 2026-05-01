@@ -35,8 +35,8 @@ int fileComparator(const void *a1, const void *b1)
 int sortFiles(file_handle* dir, int numFiles, file_handle*** sortedDir)
 {
 	int i = 0;
-	*sortedDir = calloc(numFiles, sizeof(file_handle*));
-	if(*sortedDir) {
+	file_handle** dirEntries = calloc(numFiles, sizeof(file_handle*));
+	if(dirEntries) {
 		for(int j = 0; j < numFiles; j++) {
 			switch(dir[j].fileType) {
 				case IS_FILE:
@@ -48,10 +48,11 @@ int sortFiles(file_handle* dir, int numFiles, file_handle*** sortedDir)
 				default:
 					break;
 			}
-			(*sortedDir)[i++] = &dir[j];
+			dirEntries[i++] = &dir[j];
 		}
-		qsort(*sortedDir, i, sizeof(file_handle*), fileComparator);
+		qsort(dirEntries, i, sizeof(file_handle*), fileComparator);
 	}
+	*sortedDir = dirEntries;
 	return i;
 }
 

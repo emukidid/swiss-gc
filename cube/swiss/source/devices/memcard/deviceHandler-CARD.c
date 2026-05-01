@@ -121,8 +121,8 @@ s32 deviceHandler_CARD_readDir(file_handle* ffile, file_handle** dir, u32 type){
 	ret = CARD_FindFirst (slot, memcard_dir, true);
 	while (CARD_ERROR_NOFILE != ret) {
 		// Make sure we have room for this one
-		if(i == num_entries){
-			++num_entries;
+		if(num_entries == i) {
+			num_entries *= 2;
 			*dir = reallocarray(*dir, num_entries, sizeof(file_handle));
 		}
 		memset(&(*dir)[i], 0, sizeof(file_handle));
@@ -136,11 +136,14 @@ s32 deviceHandler_CARD_readDir(file_handle* ffile, file_handle** dir, u32 type){
 		ret = CARD_FindNext (memcard_dir);
 		++i;
 	}
-	free(memcard_dir);
+	if(num_entries != i) {
+		num_entries = i;
+		*dir = reallocarray(*dir, num_entries, sizeof(file_handle));
+	}
 	
 	initial_CARD_info[slot].freeSpace = initial_CARD_info[slot].totalSpace - usedSpace;
-
-	return i;
+	free(memcard_dir);
+	return num_entries;
 }
 
 // Finds a file based on file->name and populates file->size if found.
