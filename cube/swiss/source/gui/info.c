@@ -294,12 +294,7 @@ void show_info() {
 	uiDrawObj_t* pagePanel = NULL;
 	while (padsButtonsHeld() & PAD_BUTTON_A){ VIDEO_WaitVSync (); }
 	while(1) {
-		uiDrawObj_t* newPanel = info_draw_page(page);
-		if(pagePanel != NULL) {
-			DrawDispose(pagePanel);
-		}
-		pagePanel = newPanel;
-		DrawPublish(pagePanel);
+		pagePanel = DrawRepublish(pagePanel, info_draw_page(page));
 		while (!((padsButtonsHeld() & PAD_BUTTON_RIGHT) 
 			|| (padsButtonsHeld() & PAD_BUTTON_LEFT) 
 			|| (padsButtonsHeld() & PAD_BUTTON_B)

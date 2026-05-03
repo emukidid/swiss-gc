@@ -139,15 +139,13 @@ int initialize_disc(int streaming) {
 			wkfDetected = 1;
 		}
 
-		DrawDispose(progBar);
-		progBar = DrawPublish(DrawProgressBar(true, 0, "Resetting DVD drive - Detect Media"));
+		progBar = DrawRepublish(progBar, DrawProgressBar(true, 0, "Resetting DVD drive - Detect Media"));
 		dvd_reset();
 		npdp_start();
 		DVD_ReadID(DVDDiskID);
 		// Avoid lid open scenario
 		if((dvd_get_error()>>24) && (dvd_get_error()>>24 != 1)) {
-			DrawDispose(progBar);
-			progBar = DrawPublish(DrawProgressBar(true, 0, "Possible DVD Backup - Enabling Patches"));
+			progBar = DrawRepublish(progBar, DrawProgressBar(true, 0, "Possible DVD Backup - Enabling Patches"));
 			dvd_enable_patches();
 			if(!dvd_get_error()) {
 				patched=DEBUG_MODE;

@@ -167,8 +167,7 @@ void wkfWriteFlash(unsigned char *menuImg, unsigned char *firmwareImg) {
 	print_debug("Firmware upgrade in progress.\n");
 	print_debug("Please do not power off your GC/Wii.\n");
 	
-	uiDrawObj_t* progBar = DrawProgressBar(false, 0, "Menu flashing in progress. Do NOT Power Off !!");
-	DrawPublish(progBar);
+	uiDrawObj_t* progBar = DrawPublish(DrawProgressBar(false, 0, "Menu flashing in progress. Do NOT Power Off !!"));
 	for(page_num = 0; page_num < (0x1D0000/0x1000); page_num++) {
 		print_debug("Erasing Flash Page at %08X\n",page_num<<12);
 		__wkfSpiUnlockFwPages(1);
@@ -187,10 +186,8 @@ void wkfWriteFlash(unsigned char *menuImg, unsigned char *firmwareImg) {
 		prevperc = perc;
 	}
 	sleep(1);
-	DrawDispose(progBar);
-	progBar = DrawProgressBar(false, 0, "Firmware flashing in progress. Do NOT Power Off !!");
-	DrawPublish(progBar);
 	if(firmwareImg) {
+		progBar = DrawRepublish(progBar, DrawProgressBar(false, 0, "Firmware flashing in progress. Do NOT Power Off !!"));
 		for(page_num = 0; page_num < 3; page_num++) {
 			print_debug("Erasing Flash Page at %08X\n",0x1E1000+(page_num*0x1000));
 			__wkfSpiUnlockFwPages(1);

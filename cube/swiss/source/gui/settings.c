@@ -1121,14 +1121,12 @@ int show_settings(int page, int option, ConfigEntry *config) {
 				// flush settings to .ini
 				if(config_update_global(true)) {
 					rt4k_init();
-					DrawDispose(msgBox);
-					msgBox = DrawPublish(DrawMessageBox(D_INFO, "Successfully saved configuration!"));
+					msgBox = DrawRepublish(msgBox, DrawMessageBox(D_INFO, "Successfully saved configuration!"));
 					sleep(1);
 					DrawDispose(msgBox);
 				}
 				else {
-					DrawDispose(msgBox);
-					msgBox = DrawPublish(DrawMessageBox(D_INFO, "Failed to save configuration!"));
+					msgBox = DrawRepublish(msgBox, DrawMessageBox(D_INFO, "Failed to save configuration!"));
 					sleep(1);
 					DrawDispose(msgBox);
 				}

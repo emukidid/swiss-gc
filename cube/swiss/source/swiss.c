@@ -222,11 +222,7 @@ void select_recent_entry() {
 			}
 			DrawAddChild(newPanel, DrawSelectableButton(45,fileListBase+(i*(rh+2)), getVideoMode()->fbWidth-45, fileListBase+(i*(rh+2))+rh, getRelativeName(&swissSettings.recent[i][0]), (i == idx) ? B_SELECTED:B_NOSELECT));
 		}
-		if(container) {
-			DrawDispose(container);
-		}
-		DrawPublish(newPanel);
-		container = newPanel;
+		container = DrawRepublish(container, newPanel);
 		while ((padsStickY() > -16 && padsStickY() < 16) && !(padsButtonsHeld() & PAD_BUTTON_B) && !(padsButtonsHeld() & PAD_BUTTON_A) && !(padsButtonsHeld() & PAD_BUTTON_UP) && !(padsButtonsHeld() & PAD_BUTTON_DOWN))
 			{ VIDEO_WaitVSync (); }
 		if((padsButtonsHeld() & PAD_BUTTON_UP) || padsStickY() > 16){	idx = (--idx < 0) ? max-1 : idx;}
@@ -317,11 +313,7 @@ uiDrawObj_t* renderFileBrowser(file_handle** directory, int num_files, uiDrawObj
 		DrawUpdateProgressLoading(loadingBox, +1);
 		uiDrawObj_t *newPanel = DrawContainer();
 		drawFiles(directory, num_files, newPanel);
-		if(filePanel != NULL) {
-			DrawDispose(filePanel);
-		}
-		filePanel = newPanel;
-		DrawPublish(filePanel);
+		filePanel = DrawRepublish(filePanel, newPanel);
 		DrawUpdateProgressLoading(loadingBox, -1);
 		
 		u32 waitButtons = PAD_BUTTON_X|PAD_BUTTON_START|PAD_BUTTON_B|PAD_BUTTON_A|PAD_BUTTON_UP|PAD_BUTTON_DOWN|PAD_BUTTON_LEFT|PAD_BUTTON_RIGHT|PAD_TRIGGER_L|PAD_TRIGGER_R|PAD_TRIGGER_Z;
@@ -553,11 +545,7 @@ uiDrawObj_t* renderFileCarousel(file_handle** directory, int num_files, uiDrawOb
 		DrawUpdateProgressLoading(loadingBox, +1);
 		uiDrawObj_t *newPanel = DrawContainer();
 		drawFilesCarousel(directory, num_files, newPanel);
-		if(filePanel != NULL) {
-			DrawDispose(filePanel);
-		}
-		filePanel = newPanel;
-		DrawPublish(filePanel);
+		filePanel = DrawRepublish(filePanel, newPanel);
 		DrawUpdateProgressLoading(loadingBox, -1);
 		
 		u32 waitButtons = PAD_BUTTON_X|PAD_BUTTON_START|PAD_BUTTON_B|PAD_BUTTON_A|PAD_BUTTON_UP|PAD_BUTTON_DOWN|PAD_BUTTON_LEFT|PAD_BUTTON_RIGHT|PAD_TRIGGER_L|PAD_TRIGGER_R|PAD_TRIGGER_Z;
@@ -728,11 +716,7 @@ uiDrawObj_t* renderFileFullwidth(file_handle** directory, int num_files, uiDrawO
 		DrawUpdateProgressLoading(loadingBox, +1);
 		uiDrawObj_t *newPanel = DrawContainer();
 		drawFilesFullwidth(directory, num_files, newPanel);
-		if(filePanel != NULL) {
-			DrawDispose(filePanel);
-		}
-		filePanel = newPanel;
-		DrawPublish(filePanel);
+		filePanel = DrawRepublish(filePanel, newPanel);
 		DrawUpdateProgressLoading(loadingBox, -1);
 		
 		u32 waitButtons = PAD_BUTTON_X|PAD_BUTTON_START|PAD_BUTTON_B|PAD_BUTTON_A|PAD_BUTTON_UP|PAD_BUTTON_DOWN|PAD_BUTTON_LEFT|PAD_BUTTON_RIGHT|PAD_TRIGGER_L|PAD_TRIGGER_R|PAD_TRIGGER_Z;
@@ -884,11 +868,7 @@ bool select_dest_dir(file_handle* initial, file_handle* selection)
 		for(j = 0; i<max; ++i,++j) {
 			DrawAddChild(tempBox, DrawSelectableButton(50,fileListBase+(j*40), getVideoMode()->fbWidth-35, fileListBase+(j*40)+40, getRelativeName(directory[i]->name), (i == idx) ? B_SELECTED:B_NOSELECT));
 		}
-		if(destDirBox != NULL) {
-			DrawDispose(destDirBox);
-		}
-		destDirBox = tempBox;
-		DrawPublish(destDirBox);
+		destDirBox = DrawRepublish(destDirBox, tempBox);
 		while ((padsStickY() > -16 && padsStickY() < 16) && !(padsButtonsHeld() & (PAD_BUTTON_X|PAD_BUTTON_A|PAD_BUTTON_B|PAD_BUTTON_UP|PAD_BUTTON_DOWN)))
 			{ VIDEO_WaitVSync (); }
 		if((padsButtonsHeld() & PAD_BUTTON_UP) || padsStickY() > 16){	idx = (--idx < 0) ? num_files-1 : idx;}
@@ -984,11 +964,7 @@ ExecutableFile* select_alt_dol(ExecutableFile *filesToPatch, int num_files) {
 		for(j = 0; i<max; ++i,++j) {
 			DrawAddChild(newPanel, DrawSelectableButton(50,fileListBase+(j*40), getVideoMode()->fbWidth-35, fileListBase+(j*40)+40, filesToPatch[i].name, (i == idx) ? B_SELECTED:B_NOSELECT));
 		}
-		if(container) {
-			DrawDispose(container);
-		}
-		DrawPublish(newPanel);
-		container = newPanel;
+		container = DrawRepublish(container, newPanel);
 		while ((padsStickY() > -16 && padsStickY() < 16) && !(padsButtonsHeld() & PAD_BUTTON_B) && !(padsButtonsHeld() & PAD_BUTTON_A) && !(padsButtonsHeld() & PAD_BUTTON_UP) && !(padsButtonsHeld() & PAD_BUTTON_DOWN))
 			{ VIDEO_WaitVSync (); }
 		if((padsButtonsHeld() & PAD_BUTTON_UP) || padsStickY() > 16){	idx = (--idx < 0) ? num_files-1 : idx;}
@@ -1987,8 +1963,7 @@ void load_game() {
 	if(endsWith(curFile.name,".tgc")) {
 		devices[DEVICE_CUR]->seekFile(&curFile,0,DEVICE_HANDLER_SEEK_SET);
 		if(devices[DEVICE_CUR]->readFile(&curFile,&tgcFile,sizeof(TGCHeader)) != sizeof(TGCHeader) || tgcFile.magic != TGC_MAGIC) {
-			DrawDispose(msgBox);
-			msgBox = DrawPublish(DrawMessageBox(D_WARN, "Invalid or Corrupt File!"));
+			msgBox = DrawRepublish(msgBox, DrawMessageBox(D_WARN, "Invalid or Corrupt File!"));
 			sleep(2);
 			DrawDispose(msgBox);
 			goto exit;
@@ -1996,8 +1971,7 @@ void load_game() {
 		
 		devices[DEVICE_CUR]->seekFile(&curFile,tgcFile.headerStart,DEVICE_HANDLER_SEEK_SET);
 		if(devices[DEVICE_CUR]->readFile(&curFile,&GCMDisk,sizeof(DiskHeader)) != sizeof(DiskHeader) || !valid_gcm_magic(&GCMDisk)) {
-			DrawDispose(msgBox);
-			msgBox = DrawPublish(DrawMessageBox(D_WARN, "Invalid or Corrupt File!"));
+			msgBox = DrawRepublish(msgBox, DrawMessageBox(D_WARN, "Invalid or Corrupt File!"));
 			sleep(2);
 			DrawDispose(msgBox);
 			goto exit;
@@ -2012,15 +1986,13 @@ void load_game() {
 				devices[DEVICE_CUR]->seekFile(&curFile,0x8000,DEVICE_HANDLER_SEEK_SET);
 				if(devices[DEVICE_CUR]->readFile(&curFile,&GCMDisk,sizeof(DiskHeader)) == sizeof(DiskHeader) &&
 					!GCMDisk.ConsoleID && !memcmp(&GCMDisk.ConsoleID, &GCMDisk.GamecodeA, sizeof(DiskHeader) - 1)) {
-					DrawDispose(msgBox);
-					msgBox = DrawPublish(DrawMessageBox(D_WARN, "Invalid or Corrupt File! (Fake SD Card?)"));
+					msgBox = DrawRepublish(msgBox, DrawMessageBox(D_WARN, "Invalid or Corrupt File! (Fake SD Card?)"));
 					sleep(2);
 					DrawDispose(msgBox);
 					goto exit;
 				}
 			}
-			DrawDispose(msgBox);
-			msgBox = DrawPublish(DrawMessageBox(D_WARN, "Invalid or Corrupt File!"));
+			msgBox = DrawRepublish(msgBox, DrawMessageBox(D_WARN, "Invalid or Corrupt File!"));
 			sleep(2);
 			DrawDispose(msgBox);
 			goto exit;
@@ -2029,42 +2001,36 @@ void load_game() {
 		swissSettings.audioStreaming = is_streaming_disc(&GCMDisk);
 		
 		if(needs_nkit_reencode(&GCMDisk, curFile.size)) {
-			DrawDispose(msgBox);
-			msgBox = DrawPublish(DrawMessageBox(D_WARN, "Please reconvert to NKit.iso using\nNKit bundled with this Swiss release."));
+			msgBox = DrawRepublish(msgBox, DrawMessageBox(D_WARN, "Please reconvert to NKit.iso using\nNKit bundled with this Swiss release."));
 			sleep(5);
 			DrawDispose(msgBox);
 			goto exit;
 		}
 		else if(is_nkit_format(&GCMDisk) && !valid_gcm_boot(&GCMDisk)) {
-			DrawDispose(msgBox);
-			msgBox = DrawPublish(DrawMessageBox(D_WARN, "File is not playable in NKit.iso format.\nPlease convert back to ISO using NKit."));
+			msgBox = DrawRepublish(msgBox, DrawMessageBox(D_WARN, "File is not playable in NKit.iso format.\nPlease convert back to ISO using NKit."));
 			sleep(5);
 			DrawDispose(msgBox);
 			goto exit;
 		}
 		else if(is_redump_disc(curFile.meta) && !valid_gcm_size(&GCMDisk, curFile.size)) {
 			if(swissSettings.audioStreaming && !valid_gcm_size2(&GCMDisk, curFile.size)) {
-				DrawDispose(msgBox);
-				msgBox = DrawPublish(DrawMessageBox(D_WARN, "File is a bad dump and is not playable.\nPlease attempt recovery using NKit."));
+				msgBox = DrawRepublish(msgBox, DrawMessageBox(D_WARN, "File is a bad dump and is not playable.\nPlease attempt recovery using NKit."));
 				sleep(5);
 				DrawDispose(msgBox);
 				goto exit;
 			}
 			else if(!is_recent_entry(curFile.name)) {
-				DrawDispose(msgBox);
-				msgBox = DrawPublish(DrawMessageBox(D_WARN, "File is a bad dump, but may be playable.\nPlease attempt recovery using NKit."));
+				msgBox = DrawRepublish(msgBox, DrawMessageBox(D_WARN, "File is a bad dump, but may be playable.\nPlease attempt recovery using NKit."));
 				sleep(5);
 			}
 		}
 	}
 	if(swissSettings.audioStreaming && !(devices[DEVICE_CUR]->features & FEAT_AUDIO_STREAMING)) {
-		DrawDispose(msgBox);
-		msgBox = DrawPublish(DrawMessageBox(D_WARN, "Device does not support audio streaming.\nThis may impact playability."));
+		msgBox = DrawRepublish(msgBox, DrawMessageBox(D_WARN, "Device does not support audio streaming.\nThis may impact playability."));
 		sleep(5);
 	}
 	if(swissSettings.exiSpeed && (devices[DEVICE_CUR]->quirks & QUIRK_EXI_SPEED)) {
-		DrawDispose(msgBox);
-		msgBox = DrawPublish(DrawMessageBox(D_WARN, "Device is operating in a degraded state.\nThis may impact playability."));
+		msgBox = DrawRepublish(msgBox, DrawMessageBox(D_WARN, "Device is operating in a degraded state.\nThis may impact playability."));
 		sleep(5);
 	}
 	gameID_early_set(&GCMDisk);
@@ -2302,12 +2268,7 @@ void load_file()
 				flippybootstatus *status;
 				while((status = flippy_getbootstatus()) && status->current_progress != 0xFFFF) {
 					sprintf(txtbuffer, "%.64s\n%.64s", status->text, status->subtext);
-					uiDrawObj_t *newBar = DrawProgressBar(!status->show_progress_bar, (int)(((float)status->current_progress/(float)1000)*100), txtbuffer);
-					if(progBar != NULL) {
-						DrawDispose(progBar);
-					}
-					progBar = newBar;
-					DrawPublish(progBar);
+					progBar = DrawRepublish(progBar, DrawProgressBar(!status->show_progress_bar, (int)(((float)status->current_progress/(float)1000)*100), txtbuffer));
 				}
 				DrawDispose(progBar);
 				deviceHandler_setDeviceAvailable(&__device_flippy, deviceHandler_Flippy_test());
@@ -2635,9 +2596,8 @@ int info_game(ConfigEntry *config)
 			// Save config
 			uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Saving autoload\205"));
 			config_update_global(true);
-			DrawDispose(infoPanel);
-			infoPanel = DrawPublish(draw_game_info());
 			DrawDispose(msgBox);
+			infoPanel = DrawRepublish(infoPanel, draw_game_info());
 		}
 		// Look for a cheats file based on the GameID
 		if(buttons & PAD_BUTTON_Y) {
@@ -2845,9 +2805,8 @@ void menu_loop()
 				if(ret == ENODEV) {	// for completely removed devices vs something like the disc drive without a disc.
 					deviceHandler_setDeviceAvailable(devices[DEVICE_CUR], false);
 				}
-				DrawDispose(msgBox);
 				char* statusMsg = devices[DEVICE_CUR]->status(devices[DEVICE_CUR]->initial);
-				msgBox = DrawPublish(DrawMessageBox(D_FAIL, statusMsg ? statusMsg : strerror(ret)));
+				msgBox = DrawRepublish(msgBox, DrawMessageBox(D_FAIL, statusMsg ? statusMsg : strerror(ret)));
 				sleep(2);
 				DrawDispose(msgBox);
 				return;

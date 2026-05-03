@@ -1686,11 +1686,7 @@ void DrawArgsSelector(const char *fileName) {
 		DrawAddChild(newPanel, DrawStyledLabel(33, 394, "for this DOL if you are unsure of the default values.", 0.8f, ALIGN_LEFT, defaultColor));
 		DrawAddChild(newPanel, DrawStyledLabel(640/2, 440, "(A) Toggle Param \267 (Start) Load the DOL", 1.0f, ALIGN_CENTER, defaultColor));
 		
-		if(container) {
-			DrawDispose(container);
-		}
-		DrawPublish(newPanel);
-		container = newPanel;
+		container = DrawRepublish(container, newPanel);
 		
 		while (!(padsButtonsHeld() & (PAD_BUTTON_RIGHT|PAD_BUTTON_LEFT|PAD_BUTTON_UP|PAD_BUTTON_DOWN|PAD_BUTTON_START|PAD_BUTTON_A)))
 			{ VIDEO_WaitVSync (); }
@@ -1774,11 +1770,7 @@ void DrawCheatsSelector(const char *fileName) {
 		DrawAddChild(newPanel, DrawStyledLabel(33, 404, txtbuffer, 0.8f, ALIGN_LEFT, defaultColor));
 		DrawAddChild(newPanel, DrawStyledLabel(640/2, 440, "(A) Toggle Cheat \267 (X) WiiRD Debug \267 (B) Return", 0.9f, ALIGN_CENTER, defaultColor));
 
-		if(container) {
-			DrawDispose(container);
-		}
-		DrawPublish(newPanel);
-		container = newPanel;
+		container = DrawRepublish(container, newPanel);
 		
 		while (!(padsButtonsHeld() & (PAD_BUTTON_UP|PAD_BUTTON_DOWN|PAD_BUTTON_LEFT|PAD_BUTTON_RIGHT|PAD_BUTTON_B|PAD_BUTTON_A|PAD_BUTTON_X|PAD_TRIGGER_L|PAD_TRIGGER_R)))
 			{ VIDEO_WaitVSync (); }
@@ -2001,11 +1993,7 @@ void DrawGetTextEntry(int mode, const char *label, void *src, int size) {
 			y += (grid_gap + button_height);
 		}
 		
-		if(container) {
-			DrawDispose(container);
-		}
-		DrawPublish(newPanel);
-		container = newPanel;
+		container = DrawRepublish(container, newPanel);
 		
 		while (!(padsButtonsHeld() & (PAD_TRIGGER_L|PAD_TRIGGER_R|PAD_BUTTON_UP|PAD_BUTTON_DOWN|PAD_BUTTON_LEFT | PAD_BUTTON_RIGHT|PAD_BUTTON_B|PAD_BUTTON_A|PAD_BUTTON_X|PAD_BUTTON_Y|PAD_BUTTON_START)))
 			{ VIDEO_WaitVSync (); }
@@ -2213,14 +2201,6 @@ static void *videoUpdate(void *videoEventQueue) {
 	return NULL;
 }
 
-uiDrawObj_t* DrawPublish(uiDrawObj_t *evt)
-{
-	LWP_MutexLock(_videomutex);
-	uiDrawObj_t* event = addVideoEvent(evt);
-	LWP_MutexUnlock(_videomutex);
-	return event;
-}
-
 void DrawAddChild(uiDrawObj_t *parent, uiDrawObj_t *child)
 {
 	LWP_MutexLock(_videomutex);
@@ -2234,6 +2214,25 @@ void DrawAddChild(uiDrawObj_t *parent, uiDrawObj_t *child)
 	//print_debug("Add child %08X (type %s) to parent %08X (type %s)\n",
 	//	(u32)child, typeStrings[child->type], (u32)parent, typeStrings[parent->type]);
 	LWP_MutexUnlock(_videomutex);
+}
+
+uiDrawObj_t* DrawPublish(uiDrawObj_t *evt)
+{
+	LWP_MutexLock(_videomutex);
+	uiDrawObj_t* event = addVideoEvent(evt);
+	LWP_MutexUnlock(_videomutex);
+	return event;
+}
+
+uiDrawObj_t* DrawRepublish(uiDrawObj_t *old, uiDrawObj_t *new)
+{
+	LWP_MutexLock(_videomutex);
+	if (old) {
+		old->disposed = true;
+	}
+	uiDrawObj_t* event = addVideoEvent(new);
+	LWP_MutexUnlock(_videomutex);
+	return event;
 }
 
 void DrawDispose(uiDrawObj_t *evt)
@@ -2255,7 +2254,7 @@ void DrawInit(GXRModeObj *videoMode, bool black) {
 		DrawAddChild(container, buttonPanel);
 	}
 	DrawPublish(container);
-	LWP_MutexInit(&_videomutex, 0);
+	LWP_MutexInit(&_videomutex, false);
 	LWP_CreateThread(&video_thread, videoUpdate, videoEventQueue, video_thread_stack, VIDEO_STACK_SIZE, VIDEO_PRIORITY);
 }
 

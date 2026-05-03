@@ -98,16 +98,12 @@ int play_mp3(file_handle *file, int numFiles, int curMP3) {
 			while((padsButtonsHeld() & PAD_TRIGGER_Z)){VIDEO_WaitVSync();};
 			useShuffle ^=1;
 		}
-		uiDrawObj_t* display = updatescreen_mp3(file, ret, numFiles, curMP3);
-		if(player != NULL) {
-			DrawDispose(player);
-		}
-		DrawPublish(display);
-		player = display;
+		player = DrawRepublish(player, updatescreen_mp3(file, ret, numFiles, curMP3));
 		usleep(5000);
 	}
-	if(player != NULL)
+	if(player != NULL) {
 		DrawDispose(player);
+	}
 	file->device->closeFile(file);
 	return ret;
 }
