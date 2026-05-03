@@ -527,7 +527,7 @@ int parse_tgc(file_handle *file, ExecutableFile *filesToPatch, u32 tgc_base, cha
 }
 
 int patch_gcm(ExecutableFile *filesToPatch, int numToPatch) {
-	int i, num_patched = 0;
+	int i, j, num_patched = 0;
 	// If the current device isn't SD via EXI, init one slot to write patches.
 	// TODO expand this to support IDE-EXI and other writable devices (requires dvd patch re-write/modularity)
 	bool patchDeviceReady = false;
@@ -578,9 +578,9 @@ int patch_gcm(ExecutableFile *filesToPatch, int numToPatch) {
 	// Go through all the possible files we think need patching..
 	for(i = 0; i < numToPatch; i++) {
 		ExecutableFile *fileToPatch = &filesToPatch[i];
+		uiDrawObj_t* progBox = NULL;
+		const char* message = NULL;
 
-		sprintf(txtbuffer, "Patching File %i/%i\n%s [%iKB]",i+1,numToPatch,fileToPatch->name,fileToPatch->size/1024);
-		
 		if(fileToPatch->size > 8*1024*1024) {
 			print_debug("Skipping %s %iKB too large\n", fileToPatch->name, fileToPatch->size/1024);
 			continue;
@@ -590,8 +590,8 @@ int patch_gcm(ExecutableFile *filesToPatch, int numToPatch) {
 		if(!strcasecmp(fileToPatch->name, "iwanagaD.dol") || !strcasecmp(fileToPatch->name, "switcherD.dol")) {
 			continue;	// skip unused PSO files
 		}
-		uiDrawObj_t* progBox = DrawPublish(DrawProgressBar(true, 0, txtbuffer));
-		const char* message = NULL;
+		sprintf(txtbuffer, "Reading File %i/%i\n%s [%iKB]", i+1, numToPatch, fileToPatch->name, fileToPatch->size/1024);
+		progBox = DrawRepublish(progBox, DrawProgressBar(true, 0, txtbuffer));
 		
 		u32 sizeToRead = (fileToPatch->size + 31) & ~31, sizeToWrite;
 		void* buffer = readFileBlockAligned(fileToPatch->file, fileToPatch->offset, sizeToRead);
@@ -605,7 +605,6 @@ int patch_gcm(ExecutableFile *filesToPatch, int numToPatch) {
 			message = "Failed integrity check!";
 			goto fail;
 		}
-		int j;
 		for(j = 0; j < i; j++) {
 			if(filesToPatch[i].hash == filesToPatch[j].hash) {
 				filesToPatch[i].size = filesToPatch[j].size;
@@ -617,6 +616,8 @@ int patch_gcm(ExecutableFile *filesToPatch, int numToPatch) {
 				goto fail;
 			}
 		}
+		sprintf(txtbuffer, "Patching File %i/%i\n%s [%iKB]", i+1, numToPatch, fileToPatch->name, fileToPatch->size/1024);
+		progBox = DrawRepublish(progBox, DrawProgressBar(true, 0, txtbuffer));
 		
 		u8 *oldBuffer = buffer, *newBuffer = NULL;
 		if(fileToPatch->type == PATCH_DOL_PRS || fileToPatch->type == PATCH_OTHER_PRS) {
@@ -710,6 +711,9 @@ int patch_gcm(ExecutableFile *filesToPatch, int numToPatch) {
 					print_debug("Hash mismatch, writing patch again\n");
 				}
 			}
+			sprintf(txtbuffer, "Writing File %i/%i\n%s [%iKB]", i+1, numToPatch, fileToPatch->name, fileToPatch->size/1024);
+			progBox = DrawRepublish(progBox, DrawProgressBar(true, 0, txtbuffer));
+			
 			// Otherwise, write a file out for this game with the patched buffer inside.
 			print_debug("Writing patch file: %s %i bytes (disc offset %08X)\n", fileToPatch->patchFile->name, fileToPatch->size, fileToPatch->offset);
 			devices[DEVICE_PATCHES]->seekFile(fileToPatch->patchFile, 0, DEVICE_HANDLER_SEEK_SET);
