@@ -906,6 +906,12 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 				}
 			break;
 		}
+		if ((option == SET_DEFAULT_AUDIO_STREAM && swissSettings.emulateAudioStream > 1) ||
+			(option == SET_DEFAULT_EMULATE_ETHERNET && swissSettings.emulateEthernet)) {
+			uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_WARN, "Turning this on globally may cause certain\ngames to crash from resource exhaustion."));
+			wait_press_A();
+			DrawDispose(msgBox);
+		}
 	}
 	else if(page == PAGE_GAME && gameConfig != NULL && !gameConfig->forceCleanBoot) {
 		switch(option) {
