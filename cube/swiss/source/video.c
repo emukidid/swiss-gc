@@ -174,10 +174,6 @@ GXRModeObj *getVideoModeFromSwissSetting(int uiVMode) {
 	return getVideoMode();
 }
 
-static void ProperScanPADS(u32 retrace) {
-	PAD_ScanPads();
-}
-
 GXRModeObj *getVideoMode() {
 	if(vmode == NULL) {
 		if(getScanMode() == VI_PROGRESSIVE) {
@@ -235,7 +231,6 @@ void setVideoMode(GXRModeObj *m) {
 	VIDEO_ClearFrameBuffer (m, xfb[0], COLOR_BLACK);
 	VIDEO_ClearFrameBuffer (m, xfb[1], COLOR_BLACK);
 	VIDEO_SetNextFramebuffer (xfb[0]);
-	VIDEO_SetPostRetraceCallback (ProperScanPADS);
 	VIDEO_SetBlack (false);
 	VIDEO_Flush ();
 	VIDEO_WaitForFlush ();
@@ -264,7 +259,6 @@ void setVideoMode(GXRModeObj *m) {
 }
 
 void unsetVideoMode() {
-	VIDEO_SetPostRetraceCallback (NULL);
 	VIDEO_SetBlack (!swissSettings.forceVideoActive);
 	VIDEO_Flush ();
 	VIDEO_WaitForFlush ();
