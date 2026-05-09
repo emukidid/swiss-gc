@@ -80,7 +80,8 @@ static char *tooltips_global[PAGE_GLOBAL_MAX+1] = {
 	[SET_RT4K_OPTIM] = "RetroTINK-4K HDMI Input:\n\nFor GCDigital compatibility mode:\n Requires FX-Framework firmware version 3.9.46.178 or later\n and RetroTINK-4K firmware version 1.9.4 or later, and using\n DV1-Direct mode.\n\nFor GCVideo compatibility mode:\n Requires GCVideo-DVI firmware version 3.0 or later.",
 	[SET_ENABLE_USBGECKO] = "Enable USB Gecko:\n\nIf a USB Gecko is present, messages output to the debug UART\nwill be redirected. When the USB host isn't actively reading from\nthe USB Gecko, it may cause the system to hang.\n\nwiiload is also made available for iterative development.",
 	[SET_WAIT_USBGECKO] = "Wait for USB Gecko:\n\nWait for the transmit buffer to be read by the USB host when full.",
-	[SET_SIMMEMSIZE] = "Simulated Memory Size:\n\nLimits the amount of memory available on development hardware."
+	[SET_SIMMEMSIZE] = "Simulated Memory Size:\n\nLimits the amount of memory available on development hardware.",
+	[SET_TAU_CALIB] = "Temperature Calibration:\n\nOn a cold boot, adjust this value so that the CPU temperature\nreading in the title bar is around room temperature.\n\nThere is no factory calibration."
 };
 
 static char *tooltips_interface[PAGE_INTERFACE_MAX+1] = {
@@ -184,6 +185,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 	uiDrawObj_t* page = DrawEmptyBox(20,60, getVideoMode()->fbWidth-20, 460);
 	char sramHOffsetStr[8];
 	char uiVModeStr[20];
+	char sramTemperatureStr[8];
 	char forceVOffsetStr[8];
 	char triggerLevelStr[8];
 	
@@ -246,6 +248,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 		bool dvdEnable = deviceHandler_getDeviceAvailable(&__device_dvd);
 		bool dtvEnable = !in_range(swissSettings.aveCompat, AVE_N_DOL_COMPAT, AVE_P_DOL_COMPAT);
 		bool rt4kEnable = in_range(swissSettings.aveCompat, GCDIGITAL_COMPAT, GCVIDEO_COMPAT);
+		bool tauEnable = is_gamecube();
 		// TODO settings to a new typedef that ties type etc all together, then draw a "page" of these rather than this at some point.
 		if(option < SET_AVE_COMPAT) {
 			drawSettingEntryString(page, &page_y_ofs, "System Boot Mode:", swissSettings.sramBoot ? "Production" : "Default", option == SET_SYS_BOOTMODE, true);
@@ -268,6 +271,8 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 			drawSettingEntryString(page, &page_y_ofs, "Enable USB Gecko:", enableUSBGeckoStr[swissSettings.enableUSBGecko], option == SET_ENABLE_USBGECKO, true);
 			drawSettingEntryBoolean(page, &page_y_ofs, "Wait for USB Gecko:", swissSettings.waitForUSBGecko, option == SET_WAIT_USBGECKO, true);
 			drawSettingEntryString(page, &page_y_ofs, "Simulated Memory Size:", simulatedMemSizeStr[swissSettings.simulatedMemSize], option == SET_SIMMEMSIZE, true);
+			sprintf(sramTemperatureStr, "%+hi\260C", swissSettings.sramTemperature);
+			drawSettingEntryString(page, &page_y_ofs, "Temperature Calibration:", sramTemperatureStr, option == SET_TAU_CALIB, tauEnable);
 		}
 	}
 	else if(page_num == PAGE_INTERFACE) {
@@ -582,6 +587,14 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 					swissSettings.simulatedMemSize += direction;
 					swissSettings.simulatedMemSize = (swissSettings.simulatedMemSize + 6) % 6;
 				} while(simulatedMemSizeInt[swissSettings.simulatedMemSize] > SYS_GetPhysicalMemSize());
+			break;
+			case SET_TAU_CALIB:
+				if(is_gamecube()) {
+					swissSettings.sramTemperature += direction * 4;
+					if(swissSettings.sramTemperature < -80) swissSettings.sramTemperature = -80;
+					if(swissSettings.sramTemperature > +80) swissSettings.sramTemperature = +80;
+					__SYS_SetTAUCalibration(swissSettings.sramTemperature);
+				}
 			break;
 		}
 		switch(option) {
@@ -1146,6 +1159,7 @@ int show_settings(int page, int option, ConfigEntry *config) {
 				}
 				memcpy(&swissSettings, &tempSettings, sizeof(SwissSettings));
 				VIDEO_SetAdjustingValues(swissSettings.sramHOffset, 0);
+				__SYS_SetTAUCalibration(swissSettings.sramTemperature);
 				DrawDispose(settingsPage);
 				DrawVideoMode(oldmode);
 				return 0;
