@@ -34,6 +34,12 @@ char topStr[256];
 
 const char* getDeviceInfoString(u32 location) {
 	DEVICEHANDLER_INTERFACE *device = getDeviceByLocation(location);
+	if(device == &__device_mcp_a && deviceHandler_getDeviceAvailable(&__device_card_a)) {
+		device = &__device_card_a;
+	}
+	else if(device == &__device_mcp_b && deviceHandler_getDeviceAvailable(&__device_card_b)) {
+		device = &__device_card_b;
+	}
 	if(location == bba_exists(LOC_ANY)) {
 		s32 exi_speed;
 		if(getExiSpeedByLocation(location, &exi_speed)) {
@@ -65,8 +71,8 @@ const char* getDeviceInfoString(u32 location) {
 		flippyversion *version = (flippyversion*)DVDDriveInfo->pad;
 		sprintf(topStr, "%s (%u.%u.%u%s)", device->hwName, version->major, version->minor, version->build, version->dirty ? "-dirtyboi" : "");
 
-		device = &__device_dvd;
-		if(deviceHandler_getDeviceAvailable(device)) {
+		if(deviceHandler_getDeviceAvailable(&__device_dvd)) {
+			device = &__device_dvd;
 			strcat(topStr, " + ");
 			strcat(topStr, device->hwName);
 		}
