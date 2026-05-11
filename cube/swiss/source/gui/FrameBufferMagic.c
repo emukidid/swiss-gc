@@ -155,6 +155,7 @@ typedef struct drawImageEvent {
 typedef struct drawStyledLabelEvent {
 	int x;
 	int y;
+	const char *(*getString)(void);
 	char *string;
 	float size;
 	int align;
@@ -992,6 +993,7 @@ uiDrawObj_t* DrawTooltip(const char *tooltip) {
 // Internal
 static void _DrawStyledLabel(uiDrawObj_t *evt) {
 	drawStyledLabelEvent_t *data = (drawStyledLabelEvent_t*)evt->data;
+	const char *string = data->getString ? data->getString() : data->string;
 	
 	if(data->showCaret) {
 		// blink the caret
@@ -1000,7 +1002,7 @@ static void _DrawStyledLabel(uiDrawObj_t *evt) {
 			if(data->caretColor.a >= 255) { data->fadingDirection = -1; data->caretColor.a = 255; }
 			else if(data->caretColor.a <= 15) { data->fadingDirection = 1; data->caretColor.a = 0; }
 		}		
-		drawStringWithCaret(data->x, data->y, data->string, data->size, data->align, data->color, data->caretPosition, data->caretColor);
+		drawStringWithCaret(data->x, data->y, string, data->size, data->align, data->color, data->caretPosition, data->caretColor);
 	}
 	else {
 		if(data->fadingDirection) {
@@ -1008,7 +1010,7 @@ static void _DrawStyledLabel(uiDrawObj_t *evt) {
 			if(data->color.a >= 255) data->fadingDirection = -1;
 			else if(data->color.a <= 15) data->fadingDirection = 1;
 		}
-		drawString(data->x, data->y, data->string, data->size, data->align, data->color);
+		drawString(data->x, data->y, string, data->size, data->align, data->color);
 	}
 }
 
@@ -1082,6 +1084,22 @@ uiDrawObj_t* DrawFadingLabel(int x, int y, const char *string, float size)
 	eventData->align = ALIGN_LEFT;
 	eventData->color = (GXColor) {255, 255, 255, 0};
 	eventData->fadingDirection = 1;
+	uiDrawObj_t *event = calloc(1, sizeof(uiDrawObj_t));
+	event->type = EV_STYLEDLABEL;
+	event->data = eventData;
+	return event;
+}
+
+// External
+uiDrawObj_t* DrawDynamicLabel(int x, int y, const char *(*getString)(void), float size, int align, GXColor color)
+{	
+	drawStyledLabelEvent_t *eventData = calloc(1, sizeof(drawStyledLabelEvent_t));
+	eventData->x = x;
+	eventData->y = y;
+	eventData->getString = getString;
+	eventData->size = size;
+	eventData->align = align;
+	eventData->color = color;
 	uiDrawObj_t *event = calloc(1, sizeof(uiDrawObj_t));
 	event->type = EV_STYLEDLABEL;
 	event->data = eventData;

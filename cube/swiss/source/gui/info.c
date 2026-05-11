@@ -107,12 +107,20 @@ const char* getDeviceInfoString(u32 location) {
 	return topStr;
 }
 
+const char* getControllerSocketString(s32 chan) {
+	u32 type;
+	if(PAD_GetType(chan, &type) && PAD_IsBarrel(chan)) {
+		return "Tarukonga controller";
+	}
+	return SI_GetTypeString(type);
+}
+
 uiDrawObj_t * info_draw_page(int page_num) {
 	uiDrawObj_t *container = DrawEmptyBox(20,60, getVideoMode()->fbWidth-20, 420);
 	
-	// System Info (Page 1/4)
-	if(!page_num) {
-		DrawAddChild(container, DrawLabel(30, 67, "System Info (1/4):"));
+	// System Info (Page 1/5)
+	if(page_num == 0) {
+		DrawAddChild(container, DrawLabel(30, 67, "System Info (1/5):"));
 		// Model
 		DrawAddChild(container, DrawStyledLabel(640/2, 90, (char*)"MODEL", 0.65f, ALIGN_CENTER, defaultColor));
 		if((SYS_GetConsoleType() & SYS_CONSOLE_MASK) == SYS_CONSOLE_DEVELOPMENT) {
@@ -238,7 +246,7 @@ uiDrawObj_t * info_draw_page(int page_num) {
 		DrawAddChild(container, DrawStyledLabel(640/2, 386, topStr, 0.75f, ALIGN_CENTER, defaultColor));
 	}
 	else if(page_num == 1) {
-		DrawAddChild(container, DrawLabel(30, 67, "Device Info (2/4):"));
+		DrawAddChild(container, DrawLabel(30, 67, "Device Info (2/5):"));
 		DrawAddChild(container, DrawStyledLabel(640/2, 90, (char*)"SLOT-A", 0.65f, ALIGN_CENTER, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(640/2, 106, getDeviceInfoString(LOC_MEMCARD_SLOT_A), 0.75f, ALIGN_CENTER, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(640/2, 130, (char*)"SLOT-B", 0.65f, ALIGN_CENTER, defaultColor));
@@ -249,15 +257,61 @@ uiDrawObj_t * info_draw_page(int page_num) {
 		DrawAddChild(container, DrawStyledLabel(640/2, 226, getDeviceInfoString(LOC_SERIAL_PORT_2), 0.75f, ALIGN_CENTER, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(640/2, 250, (char*)"DVD INTERFACE", 0.65f, ALIGN_CENTER, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(640/2, 266, getDeviceInfoString(LOC_DVD_CONNECTOR), 0.75f, ALIGN_CENTER, defaultColor));
-		DrawAddChild(container, DrawStyledLabel(640/2, 290, (char*)"PROGRESSIVE VIDEO", 0.65f, ALIGN_CENTER, defaultColor));
-		DrawAddChild(container, DrawStyledLabel(640/2, 306, (char*)(getDTVStatus() ? getRawDTVStatus() ? "Enabled" : "Forced" : "Disabled"), 0.75f, ALIGN_CENTER, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 290, (char*)"HIGH SPEED PORT", 0.65f, ALIGN_CENTER, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 306, getDeviceInfoString(LOC_HSP), 0.75f, ALIGN_CENTER, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(640/2, 330, (char*)"CURRENT DEVICE", 0.65f, ALIGN_CENTER, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(640/2, 346, (char*)(devices[DEVICE_CUR] != NULL ? devices[DEVICE_CUR]->deviceName : "None"), 0.75f, ALIGN_CENTER, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(640/2, 370, (char*)"CONFIGURATION DEVICE", 0.65f, ALIGN_CENTER, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(640/2, 386, (char*)(devices[DEVICE_CONFIG] != NULL ? devices[DEVICE_CONFIG]->deviceName : "None"), 0.75f, ALIGN_CENTER, defaultColor));
 	}
 	else if(page_num == 2) {
-		DrawAddChild(container, DrawLabel(30, 67, "Version Info (3/4):"));
+		DrawAddChild(container, DrawLabel(30, 67, "Hotplug Info (3/5):"));
+		DrawAddChild(container, DrawStyledLabel(640/2, 90, (char*)"SLOT-A", 0.65f, ALIGN_CENTER, defaultColor));
+		const char* getSlotAString() {
+			u32 type;
+			if(EXI_GetType(EXI_CHANNEL_0, EXI_DEVICE_0, &type)) {
+				return EXI_GetTypeString(type);
+			}
+			return "Empty";
+		}
+		DrawAddChild(container, DrawDynamicLabel(640/2, 106, getSlotAString, 0.75f, ALIGN_CENTER, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 130, (char*)"SLOT-B", 0.65f, ALIGN_CENTER, defaultColor));
+		const char* getSlotBString() {
+			u32 type;
+			if(EXI_GetType(EXI_CHANNEL_1, EXI_DEVICE_0, &type)) {
+				return EXI_GetTypeString(type);
+			}
+			return "Empty";
+		}
+		DrawAddChild(container, DrawDynamicLabel(640/2, 146, getSlotBString, 0.75f, ALIGN_CENTER, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 170, (char*)"CONTROLLER SOCKET 1", 0.65f, ALIGN_CENTER, defaultColor));
+		const char* getControllerSocket1String() {
+			return getControllerSocketString(PAD_CHAN0);
+		}
+		DrawAddChild(container, DrawDynamicLabel(640/2, 186, getControllerSocket1String, 0.75f, ALIGN_CENTER, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 210, (char*)"CONTROLLER SOCKET 2", 0.65f, ALIGN_CENTER, defaultColor));
+		const char* getControllerSocket2String() {
+			return getControllerSocketString(PAD_CHAN1);
+		}
+		DrawAddChild(container, DrawDynamicLabel(640/2, 226, getControllerSocket2String, 0.75f, ALIGN_CENTER, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 250, (char*)"CONTROLLER SOCKET 3", 0.65f, ALIGN_CENTER, defaultColor));
+		const char* getControllerSocket3String() {
+			return getControllerSocketString(PAD_CHAN2);
+		}
+		DrawAddChild(container, DrawDynamicLabel(640/2, 266, getControllerSocket3String, 0.75f, ALIGN_CENTER, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 290, (char*)"CONTROLLER SOCKET 4", 0.65f, ALIGN_CENTER, defaultColor));
+		const char* getControllerSocket4String() {
+			return getControllerSocketString(PAD_CHAN3);
+		}
+		DrawAddChild(container, DrawDynamicLabel(640/2, 306, getControllerSocket4String, 0.75f, ALIGN_CENTER, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 330, (char*)"PROGRESSIVE VIDEO", 0.65f, ALIGN_CENTER, defaultColor));
+		const char* getProgressiveVideoString() {
+			return getDTVStatus() ? getRawDTVStatus() ? "Enabled" : "Forced" : "Disabled";
+		}
+		DrawAddChild(container, DrawDynamicLabel(640/2, 346, getProgressiveVideoString, 0.75f, ALIGN_CENTER, defaultColor));
+	}
+	else if(page_num == 3) {
+		DrawAddChild(container, DrawLabel(30, 67, "Version Info (4/5):"));
 		DrawAddChild(container, DrawStyledLabel(640/2, 115, "Swiss version 0.6", 1.0f, ALIGN_CENTER, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(640/2, 140, "by emu_kidid & Extrems, 2026", 0.75f, ALIGN_CENTER, defaultColor));
 		sprintf(topStr, "Commit %s; Revision %s", GIT_COMMIT, GIT_REVISION);
@@ -269,8 +323,8 @@ uiDrawObj_t * info_draw_page(int page_num) {
 		DrawAddChild(container, DrawStyledLabel(640/2, 334, "www.gc-forever.com", 0.64f, ALIGN_CENTER, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(640/2, 378, "Visit us on IRC at EFnet/#gc-forever", 0.75f, ALIGN_CENTER, defaultColor));
 	}
-	else if(page_num == 3) {
-		DrawAddChild(container, DrawLabel(30, 67, "Greetings (4/4):"));
+	else if(page_num == 4) {
+		DrawAddChild(container, DrawLabel(30, 67, "Greetings (5/5):"));
 		DrawAddChild(container, DrawStyledLabel(640/2, 90, "Current patreon supporters", 0.75f, ALIGN_CENTER, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(640/2, 114, "Borg Number One (a.k.a. Steven Weiser), Roman Antonacci, 8BitMods,", 0.60f, ALIGN_CENTER, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(640/2, 134, "CastleMania Ryan, Dan Kunz, Fernando Avelino, HakanaiSeishin, Haymose,", 0.60f, ALIGN_CENTER, defaultColor));
@@ -285,7 +339,7 @@ uiDrawObj_t * info_draw_page(int page_num) {
 		
 		DrawAddChild(container, DrawStyledLabel(640/2, 330, "...and a big thanks to YOU, for using Swiss!", 0.75f, ALIGN_CENTER, defaultColor));
 	}
-	if(page_num != 3) {
+	if(page_num != 4) {
 		DrawAddChild(container, DrawLabel(530, 410, "\233"));
 	}
 	if(page_num != 0) {
@@ -309,7 +363,7 @@ void show_info() {
 			|| (padsButtonsHeld() & PAD_TRIGGER_L)))
 			{ VIDEO_WaitVSync (); }
 		u16 btns = padsButtonsHeld();
-		if(((btns & PAD_BUTTON_RIGHT) || (padsButtonsHeld() & PAD_TRIGGER_R)) && page < 3)
+		if(((btns & PAD_BUTTON_RIGHT) || (padsButtonsHeld() & PAD_TRIGGER_R)) && page < 4)
 			page++;
 		if(((btns & PAD_BUTTON_LEFT) || (padsButtonsHeld() & PAD_TRIGGER_L)) && page > 0)
 			page--;

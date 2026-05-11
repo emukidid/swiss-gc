@@ -91,7 +91,7 @@ void drawFontInit(void)
 	GX_SetCullMode (GX_CULL_NONE);
 }
 
-void drawString(int x, int y, char *string, float scale, int align, GXColor fontColor)
+void drawString(int x, int y, const char *string, float scale, int align, GXColor fontColor)
 {
 	if(string == NULL) {
 		return;
@@ -102,7 +102,7 @@ void drawString(int x, int y, char *string, float scale, int align, GXColor font
 	int strHeight = font->cell_height;
 	if(align)
 	{
-		char* string_work = string;
+		const char* string_work = string;
 		while(*string_work)
 		{
 			unsigned char c = *string_work;
@@ -143,7 +143,7 @@ void drawString(int x, int y, char *string, float scale, int align, GXColor font
 	}
 }
 
-void drawStringWithCaret(int x, int y, char *string, float scale, int align, GXColor fontColor, int caretPosition, GXColor caretColor)
+void drawStringWithCaret(int x, int y, const char *string, float scale, int align, GXColor fontColor, int caretPosition, GXColor caretColor)
 {
 	if(string == NULL) {
 		string = "";
@@ -154,7 +154,7 @@ void drawStringWithCaret(int x, int y, char *string, float scale, int align, GXC
 	int strHeight = font->cell_height;
 	if(align)
 	{
-		char* string_work = string;
+		const char* string_work = string;
 		while(*string_work)
 		{
 			unsigned char c = *string_work;
@@ -204,11 +204,11 @@ void drawStringWithCaret(int x, int y, char *string, float scale, int align, GXC
 	}
 }
 
-int GetCharsThatFitInWidth(char *string, int max, float scale)
+int GetCharsThatFitInWidth(const char *string, int max, float scale)
 {
 	int strWidth = 0;
 	int charCount = 0;
-	char* string_work = string;
+	const char* string_work = string;
 	//print_debug("String [%s] max %i\n", string, max);
 	while(*string_work)
 	{
@@ -225,7 +225,7 @@ int GetCharsThatFitInWidth(char *string, int max, float scale)
 }
 
 // maxSize is how far we can draw, abbreviate with "..." if we're going to exceed it.
-void drawStringEllipsis(int x, int y, char *string, float scale, int align, GXColor fontColor, bool rotateVertical, int maxSize)
+void drawStringEllipsis(int x, int y, const char *string, float scale, int align, GXColor fontColor, bool rotateVertical, int maxSize)
 {
 	if(string == NULL) {
 		return;
@@ -241,7 +241,7 @@ void drawStringEllipsis(int x, int y, char *string, float scale, int align, GXCo
 	int strHeight = font->cell_height;
 	if(align)
 	{
-		char* string_work = string;
+		const char* string_work = string;
 		while(*string_work)
 		{
 			unsigned char c = *string_work;
@@ -307,10 +307,10 @@ int GetFontHeight(float scale)
 	return strHeight;
 }
 
-int GetTextSizeInPixels(char *string)
+int GetTextSizeInPixels(const char *string)
 {
 	int strWidth = 0;
-	char* string_work = string;
+	const char* string_work = string;
 	while(*string_work)
 	{
 		unsigned char c = *string_work;
@@ -320,9 +320,9 @@ int GetTextSizeInPixels(char *string)
 	return strWidth;
 }
 
-float GetTextScaleToFitInWidth(char *string, int width) {
+float GetTextScaleToFitInWidth(const char *string, int width) {
 	int strWidth = 0;
-	char* string_work = string;
+	const char* string_work = string;
 	while(*string_work)
 	{
 		unsigned char c = *string_work;
@@ -333,7 +333,7 @@ float GetTextScaleToFitInWidth(char *string, int width) {
 	return width>strWidth ? 1.0f : (float)((float)width/(float)strWidth);
 }
 
-float GetTextScaleToFitInWidthWithMax(char *string, int width, float max) {
+float GetTextScaleToFitInWidthWithMax(const char *string, int width, float max) {
 	float scale = GetTextScaleToFitInWidth(string, width);
 	return max < scale ? max:scale;
 }

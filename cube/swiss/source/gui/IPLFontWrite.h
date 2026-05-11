@@ -24,12 +24,12 @@ extern GXColor deSelectedColor;
 extern char txtbuffer[2048];
 
 void init_font(void);
-void drawString(int x, int y, char *string, float scale, int align, GXColor fontColor);
-void drawStringWithCaret(int x, int y, char *string, float scale, int align, GXColor fontColor, int caretPosition, GXColor caretColor);
-void drawStringEllipsis(int x, int y, char *string, float scale, int align, GXColor fontColor, bool rotateVertical, int maxSize);
+void drawString(int x, int y, const char *string, float scale, int align, GXColor fontColor);
+void drawStringWithCaret(int x, int y, const char *string, float scale, int align, GXColor fontColor, int caretPosition, GXColor caretColor);
+void drawStringEllipsis(int x, int y, const char *string, float scale, int align, GXColor fontColor, bool rotateVertical, int maxSize);
 int GetFontHeight(float scale);
-int GetTextSizeInPixels(char *string);
-float GetTextScaleToFitInWidth(char *string, int width);
-float GetTextScaleToFitInWidthWithMax(char *string, int width, float max);
+int GetTextSizeInPixels(const char *string);
+float GetTextScaleToFitInWidth(const char *string, int width);
+float GetTextScaleToFitInWidthWithMax(const char *string, int width, float max);
 
 #endif
