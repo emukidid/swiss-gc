@@ -197,14 +197,10 @@ vu32* getExiRegsByLocation(u32 location) {
 	return NULL;
 }
 
-const char* getHwNameByLocation(u32 location) {
-	DEVICEHANDLER_INTERFACE *device = getDeviceByLocation(location);
-	if(device != NULL) {
-		return device->hwName;
-	}
+const char* getExiTypeByLocation(u32 location) {
 	s32 chan, dev;
+	u32 type;
 	if(getExiDeviceByLocation(location, &chan, &dev)) {
-		u32 type;
 		if(EXI_GetType(chan, dev, &type) && ~type) {
 			return EXI_GetTypeString(type);
 		}
@@ -216,6 +212,14 @@ const char* getHwNameByLocation(u32 location) {
 		}
 	}
 	return "Empty";
+}
+
+const char* getHwNameByLocation(u32 location) {
+	DEVICEHANDLER_INTERFACE *device = getDeviceByLocation(location);
+	if(device != NULL) {
+		return device->hwName;
+	}
+	return getExiTypeByLocation(location);
 }
 
 bool getFragments(int deviceSlot, file_handle *file, file_frag **fragList, u32 *totFrags, u8 fileNum, u32 forceBaseOffset, u32 forceSize) {

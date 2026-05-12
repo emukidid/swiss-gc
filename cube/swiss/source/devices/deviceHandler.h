@@ -270,6 +270,7 @@ extern bool getExiInterruptByLocation(u32 location, s32 *chan);
 extern bool getExiSpeedByLocation(u32 location, s32 *freq);
 extern bool getExiIdByLocation(u32 location, u32 *id);
 extern vu32* getExiRegsByLocation(u32 location);
+extern const char* getExiTypeByLocation(u32 location);
 extern const char* getHwNameByLocation(u32 location);
 
 #define MAX_FRAGS 40

@@ -268,20 +268,12 @@ uiDrawObj_t * info_draw_page(int page_num) {
 		DrawAddChild(container, DrawLabel(30, 67, "Hotplug Info (3/5):"));
 		DrawAddChild(container, DrawStyledLabel(640/2, 90, (char*)"SLOT-A", 0.65f, ALIGN_CENTER, defaultColor));
 		const char* getSlotAString() {
-			u32 type;
-			if(EXI_GetType(EXI_CHANNEL_0, EXI_DEVICE_0, &type)) {
-				return EXI_GetTypeString(type);
-			}
-			return "Empty";
+			return getExiTypeByLocation(LOC_MEMCARD_SLOT_A);
 		}
 		DrawAddChild(container, DrawDynamicLabel(640/2, 106, getSlotAString, 0.75f, ALIGN_CENTER, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(640/2, 130, (char*)"SLOT-B", 0.65f, ALIGN_CENTER, defaultColor));
 		const char* getSlotBString() {
-			u32 type;
-			if(EXI_GetType(EXI_CHANNEL_1, EXI_DEVICE_0, &type)) {
-				return EXI_GetTypeString(type);
-			}
-			return "Empty";
+			return getExiTypeByLocation(LOC_MEMCARD_SLOT_B);
 		}
 		DrawAddChild(container, DrawDynamicLabel(640/2, 146, getSlotBString, 0.75f, ALIGN_CENTER, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(640/2, 170, (char*)"CONTROLLER SOCKET 1", 0.65f, ALIGN_CENTER, defaultColor));
