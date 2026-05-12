@@ -186,7 +186,8 @@ static const struct {
 	{ "apploader.img", /* 2024/09/14       */  113536, 0xBECA9866ECE7A957 },
 	{ "apploader.img", /* 2024/09/17       */  113536, 0x623687789597750B },
 	{ "apploader.img", /* 2025/07/10       */  113536, 0xED22F838A52EABC5 },
-#define NKIT_FIRM_COUNT (FIRM_COUNT + 128)
+	{ "apploader.img", /* 2026/05/11       */  116512, 0xCBDE805EC9BF9E55 },
+#define NKIT_FIRM_COUNT (FIRM_COUNT + 129)
 	{ "240p Test Suite (World) (v1.04) (Unl).dol",                  2301384, 0x71BCDBA149B3AAAF },
 	{ "240p Test Suite (World) (v1.06) (Unl).dol",                   930560, 0x7EB7DDDAF5105457 },
 	{ "240p Test Suite (World) (v1.07) (Unl).dol",                   932032, 0x4DAB8540272CCBD5 },
@@ -2293,6 +2294,8 @@ static const struct {
 	{{ "327E01\x00\x00" }, false, 0x83, 0x7406, 0xAF7E5D39, 0x1A5F0EA47A582D7E, 1457711104,    +2267136, { 1457702788,    +2268956, 6496, 0x3591 }, "Memory Card Utility Program" },
 	{{ "D28J01\x00\x00" }, true,  0x7B, 0x8FC6, 0x8EFBB42B, 0xB1F399DE51C25382,  794134528,  +665843712, {  394649296,  +665814992, 6496, 0xE5B2 }, "Gekkan Nintendo Tentou Demo 2002.4.4" },
 	{{ "D58J01\x00\x01" }, false, 0x55, 0x219B, 0x56742BA5, 0xE0F39BE49F49EEAE,   89075712,       +6400, {   59875016,       +6808, 6496, 0xB69F }, "Pokémon Distributing Machine" },
+	{{ "DRME01\x00\x00" }, false, 0x52, 0x52C5, 0x262E74D2, 0x37D956CA4719FAF2,    5576704,        +512, {    5569968,        +752, 6496, 0xD393 }, "Dr. Mario" },
+	{{ "DRME01\x00\x00" }, false, 0x62, 0x52C5, 0xE26A41C1, 0x37D956CA4719FAF2,    5527552, +1454450688, {    5519904,        +768, 6496, 0x4CDA }, "Dr. Mario" },
 	{{ "G2TE52\x00\x00" }, false, 0xC4, 0xC13C, 0xC98922BB, 0x55A84DC8C78EE6E7,  397957120, +1062021120, {         ~0,          +0,    0, 0xFFFF }, "Gun" },
 	{{ "G2TP52\x00\x00" }, false, 0x10, 0xEFEC, 0xEE959C7E, 0xA6DF308D2E6E85D7, 1459955712,      +22528, { 1018210520,          +0, 6496, 0x2179 }, "Memory Card Utility Program" },
 	{{ "G2TP52\x00\x00" }, false, 0x40, 0xEFEC, 0x0C20DB86, 0xA6DF308D2E6E85D7, 1459980288,       -2048, { 1018210520,          +0, 6496, 0x2A86 }, "Memory Card Utility Program" },
@@ -2459,6 +2462,8 @@ static const struct {
 	{{ "GPZE01\x00\x00" }, false, 0x3E, 0xF60D, 0x0F13C224, 0x1C69883B549A7E38,  144412672, +1315565568, {   33273940,      +38004, 6496, 0x59D7 }, "Nintendo Puzzle Collection" },
 	{{ "GPZJ01\x00\x00" }, false, 0x49, 0x686E, 0xB6FEB467, 0x3F854F54EDCC3480,  144412672, +1315565568, {   33273940,      +38004, 6496, 0x59D7 }, "Nintendo Puzzle Collection" },
 	{{ "GPZJ01\x00\x00" }, false, 0x49, 0xB3A1, 0x05B32F44, 0xE8180E176D3D096B,  144412672, +1315565568, {   33275844, +1315481660, 6496, 0x0A78 }, "Nintendo Puzzle Collection" },
+	{{ "GPZJ01\x00\x00" }, false, 0x93, 0xF4DE, 0xCB7967F2, 0xE8180E176D3D096B,  146094080, +1313884160, {   52606716,       +2436, 6496, 0x0A78 }, "Nintendo Puzzle Collection" },
+	{{ "GPZJ01\x00\x00" }, false, 0xC1, 0xF4DE, 0xACD96107, 0xE8180E176D3D096B,  146094080,       +1280, {   52606716,       +2436, 6496, 0x0A78 }, "Nintendo Puzzle Collection" },
 	{{ "GQSEAF\x10\x00" }, false, 0x49, 0x0E94, 0x9E8B9546, 0xFD0C9D21D44DEA63, 1380898816,   +79079424, {  349195336,   +79079928, 6496, 0xF367 }, "Tales of Symphonia" },
 	{{ "GQSEAF\x11\x00" }, false, 0xA6, 0xED8E, 0xDA5B73F2, 0xFD0C9D21D44DEA63, 1395918848,   +64059392, {  387734936,   +64059656, 6496, 0xB169 }, "Tales of Symphonia" },
 	{{ "GRWJD9\x00\x00" }, false, 0x0D, 0x6896, 0xCC2D736A, 0x61FBEE2D09CDC96F, 1060562944,  +399415296, {  237874152,  +399139864, 6496, 0x44E3 }, "Super Robot Wars GC" },
@@ -2525,7 +2530,7 @@ static const struct {
 	{{ "SG4JDA\x00\x00" }, true,  0x52, 0xF019, 0x4BB4830A, 0x3645CAE26589C220, 1272594432,  +187383808, { 1272587604,  +187384140, 6496, 0x015D }, "Naruto: Clash of Ninja 4" },
 	{{ "SG4JDA\x00\x00" }, true,  0x9D, 0xB3B3, 0x424A4760, 0x38394EDF8E58393A, 1261602816,  +198375424, { 1261594344,  +198377400, 6496, 0x015D }, "Naruto: Clash of Ninja 4" },
 	{{ "TESTNA\x00\x00" }, false, 0xD2, 0x0C28, 0x6254FB97, 0xAA2E5EDD0EF81992,   26834944,       -1658, {         ~0,          +0,    0, 0xFFFF }, "Dodger Demo" },
-#define VALID_GCM_COUNT (REDUMP_COUNT + 238)
+#define VALID_GCM_COUNT (REDUMP_COUNT + 242)
 	{{ "101E01\x00\x05" }, true,  0x88, 0xB6FD, 0x4BB518CD, 0x27CFAD706924A030, 1435949056,   +24029184, {         ~0,          +0,    0, 0xFFFF }, "Hontai Kensa Disc DOL-USA" },
 	{{ "101E01\x00\x05" }, true,  0xC6, 0xB6FD, 0x4BB518CD, 0x27CFAD706924A030, 1435949056,   +24029184, {         ~0,          +0,    0, 0xFFFF }, "Hontai Kensa Disc DOL-USA" },
 	{{ "101J01\x00\x03" }, true,  0x67, 0xA361, 0x1A7B7608, 0x6E2DA2E062EF73BA, 1459453952,     +524288, {         ~0,          +0,    0, 0xFFFF }, "Hontai Kensa Disc DOL" },
