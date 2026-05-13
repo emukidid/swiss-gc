@@ -2063,7 +2063,7 @@ void load_game() {
 	config_load_current(config);
 	rt4k_load_profile(config->rt4kProfile);
 	
-	if(config->forceCleanBoot || (config->preferCleanBoot && (devices[DEVICE_CUR]->location & LOC_DVD_CONNECTOR))) {
+	if(config->forceCleanBoot || ((devices[DEVICE_CUR]->location & LOC_DVD_CONNECTOR) && config->preferCleanBoot)) {
 		gameID_set(&GCMDisk, get_gcm_boot_hash(&GCMDisk, curFile.meta));
 		
 		if(!(devices[DEVICE_CUR]->location & LOC_DVD_CONNECTOR)) {
@@ -2438,7 +2438,7 @@ int check_game(file_handle *file, file_handle *file2, ExecutableFile *filesToPat
 	return numToPatch;
 }
 
-uiDrawObj_t* draw_game_info() {
+uiDrawObj_t* draw_game_info(ConfigEntry *config) {
 	uiDrawObj_t *container = DrawEmptyBox(75,120, getVideoMode()->fbWidth-78, 400);
 
 	sprintf(txtbuffer, "%s", curFile.meta && curFile.meta->displayName ? curFile.meta->displayName : getRelativeName(curFile.name));
@@ -2521,18 +2521,24 @@ uiDrawObj_t* draw_game_info() {
 		bool isAutoLoadEntry = !strcmp(swissSettings.autoload, curFile.name) || !fnmatch(swissSettings.autoload, curFile.name, FNM_PATHNAME);
 		textPtr += sprintf(textPtr, "(Z) Load at startup [Current: %s]", isAutoLoadEntry ? "Yes":"No");
 	}
-	if(devices[DEVICE_CUR]->location & LOC_DVD_CONNECTOR) {
+	if((devices[DEVICE_CUR]->location & LOC_DVD_CONNECTOR) && !config->preferCleanBoot) {
 		textPtr = stpcpy(textPtr, textPtr == txtbuffer ? "(L+A) Clean Boot":" \267 (L+A) Clean Boot");
 	}
 	if(textPtr != txtbuffer) {
 		DrawAddChild(container, DrawStyledLabel(640/2, 370, txtbuffer, 0.6f, ALIGN_CENTER, defaultColor));
 	}
-	if(devices[DEVICE_CUR] == &__device_wode) {
-		DrawAddChild(container, DrawStyledLabel(640/2, 390, "(X) Settings \267 (Y) Cheats \267 (A) Boot", 0.75f, ALIGN_CENTER, defaultColor));
+	textPtr = stpcpy(txtbuffer, "(X) Settings \267 (Y) Cheats");
+
+	if(devices[DEVICE_CUR] != &__device_wode) {
+		textPtr = stpcpy(textPtr, " \267 (B) Exit");
+	}
+	if((devices[DEVICE_CUR]->location & LOC_DVD_CONNECTOR) && config->preferCleanBoot) {
+		textPtr = stpcpy(textPtr, " \267 (A) Clean Boot");
 	}
 	else {
-		DrawAddChild(container, DrawStyledLabel(640/2, 390, "(X) Settings \267 (Y) Cheats \267 (B) Exit \267 (A) Boot", 0.75f, ALIGN_CENTER, defaultColor));
+		textPtr = stpcpy(textPtr, " \267 (A) Boot");
 	}
+	DrawAddChild(container, DrawStyledLabel(640/2, 390, txtbuffer, 0.75f, ALIGN_CENTER, defaultColor));
 	return container;
 }
 
@@ -2558,7 +2564,7 @@ int info_game(ConfigEntry *config)
 		}
 	}
 	int ret = 0, num_cheats = -1;
-	uiDrawObj_t *infoPanel = DrawPublish(draw_game_info());
+	uiDrawObj_t *infoPanel = DrawPublish(draw_game_info(config));
 	while(1) {
 		while(padsButtonsHeld() & (PAD_BUTTON_X | PAD_BUTTON_B | PAD_BUTTON_A | PAD_BUTTON_Y | PAD_TRIGGER_Z | PAD_TRIGGER_R)){ VIDEO_WaitVSync (); }
 		while(!(padsButtonsHeld() & (PAD_BUTTON_X | PAD_BUTTON_B | PAD_BUTTON_A | PAD_BUTTON_Y | PAD_TRIGGER_Z | PAD_TRIGGER_R))){ VIDEO_WaitVSync (); }
@@ -2580,6 +2586,7 @@ int info_game(ConfigEntry *config)
 		}
 		if(buttons & PAD_BUTTON_X) {
 			needsRefresh = show_settings(PAGE_GAME, 0, config);
+			infoPanel = DrawRepublish(infoPanel, draw_game_info(config));
 		}
 		if((buttons & PAD_TRIGGER_Z) && devices[DEVICE_CONFIG] != NULL) {
 			// Toggle autoload
@@ -2597,7 +2604,7 @@ int info_game(ConfigEntry *config)
 			uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Saving autoload\205"));
 			config_update_global(true);
 			DrawDispose(msgBox);
-			infoPanel = DrawRepublish(infoPanel, draw_game_info());
+			infoPanel = DrawRepublish(infoPanel, draw_game_info(config));
 		}
 		// Look for a cheats file based on the GameID
 		if(buttons & PAD_BUTTON_Y) {
