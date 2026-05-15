@@ -1042,11 +1042,11 @@ void load_app(ExecutableFile *fileToPatch)
 			}
 			if(fileToPatch->file->device == &__device_dvd) {
 				adjust_tgc_fst((void*)fstAddr, fileToPatch->file->fileBase + fileToPatch->tgcBase, fileToPatch->tgcFileStartArea, fileToPatch->tgcFakeOffset);
-				*(vu32*)(VAR_AREA+0x30F4) = fileToPatch->file->fileBase + fileToPatch->tgcBase;
+				*(vu32*)VAR_TGC_OFFSET = fileToPatch->file->fileBase + fileToPatch->tgcBase;
 			}
 			else {
 				adjust_tgc_fst((void*)fstAddr, fileToPatch->tgcBase, fileToPatch->tgcFileStartArea, fileToPatch->tgcFakeOffset);
-				*(vu32*)(VAR_AREA+0x30F4) = fileToPatch->tgcBase;
+				*(vu32*)VAR_TGC_OFFSET = fileToPatch->tgcBase;
 			}
 			
 			// Copy bi2.bin (Disk Header Information) to just under the FST

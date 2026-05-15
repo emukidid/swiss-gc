@@ -59,6 +59,7 @@
 .set VAR_PATCHES_BASE,		0x3000	# Patches get copied to below this area.
 
 .set VAR_PAD_BUTTON,		0x30E4	# PAD buttons
+.set VAR_TGC_OFFSET,		0x30F4	# TGC disc offset
 .set VAR_RMODE,				0x30F8	# render mode
 
 # Cheat Engine + Cheats buffer	(0x817FE000)
@@ -123,6 +124,7 @@ extern char VAR_SECTOR_BUF[0x200];	// 0x200 of read data
 extern char VAR_PATCHES_BASE[];		// Patches get copied to below this area.
 
 extern char VAR_PAD_BUTTON[2];		// PAD buttons
+extern char VAR_TGC_OFFSET[4];		// TGC disc offset
 extern char VAR_RMODE[4];			// render mode
 
 // Cheat Engine + Cheats buffer (0x817FE000)
