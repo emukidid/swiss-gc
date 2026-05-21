@@ -93,7 +93,6 @@ static void resetCoverCallback(s32 result) {
 /* Initialise Video, PAD, DVD, Font */
 void Initialise(void)
 {
-	PAD_Init ();  
 	DVD_Init();
 	DVD_LowSetResetCoverCallback(resetCoverCallback);
 	DVD_Reset(DVD_RESETNONE);

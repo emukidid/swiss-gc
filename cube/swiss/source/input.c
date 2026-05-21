@@ -1,5 +1,39 @@
-#include <gccore.h>
+#include <gctypes.h>
+#include <ogc/n64.h>
+#include <ogc/pad.h>
+#include <ogc/si.h>
+#include <ogc/system.h>
 #include <stdlib.h>
+
+static u8 status[PAD_CHANMAX];
+
+static void resetCallback(void)
+{
+	u32 mask = 0;
+
+	for (s32 chan = PAD_CHAN0; chan < PAD_CHANMAX; chan++) {
+		u32 type;
+
+		if (PAD_GetType(chan, &type)) {
+			mask |= PAD_CHAN_BIT(chan);
+		} else {
+			switch (SI_DecodeType(type)) {
+				case SI_N64_CONTROLLER:
+					N64_ResetAsync(chan, &status[chan], NULL);
+					break;
+			}
+		}
+	}
+
+	PAD_Recalibrate(mask);
+}
+
+__attribute((constructor))
+static void initPads(void)
+{
+	PAD_Init();
+	SYS_SetResetCallback(resetCallback);
+}
 
 s8 __chooseMaxMagnitiude(s8 p0, s8 p1, s8 p2, s8 p3)
 {
