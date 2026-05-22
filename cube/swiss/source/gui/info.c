@@ -49,6 +49,11 @@ const char* getDeviceInfoString(u32 location) {
 			sprintf(topStr, "%s (%s)", getHwNameByLocation(location), bba_address_str());
 		}
 	}
+	else if(device == &__device_aram) {
+		formatBytes(topStr, __io_aram.numberOfSectors * __io_aram.bytesPerSector, 0, false);
+		strcat(topStr, " ");
+		strcat(topStr, device->hwName);
+	}
 	else if(device == &__device_card_a || device == &__device_card_b) {
 		s32 slot, mem_size, sector_size;
 		if(getExiDeviceByLocation(location, &slot, NULL) && CARD_ProbeEx(slot, &mem_size, &sector_size) == CARD_ERROR_READY) {
