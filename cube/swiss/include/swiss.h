@@ -47,6 +47,9 @@ extern u16* const DVDDeviceCode;
 extern dvddiskid* DVDDiskID;
 extern DiskHeader GCMDisk;
 
+extern u32 __PADDisableRecalibration(s32 disable);
+extern u32 __PADDisableRumble(s32 disable);
+
 extern u32 sdgecko_getAddressingType(s32 drv_no);
 extern u32 sdgecko_getTransferMode(s32 drv_no);
 extern u32 sdgecko_getDevice(s32 drv_no);
@@ -90,6 +93,8 @@ extern bool select_dest_dir(file_handle* initial, file_handle* selection);
 
 typedef struct {
 	int cubebootInvoked;
+	int disableRecalibration;
+	int disableRumble;
 	int enableUSBGecko; // Debug prints over USBGecko
 	int waitForUSBGecko;
 	int simulatedMemSize;

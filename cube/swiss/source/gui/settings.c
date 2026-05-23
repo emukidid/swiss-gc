@@ -78,10 +78,11 @@ static char *tooltips_global[PAGE_GLOBAL_MAX+1] = {
 	[SET_AVE_COMPAT] = "AVE Compatibility:\n\nSets the compatibility mode for the used audio/video encoder.\n\nAVE N-DOL - Output PAL as NTSC 50\nAVE P-DOL - Disable progressive scan mode\nCMPV-DOL - Enable 1080i & 540p\nGCDigital - Apply input filtering in OSD\nGCVideo - Apply general workarounds for GCVideo (default)\nAVE-RVL - Support 960i & 1152i without WiiVideo",
 	[SET_FORCE_DTVSTATUS] = "Force DTV Status:\n\nDisabled - Use detect signal from the Digital AV Out (default)\nEnabled - Force detection in the case of a hardware fault\nRegion Switch - Ease transition between SD/ED TV setups",
 	[SET_RT4K_OPTIM] = "RetroTINK-4K HDMI Input:\n\nFor GCDigital compatibility mode:\n Requires FX-Framework firmware version 3.9.46.178 or later\n and RetroTINK-4K firmware version 1.9.4 or later, and using\n DV1-Direct mode.\n\nFor GCVideo compatibility mode:\n Requires GCVideo-DVI firmware version 3.0 or later.",
+	[SET_DISABLE_RECALIB] = "Disable Controller Recalibration:\n\nAvoids problems with non-compliant GameCube Controller\nimplementations.",
 	[SET_ENABLE_USBGECKO] = "Enable USB Gecko:\n\nIf a USB Gecko is present, messages output to the debug UART\nwill be redirected. When the USB host isn't actively reading from\nthe USB Gecko, it may cause the system to hang.\n\nwiiload is also made available for iterative development.",
 	[SET_WAIT_USBGECKO] = "Wait for USB Gecko:\n\nWait for the transmit buffer to be read by the USB host when full.",
 	[SET_SIMMEMSIZE] = "Simulated Memory Size:\n\nLimits the amount of memory available on development hardware.",
-	[SET_TAU_CALIB] = "Temperature Calibration:\n\nOn a cold boot, adjust this value so that the CPU temperature\nreading in the title bar is around room temperature.\n\nThere is no factory calibration."
+	[SET_TAU_CALIB] = "CPU Temperature Calibration:\n\nOn a cold boot, adjust this value so that the CPU temperature\nreading in the title bar is around room temperature.\n\nThere is no factory calibration."
 };
 
 static char *tooltips_interface[PAGE_INTERFACE_MAX+1] = {
@@ -268,11 +269,13 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 			drawSettingEntryString(page, &page_y_ofs, "AVE Compatibility:", aveCompatStr[swissSettings.aveCompat], option == SET_AVE_COMPAT, true);
 			drawSettingEntryString(page, &page_y_ofs, "Force DTV Status:", forceDTVStatusStr[swissSettings.forceDTVStatus], option == SET_FORCE_DTVSTATUS, dtvEnable);
 			drawSettingEntryBoolean(page, &page_y_ofs, "RetroTINK-4K HDMI Input:", swissSettings.rt4kOptim, option == SET_RT4K_OPTIM, rt4kEnable);
+			drawSettingEntryBoolean(page, &page_y_ofs, "Disable Controller Recalibration:", swissSettings.disableRecalibration, option == SET_DISABLE_RECALIB, true);
+			drawSettingEntryBoolean(page, &page_y_ofs, "Disable Controller Rumble:", swissSettings.disableRumble, option == SET_DISABLE_RUMBLE, true);
 			drawSettingEntryString(page, &page_y_ofs, "Enable USB Gecko:", enableUSBGeckoStr[swissSettings.enableUSBGecko], option == SET_ENABLE_USBGECKO, true);
 			drawSettingEntryBoolean(page, &page_y_ofs, "Wait for USB Gecko:", swissSettings.waitForUSBGecko, option == SET_WAIT_USBGECKO, true);
 			drawSettingEntryString(page, &page_y_ofs, "Simulated Memory Size:", simulatedMemSizeStr[swissSettings.simulatedMemSize], option == SET_SIMMEMSIZE, true);
 			sprintf(sramTemperatureStr, "%+hi\260C", swissSettings.sramTemperature);
-			drawSettingEntryString(page, &page_y_ofs, "Temperature Calibration:", sramTemperatureStr, option == SET_TAU_CALIB, tauEnable);
+			drawSettingEntryString(page, &page_y_ofs, "CPU Temperature Calibration:", sramTemperatureStr, option == SET_TAU_CALIB, tauEnable);
 		}
 	}
 	else if(page_num == PAGE_INTERFACE) {
@@ -574,6 +577,12 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 					wait_press_A();
 					DrawDispose(msgBox);
 				}
+			break;
+			case SET_DISABLE_RECALIB:
+				swissSettings.disableRecalibration ^= 1;
+			break;
+			case SET_DISABLE_RUMBLE:
+				swissSettings.disableRumble ^= 1;
 			break;
 			case SET_ENABLE_USBGECKO:
 				swissSettings.enableUSBGecko += direction;

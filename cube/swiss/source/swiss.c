@@ -1023,6 +1023,8 @@ void load_app(ExecutableFile *fileToPatch)
 		*(vu32*)(VAR_AREA+0x30C4) = exi_probe(1);
 	}
 	
+	*(vu8*)(VAR_AREA+0x30E3) = (!!swissSettings.disableRecalibration << 6) | (!!swissSettings.disableRumble << 5);
+	
 	// Copy the game header to 0x80000000
 	memcpy(VAR_AREA,(void*)&GCMDisk,0x20);
 	

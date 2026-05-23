@@ -153,6 +153,8 @@ int config_update_global(bool checkConfigDevice) {
 	fprintf(fp, "Screen Position=%+hi\r\n", swissSettings.sramHOffset);
 	fprintf(fp, "System Language=%s\r\n", sramLanguageStr[swissSettings.sramLanguage]);
 	fprintf(fp, "Swiss Video Mode=%s\r\n", uiVModeStr[swissSettings.uiVMode]);
+	fprintf(fp, "Disable PAD Recalibration=%s\r\n", swissSettings.disableRecalibration ? "Yes":"No");
+	fprintf(fp, "Disable PAD Rumble=%s\r\n", swissSettings.disableRumble ? "Yes":"No");
 	fprintf(fp, "Enable USB Gecko=%s\r\n", enableUSBGeckoStr[swissSettings.enableUSBGecko]);
 	fprintf(fp, "Wait for USB Gecko=%s\r\n", swissSettings.waitForUSBGecko ? "Yes":"No");
 	fprintf(fp, "Simulated Memory Size=%s\r\n", simulatedMemSizeStr[swissSettings.simulatedMemSize]);
@@ -849,6 +851,12 @@ void config_parse_global(char *configData) {
 						}
 					}
 				}
+				else if(!strcmp("Disable PAD Recalibration", name)) {
+					swissSettings.disableRecalibration = !strcmp("Yes", value);
+				}
+				else if(!strcmp("Disable PAD Rumble", name)) {
+					swissSettings.disableRumble = !strcmp("Yes", value);
+				}
 				else if(!strcmp("Enable Debug", name)) {
 					swissSettings.enableUSBGecko = !strcmp("Yes", value) ? USBGECKO_MEMCARD_SLOT_B : USBGECKO_OFF;
 				}
@@ -1408,6 +1416,9 @@ void config_update_environ() {
 		unsetenv("VIDEO_PIXEL_PERFECT");
 	
 	unsetenv("WIILOAD");
+	
+	__PADDisableRecalibration(swissSettings.disableRecalibration);
+	__PADDisableRumble(swissSettings.disableRumble);
 }
 
 SwissSettings backup;
