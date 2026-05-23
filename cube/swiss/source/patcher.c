@@ -193,7 +193,7 @@ int install_code(int final)
 				mtspr(DABR, 0x800000E8 | 0b110);
 			mtspr(EAR, 0x8000000C);
 		}
-		return 1;
+		return 0;
 	}
 	// IDE-EXI
 	else if(devices[DEVICE_CUR] == &__device_ata_a || devices[DEVICE_CUR] == &__device_ata_b || devices[DEVICE_CUR] == &__device_ata_c) {
@@ -225,10 +225,10 @@ int install_code(int final)
 					patch     = !_ideexi_version ? ideexi_v1_w6300_eth_bin      : ideexi_v2_w6300_eth_bin;
 					patchSize = !_ideexi_version ? ideexi_v1_w6300_eth_bin_size : ideexi_v2_w6300_eth_bin_size;
 				} else
-					return 0;
+					return ENODEV;
 				break;
 			default:
-				return 0;
+				return ENOSYS;
 		}
 		print_debug("Installing Patch for IDE-EXI\n");
 	}
@@ -263,10 +263,10 @@ int install_code(int final)
 						patch     = sd_v1_w6300_eth_bin;
 						patchSize = sd_v1_w6300_eth_bin_size;
 					} else
-						return 0;
+						return ENODEV;
 					break;
 				default:
-					return 0;
+					return ENOSYS;
 			}
 		} else {
 			switch (devices[DEVICE_CUR]->emulated()) {
@@ -297,10 +297,10 @@ int install_code(int final)
 						patch     = sd_v2_w6300_eth_bin;
 						patchSize = sd_v2_w6300_eth_bin_size;
 					} else
-						return 0;
+						return ENODEV;
 					break;
 				default:
-					return 0;
+					return ENOSYS;
 			}
 		}
 		print_debug("Installing Patch for SD Card over EXI\n");
@@ -320,7 +320,7 @@ int install_code(int final)
 				patchSize = dvd_card_bin_size;
 				break;
 			default:
-				return 0;
+				return ENOSYS;
 		}
 		print_debug("Installing Patch for DVD\n");
 	}
@@ -332,7 +332,7 @@ int install_code(int final)
 				patchSize = usbgecko_bin_size;
 				break;
 			default:
-				return 0;
+				return ENOSYS;
 		}
 		print_debug("Installing Patch for USB Gecko\n");
 	}
@@ -356,7 +356,7 @@ int install_code(int final)
 				patchSize = wkf_card_bin_size;
 				break;
 			default:
-				return 0;
+				return ENOSYS;
 		}
 		print_debug("Installing Patch for WKF\n");
 	}
@@ -369,7 +369,7 @@ int install_code(int final)
 					patchSize = fsp_bin_size;
 					break;
 				default:
-					return 0;
+					return ENOSYS;
 			}
 		} else {
 			switch (devices[DEVICE_CUR]->emulated()) {
@@ -386,7 +386,7 @@ int install_code(int final)
 					patchSize = fsp_eth_bin_size;
 					break;
 				default:
-					return 0;
+					return ENOSYS;
 			}
 		}
 		print_debug("Installing Patch for File Service Protocol\n");
@@ -409,7 +409,7 @@ int install_code(int final)
 					patchSize = gcloader_v1_card_bin_size;
 					break;
 				default:
-					return 0;
+					return ENOSYS;
 			}
 		} else {
 			switch (devices[DEVICE_CUR]->emulated()) {
@@ -442,10 +442,10 @@ int install_code(int final)
 						patch     = gcloader_v2_w6300_eth_bin;
 						patchSize = gcloader_v2_w6300_eth_bin_size;
 					} else
-						return 0;
+						return ENODEV;
 					break;
 				default:
-					return 0;
+					return ENOSYS;
 			}
 		}
 		print_debug("Installing Patch for GC Loader\n");
@@ -478,10 +478,10 @@ int install_code(int final)
 					patch     = flippy_w6300_eth_bin;
 					patchSize = flippy_w6300_eth_bin_size;
 				} else
-					return 0;
+					return ENODEV;
 				break;
 			default:
-				return 0;
+				return ENOSYS;
 		}
 		print_debug("Installing Patch for FlippyDrive\n");
 	}
@@ -489,12 +489,12 @@ int install_code(int final)
 	print_debug("Space taken by vars/video patches: %i\n", HI_RESERVE - top_addr);
 	if (top_addr < LO_RESERVE + patchSize ||
 		top_addr < 0x80001800)
-		return 0;
+		return ENOMEM;
 	patchLocation = Calc_Address(NULL, PATCH_OTHER, LO_RESERVE);
 	memcpy(patchLocation, patch, patchSize);
 	DCFlushRange(patchLocation, patchSize);
 	ICInvalidateRange(patchLocation, patchSize);
-	return 1;
+	return 0;
 }
 
 void make_pattern(u32 *data, int dataType, u32 offsetFoundAt, u32 length, FuncPattern *functionPattern)

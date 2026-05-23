@@ -1193,9 +1193,15 @@ void load_app(ExecutableFile *fileToPatch)
 	}
 	
 	// See if the combination of our patches has exhausted our play area.
-	if(!install_code(0)) {
-		message = "Exhausted reserved memory.\nAn SD Card Adapter is necessary in order\nfor patches to reserve additional memory.";
-		goto fail;
+	switch(install_code(0)) {
+		case 0:
+			break;
+		case ENOMEM:
+			message = "Exhausted reserved memory.\nAn SD Card Adapter is necessary in order\nfor patches to reserve additional memory.";
+			goto fail;
+		default:
+			message = "Something went wrong.\nPlease open an issue with your hardware\nconfiguration and Swiss settings.";
+			goto fail;
 	}
 	setTopAddr(topAddr);
 	
