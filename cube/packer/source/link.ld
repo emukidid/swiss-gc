@@ -17,16 +17,23 @@ SECTIONS
 	. = 0x00003100 + executable_bin_size;
 	/DISCARD/ : { executable.bin.o }
 
-	. = ALIGN(32);
-	.init : AT(ADDR(.init) + 0x80000000) { KEEP(crt0.o(.init)) } : text
+	.init : AT(ADDR(.init) + 0x80000000) ALIGN(32)
+	{
+		KEEP(crt0.o(.init))
+	} : text
+
 	.text : AT(ADDR(.text) + 0x80000000)
 	{
 		*(.text .text.*)
 		. = ALIGN(32);
 	}
 
-	. = ALIGN(32);
-	.rodata : AT(ADDR(.rodata) + 0x80000000) { *(.rodata .rodata.*) } : data
+	.rodata : AT(ADDR(.rodata) + 0x80000000) ALIGN(32)
+	{
+		KEEP(crt0.o(.rodata))
+		*(.rodata .rodata.*)
+	} : data
+
 	.sdata : AT(ADDR(.sdata) + 0x80000000)
 	{
 		PROVIDE(_SDA_BASE_ = 32768);
@@ -34,8 +41,7 @@ SECTIONS
 		. = ALIGN(32);
 	}
 
-	. = ALIGN(32);
-	.sbss : AT(ADDR(.sbss) + 0x80000000)
+	.sbss : AT(ADDR(.sbss) + 0x80000000) ALIGN(32)
 	{
 		__sbss_start = .;
 		*(.sbss .sbss.*)

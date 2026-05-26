@@ -17,6 +17,8 @@
  * with Swiss.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <ogc/libversion.h>
+
 .section .init
 	.globl _start, __argv, __envp
 _start:
@@ -190,3 +192,8 @@ __eabi:
 	addi	r4, r13, __sbss_end@sdarel
 	subf	r4, r3, r4
 	b		memzero
+
+.section .rodata
+	.globl __sys_versioninfo
+__sys_versioninfo:
+	.asciz	_V_STRING
