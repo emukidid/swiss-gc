@@ -23,12 +23,14 @@ Swiss aims to be an all-in-one homebrew utility for the Nintendo GameCube.
 - [WASP](https://www.gc-forever.com/wiki/index.php?title=WASP_Fusion) / [Wiikey Fusion](https://www.gc-forever.com/wiki/index.php?title=Wiikey_Fusion)
 - SMB, FTP, FSP via [Broadband Adapter](https://www.gc-forever.com/wiki/index.php?title=Broadband_Adapter), ENC28J60, W5500, W6100 or W6300
 - [WODE Jukebox](https://www.gc-forever.com/wiki/index.php?title=Wii_Optical_Drive_Emulator)
-- [IDE-EXI](https://www.gc-forever.com/wiki/index.php?title=IDE-EXI) or M.2 Loader
+- [IDE-EXI](https://www.gc-forever.com/wiki/index.php?title=IDE-EXI), M.2 Loader or USB Dolphin
 - Memory Cards
 - [GC Loader](https://www.gc-forever.com/wiki/index.php?title=GCLoader) or CUBEODE
 - [FlippyDrive](https://www.gc-forever.com/wiki/index.php?title=FlippyDrive)
 - [KunaiGC](https://github.com/KunaiGC/KunaiGC) flash memory
-- [FlipperMCE](https://flippermce.github.io/) or GCMCE
+- [FlipperMCE](https://flippermce.github.io/), GCMCE or MemCard PRO GC
+
+Note: Most devices are not supported by libogc and only by [libogc2](https://github.com/extremscorner/libogc2).
 
 **Can emulate the following devices**
 - Processor Interface
