@@ -11595,6 +11595,9 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				// __VIInit(newmode->viTVMode & ~0x3);
 				*(s16 *)(data + 0x81300712 - 0x81300000 + 0x20) = newmode->viTVMode & ~0x3;
 				
+				// Force controller specification.
+				*(s16 *)(data + 0x81300732 - 0x81300000 + 0x20) = PAD_GetSpec();
+				
 				// Accept any region code.
 				*(s16 *)(data + 0x81300E8A - 0x81300000 + 0x20) = 1;
 				*(s16 *)(data + 0x81300EA2 - 0x81300000 + 0x20) = 1;
@@ -11661,6 +11664,9 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				// __VIInit(newmode->viTVMode & ~0x3);
 				*(u32 *)(data + 0x81300710 - 0x81300000 + 0x20) = 0x60000000;
 				*(u32 *)(data + 0x81300714 - 0x81300000 + 0x20) = 0x38600000 | (newmode->viTVMode & 0xFFFC);
+				
+				// Force controller specification.
+				*(s16 *)(data + 0x8130073A - 0x81300000 + 0x20) = PAD_GetSpec();
 				
 				// Accept any region code.
 				*(s16 *)(data + 0x8130092E - 0x81300000 + 0x20) = 1;
@@ -11799,6 +11805,9 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				// __VIInit(newmode->viTVMode);
 				*(s16 *)(data + 0x81300522 - 0x81300000 + 0x20) = newmode->viTVMode;
 				
+				// Force controller specification.
+				*(s16 *)(data + 0x8130055A - 0x81300000 + 0x20) = PAD_GetSpec();
+				
 				// Accept any region code.
 				*(s16 *)(data + 0x8130077E - 0x81300000 + 0x20) = 1;
 				*(s16 *)(data + 0x813007A2 - 0x81300000 + 0x20) = 1;
@@ -11864,6 +11873,9 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				// __VIInit(newmode->viTVMode);
 				*(s16 *)(data + 0x81300522 - 0x81300000 + 0x20) = newmode->viTVMode;
 				
+				// Force controller specification.
+				*(s16 *)(data + 0x8130055A - 0x81300000 + 0x20) = PAD_GetSpec();
+				
 				// Accept any region code.
 				*(s16 *)(data + 0x8130077E - 0x81300000 + 0x20) = 1;
 				*(s16 *)(data + 0x813007A2 - 0x81300000 + 0x20) = 1;
@@ -11906,6 +11918,9 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				*(u32 *)(data + 0x81300764 - 0x81300000 + 0x20) = 0x60000000;
 				*(u32 *)(data + 0x81300768 - 0x81300000 + 0x20) = 0x38600000 | (newmode->viTVMode & 0xFFFF);
 				
+				// Force controller specification.
+				*(s16 *)(data + 0x8130078E - 0x81300000 + 0x20) = PAD_GetSpec();
+				
 				// Accept any region code.
 				*(s16 *)(data + 0x813009D6 - 0x81300000 + 0x20) = 1;
 				*(s16 *)(data + 0x813009FA - 0x81300000 + 0x20) = 1;
@@ -11946,6 +11961,9 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				
 				// __VIInit(newmode->viTVMode);
 				*(s16 *)(data + 0x81300522 - 0x81300000 + 0x20) = newmode->viTVMode;
+				
+				// Force controller specification.
+				*(s16 *)(data + 0x8130055A - 0x81300000 + 0x20) = PAD_GetSpec();
 				
 				// Accept any region code.
 				*(s16 *)(data + 0x8130077E - 0x81300000 + 0x20) = 1;
@@ -11993,6 +12011,9 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				// __VIInit(newmode->viTVMode);
 				*(u32 *)(data + 0x813007F0 - 0x81300000 + 0x20) = 0x60000000;
 				*(u32 *)(data + 0x813007F4 - 0x81300000 + 0x20) = 0x38600000 | (newmode->viTVMode & 0xFFFF);
+				
+				// Force controller specification.
+				*(s16 *)(data + 0x8130086E - 0x81300000 + 0x20) = PAD_GetSpec();
 				
 				// Force production mode.
 				*(s16 *)(data + 0x813008A6 - 0x81300000 + 0x20) = 1;
@@ -12060,6 +12081,9 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				// __VIInit(newmode->viTVMode);
 				*(s16 *)(data + 0x81300876 - 0x81300000 + 0x20) = newmode->viTVMode;
 				
+				// Force controller specification.
+				*(s16 *)(data + 0x81300896 - 0x81300000 + 0x20) = PAD_GetSpec();
+				
 				// Accept any region code.
 				*(s16 *)(data + 0x81300ACE - 0x81300000 + 0x20) = 1;
 				*(s16 *)(data + 0x81300AF2 - 0x81300000 + 0x20) = 1;
@@ -12125,6 +12149,9 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				// __VIInit(newmode->viTVMode);
 				*(s16 *)(data + 0x81300876 - 0x81300000 + 0x20) = newmode->viTVMode;
 				
+				// Force controller specification.
+				*(s16 *)(data + 0x81300896 - 0x81300000 + 0x20) = PAD_GetSpec();
+				
 				// Accept any region code.
 				*(s16 *)(data + 0x81300ACE - 0x81300000 + 0x20) = 1;
 				*(s16 *)(data + 0x81300AF2 - 0x81300000 + 0x20) = 1;
@@ -12189,6 +12216,9 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				
 				// __VIInit(newmode->viTVMode);
 				*(s16 *)(data + 0x81300612 - 0x81300000 + 0x20) = newmode->viTVMode;
+				
+				// Force controller specification.
+				*(s16 *)(data + 0x8130064A - 0x81300000 + 0x20) = PAD_GetSpec();
 				
 				// Accept any region code.
 				*(s16 *)(data + 0x81300882 - 0x81300000 + 0x20) = 1;
@@ -13328,6 +13358,7 @@ int Patch_GameSpecificFile(void *data, u32 length, const char *gameID, const cha
 		diskHeader->DVDMagicWord = DVD_MAGIC;
 		memset(data + 0x200, 0, 0x200);
 		diskHeader->MaxFSTSize = GCMDisk.MaxFSTSize;
+		diskHeader->PADSpec = *PADSpec;
 		
 		print_debug("Patched:[%s]\n", fileName);
 		patched++;
@@ -13499,7 +13530,7 @@ int Patch_GameSpecificFile(void *data, u32 length, const char *gameID, const cha
 		}
 	} else if (!strncmp(gameID, "GHQE7D", 6) || !strncmp(gameID, "GHQP7D", 6)) {
 		if (!strcmp(fileName, "bi2.bin")) {
-			*(u32 *)(data + 0x24) = 5;
+			*(u32 *)(data + 0x24) = PAD_GetSpec();
 			
 			print_debug("Patched:[%s]\n", fileName);
 			patched++;
@@ -13548,7 +13579,7 @@ int Patch_GameSpecificFile(void *data, u32 length, const char *gameID, const cha
 		}
 	} else if (!strncmp(gameID, "GMRE70", 6) || !strncmp(gameID, "GMRP70", 6)) {
 		if (!strcmp(fileName, "bi2.bin")) {
-			*(u32 *)(data + 0x24) = 5;
+			*(u32 *)(data + 0x24) = PAD_GetSpec();
 			
 			print_debug("Patched:[%s]\n", fileName);
 			patched++;

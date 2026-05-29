@@ -43,7 +43,6 @@ dvdcmdblk DVDCommandBlock;
 dvdcmdblk DVDInquiryBlock;
 dvdcmdblk DVDStopMotorBlock;
 dvddrvinfo DVDDriveInfo[2] __attribute__((aligned(32)));
-u16* const DVDDeviceCode = (u16*)0x800030E6;
 dvddiskid* DVDDiskID = (dvddiskid*)0x80000000;
 SwissSettings swissSettings;
 

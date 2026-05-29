@@ -43,9 +43,10 @@ extern dvdcmdblk DVDCommandBlock;
 extern dvdcmdblk DVDInquiryBlock;
 extern dvdcmdblk DVDStopMotorBlock;
 extern dvddrvinfo DVDDriveInfo[2];
-extern u16* const DVDDeviceCode;
+static u16* const DVDDeviceCode = (u16*)0x800030E6;
 extern dvddiskid* DVDDiskID;
 extern DiskHeader GCMDisk;
+static u8* const PADSpec = (u8*)0x800030E9;
 
 extern u32 __PADDisableRecalibration(s32 disable);
 extern u32 __PADDisableRumble(s32 disable);
