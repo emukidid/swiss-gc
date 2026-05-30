@@ -175,6 +175,9 @@ void __SYS_PreInit(void)
 	_sync();
 
 	*(u64 *)0x800030D8 = -__builtin_ppc_get_timebase();
+	*(u16 *)0x800030E0 = 0x0006; // For backwards compatibility
+
+	__PADFixBits = PAD_CHAN0_BIT | PAD_CHAN1_BIT | PAD_CHAN2_BIT | PAD_CHAN3_BIT;
 }
 
 uiDrawObj_t *configProgBar = NULL;

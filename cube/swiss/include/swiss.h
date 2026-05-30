@@ -48,6 +48,7 @@ extern dvddiskid* DVDDiskID;
 extern DiskHeader GCMDisk;
 static u8* const PADSpec = (u8*)0x800030E9;
 
+extern u32 __PADFixBits;
 extern u32 __PADDisableRecalibration(s32 disable);
 extern u32 __PADDisableRumble(s32 disable);
 

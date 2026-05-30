@@ -1023,8 +1023,10 @@ void load_app(ExecutableFile *fileToPatch)
 		*(vu32*)(VAR_AREA+0x30C4) = exi_probe(1);
 	}
 	
-	*(vu8*)(VAR_AREA+0x30E3) = (!!swissSettings.disableRecalibration << 6) | (!!swissSettings.disableRumble << 5);
-	*(vu8*)(VAR_AREA+0x30E9) = *PADSpec;
+	*(vu16*)(VAR_AREA+0x30E0) = 0x0006;
+	*(vu8 *)(VAR_AREA+0x30E3) = (!!swissSettings.disableRecalibration << 6) | (!!swissSettings.disableRumble << 5);
+	*(vu16*)(VAR_AREA+0x30E6) = *DVDDeviceCode;
+	*(vu8 *)(VAR_AREA+0x30E9) = *PADSpec;
 	
 	// Copy the game header to 0x80000000
 	memcpy(VAR_AREA,(void*)&GCMDisk,0x20);
