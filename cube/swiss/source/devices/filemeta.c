@@ -20,6 +20,7 @@
 #include "filemeta.h"
 #include "nkit.h"
 #include "swiss.h"
+#include "sidestep.h"
 #include "deviceHandler.h"
 #include "FrameBufferMagic.h"
 
@@ -208,15 +209,35 @@ void populate_game_meta(file_handle *f, u32 bannerOffset, u32 bannerSize) {
 	meta_create_direct_texture(f->meta);
 }
 
+void populate_dol_meta(file_handle *f) {
+	DOLHEADER dolhdr;
+	f->device->seekFile(f, 0, DEVICE_HANDLER_SEEK_SET);
+	if(f->device->readFile(f, &dolhdr, DOLHDRLENGTH) == DOLHDRLENGTH) {
+		char description[BNR_DESC_LEN];
+		if(dolhdr.dataOffset[0] && dolhdr.dataLength[0] >= BNR_DESC_LEN) {
+			f->device->seekFile(f, dolhdr.dataOffset[0], DEVICE_HANDLER_SEEK_SET);
+			if(f->device->readFile(f, description, BNR_DESC_LEN) == BNR_DESC_LEN) {
+				if(strnlen(description, BNR_DESC_LEN) < BNR_DESC_LEN && !strncasecmp(description, "libogc", 6)) {
+					strncpy(f->meta->bannerDesc.description, description, BNR_DESC_LEN);
+				}
+			}
+		}
+	}
+}
+
 void populate_meta(file_handle *f) {
 	// If the meta hasn't been created, lets read it.
 	if(!f->meta && (f->meta = meta_alloc())) {
 		// File detection (GCM, DOL, MP3 etc)
 		if(f->fileType==IS_FILE) {
-			if(endsWith(f->name,".dol"))
+			if(endsWith(f->name,".dol")) {
+				populate_dol_meta(f);
 				f->meta->fileTypeTexObj = &dolimgTexObj;
-			else if(endsWith(f->name,".dol+cli"))
+			}
+			else if(endsWith(f->name,".dol+cli")) {
+				populate_dol_meta(f);
 				f->meta->fileTypeTexObj = &dolcliimgTexObj;
+			}
 			else if(endsWith(f->name,".elf"))
 				f->meta->fileTypeTexObj = &elfimgTexObj;
 			else if(endsWith(f->name,".fpkg"))
@@ -378,6 +399,7 @@ void populate_meta(file_handle *f) {
 					bootFile->size = 0;
 					
 					if (f->device->readFile(bootFile, NULL, 0) == 0 && bootFile->size) {
+						populate_dol_meta(bootFile);
 						f->device->closeFile(bootFile);
 						
 						f = memcpy(f, bootFile, offsetof(file_handle, uiObj));
