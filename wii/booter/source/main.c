@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2024-2025, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2024-2026, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -35,6 +35,7 @@ static DOLImage *const dolHeader = (DOLImage *)0x80800000;
 static void *const dolImage = dolHeader;
 static char *const dolMagic = dolImage - 32;
 void *__myArena1Hi = dolMagic;
+BOOL MALLOC_MEM2 = FALSE;
 
 extern syssram *__SYS_LockSram(void);
 extern bool __SYS_UnlockSram(bool write);
@@ -77,8 +78,7 @@ static void initVideo(void)
 
 	VIDEO_Configure(&rmode);
 	VIDEO_Flush();
-	VIDEO_WaitVSync();
-	VIDEO_WaitVSync();
+	VIDEO_WaitForFlush();
 }
 
 static void initSram(void)
