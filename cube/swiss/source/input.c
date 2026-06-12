@@ -2,36 +2,60 @@
 #include <ogc/n64.h>
 #include <ogc/pad.h>
 #include <ogc/si.h>
+#include <ogc/si_steering.h>
 #include <ogc/system.h>
 #include <stdlib.h>
 
 static u8 status[PAD_CHANMAX];
+static u32 resetBits;
 
 static void resetCallback(void)
 {
-	u32 mask = 0;
+	u32 recalibrateBits = 0;
 
 	for (s32 chan = PAD_CHAN0; chan < PAD_CHANMAX; chan++) {
 		u32 type;
 
 		if (PAD_GetType(chan, &type)) {
-			mask |= PAD_CHAN_BIT(chan);
+			recalibrateBits |= PAD_CHAN_BIT(chan);
 		} else {
 			switch (SI_DecodeType(type)) {
 				case SI_N64_CONTROLLER:
 					N64_ResetAsync(chan, &status[chan], NULL);
 					break;
+				case SI_GC_STEERING:
+					resetBits |= SI_CHAN_BIT(chan);
+					break;
 			}
 		}
 	}
 
-	PAD_Recalibrate(mask);
+	PAD_Recalibrate(recalibrateBits);
 }
 
-__attribute((constructor))
-static void initPads(void)
+static void samplingCallback(void)
+{
+	SISteeringStatus steering;
+
+	for (s32 chan = SI_CHAN0; chan < SI_MAX_CHAN; chan++) {
+		if (resetBits & SI_CHAN_BIT(chan)) {
+			switch (SI_ReadSteering(chan, &steering)) {
+				case SI_STEERING_ERR_READY:
+					SI_ControlSteering(chan, SI_STEERING_CONTROL_DRIVE, -steering.steering * 16);
+					if (steering.steering || SYS_ResetButtonDown()) break;
+				case SI_STEERING_ERR_NO_CONTROLLER:
+					resetBits &= ~SI_CHAN_BIT(chan);
+					break;
+			}
+		}
+	}
+}
+
+void padsInit()
 {
 	PAD_Init();
+	SI_InitSteering();
+	SI_SetSteeringSamplingCallback(samplingCallback);
 	SYS_SetResetCallback(resetCallback);
 }
 

@@ -2262,6 +2262,7 @@ void DrawDispose(uiDrawObj_t *evt)
 
 void DrawInit(GXRModeObj *videoMode, bool black) {
 	setVideoMode(videoMode);
+	padsInit();
 	init_font();
 	init_textures();
 	uiDrawObj_t *container = DrawContainer();
