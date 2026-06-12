@@ -81,7 +81,7 @@ static char *tooltips_global[PAGE_GLOBAL_MAX+1] = {
 	[SET_DISABLE_RECALIB] = "Disable Controller Recalibration:\n\nAvoids problems with non-compliant GameCube Controller\nimplementations.",
 	[SET_ENABLE_USBGECKO] = "Enable USB Gecko:\n\nIf a USB Gecko is present, messages output to the debug UART\nwill be redirected. When the USB host isn't actively reading from\nthe USB Gecko, it may cause the system to hang.\n\nwiiload is also made available for iterative development.",
 	[SET_WAIT_USBGECKO] = "Wait for USB Gecko:\n\nWait for the transmit buffer to be read by the USB host when full.",
-	[SET_SIMMEMSIZE] = "Simulated Memory Size:\n\nLimits the amount of memory available on development hardware.",
+	[SET_SIMMEMSIZE] = "Simulated MRAM Size:\n\nLimits the amount of memory available on development hardware.",
 	[SET_TAU_CALIB] = "CPU Temperature Calibration:\n\nOn a cold boot, adjust this value so that the CPU temperature\nreading in the title bar is around room temperature.\n\nThere is no factory calibration."
 };
 
@@ -273,7 +273,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 			drawSettingEntryBoolean(page, &page_y_ofs, "Disable Controller Rumble:", swissSettings.disableRumble, option == SET_DISABLE_RUMBLE, true);
 			drawSettingEntryString(page, &page_y_ofs, "Enable USB Gecko:", enableUSBGeckoStr[swissSettings.enableUSBGecko], option == SET_ENABLE_USBGECKO, true);
 			drawSettingEntryBoolean(page, &page_y_ofs, "Wait for USB Gecko:", swissSettings.waitForUSBGecko, option == SET_WAIT_USBGECKO, true);
-			drawSettingEntryString(page, &page_y_ofs, "Simulated Memory Size:", simulatedMemSizeStr[swissSettings.simulatedMemSize], option == SET_SIMMEMSIZE, true);
+			drawSettingEntryString(page, &page_y_ofs, "Simulated MRAM Size:", simulatedMemSizeStr[swissSettings.simulatedMemSize], option == SET_SIMMEMSIZE, true);
 			sprintf(sramTemperatureStr, "%+hi\260C", swissSettings.sramTemperature);
 			drawSettingEntryString(page, &page_y_ofs, "CPU Temperature Calibration:", sramTemperatureStr, option == SET_TAU_CALIB, tauEnable);
 		}
