@@ -6,7 +6,6 @@
 #include <ogc/system.h>
 #include <stdlib.h>
 
-static u8 status[PAD_CHANMAX];
 static u32 resetBits;
 
 static void resetCallback(void)
@@ -21,7 +20,7 @@ static void resetCallback(void)
 		} else {
 			switch (SI_DecodeType(type)) {
 				case SI_N64_CONTROLLER:
-					N64_ResetAsync(chan, &status[chan], NULL);
+					N64_ResetAsync(chan, NULL, NULL);
 					break;
 				case SI_GC_STEERING:
 					resetBits |= SI_CHAN_BIT(chan);
