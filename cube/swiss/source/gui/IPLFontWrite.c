@@ -218,7 +218,9 @@ int GetCharsThatFitInWidth(const char *string, int max, float scale)
 		if(strWidth * scale <= max) {
 			charCount++;
 		} else {
-			return charCount-3;
+			// Reserve room for the "..." abbreviation, but never return a
+			// negative count when fewer than three characters fit.
+			return charCount < 3 ? 0 : charCount - 3;
 		}
 	}
 	return charCount;
@@ -293,7 +295,7 @@ void drawStringEllipsis(int x, int y, const char *string, float scale, int align
 		chars_to_draw--;
 		
 		// check if we've started (or about to start) our ellipses abbreviation
-		if(len > 0 && chars_to_draw == 0) {
+		if(len > 0 && chars_to_draw <= 0) {
 			if(dots_to_write == 0) {
 				dots_to_write = 4;
 			}
