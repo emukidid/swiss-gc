@@ -388,7 +388,10 @@ void config_defaults(ConfigEntry *entry) {
 
 // TODO kill this off in one major version from now. Don't add new settings to it.
 void config_parse_legacy(char *configData, void (*progress_indicator)(char*, int, int)) {
-	ConfigEntry configEntries[2048]; // That's a lot of Games!
+	// One slot is reserved for the trailing "defaults" entry written after the parse loop,
+	// so at most CONFIG_LEGACY_MAX_ENTRIES - 1 games can be imported.
+	#define CONFIG_LEGACY_MAX_ENTRIES 2048
+	ConfigEntry configEntries[CONFIG_LEGACY_MAX_ENTRIES]; // That's a lot of Games!
 	int configEntriesCount = 0;
 	// Parse each entry and put it into our array
 	char *line, *linectx = NULL;
@@ -408,21 +411,25 @@ void config_parse_legacy(char *configData, void (*progress_indicator)(char*, int
 				if(!strcmp("ID", name)) {
 					defaultPassed = true;
 					if(!first) {
+						// Stop importing once the array is full, keeping the final
+						// slot free for the defaults entry written after this loop.
+						if(configEntriesCount + 1 >= CONFIG_LEGACY_MAX_ENTRIES - 1)
+							break;
 						configEntriesCount++;
 					}
-					strncpy(configEntries[configEntriesCount].game_id, value, 4);
+					strlcpy(configEntries[configEntriesCount].game_id, value, sizeof(configEntries[configEntriesCount].game_id));
 					first = 0;
 					// Fill this entry with defaults incase some values are missing..
 					config_defaults(&configEntries[configEntriesCount]);
 				}
 				else if(!strcmp("Name", name)) {
-					strncpy(configEntries[configEntriesCount].game_name, value, 64);
+					strlcpy(configEntries[configEntriesCount].game_name, value, sizeof(configEntries[configEntriesCount].game_name));
 				}
 				else if(!strcmp("Comment", name)) {
-					strncpy(configEntries[configEntriesCount].comment, value, 128);
+					strlcpy(configEntries[configEntriesCount].comment, value, sizeof(configEntries[configEntriesCount].comment));
 				}
 				else if(!strcmp("Status", name)) {
-					strncpy(configEntries[configEntriesCount].status, value, 32);
+					strlcpy(configEntries[configEntriesCount].status, value, sizeof(configEntries[configEntriesCount].status));
 				}
 				else if(!strcmp("Force Video Mode", name)) {
 					int *ptr = !defaultPassed ? &swissSettings.gameVMode : &configEntries[configEntriesCount].gameVMode;
@@ -668,6 +675,7 @@ void config_parse_legacy(char *configData, void (*progress_indicator)(char*, int
 	 config_update_recent(false);
 	 // Kill off the old swiss.ini
 	 config_file_delete(SWISS_SETTINGS_FILENAME_LEGACY);
+	#undef CONFIG_LEGACY_MAX_ENTRIES
 }
 
 void config_parse_global(char *configData) {
@@ -1135,13 +1143,13 @@ void config_parse_game(char *configData, ConfigEntry *entry) {
 			if(value != NULL) {
 				//print_debug("Name [%s] Value [%s]\n", name, value);
 				if(!strcmp("Name", name)) {
-					strncpy(entry->game_name, value, 64);
+					strlcpy(entry->game_name, value, sizeof(entry->game_name));
 				}
 				else if(!strcmp("Comment", name)) {
-					strncpy(entry->comment, value, 128);
+					strlcpy(entry->comment, value, sizeof(entry->comment));
 				}
 				else if(!strcmp("Status", name)) {
-					strncpy(entry->status, value, 32);
+					strlcpy(entry->status, value, sizeof(entry->status));
 				}
 				else if(!strcmp("Game Language", name)) {
 					for(int i = 0; i < 9; i++) {
