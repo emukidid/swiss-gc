@@ -31,6 +31,13 @@
 
 #define GUI_MSGBOX_ALPHA 225
 
+// Modern refresh palette. Selection/active highlights use the accent colour;
+// every filled box drawn through _DrawSimpleBox also gains a subtle top-to-
+// bottom gradient (lighter at the top) for depth. See the visual refresh
+// mockups for the intended look.
+#define COL_ACCENT       ((GXColor){0x2f,0x80,0xed,GUI_MSGBOX_ALPHA})
+#define COL_GRAD_LIGHTEN 30   // how much lighter the top edge of a filled box is
+
 TPLFile imagesTPL;
 TPLFile buttonsTPL;
 TPLFile backdropTPL;
@@ -464,18 +471,57 @@ static void _drawRect(int x, int y, int width, int height, int depth, GXColor co
 	GX_End();
 }
 
-static void _DrawSimpleBox(int x, int y, int width, int height, int depth, GXColor fillColor, GXColor borderColor) 
+// Lighten (or darken, with a negative delta) an RGB colour, preserving alpha.
+static GXColor _shade(GXColor c, int delta)
+{
+	int r = c.r + delta, g = c.g + delta, b = c.b + delta;
+	GXColor o;
+	o.r = r < 0 ? 0 : (r > 255 ? 255 : r);
+	o.g = g < 0 ? 0 : (g > 255 ? 255 : g);
+	o.b = b < 0 ? 0 : (b > 255 ? 255 : b);
+	o.a = c.a;
+	return o;
+}
+
+// Like _drawRect but with a vertical colour gradient (top two vertices use
+// topColor, bottom two use botColor).
+static void _drawRectGradient(int x, int y, int width, int height, int depth, GXColor topColor, GXColor botColor, float s0, float s1, float t0, float t1)
+{
+	GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
+		GX_Position3f32((float) x,(float) y,(float) depth );
+		GX_Color4u8(topColor.r, topColor.g, topColor.b, topColor.a);
+		GX_TexCoord2f32(s0,t0);
+		GX_Position3f32((float) (x+width),(float) y,(float) depth );
+		GX_Color4u8(topColor.r, topColor.g, topColor.b, topColor.a);
+		GX_TexCoord2f32(s1,t0);
+		GX_Position3f32((float) (x+width),(float) (y+height),(float) depth );
+		GX_Color4u8(botColor.r, botColor.g, botColor.b, botColor.a);
+		GX_TexCoord2f32(s1,t1);
+		GX_Position3f32((float) x,(float) (y+height),(float) depth );
+		GX_Color4u8(botColor.r, botColor.g, botColor.b, botColor.a);
+		GX_TexCoord2f32(s0,t1);
+	GX_End();
+}
+
+static void _DrawSimpleBox(int x, int y, int width, int height, int depth, GXColor fillColor, GXColor borderColor)
 {
 	//Adjust for blank texture border
 	x-=4; y-=4; width+=8; height+=8;
-	
+
+	// Vertical gradient: lighter at the top, fading to the requested fill at the
+	// bottom. midColor is the colour at the box's vertical midpoint where the
+	// top and bottom halves meet.
+	GXColor topColor = _shade(fillColor, COL_GRAD_LIGHTEN);
+	GXColor midColor = _shade(fillColor, COL_GRAD_LIGHTEN/2);
+	GXColor botColor = fillColor;
+
 	GX_InvalidateTexAll();
 	GX_LoadTexObj(&boxinnerTexObj, GX_TEXMAP0);
 
-	_drawRect(x, y, width/2, height/2, depth, fillColor, 0.0f, ((float)width/32), 0.0f, ((float)height/32));
-	_drawRect(x+(width/2), y, width/2, height/2, depth, fillColor, ((float)width/32), 0.0f, 0.0f, ((float)height/32));
-	_drawRect(x, y+(height/2), width/2, height/2, depth, fillColor, 0.0f, ((float)width/32), ((float)height/32), 0.0f);
-	_drawRect(x+(width/2), y+(height/2), width/2, height/2, depth, fillColor, ((float)width/32), 0.0f, ((float)height/32), 0.0f);
+	_drawRectGradient(x, y, width/2, height/2, depth, topColor, midColor, 0.0f, ((float)width/32), 0.0f, ((float)height/32));
+	_drawRectGradient(x+(width/2), y, width/2, height/2, depth, topColor, midColor, ((float)width/32), 0.0f, 0.0f, ((float)height/32));
+	_drawRectGradient(x, y+(height/2), width/2, height/2, depth, midColor, botColor, 0.0f, ((float)width/32), ((float)height/32), 0.0f);
+	_drawRectGradient(x+(width/2), y+(height/2), width/2, height/2, depth, midColor, botColor, ((float)width/32), 0.0f, ((float)height/32), 0.0f);
 
 	GX_InvalidateTexAll();
 	GX_LoadTexObj(&boxouterTexObj, GX_TEXMAP0);
@@ -893,7 +939,7 @@ static void _DrawSelectableButton(uiDrawObj_t *evt) {
 	drawSelectableButtonEvent_t *data = (drawSelectableButtonEvent_t*)evt->data;
 	int x1 = data->x1;
 	int x2 = data->x2;
-	GXColor selectColor = (GXColor) {96,107,164,GUI_MSGBOX_ALPHA}; //bluish
+	GXColor selectColor = COL_ACCENT; //accent
 	GXColor noColor = (GXColor) {0,0,0,0}; //black
 	GXColor borderColor = (GXColor) {200,200,200,GUI_MSGBOX_ALPHA}; //silver
 	
@@ -1260,7 +1306,7 @@ static void _DrawFileBrowserButton(uiDrawObj_t *evt) {
 		
 		// Not selected
 		GXColor noColor 	= (GXColor) {0,0,0,0};
-		GXColor selectColor = (GXColor) {46,57,104,GUI_MSGBOX_ALPHA}; 	//bluish
+		GXColor selectColor = COL_ACCENT; 	//accent
 		GXColor borderColor = (GXColor) {200,200,200,GUI_MSGBOX_ALPHA}; //Silver
 
 		_DrawSimpleBox(data->x1, data->y1, data->x2-data->x1, data->y2-data->y1, 
@@ -1618,7 +1664,7 @@ static void _DrawVertScrollBar(uiDrawObj_t *evt) {
 	if(scrollStartY > y2-3-data->scrollHeight)
 		scrollStartY = y2-3-data->scrollHeight;
 	
-	GXColor fillColor = (GXColor) {46,57,104,GUI_MSGBOX_ALPHA}; 	//bluish
+	GXColor fillColor = COL_ACCENT; 	//accent
   	GXColor noColor = (GXColor) {0,0,0,0}; //blank
 	GXColor borderColor = (GXColor) {200,200,200,GUI_MSGBOX_ALPHA}; //silver
 	
@@ -1998,7 +2044,7 @@ void DrawGetTextEntry(int mode, const char *label, void *src, int size) {
 				// Space and Backspace are special, draw them in double the width with smaller fonts
 				bool isSpecial = (gridText[i] == '\a' || gridText[i] == '\b');
 				int button_width = isSpecial ? (60 + grid_gap) : 30;
-				DrawAddChild(newPanel, DrawEmptyColouredBox(x, y, x+button_width, y+button_height, cur_col == dx && cur_row == dy ? (GXColor) {96,107,164,GUI_MSGBOX_ALPHA} : (GXColor) {0,0,0,GUI_MSGBOX_ALPHA}));
+				DrawAddChild(newPanel, DrawEmptyColouredBox(x, y, x+button_width, y+button_height, cur_col == dx && cur_row == dy ? COL_ACCENT : (GXColor) {0,0,0,GUI_MSGBOX_ALPHA}));
 				float fontSize = isSpecial ? 0.65f : 1.0f;
 				if(isSpecial)
 					sprintf(txtbuffer, "%s", gridText[i] == '\a' ? "Space" : "(Y) Back");
