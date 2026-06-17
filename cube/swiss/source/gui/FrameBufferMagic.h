@@ -22,6 +22,12 @@
 #define BUTTON_COLOUR_INNER 0x2088207C
 #define BUTTON_COLOUR_OUTER COLOR_SILVER
 
+// Modern refresh palette (shared across the GUI). Selection/active highlights
+// use the accent colour; filled boxes drawn through _DrawSimpleBox gain a
+// vertical gradient that is COL_GRAD_LIGHTEN lighter at the top.
+#define COL_ACCENT       ((GXColor){0x2f,0x80,0xed,225})
+#define COL_GRAD_LIGHTEN 30
+
 #define PROGRESS_BOX_WIDTH  600
 #define PROGRESS_BOX_HEIGHT 125
 #define PROGRESS_BOX_BOTTOMLEFT 0

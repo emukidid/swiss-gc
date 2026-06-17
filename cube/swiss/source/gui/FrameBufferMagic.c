@@ -30,13 +30,8 @@
 #include "cheats.h"
 
 #define GUI_MSGBOX_ALPHA 225
-
-// Modern refresh palette. Selection/active highlights use the accent colour;
-// every filled box drawn through _DrawSimpleBox also gains a subtle top-to-
-// bottom gradient (lighter at the top) for depth. See the visual refresh
-// mockups for the intended look.
-#define COL_ACCENT       ((GXColor){0x2f,0x80,0xed,GUI_MSGBOX_ALPHA})
-#define COL_GRAD_LIGHTEN 30   // how much lighter the top edge of a filled box is
+// COL_ACCENT and COL_GRAD_LIGHTEN live in FrameBufferMagic.h so the rest of the
+// GUI can share the refresh palette.
 
 TPLFile imagesTPL;
 TPLFile buttonsTPL;
