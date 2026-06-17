@@ -297,6 +297,34 @@ bool upToParent(file_handle* entry)
 	return getParentPath(entry->name, entry->name);
 }
 
+// Buttons that move the file browser selection and should auto-repeat when held.
+#define NAV_REPEAT_BUTTONS (PAD_BUTTON_UP|PAD_BUTTON_DOWN|PAD_BUTTON_LEFT|PAD_BUTTON_RIGHT|PAD_TRIGGER_L|PAD_TRIGGER_R)
+
+// Throttle between navigation steps. The analog stick repeats proportionally to
+// how far it is pushed (existing behaviour). Held d-pad/shoulder navigation now
+// repeats too: a longer delay before the first repeat, then accelerating while
+// held. Any other held button waits for release so single presses fire once.
+// *navHoldFrames tracks how long a direction has been held; the caller resets it
+// to 0 whenever the input loop goes idle so discrete taps restart the delay.
+static void navRepeatWait(u32 retraceCount, s8 stickMag, u32 waitButtons, int *navHoldFrames)
+{
+	if(stickMag <= -16 || stickMag >= 16) {
+		*navHoldFrames = 0;
+		VIDEO_WaitForRetrace(retraceCount + lrintf((abs(stickMag) > 64 ? 0.045f : 0.1f) * VIDEO_GetRetraceRate()));
+	}
+	else if(padsButtonsHeld() & NAV_REPEAT_BUTTONS) {
+		(*navHoldFrames)++;
+		float frac = (*navHoldFrames == 1) ? 0.30f : (*navHoldFrames < 6 ? 0.12f : 0.05f);
+		int delay = lrintf(frac * VIDEO_GetRetraceRate());
+		VIDEO_WaitForRetrace(retraceCount + (delay < 1 ? 1 : delay));
+	}
+	else {
+		*navHoldFrames = 0;
+		while (padsButtonsHeld() & waitButtons)
+			{ VIDEO_WaitVSync (); }
+	}
+}
+
 uiDrawObj_t* renderFileBrowser(file_handle** directory, int num_files, uiDrawObj_t* filePanel)
 {
 	memset(txtbuffer,0,sizeof(txtbuffer));
@@ -308,6 +336,7 @@ uiDrawObj_t* renderFileBrowser(file_handle** directory, int num_files, uiDrawObj
 	uiDrawObj_t *loadingBox = DrawProgressLoading(PROGRESS_BOX_BOTTOMLEFT);
 	DrawPublish(loadingBox);
 	meta_thread_start(loadingBox);
+	int navHoldFrames = 0;
 	while(1) {
 		u32 retraceCount = VIDEO_GetRetraceCount();
 		DrawUpdateProgressLoading(loadingBox, +1);
@@ -318,7 +347,7 @@ uiDrawObj_t* renderFileBrowser(file_handle** directory, int num_files, uiDrawObj
 		
 		u32 waitButtons = PAD_BUTTON_X|PAD_BUTTON_START|PAD_BUTTON_B|PAD_BUTTON_A|PAD_BUTTON_UP|PAD_BUTTON_DOWN|PAD_BUTTON_LEFT|PAD_BUTTON_RIGHT|PAD_TRIGGER_L|PAD_TRIGGER_R|PAD_TRIGGER_Z;
 		while ((padsStickY() > -16 && padsStickY() < 16) && !(padsButtonsHeld() & waitButtons))
-			{ VIDEO_WaitVSync (); }
+			{ navHoldFrames = 0; VIDEO_WaitVSync (); }
 		if((padsButtonsHeld() & PAD_BUTTON_UP) || padsStickY() >= 16){	curSelection = (--curSelection < 0) ? num_files-1 : curSelection;}
 		if((padsButtonsHeld() & PAD_BUTTON_DOWN) || padsStickY() <= -16) {curSelection = (curSelection + 1) % num_files;	}
 		if(padsButtonsHeld() & (PAD_BUTTON_LEFT|PAD_TRIGGER_L)) {
@@ -415,13 +444,7 @@ uiDrawObj_t* renderFileBrowser(file_handle** directory, int num_files, uiDrawObj
 			DrawUpdateFileBrowserButton(directory[curSelection]->uiObj, (curMenuLocation == ON_FILLIST) ? B_SELECTED:B_NOSELECT);
 			break;
 		}
-		if(padsStickY() <= -16 || padsStickY() >= 16) {
-			VIDEO_WaitForRetrace(retraceCount + lrintf((abs(padsStickY()) > 64 ? 0.045f : 0.1f) * VIDEO_GetRetraceRate()));
-		}
-		else {
-			while (padsButtonsHeld() & waitButtons)
-				{ VIDEO_WaitVSync (); }
-		}
+		navRepeatWait(retraceCount, padsStickY(), waitButtons, &navHoldFrames);
 	}
 	meta_thread_stop();
 	DrawDispose(loadingBox);
@@ -540,6 +563,7 @@ uiDrawObj_t* renderFileCarousel(file_handle** directory, int num_files, uiDrawOb
 	uiDrawObj_t *loadingBox = DrawProgressLoading(PROGRESS_BOX_TOPRIGHT);
 	DrawPublish(loadingBox);
 	meta_thread_start(loadingBox);
+	int navHoldFrames = 0;
 	while(1) {
 		u32 retraceCount = VIDEO_GetRetraceCount();
 		DrawUpdateProgressLoading(loadingBox, +1);
@@ -550,7 +574,7 @@ uiDrawObj_t* renderFileCarousel(file_handle** directory, int num_files, uiDrawOb
 		
 		u32 waitButtons = PAD_BUTTON_X|PAD_BUTTON_START|PAD_BUTTON_B|PAD_BUTTON_A|PAD_BUTTON_UP|PAD_BUTTON_DOWN|PAD_BUTTON_LEFT|PAD_BUTTON_RIGHT|PAD_TRIGGER_L|PAD_TRIGGER_R|PAD_TRIGGER_Z;
 		while ((padsStickX() > -16 && padsStickX() < 16) && !(padsButtonsHeld() & waitButtons))
-			{ VIDEO_WaitVSync (); }
+			{ navHoldFrames = 0; VIDEO_WaitVSync (); }
 		if((padsButtonsHeld() & PAD_BUTTON_LEFT) || padsStickX() <= -16){	curSelection = (--curSelection < 0) ? num_files-1 : curSelection;}
 		if((padsButtonsHeld() & PAD_BUTTON_RIGHT) || padsStickX() >= 16) {curSelection = (curSelection + 1) % num_files;	}
 		if(padsButtonsHeld() & (PAD_BUTTON_UP|PAD_TRIGGER_L)) {
@@ -647,13 +671,7 @@ uiDrawObj_t* renderFileCarousel(file_handle** directory, int num_files, uiDrawOb
 			select_recent_entry();
 			break;
 		}
-		if(padsStickX() <= -16 || padsStickX() >= 16) {
-			VIDEO_WaitForRetrace(retraceCount + lrintf((abs(padsStickX()) > 64 ? 0.045f : 0.1f) * VIDEO_GetRetraceRate()));
-		}
-		else {
-			while (padsButtonsHeld() & waitButtons)
-				{ VIDEO_WaitVSync (); }
-		}
+		navRepeatWait(retraceCount, padsStickX(), waitButtons, &navHoldFrames);
 	}
 	meta_thread_stop();
 	DrawDispose(loadingBox);
@@ -711,6 +729,7 @@ uiDrawObj_t* renderFileFullwidth(file_handle** directory, int num_files, uiDrawO
 	uiDrawObj_t *loadingBox = DrawProgressLoading(PROGRESS_BOX_TOPRIGHT);
 	DrawPublish(loadingBox);
 	meta_thread_start(loadingBox);
+	int navHoldFrames = 0;
 	while(1) {
 		u32 retraceCount = VIDEO_GetRetraceCount();
 		DrawUpdateProgressLoading(loadingBox, +1);
@@ -721,7 +740,7 @@ uiDrawObj_t* renderFileFullwidth(file_handle** directory, int num_files, uiDrawO
 		
 		u32 waitButtons = PAD_BUTTON_X|PAD_BUTTON_START|PAD_BUTTON_B|PAD_BUTTON_A|PAD_BUTTON_UP|PAD_BUTTON_DOWN|PAD_BUTTON_LEFT|PAD_BUTTON_RIGHT|PAD_TRIGGER_L|PAD_TRIGGER_R|PAD_TRIGGER_Z;
 		while ((padsStickY() > -16 && padsStickY() < 16) && !(padsButtonsHeld() & waitButtons))
-			{ VIDEO_WaitVSync (); }
+			{ navHoldFrames = 0; VIDEO_WaitVSync (); }
 		if((padsButtonsHeld() & PAD_BUTTON_UP) || padsStickY() >= 16){	curSelection = (--curSelection < 0) ? num_files-1 : curSelection;}
 		if((padsButtonsHeld() & PAD_BUTTON_DOWN) || padsStickY() <= -16) {curSelection = (curSelection + 1) % num_files;	}
 		if(padsButtonsHeld() & (PAD_BUTTON_LEFT|PAD_TRIGGER_L)) {
@@ -818,13 +837,7 @@ uiDrawObj_t* renderFileFullwidth(file_handle** directory, int num_files, uiDrawO
 			DrawUpdateFileBrowserButton(directory[curSelection]->uiObj, (curMenuLocation == ON_FILLIST) ? B_SELECTED:B_NOSELECT);
 			break;
 		}
-		if(padsStickY() <= -16 || padsStickY() >= 16) {
-			VIDEO_WaitForRetrace(retraceCount + lrintf((abs(padsStickY()) > 64 ? 0.045f : 0.1f) * VIDEO_GetRetraceRate()));
-		}
-		else {
-			while (padsButtonsHeld() & waitButtons)
-				{ VIDEO_WaitVSync (); }
-		}
+		navRepeatWait(retraceCount, padsStickY(), waitButtons, &navHoldFrames);
 	}
 	meta_thread_stop();
 	DrawDispose(loadingBox);
