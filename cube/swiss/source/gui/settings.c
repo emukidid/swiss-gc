@@ -1068,6 +1068,7 @@ int show_settings(int page, int option, ConfigEntry *config) {
 	
 	GXRModeObj *oldmode = getVideoMode();
 	while (padsButtonsHeld() & PAD_BUTTON_A){ VIDEO_WaitVSync (); }
+	int navHoldFrames = 0;
 	while(1) {
 		uiDrawObj_t* settingsPage = settings_draw_page(page, option, config);
 		while (!((padsButtonsHeld() & PAD_BUTTON_RIGHT) 
@@ -1079,7 +1080,7 @@ int show_settings(int page, int option, ConfigEntry *config) {
 			|| (padsButtonsHeld() & PAD_BUTTON_Y)
 			|| (padsButtonsHeld() & PAD_TRIGGER_R)
 			|| (padsButtonsHeld() & PAD_TRIGGER_L)))
-			{ VIDEO_WaitVSync (); }
+			{ navHoldFrames = 0; VIDEO_WaitVSync (); }
 		u16 btns = padsButtonsHeld();
 		if(btns & PAD_BUTTON_Y) {
 			char *tooltip = get_tooltip(page, option);
@@ -1198,16 +1199,32 @@ int show_settings(int page, int option, ConfigEntry *config) {
 				settings_toggle(page, option, 0, config);
 			}
 		}
-		while ((padsButtonsHeld() & PAD_BUTTON_RIGHT) 
-				|| (padsButtonsHeld() & PAD_BUTTON_LEFT) 
-				|| (padsButtonsHeld() & PAD_BUTTON_UP) 
-				|| (padsButtonsHeld() & PAD_BUTTON_DOWN) 
-				|| (padsButtonsHeld() & PAD_BUTTON_B) 
-				|| (padsButtonsHeld() & PAD_BUTTON_A)
-				|| (padsButtonsHeld() & PAD_BUTTON_Y)
-				|| (padsButtonsHeld() & PAD_TRIGGER_R)
-				|| (padsButtonsHeld() & PAD_TRIGGER_L))
-			{ VIDEO_WaitVSync (); }
+		// Auto-repeat held up/down so long settings pages scroll while held.
+		// Left/right (value toggles) and the shoulder page buttons still need a
+		// fresh press, so only repeat when up or down is held on its own.
+		u16 held = padsButtonsHeld();
+		u16 navUpDown = held & (PAD_BUTTON_UP | PAD_BUTTON_DOWN);
+		if(navUpDown && !(held & ~(u16)(PAD_BUTTON_UP | PAD_BUTTON_DOWN))) {
+			navHoldFrames++;
+			int rate = VIDEO_GetRetraceRate();
+			int delay = (navHoldFrames == 1) ? (rate * 3) / 10 : (navHoldFrames < 6 ? (rate * 12) / 100 : rate / 20);
+			if(delay < 1) delay = 1;
+			for(int i = 0; i < delay && (padsButtonsHeld() & (PAD_BUTTON_UP | PAD_BUTTON_DOWN)) == navUpDown; i++)
+				VIDEO_WaitVSync();
+		}
+		else {
+			navHoldFrames = 0;
+			while ((padsButtonsHeld() & PAD_BUTTON_RIGHT)
+					|| (padsButtonsHeld() & PAD_BUTTON_LEFT)
+					|| (padsButtonsHeld() & PAD_BUTTON_UP)
+					|| (padsButtonsHeld() & PAD_BUTTON_DOWN)
+					|| (padsButtonsHeld() & PAD_BUTTON_B)
+					|| (padsButtonsHeld() & PAD_BUTTON_A)
+					|| (padsButtonsHeld() & PAD_BUTTON_Y)
+					|| (padsButtonsHeld() & PAD_TRIGGER_R)
+					|| (padsButtonsHeld() & PAD_TRIGGER_L))
+				{ VIDEO_WaitVSync (); }
+		}
 		DrawDispose(settingsPage);
 	}
 }
