@@ -1058,6 +1058,27 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 	}
 }
 
+// Ask the user to confirm a destructive action. Mirrors the file-delete
+// prompt: L + A confirms, B cancels. Returns true only if confirmed.
+static bool settings_confirm(const char *message) {
+	uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_WARN, message));
+	bool confirmed = false;
+	while(1) {
+		u16 btns = padsButtonsHeld();
+		if ((btns & (PAD_BUTTON_A|PAD_TRIGGER_L)) == (PAD_BUTTON_A|PAD_TRIGGER_L)) {
+			confirmed = true;
+			break;
+		}
+		else if (btns & PAD_BUTTON_B) {
+			break;
+		}
+		VIDEO_WaitVSync();
+	}
+	do {VIDEO_WaitVSync();} while (padsButtonsHeld() & (PAD_BUTTON_A|PAD_TRIGGER_L|PAD_BUTTON_B));
+	DrawDispose(msgBox);
+	return confirmed;
+}
+
 int show_settings(int page, int option, ConfigEntry *config) {
 	wait_network();
 	// Copy current settings to a temp copy in case the user cancels out
@@ -1189,14 +1210,11 @@ int show_settings(int page, int option, ConfigEntry *config) {
 										in_range(option, SET_SMB_HOSTIP,  SET_RT4K_PORT))) {
 				settings_toggle(page, option, 0, config);
 			}
-			if(page == PAGE_GAME_GLOBAL && option == SET_GLOBAL_DEFAULTS) {
-				settings_toggle(page, option, 0, config);
-			}
-			if(page == PAGE_GAME_DEFAULTS && option == SET_DEFAULT_DEFAULTS) {
-				settings_toggle(page, option, 0, config);
-			}
-			if(page == PAGE_GAME && option == SET_DEFAULTS) {
-				settings_toggle(page, option, 0, config);
+			if((page == PAGE_GAME_GLOBAL && option == SET_GLOBAL_DEFAULTS)
+			|| (page == PAGE_GAME_DEFAULTS && option == SET_DEFAULT_DEFAULTS)
+			|| (page == PAGE_GAME && option == SET_DEFAULTS)) {
+				if(settings_confirm("Reset these settings to defaults?\n \nPress L + A to continue, or B to cancel."))
+					settings_toggle(page, option, 0, config);
 			}
 		}
 		// Auto-repeat held up/down so long settings pages scroll while held.
