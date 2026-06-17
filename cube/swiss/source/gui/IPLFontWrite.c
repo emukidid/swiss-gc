@@ -91,31 +91,20 @@ void drawFontInit(void)
 	GX_SetCullMode (GX_CULL_NONE);
 }
 
-void drawString(int x, int y, const char *string, float scale, int align, GXColor fontColor)
+// Load the glyph-run transform for a string drawn at screen (x,y).
+static void _loadFontMtx(int x, int y, int align, int strWidth, int strHeight, float scale)
 {
-	if(string == NULL) {
-		return;
-	}
-	drawFontInit();
 	Mtx GXmodelView2D;
-	int strWidth = 0;
-	int strHeight = font->cell_height;
-	if(align)
-	{
-		const char* string_work = string;
-		while(*string_work)
-		{
-			unsigned char c = *string_work;
-			strWidth += SYS_GetFontWidth(c) - 1;
-			string_work++;
-		}
-	}
 	guMtxTrans(GXmodelView2D, -(align*strWidth)/2, -strHeight/2, 0);
 	guMtxScaleApply(GXmodelView2D, GXmodelView2D, scale, scale, 1);
 	guMtxTransApply(GXmodelView2D, GXmodelView2D, x, y, 0);
 	GX_LoadPosMtxImm(GXmodelView2D,GX_PNMTX0);
-	x = 0; y = 0;
+}
 
+// Draw a run of glyphs at the currently-loaded transform in a single colour.
+static void _drawGlyphRun(const char *string, GXColor color)
+{
+	int x = 0, y = 0;
 	while (*string)
 	{
 		unsigned char c = *string;
@@ -133,7 +122,7 @@ void drawString(int x, int y, const char *string, float scale, int align, GXColo
 			int s = (i & 1) ^ ((i & 2) >> 1) ? width : 0;
 			int t = (i & 2) ? font->cell_height : 0;
 			GX_Position2s16(x + s, y + t);
-			GX_Color4u8(fontColor.r, fontColor.g, fontColor.b, fontColor.a);
+			GX_Color4u8(color.r, color.g, color.b, color.a);
 			GX_TexCoord2s16(s0 + s, t0 + t);
 		}
 		GX_End();
@@ -141,6 +130,34 @@ void drawString(int x, int y, const char *string, float scale, int align, GXColo
 		x += width - 1;
 		string++;
 	}
+}
+
+void drawString(int x, int y, const char *string, float scale, int align, GXColor fontColor)
+{
+	if(string == NULL) {
+		return;
+	}
+	drawFontInit();
+	int strWidth = 0;
+	int strHeight = font->cell_height;
+	if(align)
+	{
+		const char* string_work = string;
+		while(*string_work)
+		{
+			unsigned char c = *string_work;
+			strWidth += SYS_GetFontWidth(c) - 1;
+			string_work++;
+		}
+	}
+	// Subtle 1px drop shadow for depth/legibility, then the text itself.
+	GXColor shadow;
+	shadow.r = shadow.g = shadow.b = 0;
+	shadow.a = (u8)((fontColor.a * 3) / 5);
+	_loadFontMtx(x + 1, y + 1, align, strWidth, strHeight, scale);
+	_drawGlyphRun(string, shadow);
+	_loadFontMtx(x, y, align, strWidth, strHeight, scale);
+	_drawGlyphRun(string, fontColor);
 }
 
 void drawStringWithCaret(int x, int y, const char *string, float scale, int align, GXColor fontColor, int caretPosition, GXColor caretColor)
