@@ -2856,7 +2856,12 @@ void menu_loop()
 		if(devices[DEVICE_CUR] != NULL && needsRefresh) {
 			curMenuLocation=ON_OPTIONS;
 			curSelection=0; curMenuSelection=0;
+			// Reading (and optionally flattening) a large directory can block for a
+			// while on slow media. The async renderer only draws this box once the
+			// scan outlasts a frame, so fast folders flash nothing.
+			uiDrawObj_t *scanBox = DrawPublish(DrawProgressBar(true, 0, "Reading directory\205"));
 			scanFiles();
+			DrawDispose(scanBox);
 			if(getCurrentDirEntryCount()<=0) { devices[DEVICE_CUR]->deinit(devices[DEVICE_CUR]->initial); needsDeviceChange=1; break;}
 			needsRefresh = 0;
 			curMenuLocation = ON_FILLIST;
