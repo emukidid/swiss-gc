@@ -1077,10 +1077,10 @@ int show_settings(int page, int option, ConfigEntry *config) {
 			|| (padsButtonsHeld() & PAD_BUTTON_B)
 			|| (padsButtonsHeld() & PAD_BUTTON_A)
 			|| (padsButtonsHeld() & PAD_BUTTON_Y)
-			|| (padsButtonsHeld() & PAD_TRIGGER_R)
-			|| (padsButtonsHeld() & PAD_TRIGGER_L)))
+			|| (padsButtonsHeld() & PADEX_TRIGGER_R)
+			|| (padsButtonsHeld() & PADEX_TRIGGER_L)))
 			{ VIDEO_WaitVSync (); }
-		u16 btns = padsButtonsHeld();
+		u32 btns = padsButtonsHeld();
 		if(btns & PAD_BUTTON_Y) {
 			char *tooltip = get_tooltip(page, option);
 			if(tooltip) {
@@ -1118,10 +1118,10 @@ int show_settings(int page, int option, ConfigEntry *config) {
 			option++;
 		if((btns & PAD_BUTTON_UP) && option > PAGE_MIN)
 			option--;
-		if((btns & PAD_TRIGGER_R) && page < PAGE_MAX) {
+		if((btns & PADEX_TRIGGER_R) && page < PAGE_MAX) {
 			page++; option = 0;
 		}
-		if((btns & PAD_TRIGGER_L) && page > PAGE_GLOBAL) {
+		if((btns & PADEX_TRIGGER_L) && page > PAGE_GLOBAL) {
 			page--; option = 0;
 		}
 		if((btns & PAD_BUTTON_B))
@@ -1205,8 +1205,8 @@ int show_settings(int page, int option, ConfigEntry *config) {
 				|| (padsButtonsHeld() & PAD_BUTTON_B) 
 				|| (padsButtonsHeld() & PAD_BUTTON_A)
 				|| (padsButtonsHeld() & PAD_BUTTON_Y)
-				|| (padsButtonsHeld() & PAD_TRIGGER_R)
-				|| (padsButtonsHeld() & PAD_TRIGGER_L))
+				|| (padsButtonsHeld() & PADEX_TRIGGER_R)
+				|| (padsButtonsHeld() & PADEX_TRIGGER_L))
 			{ VIDEO_WaitVSync (); }
 		DrawDispose(settingsPage);
 	}

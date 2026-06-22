@@ -356,13 +356,13 @@ void show_info() {
 			|| (padsButtonsHeld() & PAD_BUTTON_LEFT) 
 			|| (padsButtonsHeld() & PAD_BUTTON_B)
 			|| (padsButtonsHeld() & PAD_BUTTON_A)
-			|| (padsButtonsHeld() & PAD_TRIGGER_R)
-			|| (padsButtonsHeld() & PAD_TRIGGER_L)))
+			|| (padsButtonsHeld() & PADEX_TRIGGER_R)
+			|| (padsButtonsHeld() & PADEX_TRIGGER_L)))
 			{ VIDEO_WaitVSync (); }
-		u16 btns = padsButtonsHeld();
-		if(((btns & PAD_BUTTON_RIGHT) || (padsButtonsHeld() & PAD_TRIGGER_R)) && page < 4)
+		u32 btns = padsButtonsHeld();
+		if(((btns & PAD_BUTTON_RIGHT) || (btns & PADEX_TRIGGER_R)) && page < 4)
 			page++;
-		if(((btns & PAD_BUTTON_LEFT) || (padsButtonsHeld() & PAD_TRIGGER_L)) && page > 0)
+		if(((btns & PAD_BUTTON_LEFT) || (btns & PADEX_TRIGGER_L)) && page > 0)
 			page--;
 		if((btns & PAD_BUTTON_A) || (btns & PAD_BUTTON_B))
 			break;
@@ -370,8 +370,8 @@ void show_info() {
 			|| (padsButtonsHeld() & PAD_BUTTON_LEFT) 
 			|| (padsButtonsHeld() & PAD_BUTTON_B)
 			|| (padsButtonsHeld() & PAD_BUTTON_A)
-			|| (padsButtonsHeld() & PAD_TRIGGER_R)
-			|| (padsButtonsHeld() & PAD_TRIGGER_L))
+			|| (padsButtonsHeld() & PADEX_TRIGGER_R)
+			|| (padsButtonsHeld() & PADEX_TRIGGER_L))
 			{ VIDEO_WaitVSync (); }
 	}
 	DrawDispose(pagePanel);

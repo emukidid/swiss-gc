@@ -2,7 +2,7 @@
 #define __INPUT_H
 
 void padsInit();
-u16 padsButtonsHeld();
+u32 padsButtonsHeld();
 s8 padsStickX();
 s8 padsStickY();
 

@@ -69,11 +69,11 @@ int play_mp3(file_handle *file, int numFiles, int curMP3) {
 			if(volume>0) volume--;
 			MP3Player_Volume(volume);
 		}
-		else if(buttons & PAD_TRIGGER_R) {		// Next
+		else if(buttons & PADEX_TRIGGER_R) {		// Next
 			MP3Player_Stop();
 			ret = PLAYER_NEXT;
 		}
-		else if(buttons & PAD_TRIGGER_L) {		// Previous
+		else if(buttons & PADEX_TRIGGER_L) {		// Previous
 			MP3Player_Stop();
 			ret = PLAYER_PREV;
 		}

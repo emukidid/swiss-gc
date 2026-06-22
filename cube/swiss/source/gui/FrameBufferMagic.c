@@ -1708,7 +1708,7 @@ void DrawArgsSelector(const char *fileName) {
 		
 		while (!(padsButtonsHeld() & (PAD_BUTTON_RIGHT|PAD_BUTTON_LEFT|PAD_BUTTON_UP|PAD_BUTTON_DOWN|PAD_BUTTON_START|PAD_BUTTON_A)))
 			{ VIDEO_WaitVSync (); }
-		u16 btns = padsButtonsHeld();
+		u32 btns = padsButtonsHeld();
 		if((btns & (PAD_BUTTON_RIGHT|PAD_BUTTON_LEFT)) && params->parameters[param_selection].enable) {
 			int curValIdx = params->parameters[param_selection].currentValueIdx;
 			int maxValIdx = params->parameters[param_selection].num_values;
@@ -1790,18 +1790,18 @@ void DrawCheatsSelector(const char *fileName) {
 
 		container = DrawRepublish(container, newPanel);
 		
-		while (!(padsButtonsHeld() & (PAD_BUTTON_UP|PAD_BUTTON_DOWN|PAD_BUTTON_LEFT|PAD_BUTTON_RIGHT|PAD_BUTTON_B|PAD_BUTTON_A|PAD_BUTTON_X|PAD_TRIGGER_L|PAD_TRIGGER_R)))
+		while (!(padsButtonsHeld() & (PAD_BUTTON_UP|PAD_BUTTON_DOWN|PAD_BUTTON_LEFT|PAD_BUTTON_RIGHT|PAD_BUTTON_B|PAD_BUTTON_A|PAD_BUTTON_X|PADEX_TRIGGER_L|PADEX_TRIGGER_R)))
 			{ VIDEO_WaitVSync (); }
-		u16 btns = padsButtonsHeld();
+		u32 btns = padsButtonsHeld();
 		if(btns & (PAD_BUTTON_UP|PAD_BUTTON_DOWN)) {
 			cheat_selection = btns & PAD_BUTTON_UP ? 
 				((--cheat_selection < 0) ? cheats->num_cheats-1 : cheat_selection)
 				:((cheat_selection + 1) % cheats->num_cheats);
 		}
-		if(btns & (PAD_BUTTON_LEFT|PAD_TRIGGER_L)) {
+		if(btns & (PAD_BUTTON_LEFT|PADEX_TRIGGER_L)) {
 			cheat_selection = (cheat_selection ? ((cheat_selection - cheats_per_page < 0) ? 0 : cheat_selection - cheats_per_page):(cheats->num_cheats-1));
 		}
-		if(btns & (PAD_BUTTON_RIGHT|PAD_TRIGGER_R)) {
+		if(btns & (PAD_BUTTON_RIGHT|PADEX_TRIGGER_R)) {
 			cheat_selection = cheat_selection == cheats->num_cheats-1 ? 0 : ((cheat_selection + cheats_per_page > cheats->num_cheats-1) ? cheats->num_cheats-1 : (cheat_selection + cheats_per_page) % cheats->num_cheats);
 		}
 		if(btns & PAD_BUTTON_A) {
@@ -1815,7 +1815,7 @@ void DrawCheatsSelector(const char *fileName) {
 		if(btns & PAD_BUTTON_B) {
 			break;
 		}
-		while (padsButtonsHeld() & (PAD_BUTTON_UP|PAD_BUTTON_DOWN|PAD_BUTTON_LEFT|PAD_BUTTON_RIGHT|PAD_BUTTON_B|PAD_BUTTON_A|PAD_BUTTON_X|PAD_TRIGGER_L|PAD_TRIGGER_R))
+		while (padsButtonsHeld() & (PAD_BUTTON_UP|PAD_BUTTON_DOWN|PAD_BUTTON_LEFT|PAD_BUTTON_RIGHT|PAD_BUTTON_B|PAD_BUTTON_A|PAD_BUTTON_X|PADEX_TRIGGER_L|PADEX_TRIGGER_R))
 			{ VIDEO_WaitVSync (); }
 	}
 	DrawDispose(container);
@@ -2013,9 +2013,9 @@ void DrawGetTextEntry(int mode, const char *label, void *src, int size) {
 		
 		container = DrawRepublish(container, newPanel);
 		
-		while (!(padsButtonsHeld() & (PAD_TRIGGER_L|PAD_TRIGGER_R|PAD_BUTTON_UP|PAD_BUTTON_DOWN|PAD_BUTTON_LEFT | PAD_BUTTON_RIGHT|PAD_BUTTON_B|PAD_BUTTON_A|PAD_BUTTON_X|PAD_BUTTON_Y|PAD_BUTTON_START)))
+		while (!(padsButtonsHeld() & (PADEX_TRIGGER_L|PADEX_TRIGGER_R|PAD_BUTTON_UP|PAD_BUTTON_DOWN|PAD_BUTTON_LEFT|PAD_BUTTON_RIGHT|PAD_BUTTON_B|PAD_BUTTON_A|PAD_BUTTON_X|PAD_BUTTON_Y|PAD_BUTTON_START)))
 			{ VIDEO_WaitVSync (); }
-		u16 btns = padsButtonsHeld();
+		u32 btns = padsButtonsHeld();
 		// Key nav
 		if(btns & PAD_BUTTON_DOWN) {
 			cur_row = (cur_row + 1 >= num_rows ? 0 : cur_row + 1);
@@ -2071,10 +2071,10 @@ void DrawGetTextEntry(int mode, const char *label, void *src, int size) {
 				cur_txt_mode = (cur_txt_mode + 1 >= num_txt_modes ? 0 : cur_txt_mode + 1);
 			}
 		}
-		if(btns & PAD_TRIGGER_L) {
+		if(btns & PADEX_TRIGGER_L) {
 			if(caret > 0) caret--;
 		}
-		if(btns & PAD_TRIGGER_R) {
+		if(btns & PADEX_TRIGGER_R) {
 			if(caret < strlen(text)) caret++;
 		}
 		if(btns & PAD_BUTTON_B) {
@@ -2091,7 +2091,7 @@ void DrawGetTextEntry(int mode, const char *label, void *src, int size) {
 			}
 			break;
 		}
-		while (padsButtonsHeld() & (PAD_TRIGGER_L|PAD_TRIGGER_R|PAD_BUTTON_UP|PAD_BUTTON_DOWN|PAD_BUTTON_LEFT | PAD_BUTTON_RIGHT|PAD_BUTTON_B|PAD_BUTTON_A|PAD_BUTTON_X|PAD_BUTTON_Y|PAD_BUTTON_START))
+		while (padsButtonsHeld() & (PADEX_TRIGGER_L|PADEX_TRIGGER_R|PAD_BUTTON_UP|PAD_BUTTON_DOWN|PAD_BUTTON_LEFT|PAD_BUTTON_RIGHT|PAD_BUTTON_B|PAD_BUTTON_A|PAD_BUTTON_X|PAD_BUTTON_Y|PAD_BUTTON_START))
 			{ VIDEO_WaitVSync (); }
 	}
 	if(text) free(text);

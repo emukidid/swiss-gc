@@ -84,7 +84,7 @@ s8 __chooseMaxMagnitiude(s8 p0, s8 p1, s8 p2, s8 p3)
 	return res;
 }
 
-u16 padsButtonsHeld() {
+u32 padsButtonsHeld() {
 	return (
 		PAD_ButtonsHeld(PAD_CHAN0) |
 		PAD_ButtonsHeld(PAD_CHAN1) |
