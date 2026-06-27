@@ -445,6 +445,14 @@ void populateDeviceAvailability() {
 			print_debug("Checking device availability for device %s\n", allDevices[i]->deviceName);
 			deviceHandler_setDeviceAvailable(allDevices[i], allDevices[i]->test());
 		}
+		if(allDevices[i] == &__device_sd_a && allDevices[i]->location == LOC_MEMCARD_SLOT_A && !CARD_Probe(CARD_SLOTB) && deviceHandler_getDeviceAvailable(allDevices[i])) {
+			sprintf(txtbuffer, "Please move %s to Slot B", allDevices[i]->deviceName);
+			uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_INFO, txtbuffer));
+			wait_press_A();
+			DrawDispose(msgBox);
+			deviceHandler_setDeviceAvailable(allDevices[i], allDevices[i]->test());
+			needsDeviceChange = !deviceHandler_getDeviceAvailable(devices[DEVICE_CUR]);
+		}
 	}
 	DrawDispose(msgBox);
 }
