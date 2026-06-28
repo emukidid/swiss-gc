@@ -249,7 +249,6 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 		bool dvdEnable = deviceHandler_getDeviceAvailable(&__device_dvd);
 		bool dtvEnable = !in_range(swissSettings.aveCompat, AVE_N_DOL_COMPAT, AVE_P_DOL_COMPAT);
 		bool rt4kEnable = in_range(swissSettings.aveCompat, GCDIGITAL_COMPAT, GCVIDEO_COMPAT);
-		bool tauEnable = is_gamecube();
 		// TODO settings to a new typedef that ties type etc all together, then draw a "page" of these rather than this at some point.
 		if(option < SET_AVE_COMPAT) {
 			drawSettingEntryString(page, &page_y_ofs, "System Boot Mode:", swissSettings.sramBoot ? "Production" : "Default", option == SET_SYS_BOOTMODE, true);
@@ -275,7 +274,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 			drawSettingEntryBoolean(page, &page_y_ofs, "Wait for USB Gecko:", swissSettings.waitForUSBGecko, option == SET_WAIT_USBGECKO, true);
 			drawSettingEntryString(page, &page_y_ofs, "Simulated MRAM Size:", simulatedMemSizeStr[swissSettings.simulatedMemSize], option == SET_SIMMEMSIZE, true);
 			sprintf(sramTemperatureStr, "%+hi\260C", swissSettings.sramTemperature);
-			drawSettingEntryString(page, &page_y_ofs, "CPU Temperature Calibration:", sramTemperatureStr, option == SET_TAU_CALIB, tauEnable);
+			drawSettingEntryString(page, &page_y_ofs, "CPU Temperature Calibration:", sramTemperatureStr, option == SET_TAU_CALIB, is_gamecube());
 		}
 	}
 	else if(page_num == PAGE_INTERFACE) {
@@ -299,7 +298,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 		bool netEnable = net_initialized || bba_exists(LOC_ANY);
 		// TODO settings to a new typedef that ties type etc all together, then draw a "page" of these rather than this at some point.
 		if(option < SET_FTP_USER) {
-			drawSettingEntryBoolean(page, &page_y_ofs, "Init network at startup:", swissSettings.initNetworkAtStart, option == SET_INIT_NET, true);
+			drawSettingEntryBoolean(page, &page_y_ofs, "Init network at startup:", swissSettings.initNetworkAtStart, option == SET_INIT_NET, !bba_requires_init());
 			drawSettingEntryString(page, &page_y_ofs, "IPv4 Address:", swissSettings.bbaLocalIp, option == SET_BBA_LOCALIP, netEnable);
 			drawSettingEntryNumeric(page, &page_y_ofs, "IPv4 Netmask:", swissSettings.bbaNetmask, option == SET_BBA_NETMASK, netEnable);
 			drawSettingEntryString(page, &page_y_ofs, "IPv4 Gateway:", swissSettings.bbaGateway, option == SET_BBA_GATEWAY, netEnable);
@@ -351,7 +350,6 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 		bool emulatedEthernet = devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->emulable & EMU_ETHERNET);
 		bool enabledHypervisor = devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->features & FEAT_HYPERVISOR);
 		bool enabledCleanBoot = devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->location & LOC_DVD_CONNECTOR);
-		bool rt4kEnable = is_rt4k_alive();
 		if(option < SET_DEFAULT_INVERT_CAMERA) {
 			drawSettingEntryString(page, &page_y_ofs, "Force NTSC Video Mode:", gameVModeStr[swissSettings.gameVModeNtsc], option == SET_DEFAULT_NTSC_VIDEOMODE, enabledVideoPatches);
 			drawSettingEntryString(page, &page_y_ofs, "Force PAL Video Mode:", gameVModeStr[swissSettings.gameVModePal], option == SET_DEFAULT_PAL_VIDEOMODE, enabledVideoPatches);
@@ -376,7 +374,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 			drawSettingEntryString(page, &page_y_ofs, "Disable Memory Card:", disableMemoryCardStr[swissSettings.disableMemoryCard], option == SET_DEFAULT_DISABLE_MEMCARD, enabledHypervisor);
 			drawSettingEntryBoolean(page, &page_y_ofs, "Disable Hypervisor:", swissSettings.disableHypervisor, option == SET_DEFAULT_DISABLE_HYPERVISOR, enabledCleanBoot);
 			drawSettingEntryBoolean(page, &page_y_ofs, "Prefer Clean Boot:", swissSettings.preferCleanBoot, option == SET_DEFAULT_CLEAN_BOOT, enabledCleanBoot);
-			drawSettingEntryNumeric(page, &page_y_ofs, "RetroTINK-4K Profile:", swissSettings.rt4kProfile, option == SET_DEFAULT_RT4K_PROFILE, rt4kEnable);
+			drawSettingEntryNumeric(page, &page_y_ofs, "RetroTINK-4K Profile:", swissSettings.rt4kProfile, option == SET_DEFAULT_RT4K_PROFILE, is_rt4k_alive());
 			drawSettingEntryString(page, &page_y_ofs, "Reset to defaults", NULL, option == SET_DEFAULT_DEFAULTS, true);
 		}
 	}
@@ -394,7 +392,6 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 			bool emulatedEthernet = devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->emulable & EMU_ETHERNET);
 			bool enabledHypervisor = devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->features & FEAT_HYPERVISOR);
 			bool enabledCleanBoot = devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->location & LOC_DVD_CONNECTOR);
-			bool rt4kEnable = is_rt4k_alive();
 			if(option < SET_INVERT_CAMERA) {
 				drawSettingEntryString(page, &page_y_ofs, "Game Language:", sramLanguageStr[gameConfig->gameLanguage], option == SET_GAME_LANG, true);
 				drawSettingEntryString(page, &page_y_ofs, "Force Video Mode:", gameVModeStr[gameConfig->gameVMode], option == SET_FORCE_VIDEOMODE, enabledVideoPatches);
@@ -419,7 +416,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 				drawSettingEntryString(page, &page_y_ofs, "Disable Memory Card:", disableMemoryCardStr[gameConfig->disableMemoryCard], option == SET_DISABLE_MEMCARD, enabledHypervisor);
 				drawSettingEntryBoolean(page, &page_y_ofs, "Disable Hypervisor:", gameConfig->disableHypervisor, option == SET_DISABLE_HYPERVISOR, enabledCleanBoot);
 				drawSettingEntryBoolean(page, &page_y_ofs, "Prefer Clean Boot:", gameConfig->preferCleanBoot, option == SET_CLEAN_BOOT, enabledCleanBoot);
-				drawSettingEntryNumeric(page, &page_y_ofs, "RetroTINK-4K Profile:", gameConfig->rt4kProfile, option == SET_RT4K_PROFILE, rt4kEnable);
+				drawSettingEntryNumeric(page, &page_y_ofs, "RetroTINK-4K Profile:", gameConfig->rt4kProfile, option == SET_RT4K_PROFILE, is_rt4k_alive());
 				drawSettingEntryString(page, &page_y_ofs, "Reset to defaults", NULL, option == SET_DEFAULTS, true);
 			}
 		}
@@ -658,7 +655,8 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 	else if(page == PAGE_NETWORK) {
 		switch(option) {
 			case SET_INIT_NET:
-				swissSettings.initNetworkAtStart ^= 1;
+				if(!bba_requires_init())
+					swissSettings.initNetworkAtStart ^= 1;
 			break;
 			case SET_BBA_LOCALIP:
 				DrawGetTextEntry(ENTRYMODE_IP, "IPv4 Address", &swissSettings.bbaLocalIp, sizeof(swissSettings.bbaLocalIp) - 1);
