@@ -43,7 +43,7 @@ unsigned int dvd_read_id()
 	dvd[6] = 0x20;
 	dvd[7] = 3; // enable reading!
 	
-	while(( dvd[7] & 1) && !(padsButtonsHeld() & PAD_BUTTON_B)){ VIDEO_WaitVSync (); }
+	while(( dvd[7] & 1) && !(padsButtonsHeld() & BUTTON_B)){ VIDEO_WaitVSync (); }
 	
 	if (dvd[6])
 		return 1;

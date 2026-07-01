@@ -12,7 +12,7 @@
 #include "FrameBufferMagic.h"
 #include "input.h"
 
-#define wait_press_A() ({while((padsButtonsHeld() & PAD_BUTTON_A)){VIDEO_WaitVSync();} while(!(padsButtonsHeld() & PAD_BUTTON_A)){VIDEO_WaitVSync();}})
+#define wait_press_A() ({while((padsButtonsHeld() & BUTTON_A)){VIDEO_WaitVSync();} while(!(padsButtonsHeld() & BUTTON_A)){VIDEO_WaitVSync();}})
 
 #define ALIGN_LEFT 0
 #define ALIGN_CENTER 1

@@ -223,19 +223,19 @@ void select_recent_entry() {
 			DrawAddChild(newPanel, DrawSelectableButton(45,fileListBase+(i*(rh+2)), getVideoMode()->fbWidth-45, fileListBase+(i*(rh+2))+rh, getRelativeName(&swissSettings.recent[i][0]), (i == idx) ? B_SELECTED:B_NOSELECT));
 		}
 		container = DrawRepublish(container, newPanel);
-		while ((padsStickY() > -16 && padsStickY() < 16) && !(padsButtonsHeld() & PAD_BUTTON_B) && !(padsButtonsHeld() & PAD_BUTTON_A) && !(padsButtonsHeld() & PAD_BUTTON_UP) && !(padsButtonsHeld() & PAD_BUTTON_DOWN))
+		while ((padsStickY() > -16 && padsStickY() < 16) && !(padsButtonsHeld() & BUTTON_B) && !(padsButtonsHeld() & BUTTON_A) && !(padsButtonsHeld() & BUTTON_UP) && !(padsButtonsHeld() & BUTTON_DOWN))
 			{ VIDEO_WaitVSync (); }
-		if((padsButtonsHeld() & PAD_BUTTON_UP) || padsStickY() > 16){	idx = (--idx < 0) ? max-1 : idx;}
-		if((padsButtonsHeld() & PAD_BUTTON_DOWN) || padsStickY() < -16) {idx = (idx + 1) % max;	}
-		if((padsButtonsHeld() & PAD_BUTTON_A))	break;
-		if((padsButtonsHeld() & PAD_BUTTON_B))	{ idx = -1; break; }
+		if((padsButtonsHeld() & BUTTON_UP) || padsStickY() > 16){	idx = (--idx < 0) ? max-1 : idx;}
+		if((padsButtonsHeld() & BUTTON_DOWN) || padsStickY() < -16) {idx = (idx + 1) % max;	}
+		if((padsButtonsHeld() & BUTTON_A))	break;
+		if((padsButtonsHeld() & BUTTON_B))	{ idx = -1; break; }
 		if(padsStickY() < -16 || padsStickY() > 16) {
 			usleep(50000 - abs(padsStickY()*16));
 		}
-		while (!(!(padsButtonsHeld() & PAD_BUTTON_B) && !(padsButtonsHeld() & PAD_BUTTON_A) && !(padsButtonsHeld() & PAD_BUTTON_UP) && !(padsButtonsHeld() & PAD_BUTTON_DOWN)))
+		while (!(!(padsButtonsHeld() & BUTTON_B) && !(padsButtonsHeld() & BUTTON_A) && !(padsButtonsHeld() & BUTTON_UP) && !(padsButtonsHeld() & BUTTON_DOWN)))
 			{ VIDEO_WaitVSync (); }
 	}
-	do {VIDEO_WaitVSync();} while (padsButtonsHeld() & PAD_BUTTON_B);
+	do {VIDEO_WaitVSync();} while (padsButtonsHeld() & BUTTON_B);
 	DrawDispose(container);
 	if(idx >= 0) {
 		int res = find_existing_entry(&swissSettings.recent[idx][0], true);
@@ -316,12 +316,12 @@ uiDrawObj_t* renderFileBrowser(file_handle** directory, int num_files, uiDrawObj
 		filePanel = DrawRepublish(filePanel, newPanel);
 		DrawUpdateProgressLoading(loadingBox, -1);
 		
-		u32 waitButtons = PAD_BUTTON_X|PAD_BUTTON_START|PAD_BUTTON_B|PAD_BUTTON_A|PAD_BUTTON_UP|PAD_BUTTON_DOWN|PAD_BUTTON_LEFT|PAD_BUTTON_RIGHT|PADEX_TRIGGER_L|PADEX_TRIGGER_R|PAD_TRIGGER_Z;
+		u32 waitButtons = BUTTON_X|BUTTON_START|BUTTON_B|BUTTON_A|BUTTON_UP|BUTTON_DOWN|BUTTON_LEFT|BUTTON_RIGHT|BUTTON_L|BUTTON_R|BUTTON_Z;
 		while ((padsStickY() > -16 && padsStickY() < 16) && !(padsButtonsHeld() & waitButtons))
 			{ VIDEO_WaitVSync (); }
-		if((padsButtonsHeld() & PAD_BUTTON_UP) || padsStickY() >= 16){	curSelection = (--curSelection < 0) ? num_files-1 : curSelection;}
-		if((padsButtonsHeld() & PAD_BUTTON_DOWN) || padsStickY() <= -16) {curSelection = (curSelection + 1) % num_files;	}
-		if(padsButtonsHeld() & (PAD_BUTTON_LEFT|PADEX_TRIGGER_L)) {
+		if((padsButtonsHeld() & BUTTON_UP) || padsStickY() >= 16){	curSelection = (--curSelection < 0) ? num_files-1 : curSelection;}
+		if((padsButtonsHeld() & BUTTON_DOWN) || padsStickY() <= -16) {curSelection = (curSelection + 1) % num_files;	}
+		if(padsButtonsHeld() & (BUTTON_LEFT|BUTTON_L)) {
 			if(curSelection == 0) {
 				curSelection = num_files-1;
 			}
@@ -329,7 +329,7 @@ uiDrawObj_t* renderFileBrowser(file_handle** directory, int num_files, uiDrawObj
 				curSelection = (curSelection - FILES_PER_PAGE < 0) ? 0 : curSelection - FILES_PER_PAGE;
 			}
 		}
-		if(padsButtonsHeld() & (PAD_BUTTON_RIGHT|PADEX_TRIGGER_R)) {
+		if(padsButtonsHeld() & (BUTTON_RIGHT|BUTTON_R)) {
 			if(curSelection == num_files-1) {
 				curSelection = 0;
 			}
@@ -338,7 +338,7 @@ uiDrawObj_t* renderFileBrowser(file_handle** directory, int num_files, uiDrawObj
 			}
 		}
 		
-		if(padsButtonsHeld() & PAD_BUTTON_A) {
+		if(padsButtonsHeld() & BUTTON_A) {
 			lockFile(directory[curSelection]);
 			//go into a folder or select a file
 			if(directory[curSelection]->fileType==IS_DIR) {
@@ -366,22 +366,22 @@ uiDrawObj_t* renderFileBrowser(file_handle** directory, int num_files, uiDrawObj
 			unlockFile(directory[curSelection]);
 			break;
 		}
-		if(padsButtonsHeld() & PAD_BUTTON_X) {
+		if(padsButtonsHeld() & BUTTON_X) {
 			memcpy(&curFile, &curDir, sizeof(file_handle));
 			curDir.fileBase = directory[0]->fileBase;
 			needsDeviceChange = upToParent(&curDir);
 			needsRefresh=1;
-			while(padsButtonsHeld() & PAD_BUTTON_X) VIDEO_WaitVSync();
+			while(padsButtonsHeld() & BUTTON_X) VIDEO_WaitVSync();
 			break;
 		}
-		if((padsButtonsHeld() & PAD_TRIGGER_Z) && swissSettings.enableFileManagement) {
+		if((padsButtonsHeld() & BUTTON_Z) && swissSettings.enableFileManagement) {
 			lockFile(directory[curSelection]);
 			if(directory[curSelection]->fileType == IS_FILE || directory[curSelection]->fileType == IS_DIR) {
 				memcpy(&curFile, directory[curSelection], sizeof(file_handle));
 				meta_thread_stop();
 				needsRefresh = manage_file() ? 1:0;
 				memcpy(directory[curSelection], &curFile, sizeof(file_handle));
-				while(padsButtonsHeld() & PAD_BUTTON_B) VIDEO_WaitVSync();
+				while(padsButtonsHeld() & BUTTON_B) VIDEO_WaitVSync();
 				if(needsRefresh) {
 					// If we return from doing something with a file, refresh the device in the same dir we were at
 					unlockFile(directory[curSelection]);
@@ -405,12 +405,12 @@ uiDrawObj_t* renderFileBrowser(file_handle** directory, int num_files, uiDrawObj
 			unlockFile(directory[curSelection]);
 		}
 		
-		if((padsButtonsHeld() & PAD_BUTTON_START) && swissSettings.recentListLevel > 0) {
+		if((padsButtonsHeld() & BUTTON_START) && swissSettings.recentListLevel > 0) {
 			meta_thread_stop();
 			select_recent_entry();
 			break;
 		}
-		if(padsButtonsHeld() & PAD_BUTTON_B) {
+		if(padsButtonsHeld() & BUTTON_B) {
 			curMenuLocation = ON_OPTIONS;
 			DrawUpdateFileBrowserButton(directory[curSelection]->uiObj, (curMenuLocation == ON_FILLIST) ? B_SELECTED:B_NOSELECT);
 			break;
@@ -548,12 +548,12 @@ uiDrawObj_t* renderFileCarousel(file_handle** directory, int num_files, uiDrawOb
 		filePanel = DrawRepublish(filePanel, newPanel);
 		DrawUpdateProgressLoading(loadingBox, -1);
 		
-		u32 waitButtons = PAD_BUTTON_X|PAD_BUTTON_START|PAD_BUTTON_B|PAD_BUTTON_A|PAD_BUTTON_UP|PAD_BUTTON_DOWN|PAD_BUTTON_LEFT|PAD_BUTTON_RIGHT|PADEX_TRIGGER_L|PADEX_TRIGGER_R|PAD_TRIGGER_Z;
+		u32 waitButtons = BUTTON_X|BUTTON_START|BUTTON_B|BUTTON_A|BUTTON_UP|BUTTON_DOWN|BUTTON_LEFT|BUTTON_RIGHT|BUTTON_L|BUTTON_R|BUTTON_Z;
 		while ((padsStickX() > -16 && padsStickX() < 16) && !(padsButtonsHeld() & waitButtons))
 			{ VIDEO_WaitVSync (); }
-		if((padsButtonsHeld() & PAD_BUTTON_LEFT) || padsStickX() <= -16){	curSelection = (--curSelection < 0) ? num_files-1 : curSelection;}
-		if((padsButtonsHeld() & PAD_BUTTON_RIGHT) || padsStickX() >= 16) {curSelection = (curSelection + 1) % num_files;	}
-		if(padsButtonsHeld() & (PAD_BUTTON_UP|PADEX_TRIGGER_L)) {
+		if((padsButtonsHeld() & BUTTON_LEFT) || padsStickX() <= -16){	curSelection = (--curSelection < 0) ? num_files-1 : curSelection;}
+		if((padsButtonsHeld() & BUTTON_RIGHT) || padsStickX() >= 16) {curSelection = (curSelection + 1) % num_files;	}
+		if(padsButtonsHeld() & (BUTTON_UP|BUTTON_L)) {
 			if(curSelection == 0) {
 				curSelection = num_files-1;
 			}
@@ -561,7 +561,7 @@ uiDrawObj_t* renderFileCarousel(file_handle** directory, int num_files, uiDrawOb
 				curSelection = (curSelection - FILES_PER_PAGE_CAROUSEL < 0) ? 0 : curSelection - FILES_PER_PAGE_CAROUSEL;
 			}
 		}
-		if(padsButtonsHeld() & (PAD_BUTTON_DOWN|PADEX_TRIGGER_R)) {
+		if(padsButtonsHeld() & (BUTTON_DOWN|BUTTON_R)) {
 			if(curSelection == num_files-1) {
 				curSelection = 0;
 			}
@@ -570,7 +570,7 @@ uiDrawObj_t* renderFileCarousel(file_handle** directory, int num_files, uiDrawOb
 			}
 		}
 		
-		if((padsButtonsHeld() & PAD_BUTTON_A)) {
+		if(padsButtonsHeld() & BUTTON_A) {
 			lockFile(directory[curSelection]);
 			//go into a folder or select a file
 			if(directory[curSelection]->fileType==IS_DIR) {
@@ -598,22 +598,22 @@ uiDrawObj_t* renderFileCarousel(file_handle** directory, int num_files, uiDrawOb
 			unlockFile(directory[curSelection]);
 			break;
 		}
-		if(padsButtonsHeld() & PAD_BUTTON_X) {
+		if(padsButtonsHeld() & BUTTON_X) {
 			memcpy(&curFile, &curDir, sizeof(file_handle));
 			curDir.fileBase = directory[0]->fileBase;
 			needsDeviceChange = upToParent(&curDir);
 			needsRefresh=1;
-			while(padsButtonsHeld() & PAD_BUTTON_X) VIDEO_WaitVSync();
+			while(padsButtonsHeld() & BUTTON_X) VIDEO_WaitVSync();
 			break;
 		}
-		if((padsButtonsHeld() & PAD_TRIGGER_Z) && swissSettings.enableFileManagement) {
+		if((padsButtonsHeld() & BUTTON_Z) && swissSettings.enableFileManagement) {
 			lockFile(directory[curSelection]);
 			if(directory[curSelection]->fileType == IS_FILE || directory[curSelection]->fileType == IS_DIR) {
 				memcpy(&curFile, directory[curSelection], sizeof(file_handle));
 				meta_thread_stop();
 				needsRefresh = manage_file() ? 1:0;
 				memcpy(directory[curSelection], &curFile, sizeof(file_handle));
-				while(padsButtonsHeld() & PAD_BUTTON_B) VIDEO_WaitVSync();
+				while(padsButtonsHeld() & BUTTON_B) VIDEO_WaitVSync();
 				if(needsRefresh) {
 					// If we return from doing something with a file, refresh the device in the same dir we were at
 					unlockFile(directory[curSelection]);
@@ -637,12 +637,12 @@ uiDrawObj_t* renderFileCarousel(file_handle** directory, int num_files, uiDrawOb
 			unlockFile(directory[curSelection]);
 		}
 		
-		if(padsButtonsHeld() & PAD_BUTTON_B) {
+		if(padsButtonsHeld() & BUTTON_B) {
 			curMenuLocation = ON_OPTIONS;
 			DrawUpdateFileBrowserButton(directory[curSelection]->uiObj, (curMenuLocation == ON_FILLIST) ? B_SELECTED:B_NOSELECT);
 			break;
 		}
-		if((padsButtonsHeld() & PAD_BUTTON_START) && swissSettings.recentListLevel > 0) {
+		if((padsButtonsHeld() & BUTTON_START) && swissSettings.recentListLevel > 0) {
 			meta_thread_stop();
 			select_recent_entry();
 			break;
@@ -719,12 +719,12 @@ uiDrawObj_t* renderFileFullwidth(file_handle** directory, int num_files, uiDrawO
 		filePanel = DrawRepublish(filePanel, newPanel);
 		DrawUpdateProgressLoading(loadingBox, -1);
 		
-		u32 waitButtons = PAD_BUTTON_X|PAD_BUTTON_START|PAD_BUTTON_B|PAD_BUTTON_A|PAD_BUTTON_UP|PAD_BUTTON_DOWN|PAD_BUTTON_LEFT|PAD_BUTTON_RIGHT|PADEX_TRIGGER_L|PADEX_TRIGGER_R|PAD_TRIGGER_Z;
+		u32 waitButtons = BUTTON_X|BUTTON_START|BUTTON_B|BUTTON_A|BUTTON_UP|BUTTON_DOWN|BUTTON_LEFT|BUTTON_RIGHT|BUTTON_L|BUTTON_R|BUTTON_Z;
 		while ((padsStickY() > -16 && padsStickY() < 16) && !(padsButtonsHeld() & waitButtons))
 			{ VIDEO_WaitVSync (); }
-		if((padsButtonsHeld() & PAD_BUTTON_UP) || padsStickY() >= 16){	curSelection = (--curSelection < 0) ? num_files-1 : curSelection;}
-		if((padsButtonsHeld() & PAD_BUTTON_DOWN) || padsStickY() <= -16) {curSelection = (curSelection + 1) % num_files;	}
-		if(padsButtonsHeld() & (PAD_BUTTON_LEFT|PADEX_TRIGGER_L)) {
+		if((padsButtonsHeld() & BUTTON_UP) || padsStickY() >= 16){	curSelection = (--curSelection < 0) ? num_files-1 : curSelection;}
+		if((padsButtonsHeld() & BUTTON_DOWN) || padsStickY() <= -16) {curSelection = (curSelection + 1) % num_files;	}
+		if(padsButtonsHeld() & (BUTTON_LEFT|BUTTON_L)) {
 			if(curSelection == 0) {
 				curSelection = num_files-1;
 			}
@@ -732,7 +732,7 @@ uiDrawObj_t* renderFileFullwidth(file_handle** directory, int num_files, uiDrawO
 				curSelection = (curSelection - FILES_PER_PAGE_FULLWIDTH < 0) ? 0 : curSelection - FILES_PER_PAGE_FULLWIDTH;
 			}
 		}
-		if(padsButtonsHeld() & (PAD_BUTTON_RIGHT|PADEX_TRIGGER_R)) {
+		if(padsButtonsHeld() & (BUTTON_RIGHT|BUTTON_R)) {
 			if(curSelection == num_files-1) {
 				curSelection = 0;
 			}
@@ -741,7 +741,7 @@ uiDrawObj_t* renderFileFullwidth(file_handle** directory, int num_files, uiDrawO
 			}
 		}
 		
-		if(padsButtonsHeld() & PAD_BUTTON_A) {
+		if(padsButtonsHeld() & BUTTON_A) {
 			lockFile(directory[curSelection]);
 			//go into a folder or select a file
 			if(directory[curSelection]->fileType==IS_DIR) {
@@ -769,22 +769,22 @@ uiDrawObj_t* renderFileFullwidth(file_handle** directory, int num_files, uiDrawO
 			unlockFile(directory[curSelection]);
 			break;
 		}
-		if(padsButtonsHeld() & PAD_BUTTON_X) {
+		if(padsButtonsHeld() & BUTTON_X) {
 			memcpy(&curFile, &curDir, sizeof(file_handle));
 			curDir.fileBase = directory[0]->fileBase;
 			needsDeviceChange = upToParent(&curDir);
 			needsRefresh=1;
-			while(padsButtonsHeld() & PAD_BUTTON_X) VIDEO_WaitVSync();
+			while(padsButtonsHeld() & BUTTON_X) VIDEO_WaitVSync();
 			break;
 		}
-		if((padsButtonsHeld() & PAD_TRIGGER_Z) && swissSettings.enableFileManagement) {
+		if((padsButtonsHeld() & BUTTON_Z) && swissSettings.enableFileManagement) {
 			lockFile(directory[curSelection]);
 			if(directory[curSelection]->fileType == IS_FILE || directory[curSelection]->fileType == IS_DIR) {
 				memcpy(&curFile, directory[curSelection], sizeof(file_handle));
 				meta_thread_stop();
 				needsRefresh = manage_file() ? 1:0;
 				memcpy(directory[curSelection], &curFile, sizeof(file_handle));
-				while(padsButtonsHeld() & PAD_BUTTON_B) VIDEO_WaitVSync();
+				while(padsButtonsHeld() & BUTTON_B) VIDEO_WaitVSync();
 				if(needsRefresh) {
 					// If we return from doing something with a file, refresh the device in the same dir we were at
 					unlockFile(directory[curSelection]);
@@ -808,12 +808,12 @@ uiDrawObj_t* renderFileFullwidth(file_handle** directory, int num_files, uiDrawO
 			unlockFile(directory[curSelection]);
 		}
 		
-		if((padsButtonsHeld() & PAD_BUTTON_START) && swissSettings.recentListLevel > 0) {
+		if((padsButtonsHeld() & BUTTON_START) && swissSettings.recentListLevel > 0) {
 			meta_thread_stop();
 			select_recent_entry();
 			break;
 		}
-		if(padsButtonsHeld() & PAD_BUTTON_B) {
+		if(padsButtonsHeld() & BUTTON_B) {
 			curMenuLocation = ON_OPTIONS;
 			DrawUpdateFileBrowserButton(directory[curSelection]->uiObj, (curMenuLocation == ON_FILLIST) ? B_SELECTED:B_NOSELECT);
 			break;
@@ -869,10 +869,10 @@ bool select_dest_dir(file_handle* initial, file_handle* selection)
 			DrawAddChild(tempBox, DrawSelectableButton(50,fileListBase+(j*40), getVideoMode()->fbWidth-35, fileListBase+(j*40)+40, getRelativeName(directory[i]->name), (i == idx) ? B_SELECTED:B_NOSELECT));
 		}
 		destDirBox = DrawRepublish(destDirBox, tempBox);
-		while ((padsStickY() > -16 && padsStickY() < 16) && !(padsButtonsHeld() & (PAD_BUTTON_X|PAD_BUTTON_A|PAD_BUTTON_B|PAD_BUTTON_UP|PAD_BUTTON_DOWN)))
+		while ((padsStickY() > -16 && padsStickY() < 16) && !(padsButtonsHeld() & (BUTTON_X|BUTTON_A|BUTTON_B|BUTTON_UP|BUTTON_DOWN)))
 			{ VIDEO_WaitVSync (); }
-		if((padsButtonsHeld() & PAD_BUTTON_UP) || padsStickY() > 16){	idx = (--idx < 0) ? num_files-1 : idx;}
-		if((padsButtonsHeld() & PAD_BUTTON_DOWN) || padsStickY() < -16) {idx = (idx + 1) % num_files;	}
+		if((padsButtonsHeld() & BUTTON_UP) || padsStickY() > 16){	idx = (--idx < 0) ? num_files-1 : idx;}
+		if((padsButtonsHeld() & BUTTON_DOWN) || padsStickY() < -16) {idx = (idx + 1) % num_files;	}
 		if((padsButtonsHeld() & PAD_BUTTON_A))	{
 			//go into a folder or select a file
 			if(directory[idx]->fileType==IS_DIR) {
@@ -888,15 +888,15 @@ bool select_dest_dir(file_handle* initial, file_handle* selection)
 		if(padsStickY() < -16 || padsStickY() > 16) {
 			usleep(50000 - abs(padsStickY()*256));
 		}
-		if(padsButtonsHeld() & PAD_BUTTON_X)	{
+		if(padsButtonsHeld() & BUTTON_X)	{
 			memcpy(selection, &curDir, sizeof(file_handle));
 			break;
 		}
-		if(padsButtonsHeld() & PAD_BUTTON_B)	{
+		if(padsButtonsHeld() & BUTTON_B)	{
 			cancelled = true;
 			break;
 		}
-		while (!(!(padsButtonsHeld() & PAD_BUTTON_X) && !(padsButtonsHeld() & (PAD_BUTTON_X|PAD_BUTTON_A|PAD_BUTTON_B|PAD_BUTTON_UP|PAD_BUTTON_DOWN))))
+		while (!(!(padsButtonsHeld() & BUTTON_X) && !(padsButtonsHeld() & (BUTTON_X|BUTTON_A|BUTTON_B|BUTTON_UP|BUTTON_DOWN))))
 			{ VIDEO_WaitVSync (); }
 	}
 	if(destDirBox != NULL) {
@@ -965,16 +965,16 @@ ExecutableFile* select_alt_dol(ExecutableFile *filesToPatch, int num_files) {
 			DrawAddChild(newPanel, DrawSelectableButton(50,fileListBase+(j*40), getVideoMode()->fbWidth-35, fileListBase+(j*40)+40, filesToPatch[i].name, (i == idx) ? B_SELECTED:B_NOSELECT));
 		}
 		container = DrawRepublish(container, newPanel);
-		while ((padsStickY() > -16 && padsStickY() < 16) && !(padsButtonsHeld() & PAD_BUTTON_B) && !(padsButtonsHeld() & PAD_BUTTON_A) && !(padsButtonsHeld() & PAD_BUTTON_UP) && !(padsButtonsHeld() & PAD_BUTTON_DOWN))
+		while ((padsStickY() > -16 && padsStickY() < 16) && !(padsButtonsHeld() & BUTTON_B) && !(padsButtonsHeld() & BUTTON_A) && !(padsButtonsHeld() & BUTTON_UP) && !(padsButtonsHeld() & BUTTON_DOWN))
 			{ VIDEO_WaitVSync (); }
-		if((padsButtonsHeld() & PAD_BUTTON_UP) || padsStickY() > 16){	idx = (--idx < 0) ? num_files-1 : idx;}
-		if((padsButtonsHeld() & PAD_BUTTON_DOWN) || padsStickY() < -16) {idx = (idx + 1) % num_files;	}
-		if((padsButtonsHeld() & PAD_BUTTON_A))	break;
-		if((padsButtonsHeld() & PAD_BUTTON_B))	{ idx = -1; break; }
+		if((padsButtonsHeld() & BUTTON_UP) || padsStickY() > 16){	idx = (--idx < 0) ? num_files-1 : idx;}
+		if((padsButtonsHeld() & BUTTON_DOWN) || padsStickY() < -16) {idx = (idx + 1) % num_files;	}
+		if((padsButtonsHeld() & BUTTON_A))	break;
+		if((padsButtonsHeld() & BUTTON_B))	{ idx = -1; break; }
 		if(padsStickY() < -16 || padsStickY() > 16) {
 			usleep(50000 - abs(padsStickY()*256));
 		}
-		while (!(!(padsButtonsHeld() & PAD_BUTTON_B) && !(padsButtonsHeld() & PAD_BUTTON_A) && !(padsButtonsHeld() & PAD_BUTTON_UP) && !(padsButtonsHeld() & PAD_BUTTON_DOWN)))
+		while (!(!(padsButtonsHeld() & BUTTON_B) && !(padsButtonsHeld() & BUTTON_A) && !(padsButtonsHeld() & BUTTON_UP) && !(padsButtonsHeld() & BUTTON_DOWN)))
 			{ VIDEO_WaitVSync (); }
 	}
 	DrawDispose(container);
@@ -1476,37 +1476,37 @@ bool manage_file() {
 	DrawAddChild(manageFileBox, DrawStyledLabel(640/2, 250, txtbuffer, GetTextScaleToFitInWidth(txtbuffer, getVideoMode()->fbWidth-10-10), ALIGN_CENTER, defaultColor));
 	DrawAddChild(manageFileBox, DrawStyledLabel(640/2, 310, "Press an option to continue, or B to return", 1.0f, ALIGN_CENTER, defaultColor));
 	DrawPublish(manageFileBox);
-	u32 waitButtons = PAD_BUTTON_X|PAD_BUTTON_Y|PAD_BUTTON_B|PAD_TRIGGER_Z|PADEX_TRIGGER_R|PADEX_TRIGGER_L;
+	u32 waitButtons = BUTTON_X|BUTTON_Y|BUTTON_B|BUTTON_Z|BUTTON_R|BUTTON_L;
 	do {VIDEO_WaitVSync();} while (padsButtonsHeld() & waitButtons);
 	int option = 0;
 	while(1) {
 		u32 buttons = padsButtonsHeld();
-		if(canCopy && (buttons & PAD_BUTTON_X)) {
+		if(canCopy && (buttons & BUTTON_X)) {
 			option = COPY_OPTION;
-			while(padsButtonsHeld() & PAD_BUTTON_X){ VIDEO_WaitVSync (); }
+			while(padsButtonsHeld() & BUTTON_X){ VIDEO_WaitVSync (); }
 			break;
 		}
-		if(canMove && (buttons & PAD_BUTTON_Y)) {
+		if(canMove && (buttons & BUTTON_Y)) {
 			option = MOVE_OPTION;
-			while(padsButtonsHeld() & PAD_BUTTON_Y){ VIDEO_WaitVSync (); }
+			while(padsButtonsHeld() & BUTTON_Y){ VIDEO_WaitVSync (); }
 			break;
 		}
-		if(canDelete && (buttons & PAD_TRIGGER_Z)) {
+		if(canDelete && (buttons & BUTTON_Z)) {
 			option = DELETE_OPTION;
-			while(padsButtonsHeld() & PAD_TRIGGER_Z){ VIDEO_WaitVSync (); }
+			while(padsButtonsHeld() & BUTTON_Z){ VIDEO_WaitVSync (); }
 			break;
 		}
-		if(canRename && (buttons & PADEX_TRIGGER_R)) {
+		if(canRename && (buttons & BUTTON_R)) {
 			option = RENAME_OPTION;
-			while(padsButtonsHeld() & PADEX_TRIGGER_R){ VIDEO_WaitVSync (); }
+			while(padsButtonsHeld() & BUTTON_R){ VIDEO_WaitVSync (); }
 			break;
 		}
-		if(canRename && (buttons & PADEX_TRIGGER_L)) {
+		if(canRename && (buttons & BUTTON_L)) {
 			option = HIDE_OPTION;
-			while(padsButtonsHeld() & PADEX_TRIGGER_L){ VIDEO_WaitVSync (); }
+			while(padsButtonsHeld() & BUTTON_L){ VIDEO_WaitVSync (); }
 			break;
 		}
-		if(buttons & PAD_BUTTON_B) {
+		if(buttons & BUTTON_B) {
 			DrawDispose(manageFileBox);
 			return false;
 		}
@@ -1521,16 +1521,16 @@ bool manage_file() {
 		bool cancel = false;
 		while(1) {
 			u32 btns = padsButtonsHeld();
-			if ((btns & (PAD_BUTTON_A|PADEX_TRIGGER_L)) == (PAD_BUTTON_A|PADEX_TRIGGER_L)) {
+			if ((btns & (BUTTON_A|BUTTON_L)) == (BUTTON_A|BUTTON_L)) {
 				break;
 			}
-			else if (btns & PAD_BUTTON_B) {
+			else if (btns & BUTTON_B) {
 				cancel = true;
 				break;
 			}
 			VIDEO_WaitVSync();
 		}
-		do {VIDEO_WaitVSync();} while (padsButtonsHeld() & (PAD_BUTTON_A|PADEX_TRIGGER_L|PAD_BUTTON_B));
+		do {VIDEO_WaitVSync();} while (padsButtonsHeld() & (BUTTON_A|BUTTON_L|BUTTON_B));
 		DrawDispose(msgBox);
 		if(cancel) {
 			return false;
@@ -1561,7 +1561,7 @@ bool manage_file() {
 		}
 		free(nameBuffer);
 		free(parentPath);
-		do {VIDEO_WaitVSync();} while (padsButtonsHeld() & (PAD_BUTTON_B|PAD_BUTTON_START));
+		do {VIDEO_WaitVSync();} while (padsButtonsHeld() & (BUTTON_B|BUTTON_START));
 		return modified;
 	}
 	// Handle deletes (dir or file)
@@ -1634,10 +1634,10 @@ bool manage_file() {
 			DrawAddChild(dupeBox, DrawStyledLabel(640/2, 230, "(A) Rename (Z) Overwrite", 1.0f, ALIGN_CENTER, defaultColor));
 			DrawAddChild(dupeBox, DrawStyledLabel(640/2, 300, "Press an option to continue, or B to return", 1.0f, ALIGN_CENTER, defaultColor));
 			DrawPublish(dupeBox);
-			while(padsButtonsHeld() & (PAD_BUTTON_A | PAD_TRIGGER_Z)) { VIDEO_WaitVSync (); }
+			while(padsButtonsHeld() & (BUTTON_A | BUTTON_Z)) { VIDEO_WaitVSync (); }
 			while(1) {
 				u32 buttons = padsButtonsHeld();
-				if(buttons & PAD_TRIGGER_Z) {
+				if(buttons & BUTTON_Z) {
 					if(!strcmp(curFile.name, destFile->name)) {
 						DrawDispose(dupeBox);
 						uiDrawObj_t *msgBox = DrawMessageBox(D_INFO, "Can't overwrite a file with itself!");
@@ -1650,10 +1650,10 @@ bool manage_file() {
 						devices[DEVICE_DEST]->deleteFile(destFile);
 					}
 
-					while(padsButtonsHeld() & PAD_TRIGGER_Z){ VIDEO_WaitVSync (); }
+					while(padsButtonsHeld() & BUTTON_Z){ VIDEO_WaitVSync (); }
 					break;
 				}
-				if(buttons & PAD_BUTTON_A) {
+				if(buttons & BUTTON_A) {
 					int cursor, extension_start = -1, copy_num = 0;
 					char name_backup[1024];
 					for(cursor = 0; destFile->name[cursor]; cursor++) {
@@ -1711,10 +1711,10 @@ bool manage_file() {
 						}
 					}
 
-					while(padsButtonsHeld() & PAD_BUTTON_A){ VIDEO_WaitVSync (); }
+					while(padsButtonsHeld() & BUTTON_A){ VIDEO_WaitVSync (); }
 					break;
 				}
-				if(buttons & PAD_BUTTON_B) {
+				if(buttons & BUTTON_B) {
 					DrawDispose(dupeBox);
 					return false;
 				}
@@ -1781,7 +1781,7 @@ bool manage_file() {
 			print_debug("Copying %i byte file from %s to %s\n", curFile.size, &curFile.name[0], destFile->name);
 			while(curOffset < curFile.size) {
 				u32 buttons = padsButtonsHeld();
-				if(buttons & PAD_BUTTON_B) {
+				if(buttons & BUTTON_B) {
 					cancelled = 1;
 					break;
 				}
@@ -1904,7 +1904,7 @@ void verify_game()
 	int timeremain = 0;
 	while(curOffset < curFile.size) {
 		u32 buttons = padsButtonsHeld();
-		if(buttons & PAD_BUTTON_B) {
+		if(buttons & BUTTON_B) {
 			cancelled = 1;
 			break;
 		}
@@ -2558,7 +2558,7 @@ int info_game(ConfigEntry *config)
 {
 	if(swissSettings.cubebootInvoked) {
 		u32 buttons = padsButtonsHeld();
-		if(buttons & PAD_BUTTON_Y) {
+		if(buttons & BUTTON_Y) {
 			if(findCheats(false) > 0) {
 				loadCheatsSelection();
 				DrawCheatsSelector(getRelativeName(curFile.name));
@@ -2568,7 +2568,7 @@ int info_game(ConfigEntry *config)
 		return swissSettings.cubebootInvoked;
 	}
 	if(swissSettings.autoBoot) {
-		if(padsButtonsHeld() & PAD_BUTTON_B) {
+		if(padsButtonsHeld() & BUTTON_B) {
 			swissSettings.autoBoot = 0;
 		} else {
 			return swissSettings.autoBoot;
@@ -2577,29 +2577,29 @@ int info_game(ConfigEntry *config)
 	int ret = 0, num_cheats = -1;
 	uiDrawObj_t *infoPanel = DrawPublish(draw_game_info(config));
 	while(1) {
-		while(padsButtonsHeld() & (PAD_BUTTON_X | PAD_BUTTON_B | PAD_BUTTON_A | PAD_BUTTON_Y | PAD_TRIGGER_Z | PADEX_TRIGGER_R)){ VIDEO_WaitVSync (); }
-		while(!(padsButtonsHeld() & (PAD_BUTTON_X | PAD_BUTTON_B | PAD_BUTTON_A | PAD_BUTTON_Y | PAD_TRIGGER_Z | PADEX_TRIGGER_R))){ VIDEO_WaitVSync (); }
+		while(padsButtonsHeld() & (BUTTON_X | BUTTON_B | BUTTON_A | BUTTON_Y | BUTTON_Z | BUTTON_R)){ VIDEO_WaitVSync (); }
+		while(!(padsButtonsHeld() & (BUTTON_X | BUTTON_B | BUTTON_A | BUTTON_Y | BUTTON_Z | BUTTON_R))){ VIDEO_WaitVSync (); }
 		u32 buttons = padsButtonsHeld();
-		if(buttons & PAD_BUTTON_A) {
-			if(buttons & PADEX_TRIGGER_L) {
+		if(buttons & BUTTON_A) {
+			if(buttons & BUTTON_L) {
 				config->forceCleanBoot = 1;
 			}
 			ret = 1;
 			break;
 		}
 		// WODE can't return from here.
-		if((buttons & PAD_BUTTON_B) && devices[DEVICE_CUR] != &__device_wode) {
+		if((buttons & BUTTON_B) && devices[DEVICE_CUR] != &__device_wode) {
 			ret = 0;
 			break;
 		}
-		if((buttons & PADEX_TRIGGER_R) && is_verifiable_disc(&GCMDisk)) {
+		if((buttons & BUTTON_R) && is_verifiable_disc(&GCMDisk)) {
 			verify_game();
 		}
-		if(buttons & PAD_BUTTON_X) {
+		if(buttons & BUTTON_X) {
 			needsRefresh = show_settings(PAGE_GAME, 0, config);
 			infoPanel = DrawRepublish(infoPanel, draw_game_info(config));
 		}
-		if((buttons & PAD_TRIGGER_Z) && devices[DEVICE_CONFIG] != NULL) {
+		if((buttons & BUTTON_Z) && devices[DEVICE_CONFIG] != NULL) {
 			// Toggle autoload
 			if(!strcmp(&swissSettings.autoload[0], &curFile.name[0])
 			|| !fnmatch(&swissSettings.autoload[0], &curFile.name[0], FNM_PATHNAME)) {
@@ -2618,7 +2618,7 @@ int info_game(ConfigEntry *config)
 			infoPanel = DrawRepublish(infoPanel, draw_game_info(config));
 		}
 		// Look for a cheats file based on the GameID
-		if(buttons & PAD_BUTTON_Y) {
+		if(buttons & BUTTON_Y) {
 			// don't find cheats again if we've just found some for this game since it'll wipe selections.
 			if(num_cheats == -1) {
 				num_cheats = findCheats(false);
@@ -2629,9 +2629,9 @@ int info_game(ConfigEntry *config)
 				saveCheatsSelection();
 			}
 		}
-		while(padsButtonsHeld() & PAD_BUTTON_A){ VIDEO_WaitVSync (); }
+		while(padsButtonsHeld() & BUTTON_A){ VIDEO_WaitVSync (); }
 	}
-	while(padsButtonsHeld() & PAD_BUTTON_A){ VIDEO_WaitVSync (); }
+	while(padsButtonsHeld() & BUTTON_A){ VIDEO_WaitVSync (); }
 	DrawDispose(infoPanel);
 	return ret;
 }
@@ -2718,23 +2718,22 @@ void select_device(int type)
 			DrawAddChild(deviceSelectBox, deviceDetailLabel);
 		}
 		DrawPublish(deviceSelectBox);
-		while (!(padsButtonsHeld() & 
-			(PAD_BUTTON_RIGHT|PAD_BUTTON_LEFT|PAD_BUTTON_B|PAD_BUTTON_A|PAD_BUTTON_X|PAD_BUTTON_Y|PADEX_TRIGGER_L|PADEX_TRIGGER_R|PAD_TRIGGER_Z) ))
+		while (!(padsButtonsHeld() & (BUTTON_RIGHT|BUTTON_LEFT|BUTTON_B|BUTTON_A|BUTTON_X|BUTTON_Y|BUTTON_L|BUTTON_R|BUTTON_Z)))
 			{ VIDEO_WaitVSync (); }
 		u32 btns = padsButtonsHeld();
-		if((btns & PAD_BUTTON_Y) && allDevices[curDevice]->details) {
+		if((btns & BUTTON_Y) && allDevices[curDevice]->details) {
 			char *deviceDetails = allDevices[curDevice]->details(allDevices[curDevice]->initial);
 			if(deviceDetails) {
 				uiDrawObj_t *deviceDetailBox = DrawPublish(DrawTooltip(deviceDetails));
-				while (padsButtonsHeld() & PAD_BUTTON_Y){ VIDEO_WaitVSync (); }
-				while (!((padsButtonsHeld() & PAD_BUTTON_Y) || (padsButtonsHeld() & PAD_BUTTON_B))){ VIDEO_WaitVSync (); }
+				while (padsButtonsHeld() & BUTTON_Y){ VIDEO_WaitVSync (); }
+				while (!((padsButtonsHeld() & BUTTON_Y) || (padsButtonsHeld() & BUTTON_B))){ VIDEO_WaitVSync (); }
 				DrawDispose(deviceDetailBox);
 				free(deviceDetails);
 			}
 		}
-		if((btns & PAD_BUTTON_X) && (allDevices[curDevice]->features & FEAT_EXI_SPEED))
+		if((btns & BUTTON_X) && (allDevices[curDevice]->features & FEAT_EXI_SPEED))
 			inAdvanced ^= 1;
-		if(btns & PAD_TRIGGER_Z) {
+		if(btns & BUTTON_Z) {
 			showAllDevices ^= 1;
 			if(!showAllDevices && !deviceHandler_getDeviceAvailable(allDevices[curDevice])) {
 				inAdvanced = 0;
@@ -2742,20 +2741,20 @@ void select_device(int type)
 			}
 		}
 		if(inAdvanced) {
-			if((btns & PAD_BUTTON_RIGHT) || (btns & PAD_BUTTON_LEFT)) {
+			if((btns & BUTTON_RIGHT) || (btns & BUTTON_LEFT)) {
 				swissSettings.exiSpeed^=1;
 			}
 		}
 		else {
-			if(btns & (PAD_BUTTON_RIGHT|PADEX_TRIGGER_R)) {
+			if(btns & (BUTTON_RIGHT|BUTTON_R)) {
 				direction = 1;
 			}
-			if(btns & (PAD_BUTTON_LEFT|PADEX_TRIGGER_L)) {
+			if(btns & (BUTTON_LEFT|BUTTON_L)) {
 				direction = -1;
 			}
 		}
 			
-		if(btns & PAD_BUTTON_A) {
+		if(btns & BUTTON_A) {
 			if(!inAdvanced) {
 				if(type == DEVICE_CUR)
 					break;
@@ -2771,18 +2770,16 @@ void select_device(int type)
 			else 
 				inAdvanced = 0;
 		}
-		if(btns & PAD_BUTTON_B) {
+		if(btns & BUTTON_B) {
 			devices[type] = NULL;
 			DrawDispose(deviceSelectBox);
 			return;
 		}
-		while ((padsButtonsHeld() & 
-			(PAD_BUTTON_RIGHT|PAD_BUTTON_LEFT|PAD_BUTTON_B|PAD_BUTTON_A
-			|PAD_BUTTON_X|PAD_BUTTON_Y|PADEX_TRIGGER_L|PADEX_TRIGGER_R|PAD_TRIGGER_Z) ))
+		while (padsButtonsHeld() & (BUTTON_RIGHT|BUTTON_LEFT|BUTTON_B|BUTTON_A|BUTTON_X|BUTTON_Y|BUTTON_L|BUTTON_R|BUTTON_Z))
 			{ VIDEO_WaitVSync (); }
 		DrawDispose(deviceSelectBox);
 	}
-	while ((padsButtonsHeld() & PAD_BUTTON_A)){ VIDEO_WaitVSync (); }
+	while ((padsButtonsHeld() & BUTTON_A)){ VIDEO_WaitVSync (); }
 	// Deinit any existing device
 	if(devices[type] != NULL) {
 		// Don't deinit our current device when selecting a destination device
@@ -2799,7 +2796,7 @@ void select_device(int type)
 
 void menu_loop()
 { 
-	while(padsButtonsHeld() & PAD_BUTTON_A) { VIDEO_WaitVSync (); }
+	while(padsButtonsHeld() & BUTTON_A) { VIDEO_WaitVSync (); }
 	// We don't care if a subsequent device is "default"
 	if(needsDeviceChange) {
 		freeFiles();
@@ -2868,20 +2865,20 @@ void menu_loop()
 					filePanel = renderFileFullwidth(getSortedDirEntries(), getSortedDirEntryCount(), filePanel);
 					break;
 			}
-			while(padsButtonsHeld() & (PAD_BUTTON_B | PAD_BUTTON_A | PAD_BUTTON_RIGHT | PAD_BUTTON_LEFT | PAD_BUTTON_START)) {
+			while(padsButtonsHeld() & (BUTTON_B | BUTTON_A | BUTTON_RIGHT | BUTTON_LEFT | BUTTON_START)) {
 				VIDEO_WaitVSync (); 
 			}
 		}
 		else if (curMenuLocation==ON_OPTIONS) {
 			u32 btns = padsButtonsHeld();
-			while (!((btns=padsButtonsHeld()) & (PAD_BUTTON_B | PAD_BUTTON_A | PAD_BUTTON_RIGHT | PAD_BUTTON_LEFT | PAD_BUTTON_START))) {
+			while (!((btns=padsButtonsHeld()) & (BUTTON_B | BUTTON_A | BUTTON_RIGHT | BUTTON_LEFT | BUTTON_START))) {
 				VIDEO_WaitVSync();
 			}
 			
-			if(btns & PAD_BUTTON_LEFT){	curMenuSelection = (--curMenuSelection < 0) ? (MENU_MAX-1) : curMenuSelection;}
-			else if(btns & PAD_BUTTON_RIGHT){curMenuSelection = (curMenuSelection + 1) % MENU_MAX;	}
+			if(btns & BUTTON_LEFT){	curMenuSelection = (--curMenuSelection < 0) ? (MENU_MAX-1) : curMenuSelection;}
+			else if(btns & BUTTON_RIGHT){curMenuSelection = (curMenuSelection + 1) % MENU_MAX;	}
 
-			if(btns & PAD_BUTTON_A) {
+			if(btns & BUTTON_A) {
 				//handle menu event
 				switch(curMenuSelection) {
 					case MENU_DEVICE:
@@ -2916,13 +2913,13 @@ void menu_loop()
 						break;
 				}
 			}
-			if((btns & PAD_BUTTON_B) && devices[DEVICE_CUR] != NULL) {
+			if((btns & BUTTON_B) && devices[DEVICE_CUR] != NULL) {
 				curMenuLocation = ON_FILLIST;
 			}
-			if((btns & PAD_BUTTON_START) && swissSettings.recentListLevel > 0) {
+			if((btns & BUTTON_START) && swissSettings.recentListLevel > 0) {
 				select_recent_entry();
 			}
-			while(padsButtonsHeld() & (PAD_BUTTON_B | PAD_BUTTON_A | PAD_BUTTON_RIGHT | PAD_BUTTON_LEFT | PAD_BUTTON_START)) {
+			while(padsButtonsHeld() & (BUTTON_B | BUTTON_A | BUTTON_RIGHT | BUTTON_LEFT | BUTTON_START)) {
 				VIDEO_WaitVSync (); 
 			}
 		}

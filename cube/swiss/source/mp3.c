@@ -45,13 +45,13 @@ int play_mp3(file_handle *file, int numFiles, int curMP3) {
 	while(MP3Player_IsPlaying() || ret == PLAYER_PAUSE ) {
 	
 		u32 buttons = padsButtonsHeld();
-		if(buttons & PAD_BUTTON_B) {			// Stop
-			while((padsButtonsHeld() & PAD_BUTTON_B)){VIDEO_WaitVSync();};
+		if(buttons & BUTTON_B) {			// Stop
+			while((padsButtonsHeld() & BUTTON_B)){VIDEO_WaitVSync();};
 			MP3Player_Stop();
 			ret = PLAYER_STOP;
 		}
-		else if(buttons & PAD_BUTTON_START) {	// Pause
-			while((padsButtonsHeld() & PAD_BUTTON_START)){VIDEO_WaitVSync();};
+		else if(buttons & BUTTON_START) {	// Pause
+			while((padsButtonsHeld() & BUTTON_START)){VIDEO_WaitVSync();};
 			if(ret != PLAYER_PAUSE) {
 				MP3Player_Stop();
 				ret = PLAYER_PAUSE;
@@ -61,23 +61,25 @@ int play_mp3(file_handle *file, int numFiles, int curMP3) {
 				ret = PLAYER_NEXT;
 			}
 		}
-		else if(buttons & PAD_BUTTON_X) {		// VOL+
+		else if(buttons & BUTTON_X) {		// VOL+
 			if(volume<256) volume++;
 			MP3Player_Volume(volume);
 		}
-		else if(buttons & PAD_BUTTON_Y) {		// VOL-
+		else if(buttons & BUTTON_Y) {		// VOL-
 			if(volume>0) volume--;
 			MP3Player_Volume(volume);
 		}
-		else if(buttons & PADEX_TRIGGER_R) {		// Next
+		else if(buttons & BUTTON_R) {		// Next
+			while((padsButtonsHeld() & BUTTON_R)){VIDEO_WaitVSync();};
 			MP3Player_Stop();
 			ret = PLAYER_NEXT;
 		}
-		else if(buttons & PADEX_TRIGGER_L) {		// Previous
+		else if(buttons & BUTTON_L) {		// Previous
+			while((padsButtonsHeld() & BUTTON_L)){VIDEO_WaitVSync();};
 			MP3Player_Stop();
 			ret = PLAYER_PREV;
 		}
-		else if(buttons & PAD_BUTTON_RIGHT) {		// Fwd
+		else if(buttons & BUTTON_RIGHT) {	// Fwd
 			MP3Player_Stop();
 			if(file->offset+0x8000 < file->size) {
 				file->offset += 0x8000;
@@ -88,14 +90,14 @@ int play_mp3(file_handle *file, int numFiles, int curMP3) {
 				break;
 			}
 		}
-		else if(buttons & PAD_BUTTON_LEFT) {		// Rewind
+		else if(buttons & BUTTON_LEFT) {	// Rewind
 			MP3Player_Stop();
 			if(file->offset-0x10000 > 0) file->offset -= 0x10000;
 			else file->offset = 0;
 			MP3Player_PlayFile(file, &mp3Reader, NULL);
 		}
-		else if(buttons & PAD_TRIGGER_Z) {		// Toggle Shuffle
-			while((padsButtonsHeld() & PAD_TRIGGER_Z)){VIDEO_WaitVSync();};
+		else if(buttons & BUTTON_Z) {		// Toggle Shuffle
+			while((padsButtonsHeld() & BUTTON_Z)){VIDEO_WaitVSync();};
 			useShuffle ^=1;
 		}
 		player = DrawRepublish(player, updatescreen_mp3(file, ret, numFiles, curMP3));

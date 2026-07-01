@@ -349,31 +349,31 @@ uiDrawObj_t * info_draw_page(int page_num) {
 void show_info() {
 	int page = 0;
 	uiDrawObj_t* pagePanel = NULL;
-	while (padsButtonsHeld() & PAD_BUTTON_A){ VIDEO_WaitVSync (); }
+	while (padsButtonsHeld() & BUTTON_A){ VIDEO_WaitVSync (); }
 	while(1) {
 		pagePanel = DrawRepublish(pagePanel, info_draw_page(page));
-		while (!((padsButtonsHeld() & PAD_BUTTON_RIGHT) 
-			|| (padsButtonsHeld() & PAD_BUTTON_LEFT) 
-			|| (padsButtonsHeld() & PAD_BUTTON_B)
-			|| (padsButtonsHeld() & PAD_BUTTON_A)
-			|| (padsButtonsHeld() & PADEX_TRIGGER_R)
-			|| (padsButtonsHeld() & PADEX_TRIGGER_L)))
+		while (!((padsButtonsHeld() & BUTTON_RIGHT)
+			|| (padsButtonsHeld() & BUTTON_LEFT)
+			|| (padsButtonsHeld() & BUTTON_B)
+			|| (padsButtonsHeld() & BUTTON_A)
+			|| (padsButtonsHeld() & BUTTON_R)
+			|| (padsButtonsHeld() & BUTTON_L)))
 			{ VIDEO_WaitVSync (); }
 		u32 btns = padsButtonsHeld();
-		if(((btns & PAD_BUTTON_RIGHT) || (btns & PADEX_TRIGGER_R)) && page < 4)
+		if(((btns & BUTTON_RIGHT) || (btns & BUTTON_R)) && page < 4)
 			page++;
-		if(((btns & PAD_BUTTON_LEFT) || (btns & PADEX_TRIGGER_L)) && page > 0)
+		if(((btns & BUTTON_LEFT) || (btns & BUTTON_L)) && page > 0)
 			page--;
-		if((btns & PAD_BUTTON_A) || (btns & PAD_BUTTON_B))
+		if((btns & BUTTON_A) || (btns & PAD_BUTTON_B))
 			break;
-		while ((padsButtonsHeld() & PAD_BUTTON_RIGHT) 
-			|| (padsButtonsHeld() & PAD_BUTTON_LEFT) 
-			|| (padsButtonsHeld() & PAD_BUTTON_B)
-			|| (padsButtonsHeld() & PAD_BUTTON_A)
-			|| (padsButtonsHeld() & PADEX_TRIGGER_R)
-			|| (padsButtonsHeld() & PADEX_TRIGGER_L))
+		while ((padsButtonsHeld() & BUTTON_RIGHT)
+			|| (padsButtonsHeld() & BUTTON_LEFT)
+			|| (padsButtonsHeld() & BUTTON_B)
+			|| (padsButtonsHeld() & BUTTON_A)
+			|| (padsButtonsHeld() & BUTTON_R)
+			|| (padsButtonsHeld() & BUTTON_L))
 			{ VIDEO_WaitVSync (); }
 	}
 	DrawDispose(pagePanel);
-	while (padsButtonsHeld() & PAD_BUTTON_A){ VIDEO_WaitVSync (); }
+	while (padsButtonsHeld() & BUTTON_A){ VIDEO_WaitVSync (); }
 }

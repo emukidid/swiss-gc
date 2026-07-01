@@ -1065,30 +1065,30 @@ int show_settings(int page, int option, ConfigEntry *config) {
 	memcpy(&tempSettings, &swissSettings, sizeof(SwissSettings));
 	
 	GXRModeObj *oldmode = getVideoMode();
-	while (padsButtonsHeld() & PAD_BUTTON_A){ VIDEO_WaitVSync (); }
+	while (padsButtonsHeld() & BUTTON_A){ VIDEO_WaitVSync (); }
 	while(1) {
 		uiDrawObj_t* settingsPage = settings_draw_page(page, option, config);
-		while (!((padsButtonsHeld() & PAD_BUTTON_RIGHT) 
-			|| (padsButtonsHeld() & PAD_BUTTON_LEFT) 
-			|| (padsButtonsHeld() & PAD_BUTTON_UP) 
-			|| (padsButtonsHeld() & PAD_BUTTON_DOWN) 
-			|| (padsButtonsHeld() & PAD_BUTTON_B)
-			|| (padsButtonsHeld() & PAD_BUTTON_A)
-			|| (padsButtonsHeld() & PAD_BUTTON_Y)
-			|| (padsButtonsHeld() & PADEX_TRIGGER_R)
-			|| (padsButtonsHeld() & PADEX_TRIGGER_L)))
+		while (!((padsButtonsHeld() & BUTTON_RIGHT)
+			|| (padsButtonsHeld() & BUTTON_LEFT)
+			|| (padsButtonsHeld() & BUTTON_UP)
+			|| (padsButtonsHeld() & BUTTON_DOWN)
+			|| (padsButtonsHeld() & BUTTON_B)
+			|| (padsButtonsHeld() & BUTTON_A)
+			|| (padsButtonsHeld() & BUTTON_Y)
+			|| (padsButtonsHeld() & BUTTON_R)
+			|| (padsButtonsHeld() & BUTTON_L)))
 			{ VIDEO_WaitVSync (); }
 		u32 btns = padsButtonsHeld();
-		if(btns & PAD_BUTTON_Y) {
+		if(btns & BUTTON_Y) {
 			char *tooltip = get_tooltip(page, option);
 			if(tooltip) {
 				uiDrawObj_t* tooltipBox = DrawPublish(DrawTooltip(tooltip));
-				while (padsButtonsHeld() & PAD_BUTTON_Y){ VIDEO_WaitVSync (); }
-				while (!((padsButtonsHeld() & PAD_BUTTON_Y) || (padsButtonsHeld() & PAD_BUTTON_B))){ VIDEO_WaitVSync (); }
+				while (padsButtonsHeld() & BUTTON_Y){ VIDEO_WaitVSync (); }
+				while (!((padsButtonsHeld() & BUTTON_Y) || (padsButtonsHeld() & BUTTON_B))){ VIDEO_WaitVSync (); }
 				DrawDispose(tooltipBox);
 			}
 		}
-		if(btns & PAD_BUTTON_RIGHT) {
+		if(btns & BUTTON_RIGHT) {
 			// If we're on a button (Back, Next, Save, Exit), allow left/right movement
 			if((page == PAGE_MIN || page == PAGE_MAX) && (option >= settings_count_pp[page]-2) && option < settings_count_pp[page]) {
 				option++;
@@ -1100,7 +1100,7 @@ int show_settings(int page, int option, ConfigEntry *config) {
 				settings_toggle(page, option, 1, config);
 			}
 		}
-		if(btns & PAD_BUTTON_LEFT) {
+		if(btns & BUTTON_LEFT) {
 			// If we're on a button (Back, Next, Save, Exit), allow left/right movement
 			if((page == PAGE_MIN || page == PAGE_MAX) && (option > settings_count_pp[page]-2)) {
 				option--;
@@ -1112,20 +1112,20 @@ int show_settings(int page, int option, ConfigEntry *config) {
 				settings_toggle(page, option, -1, config);
 			}
 		}
-		if((btns & PAD_BUTTON_DOWN) && option < settings_count_pp[page])
+		if((btns & BUTTON_DOWN) && option < settings_count_pp[page])
 			option++;
-		if((btns & PAD_BUTTON_UP) && option > PAGE_MIN)
+		if((btns & BUTTON_UP) && option > PAGE_MIN)
 			option--;
-		if((btns & PADEX_TRIGGER_R) && page < PAGE_MAX) {
+		if((btns & BUTTON_R) && page < PAGE_MAX) {
 			page++; option = 0;
 		}
-		if((btns & PADEX_TRIGGER_L) && page > PAGE_GLOBAL) {
+		if((btns & BUTTON_L) && page > PAGE_GLOBAL) {
 			page--; option = 0;
 		}
-		if((btns & PAD_BUTTON_B))
+		if((btns & BUTTON_B))
 			option = settings_count_pp[page];
 		// Handle all options/buttons here
-		if((btns & PAD_BUTTON_A)) {
+		if((btns & BUTTON_A)) {
 			// Generic Save/Cancel/Back/Next button actions
 			if(option == settings_count_pp[page]-1) {
 				uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Saving changes\205"));
@@ -1196,15 +1196,15 @@ int show_settings(int page, int option, ConfigEntry *config) {
 				settings_toggle(page, option, 0, config);
 			}
 		}
-		while ((padsButtonsHeld() & PAD_BUTTON_RIGHT) 
-				|| (padsButtonsHeld() & PAD_BUTTON_LEFT) 
-				|| (padsButtonsHeld() & PAD_BUTTON_UP) 
-				|| (padsButtonsHeld() & PAD_BUTTON_DOWN) 
-				|| (padsButtonsHeld() & PAD_BUTTON_B) 
-				|| (padsButtonsHeld() & PAD_BUTTON_A)
-				|| (padsButtonsHeld() & PAD_BUTTON_Y)
-				|| (padsButtonsHeld() & PADEX_TRIGGER_R)
-				|| (padsButtonsHeld() & PADEX_TRIGGER_L))
+		while ((padsButtonsHeld() & BUTTON_RIGHT)
+				|| (padsButtonsHeld() & BUTTON_LEFT)
+				|| (padsButtonsHeld() & BUTTON_UP)
+				|| (padsButtonsHeld() & BUTTON_DOWN)
+				|| (padsButtonsHeld() & BUTTON_B)
+				|| (padsButtonsHeld() & BUTTON_A)
+				|| (padsButtonsHeld() & BUTTON_Y)
+				|| (padsButtonsHeld() & BUTTON_R)
+				|| (padsButtonsHeld() & BUTTON_L))
 			{ VIDEO_WaitVSync (); }
 		DrawDispose(settingsPage);
 	}

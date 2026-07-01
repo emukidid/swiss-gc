@@ -434,7 +434,7 @@ void populateDeviceAvailability() {
 		if(DVD_LowGetCoverStatus() == DVD_COVER_OPEN) {
 			break;
 		}
-		if(padsButtonsHeld() & PAD_BUTTON_B) {
+		if(padsButtonsHeld() & BUTTON_B) {
 			DVD_CancelAsync(&DVDInquiryBlock, NULL);
 			break;
 		}
