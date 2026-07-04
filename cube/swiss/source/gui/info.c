@@ -199,7 +199,8 @@ uiDrawObj_t * info_draw_page(int page_num) {
 		DrawAddChild(container, DrawStyledLabel(640/2, 146, topStr, 0.75f, ALIGN_CENTER, defaultColor));
 		
 		DrawAddChild(container, DrawStyledLabel(640/2, 170, (char*)"VIDEO MODE", 0.65f, ALIGN_CENTER, defaultColor));
-		DrawAddChild(container, DrawStyledLabel(640/2, 186, getVideoModeString(getVideoMode()), 0.75f, ALIGN_CENTER, defaultColor));
+		sprintf(topStr, "%.5G Hz %s", VIDEO_GetRetraceRate(), getVideoModeString(getVideoMode()));
+		DrawAddChild(container, DrawStyledLabel(640/2, 186, topStr, 0.75f, ALIGN_CENTER, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(640/2, 210, (char*)"AUDIO", 0.65f, ALIGN_CENTER, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(640/2, 226, (char*)(swissSettings.sramStereo ? "Stereo" : "Mono"), 0.75f, ALIGN_CENTER, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(640/2, 250, (char*)"LANGUAGE", 0.65f, ALIGN_CENTER, defaultColor));
@@ -231,7 +232,7 @@ uiDrawObj_t * info_draw_page(int page_num) {
 		DrawAddChild(container, DrawStyledLabel(640/2, 306, topStr, 0.75f, ALIGN_CENTER, defaultColor));
 		
 		DrawAddChild(container, DrawStyledLabel(640/2, 330, (char*)"CPU ECID", 0.65f, ALIGN_CENTER, defaultColor));
-		sprintf(topStr,"%08X:%08X:%08X:%08X",mfspr(ECID0),mfspr(ECID1),mfspr(ECID2),mfspr(ECID3));
+		sprintf(topStr, "%08X:%08X:%08X:%08X", mfspr(ECID0), mfspr(ECID1), mfspr(ECID2), mfspr(ECID3));
 		DrawAddChild(container, DrawStyledLabel(640/2, 346, topStr, 0.75f, ALIGN_CENTER, defaultColor));
 		
 		DrawAddChild(container, DrawStyledLabel(640/2, 370, (char*)"SYSTEM-ON-CHIP", 0.65f, ALIGN_CENTER, defaultColor));
