@@ -13034,6 +13034,43 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				*(u32 *)(data + 0x80155A90 - 0x80014140 + 0x2620) = 0x39000002;
 				*(u32 *)(data + 0x80155A94 - 0x80014140 + 0x2620) = branchAndLink((u32 *)0x801996C8, (u32 *)0x80155A94);
 				
+				// Fix race condition with AX callback.
+				addr = installPatch2(NULL, 29 * sizeof(u32));
+				
+				*(u32 *)(data + 0x801834D4 - 0x80014140 + 0x2620) = branchAndLink((u32 *)addr, (u32 *)0x801834D4);
+				
+				u32 *patch = Calc_Address(NULL, PATCH_OTHER, (u32)addr);
+				
+				*patch++ = 0x9421FFE0;
+				*patch++ = 0x7C0802A6;
+				*patch++ = 0x90010024;
+				*patch++ = 0x93E1001C;
+				*patch++ = 0x93C10018;
+				*patch++ = 0x93A10014;
+				*patch++ = 0x7C7D1B78;
+				*patch++ = branchAndLink((u32 *)0x8019349C, (u32 *)addr +  7);
+				*patch++ = 0x83CD0000 | ((0x80484740 - 0x8048A620) & 0xFFFF);
+				*patch++ = 0x7C7F1B78;
+				*patch++ = 0x48000010;
+				*patch++ = 0x807E0008;
+				*patch++ = branchAndLink((u32 *)0x801A6788, (u32 *)addr + 12);
+				*patch++ = 0x83DE0000;
+				*patch++ = 0x281E0000;
+				*patch++ = 0x4082FFF0;
+				*patch++ = 0x38000000;
+				*patch++ = 0x7FE3FB78;
+				*patch++ = 0x900D0000 | ((0x80484740 - 0x8048A620) & 0xFFFF);
+				*patch++ = branchAndLink((u32 *)0x801934C4, (u32 *)addr + 19);
+				*patch++ = 0x7FA3EB78;
+				*patch++ = branchAndLink((u32 *)0x80182E8C, (u32 *)addr + 21);
+				*patch++ = 0x80010024;
+				*patch++ = 0x83E1001C;
+				*patch++ = 0x83C10018;
+				*patch++ = 0x83A10014;
+				*patch++ = 0x7C0803A6;
+				*patch++ = 0x38210020;
+				*patch++ = 0x4E800020;
+				
 				print_debug("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
@@ -13063,6 +13100,43 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				*(u32 *)(data + 0x80151AD4 - 0x80014180 + 0x2620) = 0x38C00000;
 				*(u32 *)(data + 0x80151AD8 - 0x80014180 + 0x2620) = 0x39000002;
 				*(u32 *)(data + 0x80151ADC - 0x80014180 + 0x2620) = branchAndLink((u32 *)0x8019414C, (u32 *)0x80151ADC);
+				
+				// Fix race condition with AX callback.
+				addr = installPatch2(NULL, 29 * sizeof(u32));
+				
+				*(u32 *)(data + 0x8017E338 - 0x80014180 + 0x2620) = branchAndLink((u32 *)addr, (u32 *)0x8017E338);
+				
+				u32 *patch = Calc_Address(NULL, PATCH_OTHER, (u32)addr);
+				
+				*patch++ = 0x9421FFE0;
+				*patch++ = 0x7C0802A6;
+				*patch++ = 0x90010024;
+				*patch++ = 0x93E1001C;
+				*patch++ = 0x93C10018;
+				*patch++ = 0x93A10014;
+				*patch++ = 0x7C7D1B78;
+				*patch++ = branchAndLink((u32 *)0x8018DFEC, (u32 *)addr +  7);
+				*patch++ = 0x83CD0000 | ((0x80475CE0 - 0x8047BC20) & 0xFFFF);
+				*patch++ = 0x7C7F1B78;
+				*patch++ = 0x48000010;
+				*patch++ = 0x807E0008;
+				*patch++ = branchAndLink((u32 *)0x8019FF50, (u32 *)addr + 12);
+				*patch++ = 0x83DE0000;
+				*patch++ = 0x281E0000;
+				*patch++ = 0x4082FFF0;
+				*patch++ = 0x38000000;
+				*patch++ = 0x7FE3FB78;
+				*patch++ = 0x900D0000 | ((0x80475CE0 - 0x8047BC20) & 0xFFFF);
+				*patch++ = branchAndLink((u32 *)0x8018E014, (u32 *)addr + 19);
+				*patch++ = 0x7FA3EB78;
+				*patch++ = branchAndLink((u32 *)0x8017DCF0, (u32 *)addr + 21);
+				*patch++ = 0x80010024;
+				*patch++ = 0x83E1001C;
+				*patch++ = 0x83C10018;
+				*patch++ = 0x83A10014;
+				*patch++ = 0x7C0803A6;
+				*patch++ = 0x38210020;
+				*patch++ = 0x4E800020;
 				
 				print_debug("Patched:[%.6s]\n", gameID);
 				patched++;
@@ -13094,6 +13168,43 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				*(u32 *)(data + 0x80155AD4 - 0x80014140 + 0x2620) = 0x39000002;
 				*(u32 *)(data + 0x80155AD8 - 0x80014140 + 0x2620) = branchAndLink((u32 *)0x80199784, (u32 *)0x80155AD8);
 				
+				// Fix race condition with AX callback.
+				addr = installPatch2(NULL, 29 * sizeof(u32));
+				
+				*(u32 *)(data + 0x80183590 - 0x80014140 + 0x2620) = branchAndLink((u32 *)addr, (u32 *)0x80183590);
+				
+				u32 *patch = Calc_Address(NULL, PATCH_OTHER, (u32)addr);
+				
+				*patch++ = 0x9421FFE0;
+				*patch++ = 0x7C0802A6;
+				*patch++ = 0x90010024;
+				*patch++ = 0x93E1001C;
+				*patch++ = 0x93C10018;
+				*patch++ = 0x93A10014;
+				*patch++ = 0x7C7D1B78;
+				*patch++ = branchAndLink((u32 *)0x80193558, (u32 *)addr +  7);
+				*patch++ = 0x83CD0000 | ((0x80483300 - 0x804891E0) & 0xFFFF);
+				*patch++ = 0x7C7F1B78;
+				*patch++ = 0x48000010;
+				*patch++ = 0x807E0008;
+				*patch++ = branchAndLink((u32 *)0x801A6844, (u32 *)addr + 12);
+				*patch++ = 0x83DE0000;
+				*patch++ = 0x281E0000;
+				*patch++ = 0x4082FFF0;
+				*patch++ = 0x38000000;
+				*patch++ = 0x7FE3FB78;
+				*patch++ = 0x900D0000 | ((0x80483300 - 0x804891E0) & 0xFFFF);
+				*patch++ = branchAndLink((u32 *)0x80193580, (u32 *)addr + 19);
+				*patch++ = 0x7FA3EB78;
+				*patch++ = branchAndLink((u32 *)0x80182F48, (u32 *)addr + 21);
+				*patch++ = 0x80010024;
+				*patch++ = 0x83E1001C;
+				*patch++ = 0x83C10018;
+				*patch++ = 0x83A10014;
+				*patch++ = 0x7C0803A6;
+				*patch++ = 0x38210020;
+				*patch++ = 0x4E800020;
+				
 				print_debug("Patched:[%.6s]\n", gameID);
 				patched++;
 				break;
@@ -13123,6 +13234,43 @@ int Patch_GameSpecific(void *data, u32 length, const char *gameID, int dataType)
 				*(u32 *)(data + 0x80155A68 - 0x80014140 + 0x2620) = 0x38C00000;
 				*(u32 *)(data + 0x80155A6C - 0x80014140 + 0x2620) = 0x39000002;
 				*(u32 *)(data + 0x80155A70 - 0x80014140 + 0x2620) = branchAndLink((u32 *)0x801996B8, (u32 *)0x80155A70);
+				
+				// Fix race condition with AX callback.
+				addr = installPatch2(NULL, 29 * sizeof(u32));
+				
+				*(u32 *)(data + 0x801834C4 - 0x80014140 + 0x2620) = branchAndLink((u32 *)addr, (u32 *)0x801834C4);
+				
+				u32 *patch = Calc_Address(NULL, PATCH_OTHER, (u32)addr);
+				
+				*patch++ = 0x9421FFE0;
+				*patch++ = 0x7C0802A6;
+				*patch++ = 0x90010024;
+				*patch++ = 0x93E1001C;
+				*patch++ = 0x93C10018;
+				*patch++ = 0x93A10014;
+				*patch++ = 0x7C7D1B78;
+				*patch++ = branchAndLink((u32 *)0x8019348C, (u32 *)addr +  7);
+				*patch++ = 0x83CD0000 | ((0x8047F600 - 0x804854E0) & 0xFFFF);
+				*patch++ = 0x7C7F1B78;
+				*patch++ = 0x48000010;
+				*patch++ = 0x807E0008;
+				*patch++ = branchAndLink((u32 *)0x801A6778, (u32 *)addr + 12);
+				*patch++ = 0x83DE0000;
+				*patch++ = 0x281E0000;
+				*patch++ = 0x4082FFF0;
+				*patch++ = 0x38000000;
+				*patch++ = 0x7FE3FB78;
+				*patch++ = 0x900D0000 | ((0x8047F600 - 0x804854E0) & 0xFFFF);
+				*patch++ = branchAndLink((u32 *)0x801934B4, (u32 *)addr + 19);
+				*patch++ = 0x7FA3EB78;
+				*patch++ = branchAndLink((u32 *)0x80182E7C, (u32 *)addr + 21);
+				*patch++ = 0x80010024;
+				*patch++ = 0x83E1001C;
+				*patch++ = 0x83C10018;
+				*patch++ = 0x83A10014;
+				*patch++ = 0x7C0803A6;
+				*patch++ = 0x38210020;
+				*patch++ = 0x4E800020;
 				
 				print_debug("Patched:[%.6s]\n", gameID);
 				patched++;
