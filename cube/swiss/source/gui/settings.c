@@ -135,6 +135,10 @@ char* getConfigDeviceName(SwissSettings *settings) {
 	return configDevice != NULL ? (char*)(configDevice->deviceName) : "None";
 }
 
+char* getGameVideoModeString(int gameVMode) {
+	return gameVMode <= 0 ? getScanMode() == VI_PROGRESSIVE ? "Auto (Progressive)" : "Auto (Interlaced)" : gameVModeStr[gameVMode];
+}
+
 char* get_tooltip(int page_num, int option) {
 	char *textPtr = NULL;
 	if(page_num == PAGE_GLOBAL) {
@@ -185,7 +189,7 @@ void drawSettingEntryNumeric(uiDrawObj_t* page, int *y, char *label, int num, bo
 uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfig) {
 	uiDrawObj_t* page = DrawEmptyBox(20,60, getVideoMode()->fbWidth-20, 460);
 	char sramHOffsetStr[8];
-	char uiVModeStr[20];
+	char uiVModeStr[21];
 	char sramTemperatureStr[8];
 	char forceVOffsetStr[8];
 	char triggerLevelStr[8];
@@ -351,8 +355,8 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 		bool enabledHypervisor = devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->features & FEAT_HYPERVISOR);
 		bool enabledCleanBoot = devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->location & LOC_DVD_CONNECTOR);
 		if(option < SET_DEFAULT_INVERT_CAMERA) {
-			drawSettingEntryString(page, &page_y_ofs, "Force NTSC Video Mode:", gameVModeStr[swissSettings.gameVModeNtsc], option == SET_DEFAULT_NTSC_VIDEOMODE, enabledVideoPatches);
-			drawSettingEntryString(page, &page_y_ofs, "Force PAL Video Mode:", gameVModeStr[swissSettings.gameVModePal], option == SET_DEFAULT_PAL_VIDEOMODE, enabledVideoPatches);
+			drawSettingEntryString(page, &page_y_ofs, "Force NTSC Video Mode:", getGameVideoModeString(swissSettings.gameVModeNtsc), option == SET_DEFAULT_NTSC_VIDEOMODE, enabledVideoPatches);
+			drawSettingEntryString(page, &page_y_ofs, "Force PAL Video Mode:", getGameVideoModeString(swissSettings.gameVModePal), option == SET_DEFAULT_PAL_VIDEOMODE, enabledVideoPatches);
 			drawSettingEntryString(page, &page_y_ofs, "Force Horizontal Scale:", forceHScaleStr[swissSettings.forceHScale], option == SET_DEFAULT_HORIZ_SCALE, enabledVideoPatches);
 			sprintf(forceVOffsetStr, "%+hi", swissSettings.forceVOffset);
 			drawSettingEntryString(page, &page_y_ofs, "Force Vertical Offset:", forceVOffsetStr, option == SET_DEFAULT_VERT_OFFSET, enabledVideoPatches);
@@ -394,7 +398,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 			bool enabledCleanBoot = devices[DEVICE_CUR] == NULL || (devices[DEVICE_CUR]->location & LOC_DVD_CONNECTOR);
 			if(option < SET_INVERT_CAMERA) {
 				drawSettingEntryString(page, &page_y_ofs, "Game Language:", sramLanguageStr[gameConfig->gameLanguage], option == SET_GAME_LANG, true);
-				drawSettingEntryString(page, &page_y_ofs, "Force Video Mode:", gameVModeStr[gameConfig->gameVMode], option == SET_FORCE_VIDEOMODE, enabledVideoPatches);
+				drawSettingEntryString(page, &page_y_ofs, "Force Video Mode:", getGameVideoModeString(gameConfig->gameVMode), option == SET_FORCE_VIDEOMODE, enabledVideoPatches);
 				drawSettingEntryString(page, &page_y_ofs, "Force Horizontal Scale:", forceHScaleStr[gameConfig->forceHScale], option == SET_HORIZ_SCALE, enabledVideoPatches);
 				sprintf(forceVOffsetStr, "%+hi", gameConfig->forceVOffset);
 				drawSettingEntryString(page, &page_y_ofs, "Force Vertical Offset:", forceVOffsetStr, option == SET_VERT_OFFSET, enabledVideoPatches);
@@ -424,7 +428,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 			// Just draw the defaults again
 			if(option < SET_INVERT_CAMERA) {
 				drawSettingEntryString(page, &page_y_ofs, "Game Language:", sramLanguageStr[SRAM_LANGUAGE_MAX], option == SET_GAME_LANG, false);
-				drawSettingEntryString(page, &page_y_ofs, "Force Video Mode:", gameVModeStr[swissSettings.gameVMode], option == SET_FORCE_VIDEOMODE, false);
+				drawSettingEntryString(page, &page_y_ofs, "Force Video Mode:", getGameVideoModeString(swissSettings.gameVMode), option == SET_FORCE_VIDEOMODE, false);
 				drawSettingEntryString(page, &page_y_ofs, "Force Horizontal Scale:", forceHScaleStr[swissSettings.forceHScale], option == SET_HORIZ_SCALE, false);
 				sprintf(forceVOffsetStr, "%+hi", swissSettings.forceVOffset);
 				drawSettingEntryString(page, &page_y_ofs, "Force Vertical Offset:", forceVOffsetStr, option == SET_VERT_OFFSET, false);
