@@ -135,8 +135,9 @@ static void ARAMStub(void)
     asm("li 30,0");
     asm("li 31,0");
     asm("blr");			/*** Boot DOL ***/
-
 }
+
+void __InitFPRS(void);
 
 void ARAMRunStub(void)
 {
@@ -155,9 +156,11 @@ void ARAMRunStub(void)
 	memcpy(p, s, ARAMRunStub - ARAMStub);
 
 	/*** Flush ARAMStub ***/
-	DCFlushRangeNoSync(p, ARAMRunStub - ARAMStub);
+	DCFlushRangeNoSync(p, ARAMRunStub - ARAMStub); _sync();
 	ICInvalidateRange(p, ARAMRunStub - ARAMStub);
-	_sync();
+
+	/*** Reset FPRs ***/
+	__InitFPRS();
 
 	/*** Boot the bugger :D ***/
 	stub = (BOOTSTUB) p;

@@ -186,9 +186,8 @@ int install_code(int final)
 					*(u32 *)&VAR_AREA[i] = 0x4C000064;
 			}
 			memcpy((void *)0x80000000, VAR_AREA, sizeof(VAR_AREA));
-			DCFlushRangeNoSync((void *)0x80000000, sizeof(VAR_AREA));
+			DCFlushRangeNoSync((void *)0x80000000, sizeof(VAR_AREA)); _sync();
 			ICInvalidateRange((void *)0x80000000, sizeof(VAR_AREA));
-			_sync();
 			if (top_addr != 0x81800000)
 				mtspr(DABR, 0x800000E8 | 0b110);
 			mtspr(EAR, 0x8000000C);

@@ -170,9 +170,8 @@ void __SYS_PreInit(void)
 	*(u32 *)0x800000FC = SYS_GetCoreFrequency();
 
 	memcpy((void *)0x80001800, stub_bin, stub_bin_size);
-	DCFlushRangeNoSync((void *)0x80001800, stub_bin_size);
+	DCFlushRangeNoSync((void *)0x80001800, stub_bin_size); _sync();
 	ICInvalidateRange((void *)0x80001800, stub_bin_size);
-	_sync();
 
 	*(u64 *)0x800030D8 = -__builtin_ppc_get_timebase();
 	*(u16 *)0x800030E0 = 0x0006; // For backwards compatibility
