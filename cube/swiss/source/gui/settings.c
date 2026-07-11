@@ -110,7 +110,6 @@ static char *tooltips_game_global[PAGE_GAME_GLOBAL_MAX+1] = {
 };
 
 static char *tooltips_game[PAGE_GAME_DEFAULTS_MAX+1] = {
-	[SET_VERT_OFFSET] = "Force Vertical Offset:\n\n+0 - Standard value\n-2 - GCVideo-DVI compatible (480i)\n-3 - GCVideo-DVI compatible (default)\n-4 - GCVideo-DVI compatible (240p)\n-12 - Datapath VisionRGB (480p)",
 	[SET_VERT_FILTER] = "Force Vertical Filter:\n\nFor 480i & 576i:\n Auto - Do nothing (default)\n\nFor 240p & 288p:\n Auto - Equivalent to 0 (default)\n 0 - 50%/50% blend with lower lines\n 1 - 50%/50% blend with upper lines\n 2 - Discard even lines\n\nFor other video modes:\n Auto - Equivalent to 0 (default)\n 0 - 3\327MSAA resolve only\n 1 - 18.75%/62.5%/18.75% blend\n 2 - 25%/50%/25% blend (deflicker)",
 	[SET_PIXEL_CENTER] = "Fix Pixel Center:\n\nNot to be confused with the \223480p Pixel Fix\224 on Wii.",
 	[SET_ANISO_FILTER] = "Force Anisotropic Filter:\n\nThe GameCube's texture sampling hardware is optimised for the\ntrilinear filtering of 16 bpp textures and the bilinear filtering of\n32 bpp textures.\n\nIt is not unusual for the performance to randomly plummet once\nanisotropic filtering is enabled, so do so sparingly.",

@@ -335,7 +335,6 @@ void config_defaults(ConfigEntry *entry) {
 	entry->gameVMode = entry->region == 'P' ? swissSettings.gameVModePal : swissSettings.gameVModeNtsc;
 	entry->forceHScale = swissSettings.forceHScale;
 	entry->forceVOffset = swissSettings.forceVOffset;
-	entry->forceVOffset = in_range(swissSettings.aveCompat, GCDIGITAL_COMPAT, GCVIDEO_COMPAT) ? -3:0;
 	entry->forceVFilter = swissSettings.forceVFilter;
 	entry->forceVJitter = swissSettings.forceVJitter;
 	entry->fixPixelCenter = swissSettings.fixPixelCenter;
@@ -441,12 +440,6 @@ void config_parse_legacy(char *configData, void (*progress_indicator)(char*, int
 							break;
 						}
 					}
-				}
-				else if(!strcmp("Force Vertical Offset", name)) {
-					if(defaultPassed)
-						configEntries[configEntriesCount].forceVOffset = atoi(value);
-					else
-						swissSettings.forceVOffset = atoi(value);
 				}
 				else if(!strcmp("Force Vertical Filter", name)) {
 					int *ptr = !defaultPassed ? &swissSettings.forceVFilter : &configEntries[configEntriesCount].forceVFilter;
