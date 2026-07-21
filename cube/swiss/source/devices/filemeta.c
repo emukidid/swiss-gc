@@ -436,10 +436,10 @@ file_handle* meta_find_disc2(file_handle *f) {
 					populate_meta(&dirEntries[j]);
 				}
 				if(dirEntries[j].meta) {
-					if(strncmp((const char*)dirEntries[j].meta->diskId.gamename, (const char*)f->meta->diskId.gamename, 4)) {
+					if(strncmp(dirEntries[j].meta->diskId.gamename, f->meta->diskId.gamename, 4)) {
 						continue;
 					}
-					if(strncmp((const char*)dirEntries[j].meta->diskId.company, (const char*)f->meta->diskId.company, 2)) {
+					if(strncmp(dirEntries[j].meta->diskId.company, f->meta->diskId.company, 2)) {
 						continue;
 					}
 					if(dirEntries[j].meta->diskId.disknum == f->meta->diskId.disknum) {
@@ -462,6 +462,29 @@ file_handle* meta_find_disc2(file_handle *f) {
 		}
 	}
 	return disc2File;
+}
+
+static char barrelGameEntries[][4] = {"GKGE", "GKGJ", "GKGP", "GY2E", "GY2J", "GY2P", "GY3E", "GY3J", "GYBE", "GYBJ", "GYBP"};
+
+int meta_find_barrel_game(int curSelection) {
+	file_handle** dirEntries = getSortedDirEntries();
+	int dirEntryCount = getSortedDirEntryCount();
+	for(int i = curSelection + 1; i < dirEntryCount; i++) {
+		lockFile(dirEntries[i]);
+		if(!dirEntries[i]->meta && strcasestr(dirEntries[i]->name, "DONKEY KONG")) {
+			populate_meta(dirEntries[i]);
+		}
+		if(dirEntries[i]->meta) {
+			for(int j = 0; j < sizeof(barrelGameEntries) / sizeof(*barrelGameEntries); j++) {
+				if(!strncmp(dirEntries[i]->meta->diskId.gamename, barrelGameEntries[j], 4)) {
+					unlockFile(dirEntries[i]);
+					return i;
+				}
+			}
+		}
+		unlockFile(dirEntries[i]);
+	}
+	return 0;
 }
 
 static void *meta_thread_func(void *loadingBox) {

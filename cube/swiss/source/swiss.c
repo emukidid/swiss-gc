@@ -316,7 +316,7 @@ uiDrawObj_t* renderFileBrowser(file_handle** directory, int num_files, uiDrawObj
 		filePanel = DrawRepublish(filePanel, newPanel);
 		DrawUpdateProgressLoading(loadingBox, -1);
 		
-		u32 waitButtons = BUTTON_X|BUTTON_START|BUTTON_B|BUTTON_A|BUTTON_UP|BUTTON_DOWN|BUTTON_LEFT|BUTTON_RIGHT|BUTTON_L|BUTTON_R|BUTTON_Z;
+		u32 waitButtons = BUTTON_X|BUTTON_START|BUTTON_B|BUTTON_A|BUTTON_UP|BUTTON_DOWN|BUTTON_LEFT|BUTTON_RIGHT|BUTTON_L|BUTTON_R|BUTTON_Z|BUTTON_CLAP;
 		while ((padsStickY() > -16 && padsStickY() < 16) && !(padsButtonsHeld() & waitButtons))
 			{ VIDEO_WaitVSync (); }
 		if((padsButtonsHeld() & BUTTON_UP) || padsStickY() >= 16){	curSelection = (--curSelection < 0) ? num_files-1 : curSelection;}
@@ -336,6 +336,11 @@ uiDrawObj_t* renderFileBrowser(file_handle** directory, int num_files, uiDrawObj
 			else {
 				curSelection = (curSelection + FILES_PER_PAGE > num_files-1) ? num_files-1 : (curSelection + FILES_PER_PAGE) % num_files;
 			}
+		}
+		if(padsButtonsHeld() & BUTTON_CLAP) {
+			DrawUpdateProgressLoading(loadingBox, +1);
+			curSelection = meta_find_barrel_game(curSelection);
+			DrawUpdateProgressLoading(loadingBox, -1);
 		}
 		
 		if(padsButtonsHeld() & BUTTON_A) {
@@ -548,7 +553,7 @@ uiDrawObj_t* renderFileCarousel(file_handle** directory, int num_files, uiDrawOb
 		filePanel = DrawRepublish(filePanel, newPanel);
 		DrawUpdateProgressLoading(loadingBox, -1);
 		
-		u32 waitButtons = BUTTON_X|BUTTON_START|BUTTON_B|BUTTON_A|BUTTON_UP|BUTTON_DOWN|BUTTON_LEFT|BUTTON_RIGHT|BUTTON_L|BUTTON_R|BUTTON_Z;
+		u32 waitButtons = BUTTON_X|BUTTON_START|BUTTON_B|BUTTON_A|BUTTON_UP|BUTTON_DOWN|BUTTON_LEFT|BUTTON_RIGHT|BUTTON_L|BUTTON_R|BUTTON_Z|BUTTON_CLAP;
 		while ((padsStickX() > -16 && padsStickX() < 16) && !(padsButtonsHeld() & waitButtons))
 			{ VIDEO_WaitVSync (); }
 		if((padsButtonsHeld() & BUTTON_LEFT) || padsStickX() <= -16){	curSelection = (--curSelection < 0) ? num_files-1 : curSelection;}
@@ -568,6 +573,11 @@ uiDrawObj_t* renderFileCarousel(file_handle** directory, int num_files, uiDrawOb
 			else {
 				curSelection = (curSelection + FILES_PER_PAGE_CAROUSEL > num_files-1) ? num_files-1 : (curSelection + FILES_PER_PAGE_CAROUSEL) % num_files;
 			}
+		}
+		if(padsButtonsHeld() & BUTTON_CLAP) {
+			DrawUpdateProgressLoading(loadingBox, +1);
+			curSelection = meta_find_barrel_game(curSelection);
+			DrawUpdateProgressLoading(loadingBox, -1);
 		}
 		
 		if(padsButtonsHeld() & BUTTON_A) {
@@ -719,7 +729,7 @@ uiDrawObj_t* renderFileFullwidth(file_handle** directory, int num_files, uiDrawO
 		filePanel = DrawRepublish(filePanel, newPanel);
 		DrawUpdateProgressLoading(loadingBox, -1);
 		
-		u32 waitButtons = BUTTON_X|BUTTON_START|BUTTON_B|BUTTON_A|BUTTON_UP|BUTTON_DOWN|BUTTON_LEFT|BUTTON_RIGHT|BUTTON_L|BUTTON_R|BUTTON_Z;
+		u32 waitButtons = BUTTON_X|BUTTON_START|BUTTON_B|BUTTON_A|BUTTON_UP|BUTTON_DOWN|BUTTON_LEFT|BUTTON_RIGHT|BUTTON_L|BUTTON_R|BUTTON_Z|BUTTON_CLAP;
 		while ((padsStickY() > -16 && padsStickY() < 16) && !(padsButtonsHeld() & waitButtons))
 			{ VIDEO_WaitVSync (); }
 		if((padsButtonsHeld() & BUTTON_UP) || padsStickY() >= 16){	curSelection = (--curSelection < 0) ? num_files-1 : curSelection;}
@@ -739,6 +749,11 @@ uiDrawObj_t* renderFileFullwidth(file_handle** directory, int num_files, uiDrawO
 			else {
 				curSelection = (curSelection + FILES_PER_PAGE_FULLWIDTH > num_files-1) ? num_files-1 : (curSelection + FILES_PER_PAGE_FULLWIDTH) % num_files;
 			}
+		}
+		if(padsButtonsHeld() & BUTTON_CLAP) {
+			DrawUpdateProgressLoading(loadingBox, +1);
+			curSelection = meta_find_barrel_game(curSelection);
+			DrawUpdateProgressLoading(loadingBox, -1);
 		}
 		
 		if(padsButtonsHeld() & BUTTON_A) {
