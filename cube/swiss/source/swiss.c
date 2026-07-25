@@ -2032,7 +2032,7 @@ void load_game() {
 			DrawDispose(msgBox);
 			goto exit;
 		}
-		else if(is_nkit_format(&GCMDisk) && !valid_gcm_boot(&GCMDisk)) {
+		else if((is_artx_disc(&GCMDisk) || !valid_gcm_boot(&GCMDisk)) && is_nkit_format(&GCMDisk)) {
 			msgBox = DrawRepublish(msgBox, DrawMessageBox(D_WARN, "File is not playable in NKit.iso format.\nPlease convert back to ISO using NKit."));
 			sleep(5);
 			DrawDispose(msgBox);

@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2020-2025, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2020-2026, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -28,6 +28,7 @@
 uint8_t fletcher8(const void *buffer, size_t size);
 uint16_t fletcher16(const void *buffer, size_t size);
 
+bool is_artx_disc(const DiskHeader *header);
 bool is_datel_disc(const DiskHeader *header);
 bool is_diag_disc(const DiskHeader *header);
 bool is_multi_disc(const file_meta *meta);
