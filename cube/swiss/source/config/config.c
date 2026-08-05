@@ -322,11 +322,11 @@ int config_update_game(ConfigEntry *entry, ConfigEntry *defaults, bool checkConf
 	return res;
 }
 
-static char fixPixelCenterEntries[][4] = {"00\0E", "DNDD", "G2BE", "G2BP", "GD7E", "GD7P", "GEME", "GEMJ", "GEMP", "GNBE", "GNBJ", "GNBP", "GZBJ"};
-static char triggerLevelEntries[][4] = {"GKGE", "GKGJ", "GKGP", "GY2E", "GY2J", "GY2P", "GY3E", "GY3J", "GYBE", "GYBJ", "GYBP"};
-static char emulateAudioStreamEntries[][4] = {"UFZE", "UFZJ", "UFZP"};
-static char emulateReadSpeedEntries[][4] = {"DRSE", "GQSD", "GQSE", "GQSF", "GQSI", "GQSP", "GQSS", "GRSE", "GRSJ", "GRSP", "GTOJ"};
-static char emulateEthernetEntries[][4] = {"DPSJ", "GHEE", "GHEJ", "GKYE", "GKYJ", "GKYP", "GM4E", "GM4J", "GM4P", "GPJJ", "GPOE", "GPOJ", "GPOP", "GPSE", "GPSJ", "GPSP", "GTEE", "GTEJ", "GTEP", "GTEW", "PHEJ"};
+static char fixPixelCenterEntries[][5] = {"00\0E\1", "DNDD\1", "G2BE\1", "G2BP\1", "GD7E\1", "GD7P\1", "GEME\1", "GEMJ\1", "GEMP\1", "GNBE\1", "GNBJ\1", "GNBP\1", "GZBJ\1"};
+static char triggerLevelEntries[][5] = {"GKGE\0", "GKGJ\0", "GKGP\0", "GY2E\0", "GY2J\0", "GY2P\0", "GY3E\0", "GY3J\0", "GYBE\0", "GYBJ\0", "GYBP\0"};
+static char emulateAudioStreamEntries[][5] = {"UFZE\0", "UFZJ\0", "UFZP\0"};
+static char emulateReadSpeedEntries[][5] = {"DRSE\1", "GADE\0", "GQSD\1", "GQSE\1", "GQSF\1", "GQSI\1", "GQSP\1", "GQSS\1", "GRSE\1", "GRSJ\1", "GRSP\1", "GTOJ\1"};
+static char emulateEthernetEntries[][5] = {"DPSJ\1", "GHEE\1", "GHEJ\1", "GKYE\1", "GKYJ\1", "GKYP\1", "GM4E\1", "GM4J\1", "GM4P\1", "GPJJ\1", "GPOE\1", "GPOJ\1", "GPOP\1", "GPSE\1", "GPSJ\1", "GPSP\1", "GTEE\1", "GTEJ\1", "GTEP\1", "GTEW\1", "PHEJ\1"};
 
 void config_defaults(ConfigEntry *entry) {
 	strcpy(entry->comment, "No Comment");
@@ -355,31 +355,31 @@ void config_defaults(ConfigEntry *entry) {
 
 	for(int i = 0; i < sizeof(fixPixelCenterEntries) / sizeof(*fixPixelCenterEntries); i++) {
 		if(!strncmp(entry->game_id, fixPixelCenterEntries[i], 4)) {
-			entry->fixPixelCenter = 1;
+			entry->fixPixelCenter = fixPixelCenterEntries[i][4];
 			break;
 		}
 	}
 	for(int i = 0; i < sizeof(triggerLevelEntries) / sizeof(*triggerLevelEntries); i++) {
 		if(!strncmp(entry->game_id, triggerLevelEntries[i], 4)) {
-			entry->triggerLevel = 0;
+			entry->triggerLevel = triggerLevelEntries[i][4];
 			break;
 		}
 	}
 	for(int i = 0; i < sizeof(emulateAudioStreamEntries) / sizeof(*emulateAudioStreamEntries); i++) {
 		if(!strncmp(entry->game_id, emulateAudioStreamEntries[i], 4)) {
-			entry->emulateAudioStream = 0;
+			entry->emulateAudioStream = emulateAudioStreamEntries[i][4];
 			break;
 		}
 	}
 	for(int i = 0; i < sizeof(emulateReadSpeedEntries) / sizeof(*emulateReadSpeedEntries); i++) {
 		if(!strncmp(entry->game_id, emulateReadSpeedEntries[i], 4)) {
-			entry->emulateReadSpeed = 1;
+			entry->emulateReadSpeed = emulateReadSpeedEntries[i][4];
 			break;
 		}
 	}
 	for(int i = 0; i < sizeof(emulateEthernetEntries) / sizeof(*emulateEthernetEntries); i++) {
 		if(!strncmp(entry->game_id, emulateEthernetEntries[i], 4)) {
-			entry->emulateEthernet = 1;
+			entry->emulateEthernet = emulateEthernetEntries[i][4];
 			break;
 		}
 	}
