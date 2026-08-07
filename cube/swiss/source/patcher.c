@@ -15626,6 +15626,23 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 		{ 5, 0, 0, 0, 0, 2, NULL, 0, "OSDisableInterrupts" };
 	FuncPattern OSRestoreInterruptsSig = 
 		{ 9, 0, 0, 0, 2, 2, NULL, 0, "OSRestoreInterrupts" };
+	FuncPattern OSGetResetButtonStateSigs[9] = {
+		{ 118, 36, 11, 6, 12, 26, NULL, 0, "OSGetResetSwitchStateD" },
+		{ 241, 80, 13, 8, 19, 57, NULL, 0, "OSGetResetButtonStateD" },
+		{ 241, 80, 13, 8, 19, 57, NULL, 0, "OSGetResetButtonStateD" },
+		{  74, 20, 12, 4,  8, 12, NULL, 0, "OSGetResetSwitchState" },
+		{ 125, 34, 14, 6, 12, 28, NULL, 0, "OSGetResetSwitchState" },
+		{ 169, 40, 16, 5, 17, 46, NULL, 0, "OSGetResetButtonState" },
+		{ 166, 39, 16, 5, 16, 46, NULL, 0, "OSGetResetButtonState" },
+		{ 167, 36, 16, 4, 15, 46, NULL, 0, "OSGetResetButtonState" },	// SN Systems ProDG
+		{ 166, 39, 16, 5, 16, 46, NULL, 0, "OSGetResetButtonState" }
+	};
+	FuncPattern __OSSetResetButtonTimerSigs[4] = {
+		{ 28, 6, 2, 2, 1, 5, NULL, 0, "__OSSetResetButtonTimerD" },
+		{ 28, 6, 2, 2, 1, 5, NULL, 0, "__OSSetResetButtonTimerD" },
+		{ 23, 4, 3, 2, 1, 4, NULL, 0, "__OSSetResetButtonTimer" },
+		{ 23, 4, 3, 2, 1, 4, NULL, 0, "__OSSetResetButtonTimer" }
+	};
 	FuncPattern __OSLockSramSigs[3] = {
 		{  9, 3, 2, 1, 0, 2, NULL, 0, "__OSLockSramD" },
 		{ 23, 7, 5, 2, 2, 2, NULL, 0, "__OSLockSram" },
@@ -15645,6 +15662,11 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 		{ 11,  4,  3, 1, 0, 2, NULL, 0, "__OSUnlockSramExD" },
 		{  9,  3,  2, 1, 0, 2, NULL, 0, "__OSUnlockSramEx" },
 		{ 98, 43, 11, 9, 5, 6, NULL, 0, "__OSUnlockSramEx" }	// SN Systems ProDG
+	};
+	FuncPattern __OSGetSystemTimeSigs[3] = {
+		{ 22, 4, 2, 3, 0, 3, NULL, 0, "__OSGetSystemTimeD" },
+		{ 25, 8, 5, 3, 0, 3, NULL, 0, "__OSGetSystemTime" },
+		{ 25, 8, 5, 3, 0, 3, NULL, 0, "__OSGetSystemTime" }	// SN Systems ProDG
 	};
 	FuncPattern InitializeUARTSigs[6] = {
 		{ 18,  7, 4, 1, 1, 2, NULL, 0, "InitializeUARTD" },
@@ -15868,6 +15890,181 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 		
 		FuncPattern fp;
 		make_pattern(data, dataType, i, length, &fp);
+		
+		for (j = 0; j < sizeof(OSGetResetButtonStateSigs) / sizeof(FuncPattern); j++) {
+			if (compare_pattern(&fp, &OSGetResetButtonStateSigs[j])) {
+				switch (j) {
+					case 0:
+						if (findx_pattern(data, dataType, i +   4, length, &OSDisableInterruptsSig) &&
+							get_immediate(data,  i +   6, i +   7, &address) && address == 0xCC003000 &&
+							(data[i +   8] & 0xFC00FFFF) == 0x540003DF &&
+							findx_pattern(data, dataType, i +  26, length, &__OSGetSystemTimeSigs[0]) &&
+							findx_pattern(data, dataType, i +  38, length, &__OSGetSystemTimeSigs[0]) &&
+							get_immediate(data,  i +  43, i +  44, &address) && address == 0x800000F8 &&
+							findx_pattern(data, dataType, i +  71, length, &__OSGetSystemTimeSigs[0]) &&
+							findx_pattern(data, dataType, i +  83, length, &__OSGetSystemTimeSigs[0]) &&
+							get_immediate(data,  i +  88, i +  89, &address) && address == 0x800000F8 &&
+							findx_pattern(data, dataType, i + 111, length, &OSRestoreInterruptsSig))
+							OSGetResetButtonStateSigs[j].offsetFoundAt = i;
+						break;
+					case 1:
+						if (findx_pattern(data, dataType, i +   6, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i +   8, length, &__OSGetSystemTimeSigs[0]) &&
+							get_immediate(data,  i +  69, i +  70, &address) && address == 0xCC003000 &&
+							(data[i +  71] & 0xFC00FFFF) == 0x540003DF &&
+							get_immediate(data,  i + 100, i + 101, &address) && address == 0x800000F8 &&
+							get_immediate(data,  i + 152, i + 153, &address) && address == 0x800000F8 &&
+							get_immediate(data,  i + 174, i + 175, &address) && address == 0x800030E3 &&
+							(data[i + 176] & 0xFC00FFFF) == 0x540006BF &&
+							get_immediate(data,  i + 178, i + 179, &address) && address == 0x800030E3 &&
+							(data[i + 180] & 0xFC00FFFF) == 0x540006BE &&
+							get_immediate(data,  i + 185, i + 186, &address) && address == 0x800000F8 &&
+							get_immediate(data,  i + 208, i + 209, &address) && address == 0x800000F8 &&
+							findx_pattern(data, dataType, i + 234, length, &OSRestoreInterruptsSig))
+							OSGetResetButtonStateSigs[j].offsetFoundAt = i;
+						break;
+					case 2:
+						if (findx_pattern(data, dataType, i +   6, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i +   8, length, &__OSGetSystemTimeSigs[0]) &&
+							get_immediate(data,  i +  69, i +  70, &address) && address == 0xCC003000 &&
+							(data[i +  71] & 0xFC00FFFF) == 0x540003DF &&
+							get_immediate(data,  i + 100, i + 101, &address) && address == 0x800000F8 &&
+							get_immediate(data,  i + 152, i + 153, &address) && address == 0x800000F8 &&
+							get_immediate(data,  i + 174, i + 175, &address) && address == 0x800030E3 &&
+							(data[i + 176] & 0xFC00FFFF) == 0x540006FF &&
+							get_immediate(data,  i + 178, i + 179, &address) && address == 0x800030E3 &&
+							(data[i + 180] & 0xFC00FFFF) == 0x540006FE &&
+							get_immediate(data,  i + 185, i + 186, &address) && address == 0x800000F8 &&
+							get_immediate(data,  i + 208, i + 209, &address) && address == 0x800000F8 &&
+							findx_pattern(data, dataType, i + 234, length, &OSRestoreInterruptsSig))
+							OSGetResetButtonStateSigs[j].offsetFoundAt = i;
+						break;
+					case 3:
+						if (findx_pattern(data, dataType, i +   5, length, &OSDisableInterruptsSig) &&
+							get_immediate(data,  i +   6, i +   7, &address) && address == 0xCC003000 &&
+							(data[i +   9] & 0xFC00FFFF) == 0x540003DF &&
+							(data[i +  18] & 0xFC00FFFF) == 0x540007BD &&
+							findx_pattern(data, dataType, i +  27, length, &__OSGetSystemTimeSigs[1]) &&
+							findx_pattern(data, dataType, i +  39, length, &__OSGetSystemTimeSigs[1]) &&
+							get_immediate(data,  i +  40, i +  42, &address) && address == 0x800000F8 &&
+							findx_pattern(data, dataType, i +  66, length, &OSRestoreInterruptsSig))
+							OSGetResetButtonStateSigs[j].offsetFoundAt = i;
+						break;
+					case 4:
+						if (findx_pattern(data, dataType, i +   6, length, &OSDisableInterruptsSig) &&
+							get_immediate(data,  i +   7, i +   8, &address) && address == 0xCC003000 &&
+							(data[i +  10] & 0xFC00FFFF) == 0x540003DF &&
+							findx_pattern(data, dataType, i +  27, length, &__OSGetSystemTimeSigs[1]) &&
+							findx_pattern(data, dataType, i +  39, length, &__OSGetSystemTimeSigs[1]) &&
+							get_immediate(data,  i +  40, i +  42, &address) && address == 0x800000F8 &&
+							findx_pattern(data, dataType, i +  77, length, &__OSGetSystemTimeSigs[1]) &&
+							findx_pattern(data, dataType, i +  88, length, &__OSGetSystemTimeSigs[1]) &&
+							get_immediate(data,  i +  89, i +  91, &address) && address == 0x800000F8 &&
+							findx_pattern(data, dataType, i + 116, length, &OSRestoreInterruptsSig))
+							OSGetResetButtonStateSigs[j].offsetFoundAt = i;
+						break;
+					case 5:
+						if (findx_pattern(data, dataType, i +   6, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i +   8, length, &__OSGetSystemTimeSigs[1]) &&
+							get_immediate(data,  i +   9, i +  10, &address) && address == 0xCC003000 &&
+							(data[i +  11] & 0xFC00FFFF) == 0x540003DF &&
+							get_immediate(data,  i +  39, i +  41, &address) && address == 0x800000F8 &&
+							get_immediate(data,  i +  89, i +  90, &address) && address == 0x800000F8 &&
+							get_immediate(data,  i + 115, i + 116, &address) && address == 0x800030E3 &&
+							(data[i + 117] & 0xFC00FFFF) == 0x540006BF &&
+							get_immediate(data,  i + 115, i + 120, &address) && address == 0x800000F8 &&
+							findx_pattern(data, dataType, i + 160, length, &OSRestoreInterruptsSig))
+							OSGetResetButtonStateSigs[j].offsetFoundAt = i;
+						break;
+					case 6:
+						if (findx_pattern(data, dataType, i +   6, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i +   8, length, &__OSGetSystemTimeSigs[1]) &&
+							get_immediate(data,  i +   9, i +  10, &address) && address == 0xCC003000 &&
+							(data[i +  11] & 0xFC00FFFF) == 0x540003DF &&
+							get_immediate(data,  i +  39, i +  41, &address) && address == 0x800000F8 &&
+							get_immediate(data,  i +  89, i +  90, &address) && address == 0x800000F8 &&
+							get_immediate(data,  i + 112, i + 114, &address) && address == 0x800030E3 &&
+							(data[i + 115] & 0xFC00FFFF) == 0x540006BF &&
+							get_immediate(data,  i + 112, i + 118, &address) && address == 0x800000F8 &&
+							findx_pattern(data, dataType, i + 157, length, &OSRestoreInterruptsSig))
+							OSGetResetButtonStateSigs[j].offsetFoundAt = i;
+						break;
+					case 7:
+						if (findx_pattern(data, dataType, i +   6, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i +   8, length, &__OSGetSystemTimeSigs[2]) &&
+							get_immediate(data,  i +   9, i +  10, &address) && address == 0xCC003000 &&
+							(data[i +  11] & 0xFC00FFFF) == 0x540003DF &&
+							get_immediate(data,  i +  38, i +  40, &address) && address == 0x800000F8 &&
+							get_immediate(data,  i +  85, i +  87, &address) && address == 0x800000F8 &&
+							get_immediate(data,  i + 109, i + 110, &address) && address == 0x800030E3 &&
+							(data[i + 111] & 0xFC00FFFF) == 0x540006BF &&
+							get_immediate(data,  i + 109, i + 114, &address) && address == 0x800000F8 &&
+							findx_pattern(data, dataType, i + 158, length, &OSRestoreInterruptsSig))
+							OSGetResetButtonStateSigs[j].offsetFoundAt = i;
+						break;
+					case 8:
+						if (findx_pattern(data, dataType, i +   6, length, &OSDisableInterruptsSig) &&
+							findx_pattern(data, dataType, i +   8, length, &__OSGetSystemTimeSigs[1]) &&
+							get_immediate(data,  i +   9, i +  10, &address) && address == 0xCC003000 &&
+							(data[i +  11] & 0xFC00FFFF) == 0x540003DF &&
+							get_immediate(data,  i +  39, i +  41, &address) && address == 0x800000F8 &&
+							get_immediate(data,  i +  89, i +  90, &address) && address == 0x800000F8 &&
+							get_immediate(data,  i + 112, i + 114, &address) && address == 0x800030E3 &&
+							(data[i + 115] & 0xFC00FFFF) == 0x540006FF &&
+							get_immediate(data,  i + 112, i + 118, &address) && address == 0x800000F8 &&
+							findx_pattern(data, dataType, i + 157, length, &OSRestoreInterruptsSig))
+							OSGetResetButtonStateSigs[j].offsetFoundAt = i;
+						break;
+				}
+			}
+		}
+		
+		for (j = 0; j < sizeof(__OSSetResetButtonTimerSigs) / sizeof(FuncPattern); j++) {
+			if (compare_pattern(&fp, &__OSSetResetButtonTimerSigs[j])) {
+				switch (j) {
+					case 0:
+						if (findx_pattern(data, dataType, i +  5, length, &OSDisableInterruptsSig) &&
+							get_immediate(data,   i + 11, i + 12, &address) && address == 0x800030E3 &&
+							(data[i + 13] & 0xFC00FFFF) == 0x54000632 &&
+							get_immediate(data,   i + 14, i + 15, &address) && address == 0x800030E3 &&
+							get_immediate(data,   i + 16, i + 17, &address) && address == 0x800030E3 &&
+							get_immediate(data,   i + 19, i + 20, &address) && address == 0x800030E3 &&
+							findx_pattern(data, dataType, i + 22, length, &OSRestoreInterruptsSig))
+							__OSSetResetButtonTimerSigs[j].offsetFoundAt = i;
+						break;
+					case 1:
+						if (findx_pattern(data, dataType, i +  5, length, &OSDisableInterruptsSig) &&
+							get_immediate(data,   i + 11, i + 12, &address) && address == 0x800030E3 &&
+							(data[i + 13] & 0xFC00FFFF) == 0x54000034 &&
+							get_immediate(data,   i + 14, i + 15, &address) && address == 0x800030E3 &&
+							get_immediate(data,   i + 16, i + 17, &address) && address == 0x800030E3 &&
+							get_immediate(data,   i + 19, i + 20, &address) && address == 0x800030E3 &&
+							findx_pattern(data, dataType, i + 22, length, &OSRestoreInterruptsSig))
+							__OSSetResetButtonTimerSigs[j].offsetFoundAt = i;
+						break;
+					case 2:
+						if (findx_pattern(data, dataType, i +  5, length, &OSDisableInterruptsSig) &&
+							get_immediate(data,   i + 10, i + 11, &address) && address == 0x800030E3 &&
+							(data[i + 12] & 0xFC00FFFF) == 0x54000632 &&
+							get_immediate(data,   i + 10, i + 13, &address) && address == 0x800030E3 &&
+							get_immediate(data,   i + 10, i + 14, &address) && address == 0x800030E3 &&
+							get_immediate(data,   i + 10, i + 16, &address) && address == 0x800030E3 &&
+							findx_pattern(data, dataType, i + 17, length, &OSRestoreInterruptsSig))
+							__OSSetResetButtonTimerSigs[j].offsetFoundAt = i;
+						break;
+					case 3:
+						if (findx_pattern(data, dataType, i +  5, length, &OSDisableInterruptsSig) &&
+							get_immediate(data,   i + 10, i + 11, &address) && address == 0x800030E3 &&
+							(data[i + 12] & 0xFC00FFFF) == 0x54000034 &&
+							get_immediate(data,   i + 10, i + 13, &address) && address == 0x800030E3 &&
+							get_immediate(data,   i + 10, i + 14, &address) && address == 0x800030E3 &&
+							get_immediate(data,   i + 10, i + 16, &address) && address == 0x800030E3 &&
+							findx_pattern(data, dataType, i + 17, length, &OSRestoreInterruptsSig))
+							__OSSetResetButtonTimerSigs[j].offsetFoundAt = i;
+						break;
+				}
+			}
+		}
 		
 		for (j = 0; j < sizeof(InitializeUARTSigs) / sizeof(FuncPattern); j++) {
 			if (compare_pattern(&fp, &InitializeUARTSigs[j])) {
@@ -16800,6 +16997,53 @@ int Patch_Miscellaneous(u32 *data, u32 length, int dataType)
 			}
 		}
 		i += fp.Length - 1;
+	}
+	
+	for (j = 0; j < sizeof(OSGetResetButtonStateSigs) / sizeof(FuncPattern); j++)
+	if ((i = OSGetResetButtonStateSigs[j].offsetFoundAt)) {
+		u32 *OSGetResetButtonState = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+		
+		if (OSGetResetButtonState) {
+			switch (j) {
+				case 1:
+					data[i + 176] = 0x540006FF;	// clrlwi.	r0, r0, 27
+					data[i + 180] = 0x540006FE;	// clrlwi	r0, r0, 27
+					break;
+				case 5:
+					data[i + 117] = 0x540006FF;	// clrlwi.	r0, r0, 27
+					break;
+				case 6:
+					data[i + 115] = 0x540006FF;	// clrlwi.	r0, r0, 27
+					break;
+				case 7:
+					data[i + 111] = 0x540006FF;	// clrlwi.	r0, r0, 27
+					break;
+			}
+			print_debug("Found:[%s$%i] @ %08X\n", OSGetResetButtonStateSigs[j].Name, j, OSGetResetButtonState);
+			patched++;
+		}
+	}
+	
+	for (j = 0; j < sizeof(__OSSetResetButtonTimerSigs) / sizeof(FuncPattern); j++)
+	if ((i = __OSSetResetButtonTimerSigs[j].offsetFoundAt)) {
+		u32 *__OSSetResetButtonTimer = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+		
+		if (__OSSetResetButtonTimer) {
+			switch (j) {
+				case 0:
+					data[i +  8] = 0x2800001F;	// cmplwi	r0, 31
+					data[i + 10] = 0x3BE0001F;	// li		r31, 31
+					data[i + 13] = 0x54000034;	// clrrwi	r0, r0, 5
+					break;
+				case 2:
+					data[i +  7] = 0x2800001F;	// cmplwi	r0, 31
+					data[i +  9] = 0x3BE0001F;	// li		r31, 31
+					data[i + 12] = 0x54000034;	// clrrwi	r0, r0, 5
+					break;
+			}
+			print_debug("Found:[%s$%i] @ %08X\n", __OSSetResetButtonTimerSigs[j].Name, j, __OSSetResetButtonTimer);
+			patched++;
+		}
 	}
 	
 	for (j = 0; j < sizeof(InitializeUARTSigs) / sizeof(FuncPattern); j++)
