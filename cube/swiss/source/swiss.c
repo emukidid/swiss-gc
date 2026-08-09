@@ -1679,6 +1679,7 @@ bool manage_file() {
 							extension_start = -1;
 						name_backup[cursor] = destFile->name[cursor];
 					}
+					name_backup[cursor] = 0;
 
 					devices[DEVICE_DEST]->closeFile(destFile);
 
@@ -1709,8 +1710,7 @@ bool manage_file() {
 						strcpy(destFile->name + cursor, name_backup + extension_start);
 					}
 
-					while(devices[DEVICE_DEST]->readFile(destFile, NULL, 0) == 0) {
-						devices[DEVICE_DEST]->closeFile(destFile);
+					while(!devices[DEVICE_DEST]->statFile(destFile)) {
 						copy_num++;
 						if(copy_num > 99) {
 							DrawDispose(dupeBox);

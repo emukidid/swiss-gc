@@ -159,7 +159,9 @@ bool findFile(file_handle* file) {
 	ret = CARD_FindFirst (slot, memcard_dir, true);
 	while (CARD_ERROR_NOFILE != ret && !found) {
 		if(!strncmp(filename, memcard_dir->filename, CARD_FILENAMELEN)) {
-			file->size = memcard_dir->filelen;
+			file->fileBase = memcard_dir->fileno;
+			file->size     = memcard_dir->filelen;
+			file->fileType = IS_FILE;
 			memcpy( file->other, memcard_dir, sizeof(card_dir));
 			found = true;
  		}
@@ -167,6 +169,13 @@ bool findFile(file_handle* file) {
 	}
 	free(memcard_dir);
 	return found;
+}
+
+s32 deviceHandler_CARD_statFile(file_handle* file) {
+	if(!findFile(file)) {
+		return CARD_ERROR_NOFILE;
+	}
+	return 0;
 }
 
 s64 deviceHandler_CARD_seekFile(file_handle* file, s64 where, u32 type){
@@ -574,6 +583,7 @@ DEVICEHANDLER_INTERFACE __device_card_a = {
 	.info = deviceHandler_CARD_info,
 	.init = deviceHandler_CARD_init,
 	.readDir = deviceHandler_CARD_readDir,
+	.statFile = deviceHandler_CARD_statFile,
 	.seekFile = deviceHandler_CARD_seekFile,
 	.readFile = deviceHandler_CARD_readFile,
 	.writeFile = deviceHandler_CARD_writeFile,
@@ -597,6 +607,7 @@ DEVICEHANDLER_INTERFACE __device_card_b = {
 	.info = deviceHandler_CARD_info,
 	.init = deviceHandler_CARD_init,
 	.readDir = deviceHandler_CARD_readDir,
+	.statFile = deviceHandler_CARD_statFile,
 	.seekFile = deviceHandler_CARD_seekFile,
 	.readFile = deviceHandler_CARD_readFile,
 	.writeFile = deviceHandler_CARD_writeFile,
