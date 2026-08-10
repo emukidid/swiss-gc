@@ -1368,7 +1368,7 @@ loaddir_retry:
 		return false;
 	}
 
-	res = ftp_execute_open(env, "LIST -al", "A", 0, &data_sock);
+	res = ftp_execute_open(env, "LIST", "A", 0, &data_sock);
 	if(res < 0)
 	{
 		return false;
