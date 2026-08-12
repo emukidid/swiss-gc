@@ -30,7 +30,7 @@ Swiss aims to be an all-in-one homebrew utility for the Nintendo GameCube.
 - [KunaiGC](https://github.com/KunaiGC/KunaiGC) flash memory
 - [FlipperMCE](https://flippermce.github.io/), GCMCE or MemCard PRO GC
 
-Note: Most devices are not supported by libogc and only by [libogc2](https://github.com/extremscorner/libogc2).
+Note: Most devices and the exFAT filesystem are not supported by libogc and only by [libogc2](https://github.com/extremscorner/libogc2).
 
 **Can emulate the following devices**
 - Processor Interface
@@ -40,6 +40,8 @@ Note: Most devices are not supported by libogc and only by [libogc2](https://git
 	- Broadband Adapter via [ENC28J60](https://www.microchip.com/en-us/product/enc28j60), [W5500](https://wiznet.io/products/ethernet-chips/w5500), [W6100](https://wiznet.io/products/ethernet-chips/w6100) or [W6300](https://wiznet.io/products/ethernet-chips/w6300)
 	- Memory Cards via SD Cards
 - Audio Streaming Interface
+
+Note: Emulation is only available for the Dolphin SDK. Homebrew requires native drivers as provided by libogc2.
 
 **Can provide the following services**
 - Game ID for BlueRetro, FlipperMCE, MemCard PRO GC and PixelFX RetroGEM GC
