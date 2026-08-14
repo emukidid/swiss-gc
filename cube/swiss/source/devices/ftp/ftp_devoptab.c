@@ -142,6 +142,7 @@ static s32 debug_sock = INVALID_SOCKET;
 
 static bool ReadFTPFromCache( void *buf, off_t len, FTPFILESTRUCT *file );
 static int ftp_execute(ftp_env* env, char *cmd, int res, int reconnect);
+static bool ftp_parse_mlsd_line(const char *line, char *name, off_t *size, bool *isDirectory);
 
 static inline void _FTP_lock()
 {
@@ -1303,6 +1304,94 @@ static u64 mystrtoul64( const char* p )
 	return res;
 }
 
+/*
+ * Parse an MLSD line.
+ * MLSD format: "fact1=value1;fact2=value2;...; filename"
+ * We extract name, size (if present) and type (dir/file).
+ * Return true on success (name found), false otherwise.
+ */
+static bool ftp_parse_mlsd_line(const char *line, char *name, off_t *size, bool *isDirectory)
+{
+	const char *p = line;
+	const char *sep;
+	char keybuf[64];
+	char valbuf[64];
+
+	bool type_found = false;
+
+	*size = 0;
+	*isDirectory = false;
+	name[0] = 0;
+
+	// RFC 3659 uses a single space between facts and pathname.
+	sep = strchr(p, ' ');
+	if (!sep) {
+		return false;
+	}
+
+	// parse facts between p and sep
+	const char *fact = p;
+	while (fact < sep) {
+		const char *eq = strchr(fact, '=');
+		if (!eq || eq > sep) break;
+		const char *sc = strchr(eq+1, ';');
+		if (!sc || sc > sep) break;
+
+		int klen = eq - fact;
+		if (klen >= (int)sizeof(keybuf)) klen = sizeof(keybuf)-1;
+		strncpy(keybuf, fact, klen);
+		keybuf[klen] = 0;
+
+		int vlen = sc - (eq+1);
+		if (vlen >= (int)sizeof(valbuf)) vlen = sizeof(valbuf)-1;
+		strncpy(valbuf, eq+1, vlen);
+		valbuf[vlen] = 0;
+
+		// Key comparisons are case-insensitive per RFC; do simple checks
+		if (strcasecmp(keybuf, "size") == 0) {
+			*size = (off_t) mystrtoul64(valbuf);
+		} else if (strcasecmp(keybuf, "type") == 0) {
+			if (strcasecmp(valbuf, "dir") == 0) {
+				*isDirectory = true;
+				type_found = true;
+			} else if (strcasecmp(valbuf, "file") == 0) {
+				*isDirectory = false;
+				type_found = true;
+			} else if (strcasecmp(valbuf, "cdir") == 0 ||
+			           strcasecmp(valbuf, "pdir") == 0) {
+				// Swiss already adds "." and ".." itself.
+				return false;
+			} else {
+				// Unknown or unsupported MLSD type.
+				return false;
+			}
+		}
+
+		fact = sc + 1;
+	}
+
+	// Pathname begins immediately after the RFC 3659 separator.
+	// Any additional spaces or tabs are part of the pathname.
+	const char *fname = sep + 1;
+
+	// Trim only the FTP line ending, not pathname whitespace.
+	const char *end = fname + strlen(fname);
+	while (end > fname && (*(end-1) == '\r' || *(end-1) == '\n')) {
+		end--;
+	}
+
+	int flen = end - fname;
+	if (flen <= 0 || flen >= FTP_MAX_LINE) {
+		return false;
+	}
+
+	strncpy(name, fname, flen);
+	name[flen] = 0;
+
+	// A usable MLSD entry must have a recognized Type.
+	return type_found;
+}
+
 static bool FTP_FindFirst(const char *path_abs, FTPDIRSTATESTRUCT* state, ftp_env* env)
 {
 	SOCKET data_sock;
@@ -1368,69 +1457,116 @@ loaddir_retry:
 		return false;
 	}
 
-	res = ftp_execute_open(env, "LIST", "A", 0, &data_sock);
-	if(res < 0)
-	{
-		return false;
-	}
-
-	AddDirEntry(state, &ppLastItem, ".", 0, true);
-
-	//add '..' item, if not root dir
-	if ( strlen(path_abs) != 1 )
-	{
-		AddDirEntry(state, &ppLastItem, "..", 0, true);
-	}
-
+	// Try MLSD first (machine-readable listing). If it fails, fall back to LIST.
+	bool used_mlsd = false;
 	bool hasItems = false;
 
-	while((res = ftp_readline(data_sock, buf, FTP_MAX_LINE)) > 0)
+	// Attempt MLSD
+	if ((res = ftp_execute_open(env, "MLSD", "A", 0, &data_sock)) == 0)
 	{
-//		NET_PRINTF( "ftp_readline() : %s\n", buf );
+		NET_PRINTF("FTP_FindFirst() - MLSD succeeded\n", 0);
 
-		if(ftp_get_fname(buf, buf2) >= 0)
+		AddDirEntry(state, &ppLastItem, ".", 0, true);
+
+		//add '..' item, if not root dir
+		if ( strlen(path_abs) != 1 )
 		{
-			if((strcmp(buf2, ".") == 0) || (strcmp(buf2, "..") == 0))
-			{
-				continue;
-			}
-
-			if(strstr(buf2, "->"))
-			{
-				continue;
-			}
-
-			strcpy(filename, buf2);
-
-			ftp_get_substring(buf, buf2, 5);
-			b = buf2;
-			filesize = mystrtoul64( b );
-
-			ftp_get_substring(buf, buf2, 1);
-
-			if( buf2[0] == 'd' || buf2[0] == 'd' )
-			{
-				isdirectory = true;
-			}
-			else if	(buf2[0] == 'l' || buf2[0] == 'L')
-			{
-				continue;  //review!!! - S_IFLNK;
-			}
-			else
-			{
-				isdirectory = false;
-			}
-
-			AddDirEntry(state, &ppLastItem, filename, filesize, isdirectory);
-			hasItems = true;
+			AddDirEntry(state, &ppLastItem, "..", 0, true);
 		}
+
+		while((res = ftp_readline(data_sock, buf, FTP_MAX_LINE)) > 0)
+		{
+			// parse MLSD line
+			if (ftp_parse_mlsd_line(buf, filename, &filesize, &isdirectory))
+			{
+				if((strcmp(filename, ".") == 0) || (strcmp(filename, "..") == 0))
+				{
+					continue;
+				}
+
+				// cdir, pdir and unsupported MLSD types are filtered by ftp_parse_mlsd_line().
+				AddDirEntry(state, &ppLastItem, filename, filesize, isdirectory);
+				hasItems = true;
+			}
+		}
+
+		res = ftp_close_data(env);
+		if(res < 0)
+		{
+			FTP_FindClose(state);
+			return false;
+		}
+
+		used_mlsd = true;
 	}
 
-	res = ftp_close_data(env);
-	if(res < 0)
+	// If MLSD was not accepted, fall back to LIST (existing logic)
+	if (!used_mlsd)
 	{
-		FTP_FindClose(state);
-		return false;
+		res = ftp_execute_open(env, "LIST", "A", 0, &data_sock);
+		if(res < 0)
+		{
+			return false;
+		}
+
+		AddDirEntry(state, &ppLastItem, ".", 0, true);
+
+		//add '..' item, if not root dir
+		if ( strlen(path_abs) != 1 )
+		{
+			AddDirEntry(state, &ppLastItem, "..", 0, true);
+		}
+
+		hasItems = false;
+
+		while((res = ftp_readline(data_sock, buf, FTP_MAX_LINE)) > 0)
+		{
+//		NET_PRINTF( "ftp_readline() : %s\n", buf );
+
+			if(ftp_get_fname(buf, buf2) >= 0)
+			{
+				if((strcmp(buf2, ".") == 0) || (strcmp(buf2, "..") == 0))
+				{
+					continue;
+				}
+
+				if(strstr(buf2, "->"))
+				{
+					continue;
+				}
+
+				strcpy(filename, buf2);
+
+				ftp_get_substring(buf, buf2, 5);
+				b = buf2;
+				filesize = mystrtoul64( b );
+
+				ftp_get_substring(buf, buf2, 1);
+
+				if( buf2[0] == 'd' || buf2[0] == 'd' )
+				{
+					isdirectory = true;
+				}
+				else if	(buf2[0] == 'l' || buf2[0] == 'L')
+				{
+					continue;  //review!!! - S_IFLNK;
+				}
+				else
+				{
+					isdirectory = false;
+				}
+
+				AddDirEntry(state, &ppLastItem, filename, filesize, isdirectory);
+				hasItems = true;
+			}
+		}
+
+		res = ftp_close_data(env);
+		if(res < 0)
+		{
+			FTP_FindClose(state);
+			return false;
+		}
 	}
 
 	state->next_enum_item = state->list;
