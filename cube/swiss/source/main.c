@@ -46,6 +46,12 @@ dvddrvinfo DVDDriveInfo[2] __attribute__((aligned(32)));
 dvddiskid* DVDDiskID = (dvddiskid*)0x80000000;
 SwissSettings swissSettings;
 
+static const dvddiskid Swiss = {
+	.gamename  = "GSWA",
+	.company   = "GL",
+	.magic     = DVD_MAGIC
+};
+
 static void driveInfoCallback(s32 result, dvdcmdblk *block) {
 	dvddrvinfo* DVDDriveInfo = DVD_GetUserData(block);
 	if(result == DVD_ERROR_CANCELED) {
@@ -323,6 +329,11 @@ int main(int argc, char *argv[])
 				swissSettings.configDeviceId = allDevices[i]->deviceUniqueId;
 				print_debug("No default config device found, using [%s]\n", allDevices[i]->deviceName);
 				if(!config_init(&config_migration)) {
+					if(swissSettings.sramBoot != SYS_BOOT_PRODUCTION && !memcmp(DVDDiskID, &Swiss, sizeof(dvddiskid))) {
+						uiDrawObj_t *msgBox = DrawPublish(DrawMessageBox(D_INFO, "You can set \223System Boot Mode\224 to Production\nto restore the GameCube logo screen."));
+						wait_press_A();
+						DrawDispose(msgBox);
+					}
 					show_settings(PAGE_GLOBAL, SET_CONFIG_DEV, NULL);
 				}
 				else if(swissSettings.aveCompat != AVE_RVL_COMPAT && swissSettings.lastDTVStatus != getRawDTVStatus()) {
