@@ -1351,21 +1351,21 @@ static bool ftp_parse_mlsd_line(const char *line, char *name, off_t *size, bool 
 		if (strcasecmp(keybuf, "size") == 0) {
 			*size = (off_t) mystrtoul64(valbuf);
 		} else if (strcasecmp(keybuf, "type") == 0) {
-	if (strcasecmp(valbuf, "dir") == 0) {
-		*isDirectory = true;
-		type_found = true;
-	} else if (strcasecmp(valbuf, "file") == 0) {
-		*isDirectory = false;
-		type_found = true;
-	} else if (strcasecmp(valbuf, "cdir") == 0 ||
-	           strcasecmp(valbuf, "pdir") == 0) {
-		// Swiss already adds "." and ".." itself.
-		return false;
-	} else {
-		// Unknown or unsupported MLSD type.
-		return false;
-	}
-}
+			if (strcasecmp(valbuf, "dir") == 0) {
+				*isDirectory = true;
+				type_found = true;
+			} else if (strcasecmp(valbuf, "file") == 0) {
+				*isDirectory = false;
+				type_found = true;
+			} else if (strcasecmp(valbuf, "cdir") == 0 ||
+			           strcasecmp(valbuf, "pdir") == 0) {
+				// Swiss already adds "." and ".." itself.
+				return false;
+			} else {
+				// Unknown or unsupported MLSD type.
+				return false;
+			}
+		}
 
 		fact = sc + 1;
 	}
@@ -1382,7 +1382,7 @@ static bool ftp_parse_mlsd_line(const char *line, char *name, off_t *size, bool 
 
 	int flen = end - fname;
 	if (flen <= 0 || flen >= FTP_MAX_LINE) {
-	return false;
+		return false;
 	}
 
 	strncpy(name, fname, flen);
