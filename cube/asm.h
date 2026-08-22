@@ -133,10 +133,10 @@
 
 #define IABR	1010
 
-#define PMC1    953
-#define PMC2    954
-#define PMC3    957
-#define PMC4    958
+#define PMC1	953
+#define PMC2	954
+#define PMC3	957
+#define PMC4	958
 
 #define MMCR0	952
 #define MMCR1	956
@@ -196,12 +196,12 @@
 #define CTR_OFFSET	 188
 #define XER_OFFSET	 192
 #define MSR_OFFSET	 196
-#define DAR_OFFSET	 200
+#define DABR_OFFSET	 200
 
-#define	STATE_OFFSET 204
+#define STATE_OFFSET 204
 #define MODE_OFFSET	 206
-	 
-#define FPR0_OFFSET	208
+
+#define FPR0_OFFSET 208
 #define FPR1_OFFSET 216
 #define FPR2_OFFSET 224
 #define FPR3_OFFSET 232
@@ -236,38 +236,38 @@
 
 #define FPSCR_OFFSET 464
 
-#define PSR0_OFFSET 472
-#define PSR1_OFFSET 480
-#define PSR2_OFFSET 488
-#define PSR3_OFFSET 496
-#define PSR4_OFFSET 504
-#define PSR5_OFFSET 512
-#define PSR6_OFFSET 520
-#define PSR7_OFFSET 528
-#define PSR8_OFFSET 536
-#define PSR9_OFFSET 544
-#define PSR10_OFFSET 552
-#define PSR11_OFFSET 560
-#define PSR12_OFFSET 568
-#define PSR13_OFFSET 576
-#define PSR14_OFFSET 584
-#define PSR15_OFFSET 592
-#define PSR16_OFFSET 600
-#define PSR17_OFFSET 608
-#define PSR18_OFFSET 616
-#define PSR19_OFFSET 624
-#define PSR20_OFFSET 632
-#define PSR21_OFFSET 640
-#define PSR22_OFFSET 648
-#define PSR23_OFFSET 656
-#define PSR24_OFFSET 664
-#define PSR25_OFFSET 672
-#define PSR26_OFFSET 680
-#define PSR27_OFFSET 688
-#define PSR28_OFFSET 696
-#define PSR29_OFFSET 704
-#define PSR30_OFFSET 712
-#define PSR31_OFFSET 720
+#define PSFPR0_OFFSET 472
+#define PSFPR1_OFFSET 480
+#define PSFPR2_OFFSET 488
+#define PSFPR3_OFFSET 496
+#define PSFPR4_OFFSET 504
+#define PSFPR5_OFFSET 512
+#define PSFPR6_OFFSET 520
+#define PSFPR7_OFFSET 528
+#define PSFPR8_OFFSET 536
+#define PSFPR9_OFFSET 544
+#define PSFPR10_OFFSET 552
+#define PSFPR11_OFFSET 560
+#define PSFPR12_OFFSET 568
+#define PSFPR13_OFFSET 576
+#define PSFPR14_OFFSET 584
+#define PSFPR15_OFFSET 592
+#define PSFPR16_OFFSET 600
+#define PSFPR17_OFFSET 608
+#define PSFPR18_OFFSET 616
+#define PSFPR19_OFFSET 624
+#define PSFPR20_OFFSET 632
+#define PSFPR21_OFFSET 640
+#define PSFPR22_OFFSET 648
+#define PSFPR23_OFFSET 656
+#define PSFPR24_OFFSET 664
+#define PSFPR25_OFFSET 672
+#define PSFPR26_OFFSET 680
+#define PSFPR27_OFFSET 688
+#define PSFPR28_OFFSET 696
+#define PSFPR29_OFFSET 704
+#define PSFPR30_OFFSET 712
+#define PSFPR31_OFFSET 720
 /*
  * maintain the EABI requested 8 bytes aligment
  * As SVR4 ABI requires 16, make it 16 (as some
@@ -275,31 +275,31 @@
  */
 #define EXCEPTION_FRAME_END 728
 
-#define	IBAT0U		528
-#define	IBAT0L		529	
-#define	IBAT1U		530	
-#define	IBAT1L		531	
-#define	IBAT2U		532	
-#define	IBAT2L		533	
-#define	IBAT3U		534	
-#define	IBAT3L		535	
-#define	IBAT4U		560
-#define	IBAT4L		561
-#define	IBAT5U		562
-#define	IBAT5L		563
-#define	IBAT6U		564
-#define	IBAT6L		565
-#define	IBAT7U		566
-#define	IBAT7L		567
+#define IBAT0U		528
+#define IBAT0L		529
+#define IBAT1U		530
+#define IBAT1L		531
+#define IBAT2U		532
+#define IBAT2L		533
+#define IBAT3U		534
+#define IBAT3L		535
+#define IBAT4U		560
+#define IBAT4L		561
+#define IBAT5U		562
+#define IBAT5L		563
+#define IBAT6U		564
+#define IBAT6L		565
+#define IBAT7U		566
+#define IBAT7L		567
 
-#define	DBAT0U		536
-#define	DBAT0L		537	
-#define	DBAT1U		538	
-#define	DBAT1L		539	
-#define	DBAT2U		540	
-#define	DBAT2L		541	
-#define	DBAT3U		542	
-#define	DBAT3L		543
+#define DBAT0U		536
+#define DBAT0L		537
+#define DBAT1U		538
+#define DBAT1L		539
+#define DBAT2U		540
+#define DBAT2L		541
+#define DBAT3U		542
+#define DBAT3L		543
 #define DBAT4U		568
 #define DBAT4L		569
 #define DBAT5U		570
@@ -311,7 +311,7 @@
 
 #define HID0		1008
 #define HID1		1009
-#define HID2		920	
+#define HID2		920
 #define HID4		1011
 
 #define GQR0		912
@@ -335,14 +335,21 @@
 #define ECID2		926
 #define ECID3		927
 
+#define MSR_LE				0x00000001
 #define MSR_RI				0x00000002
+#define MSR_PM				0x00000004
 #define MSR_DR				0x00000010
 #define MSR_IR				0x00000020
 #define MSR_IP				0x00000040
+#define MSR_FE1				0x00000100
+#define MSR_BE				0x00000200
 #define MSR_SE				0x00000400
+#define MSR_FE0				0x00000800
 #define MSR_ME				0x00001000
 #define MSR_FP				0x00002000
+#define MSR_PR				0x00004000
 #define MSR_EE				0x00008000
+#define MSR_ILE				0x00010000
 #define MSR_POW				0x00040000
 
 #define PPC_ALIGNMENT		8

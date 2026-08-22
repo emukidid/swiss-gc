@@ -127,6 +127,8 @@ startup:
 
 premain:
 	li		r3, 0
+	mtdabr	r3
+	mtiabr	r3
 	lis		r0, reload@h + 0x48000002
 	ori		r0, r0, reload@l + 0x48000002
 1:	stwu	r0, 0x0100 (r3)

@@ -25,11 +25,16 @@
 _start:
 	mfmsr	r3
 	b		1f
-	.asciz	"STUBHAXX"
-	.align 2
+	.ascii	"STUBHAXX"
 
-1:	rlwinm	r3, r3, 0, 17, 15
+	mfmsr	r3
+	nop
+1:	rlwinm	r3, r3, 0, 26, 27
+	nop
 	mtmsr	r3
+	sync
+	isync
+
 	li		r3, 0
 	mtsrr1	r3
 	li		r3, startup
@@ -42,6 +47,8 @@ startup:
 	mtear	r0
 
 	li		r3, 0
+	mtdabr	r3
+	mtiabr	r3
 	lis		r0, reset@h + 0x48000002
 	ori		r0, r0, reset@l + 0x48000002
 1:	stwu	r0, 0x0100 (r3)
