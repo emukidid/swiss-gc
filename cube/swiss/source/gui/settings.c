@@ -86,7 +86,7 @@ static char *tooltips_global[PAGE_GLOBAL_MAX+1] = {
 };
 
 static char *tooltips_interface[PAGE_INTERFACE_MAX+1] = {
-	[SET_FILEBROWSER_TYPE] = "File Browser Type:\n\nStandard - Displays files with minimal detail. (default)\n\nFullwidth - Displays files across the entire screen while hiding side information panels.\n\nCarousel - Suited towards Game/DOL only use, consider combining\nthis option with the File Management setting turned off\nand Hide Unknown File Types turned on for a better experience.",
+	[SET_FILEBROWSER_TYPE] = "File Browser Type:\n\nStandard - Displays files with minimal detail. (default)\n\nFullwidth - Displays files across the entire screen while hiding\nside information panels.\n\nCarousel - Suited towards Game/DOL only use, consider combining\nthis option with the \223File Management\224 setting turned off and\n\223Hide unknown file types\224 turned on for a better experience.",
 	[SET_APPSBROWSER_TYPE] = "File Browser Type for apps:\n\nApplicable to the /apps directory.",
 	[SET_GAMEBROWSER_TYPE] = "File Browser Type for games:\n\nApplicable to the /games directory.",
 	[SET_FILE_MGMT] = "File Management:\n\nWhen enabled, pressing Z on an entry in the file browser will\nallow it to be managed.",
