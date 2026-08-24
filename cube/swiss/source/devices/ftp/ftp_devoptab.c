@@ -828,14 +828,7 @@ execute_open_actv_retry:
 
 		if ( offset!=0 )
 		{
-			//2^32 = 4.294.967.296
-
-			u32 low_part = offset % 1000000000;
-			u32 high_part = offset / 1000000000;
-
-			NET_PRINTF("offset=%u:%u\n", (u32)(offset >> 32), (u32)(offset & 0xffffFFFF));
-
-			sprintf(buf, "REST %u%u", high_part, low_part );
+			sprintf(buf, "REST %lld", offset);
 			NET_PRINTF("REST=%s\n",buf);
 			if((res = ftp_execute(env, buf, 350, 1)) < 0)
 			{
@@ -1038,12 +1031,7 @@ execute_open_retry:
 
 		if( offset !=0 )
 		{
-			u32 low_part = offset % 1000000000;
-			u32 high_part = offset / 1000000000;
-
-			NET_PRINTF("offset=%u:%u\n", (u32)(offset >> 32), (u32)(offset & 0xffffFFFF));
-
-			sprintf(buf, "REST %u%u", high_part, low_part );
+			sprintf(buf, "REST %lld", offset);
 			NET_PRINTF("REST=%s\n",buf);
 			if((res = ftp_execute(env, buf, 350, 1)) < 0)
 			{
