@@ -190,6 +190,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 	char sramHOffsetStr[8];
 	char uiVModeStr[21];
 	char sramTemperatureStr[8];
+	char bbaNetmaskStr[8];
 	char forceVOffsetStr[8];
 	char triggerLevelStr[8];
 	
@@ -303,7 +304,8 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 		if(option < SET_FTP_USER) {
 			drawSettingEntryBoolean(page, &page_y_ofs, "Init network at startup:", swissSettings.initNetworkAtStart, option == SET_INIT_NET, !bba_requires_init());
 			drawSettingEntryString(page, &page_y_ofs, "IPv4 Address:", swissSettings.bbaLocalIp, option == SET_BBA_LOCALIP, netEnable);
-			drawSettingEntryNumeric(page, &page_y_ofs, "IPv4 Netmask:", swissSettings.bbaNetmask, option == SET_BBA_NETMASK, netEnable);
+			sprintf(bbaNetmaskStr, "/%hu", swissSettings.bbaNetmask);
+			drawSettingEntryString(page, &page_y_ofs, "IPv4 Netmask:", bbaNetmaskStr, option == SET_BBA_NETMASK, netEnable);
 			drawSettingEntryString(page, &page_y_ofs, "IPv4 Gateway:", swissSettings.bbaGateway, option == SET_BBA_GATEWAY, netEnable);
 			drawSettingEntryBoolean(page, &page_y_ofs, "IPv4 uses DHCP:", swissSettings.bbaUseDhcp, option == SET_BBA_DHCP, netEnable);
 			drawSettingEntryString(page, &page_y_ofs, "FSP Host IP:", swissSettings.fspHostIp, option == SET_FSP_HOSTIP, netEnable);

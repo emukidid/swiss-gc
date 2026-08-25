@@ -30,7 +30,7 @@ static lwp_t net_thread = LWP_THREAD_NULL;
 static void *net_thread_func(void *arg)
 {
 	inet_aton(swissSettings.bbaLocalIp, &bba_localip);
-	bba_netmask.s_addr = INADDR_BROADCAST << (32 - swissSettings.bbaNetmask);
+	bba_netmask.s_addr = ~(INADDR_BROADCAST >> swissSettings.bbaNetmask);
 	inet_aton(swissSettings.bbaGateway, &bba_gateway);
 
 	if (if_configex(&bba_localip, &bba_netmask, &bba_gateway, swissSettings.bbaUseDhcp) == -1) {
@@ -40,7 +40,7 @@ static void *net_thread_func(void *arg)
 
 	net_initialized = 1;
 	inet_ntoa_r(bba_localip, swissSettings.bbaLocalIp, sizeof(swissSettings.bbaLocalIp));
-	swissSettings.bbaNetmask = bba_netmask.s_addr ? (32 - __builtin_ctz(bba_netmask.s_addr)) : 0;
+	swissSettings.bbaNetmask = __builtin_stdc_leading_ones(bba_netmask.s_addr);
 	inet_ntoa_r(bba_gateway, swissSettings.bbaGateway, sizeof(swissSettings.bbaGateway));
 
 	char ifname[4];
@@ -181,7 +181,7 @@ bool bba_requires_init(void)
 
 const char *bba_address_str(void)
 {
-	static char string[18];
+	static char string[19];
 
 	if ((bba_localip.s_addr = net_gethostip()) == INADDR_ANY) {
 		u8 mac_addr[6];
@@ -193,7 +193,7 @@ const char *bba_address_str(void)
 		return string;
 	}
 
-	sprintf(string, "%u.%u.%u.%u", ip4_addr1(&bba_localip), ip4_addr2(&bba_localip), ip4_addr3(&bba_localip), ip4_addr4(&bba_localip));
+	sprintf(string, "%u.%u.%u.%u/%u", ip4_addr1(&bba_localip), ip4_addr2(&bba_localip), ip4_addr3(&bba_localip), ip4_addr4(&bba_localip), __builtin_stdc_leading_ones(bba_netmask.s_addr));
 	return string;
 }
 
