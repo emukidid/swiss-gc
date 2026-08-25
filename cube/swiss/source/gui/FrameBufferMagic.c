@@ -1526,8 +1526,45 @@ static void _DrawTitleBar(uiDrawObj_t *evt) {
 	}
 	time_t curtime;
 	if(time(&curtime) != (time_t)-1) {
-		strftime(fbTextBuffer, sizeof(fbTextBuffer), "%Y-%m-%d \267 %H:%M:%S", localtime(&curtime));
-		drawString(getVideoMode()->fbWidth-36, 39, fbTextBuffer, 0.55f, ALIGN_RIGHT, defaultColor);
+		struct tm *timeinfo = localtime(&curtime);
+		char timeBuffer[9];
+		char glyph[2] = {'\0', '\0'};
+		static int digitWidths[10];
+		static int digitWidth;
+		static int colonWidth;
+		static int dateWidth;
+		int i;
+
+		if(!digitWidth) {
+			for(i = 0; i < 10; i++) {
+				glyph[0] = '0' + i;
+				digitWidths[i] = GetTextSizeInPixels(glyph);
+				if(digitWidths[i] > digitWidth) {
+					digitWidth = digitWidths[i];
+				}
+			}
+			colonWidth = GetTextSizeInPixels(":");
+			dateWidth = GetTextSizeInPixels("0000-00-00 \267 ");
+		}
+
+		strftime(fbTextBuffer, sizeof(fbTextBuffer), "%Y-%m-%d \267 ", timeinfo);
+		strftime(timeBuffer, sizeof(timeBuffer), "%H:%M:%S", timeinfo);
+
+		int timeWidth = digitWidth * 6 + colonWidth * 2;
+		int timeX = getVideoMode()->fbWidth-36-(int)(timeWidth * 0.55f);
+		int dateX = timeX-(int)(dateWidth * 0.55f);
+
+		drawString(dateX, 39, fbTextBuffer, 0.55f, ALIGN_LEFT, defaultColor);
+
+		int offset = 0;
+		for(i = 0; timeBuffer[i]; i++) {
+			glyph[0] = timeBuffer[i];
+			int slotWidth = timeBuffer[i] == ':' ? colonWidth : digitWidth;
+			int glyphWidth = timeBuffer[i] == ':' ? colonWidth : digitWidths[timeBuffer[i] - '0'];
+			int glyphOffset = (slotWidth - glyphWidth) / 2;
+			drawString(timeX + (int)((offset + glyphOffset) * 0.55f), 39, glyph, 0.55f, ALIGN_LEFT, defaultColor);
+			offset += slotWidth;
+		}
 	}
 }
 
