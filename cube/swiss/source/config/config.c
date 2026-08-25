@@ -1,5 +1,6 @@
 #include <argz.h>
 #include <langinfo.h>
+#include <stdcountof.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -353,31 +354,31 @@ void config_defaults(ConfigEntry *entry) {
 	entry->preferCleanBoot = swissSettings.preferCleanBoot;
 	entry->rt4kProfile = swissSettings.rt4kProfile;
 
-	for(int i = 0; i < sizeof(fixPixelCenterEntries) / sizeof(*fixPixelCenterEntries); i++) {
+	for(int i = 0; i < countof(fixPixelCenterEntries); i++) {
 		if(!strncmp(entry->game_id, fixPixelCenterEntries[i], 4)) {
 			entry->fixPixelCenter = fixPixelCenterEntries[i][4];
 			break;
 		}
 	}
-	for(int i = 0; i < sizeof(triggerLevelEntries) / sizeof(*triggerLevelEntries); i++) {
+	for(int i = 0; i < countof(triggerLevelEntries); i++) {
 		if(!strncmp(entry->game_id, triggerLevelEntries[i], 4)) {
 			entry->triggerLevel = triggerLevelEntries[i][4];
 			break;
 		}
 	}
-	for(int i = 0; i < sizeof(emulateAudioStreamEntries) / sizeof(*emulateAudioStreamEntries); i++) {
+	for(int i = 0; i < countof(emulateAudioStreamEntries); i++) {
 		if(!strncmp(entry->game_id, emulateAudioStreamEntries[i], 4)) {
 			entry->emulateAudioStream = emulateAudioStreamEntries[i][4];
 			break;
 		}
 	}
-	for(int i = 0; i < sizeof(emulateReadSpeedEntries) / sizeof(*emulateReadSpeedEntries); i++) {
+	for(int i = 0; i < countof(emulateReadSpeedEntries); i++) {
 		if(!strncmp(entry->game_id, emulateReadSpeedEntries[i], 4)) {
 			entry->emulateReadSpeed = emulateReadSpeedEntries[i][4];
 			break;
 		}
 	}
-	for(int i = 0; i < sizeof(emulateEthernetEntries) / sizeof(*emulateEthernetEntries); i++) {
+	for(int i = 0; i < countof(emulateEthernetEntries); i++) {
 		if(!strncmp(entry->game_id, emulateEthernetEntries[i], 4)) {
 			entry->emulateEthernet = emulateEthernetEntries[i][4];
 			break;
@@ -1466,7 +1467,7 @@ void config_load_current(ConfigEntry *entry) {
 		swissSettings.sramProgressive = in_range(swissSettings.gameVMode, 4, 7) || in_range(swissSettings.gameVMode, 11, 14);
 		
 		if(swissSettings.sram60Hz) {
-			for(int i = 0; i < sizeof(gameVModePalEntries) / sizeof(*gameVModePalEntries); i++) {
+			for(int i = 0; i < countof(gameVModePalEntries); i++) {
 				if(!strncmp(entry->game_id, gameVModePalEntries[i], 4)) {
 					swissSettings.gameVMode += 7;
 					break;

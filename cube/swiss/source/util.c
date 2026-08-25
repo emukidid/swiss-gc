@@ -1,5 +1,6 @@
 #include <fnmatch.h>
 #include <stdarg.h>
+#include <stdcountof.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include "swiss.h"
@@ -191,7 +192,7 @@ void load_auto_dol(int argc, char *argv[]) {
 	scanFiles();
 	file_handle *dirEntries = getCurrentDirEntries();
 	int dirEntryCount = getCurrentDirEntryCount();
-	for (int f = 0; f < sizeof(autoboot_dols) / sizeof(*autoboot_dols); f++) {
+	for (int f = 0; f < countof(autoboot_dols); f++) {
 		for (int i = 0; i < dirEntryCount; i++) {
 			if (!fnmatch(autoboot_dols[f], dirEntries[i].name, FNM_PATHNAME | FNM_CASEFOLD)) {
 				DOLHEADER dolhdr;

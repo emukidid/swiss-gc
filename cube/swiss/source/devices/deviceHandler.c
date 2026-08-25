@@ -3,6 +3,7 @@
 	by emu_kidid
  */
 
+#include <stdcountof.h>
 #include <stdio.h>
 #include <ogcsys.h>
 #include <unistd.h>
@@ -238,7 +239,7 @@ bool getFragments(int deviceSlot, file_handle *file, file_frag **fragList, u32 *
 		// fatfs - Cluster link table map buffer
 		DWORD clmt[(MAX_FRAGS+1)*2];
 		file->ffsFp->cltbl = clmt;
-		*file->ffsFp->cltbl = sizeof(clmt)/sizeof(DWORD);
+		*file->ffsFp->cltbl = countof(clmt);
 		if(f_lseek(file->ffsFp, CREATE_LINKMAP) != FR_OK) {
 			file->ffsFp->cltbl = NULL;
 			return false;	// Too many fragments for our buffer

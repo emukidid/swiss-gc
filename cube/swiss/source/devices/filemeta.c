@@ -4,6 +4,7 @@
  */
 
 #include <fnmatch.h>
+#include <stdcountof.h>
 #include <stdio.h>
 #include <ogcsys.h>
 #include <unistd.h>
@@ -475,7 +476,7 @@ int meta_find_barrel_game(int curSelection) {
 			populate_meta(dirEntries[i]);
 		}
 		if(dirEntries[i]->meta) {
-			for(int j = 0; j < sizeof(barrelGameEntries) / sizeof(*barrelGameEntries); j++) {
+			for(int j = 0; j < countof(barrelGameEntries); j++) {
 				if(!strncmp(dirEntries[i]->meta->diskId.gamename, barrelGameEntries[j], 4)) {
 					unlockFile(dirEntries[i]);
 					return i;

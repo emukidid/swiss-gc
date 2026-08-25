@@ -3,6 +3,7 @@
 	by meneerbeer, emu_kidid
  */
 
+#include <stdcountof.h>
 #include <string.h>
 #include <unistd.h>
 #include <malloc.h>
@@ -42,7 +43,7 @@ static char *bootFile_names[] = {"boot.iso", "boot.iso.iso", "boot.gcm", "boot.g
 
 bool gcloaderGetBootFile(file_handle* file) {
 	int i;
-	for(i = 0; i < sizeof(bootFile_names)/sizeof(char*); i++) {
+	for(i = 0; i < countof(bootFile_names); i++) {
 		memset(file, 0, sizeof(file_handle));
 		concat_path(file->name, initial_GCLoader.name, bootFile_names[i]);
 		
