@@ -1522,7 +1522,7 @@ static void _DrawTitleBar(uiDrawObj_t *evt) {
 	s8 cputemp = SYS_GetCoreTemperature();
 	if(cputemp >= 0) {
 		sprintf(fbTextBuffer, "%i\260C", cputemp);
-		drawString(getVideoMode()->fbWidth-247, 39, fbTextBuffer, 0.55f, ALIGN_CENTER, defaultColor);
+		drawString(getVideoMode()->fbWidth-246, 39, fbTextBuffer, 0.55f, ALIGN_CENTER, defaultColor);
 	}
 	time_t curtime;
 	if(time(&curtime) != (time_t)-1) {

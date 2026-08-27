@@ -851,7 +851,7 @@ bool select_dest_dir(file_handle* initial, file_handle* selection)
 	file_handle **directory = NULL;
 	file_handle *curDirEntries = NULL;
 	file_handle curDir;
-	memcpy(&curDir, initial, sizeof(file_entry));
+	memcpy(&curDir, initial, sizeof(file_handle));
 	int i = 0, j = 0, max = 0, refresh = 1, num_files =0, idx = 0;
 	
 	bool cancelled = false;
@@ -1628,6 +1628,7 @@ bool manage_file() {
 		u32 isSrcCard = devices[DEVICE_CUR] == &__device_card_a || devices[DEVICE_CUR] == &__device_card_b;
 		
 		concat_path(destFile->name, destFile->name, stripInvalidChars(getRelativeName(curFile.name)));
+		destFile->status = 0;
 		destFile->fp = 0;
 		destFile->ffsFp = 0;
 		destFile->fileBase = 0;
