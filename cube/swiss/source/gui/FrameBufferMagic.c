@@ -1522,11 +1522,11 @@ static void _DrawTitleBar(uiDrawObj_t *evt) {
 	s8 cputemp = SYS_GetCoreTemperature();
 	if(cputemp >= 0) {
 		sprintf(fbTextBuffer, "%i\260C", cputemp);
-		drawString(getVideoMode()->fbWidth-233, 39, fbTextBuffer, 0.55f, ALIGN_CENTER, defaultColor);
+		drawString(getVideoMode()->fbWidth-247, 39, fbTextBuffer, 0.55f, ALIGN_CENTER, defaultColor);
 	}
 	time_t curtime;
 	if(time(&curtime) != (time_t)-1) {
-		strftime(fbTextBuffer, sizeof(fbTextBuffer), "%Y-%m-%d \267 %H:%M:%S", localtime(&curtime));
+		strftime(fbTextBuffer, sizeof(fbTextBuffer), swissSettings.sramLanguage == SYS_LANG_ENGLISH_US ? "%D \267 %r" : "%F \267 %T", localtime(&curtime));
 		drawString(getVideoMode()->fbWidth-36, 39, fbTextBuffer, 0.55f, ALIGN_RIGHT, defaultColor);
 	}
 }
