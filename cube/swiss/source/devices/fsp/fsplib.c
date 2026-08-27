@@ -559,6 +559,12 @@ FSP_DIR * fsp_opendir(FSP_SESSION *s,const char *dirname)
         return NULL;
     }
 
+    if (dir == NULL)
+    {
+        errno = ENOMSG;
+        return NULL;
+    }
+
     dir->inuse=1;
     dir->blocksize=blocksize;
     dir->dirname=strdup(dirname);
