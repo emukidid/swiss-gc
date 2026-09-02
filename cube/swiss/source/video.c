@@ -249,11 +249,12 @@ void setVideoMode(GXRModeObj *m) {
 	// init viewport
 	GX_SetViewport (0.0f, 0.0f, m->fbWidth, m->efbHeight, 0.0f, 1.0f);
 	// Set the correct y scaling for efb->xfb copy operation
-	GX_SetDispCopyYScale (GX_GetYScaleFactor (m->efbHeight, m->xfbHeight));
 	GX_SetDispCopySrc (0, 0, m->fbWidth, m->efbHeight);
+	GX_SetDispCopyFrame2Field (m->copy_interlaced);
+	GX_SetDispCopyYScale (GX_GetYScaleFactor (m->efbHeight, m->xfbHeight));
 	GX_SetDispCopyDst (m->fbWidth, m->xfbHeight);
 	GX_SetCopyFilter (m->aa, m->sample_pattern, GX_TRUE, m->vfilter);
-	GX_SetFieldMode (m->field_rendering, ((m->viHeight == 2 * m->xfbHeight) ? GX_ENABLE : GX_DISABLE));
+	GX_SetFieldMode (m->field_rendering, ((m->viHeight == 2 * m->efbHeight) ? GX_ENABLE : GX_DISABLE));
 	if (m->aa)
 		GX_SetPixelFmt(GX_PF_RGB565_Z16, GX_ZC_LINEAR);
 	else

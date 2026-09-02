@@ -2205,6 +2205,9 @@ static void *videoUpdate(void *videoEventQueue) {
 		}
 		
 		//Copy EFB->XFB
+		if(vmode->copy_interlaced == GX_COPY_INTERLACED) {
+			GX_SetDispCopyFrame2Field(GX_COPY_INTERLACED ^ VIDEO_GetNextField());
+		}
 		u16 width = vmode->fbWidth;
 		u16 height = GX_SetDispCopyYScale(getYScaleFactor(vmode->efbHeight, vmode->xfbHeight));
 		GX_CopyDisp(xfb[whichfb], GX_TRUE);
