@@ -417,7 +417,7 @@ static const struct {
 	{{ "DPNJ01\x00\x00" }, true,  0xDC, 0xA906, 0x4E8EB4F0, 0x307795BC0687C4F8,  299180032, +1160798208, {  293840904, +1160798348, 6496, 0x9D4C }, "P.N. 03" },
 	{{ "DPNP08\x00\x00" }, false, 0x47, 0x77F0, 0x965F3101, 0x4945ADA61679CADB,  216182784, +1243795456, {  167287440, +1243796560, 6496, 0xE91E }, "P.N. 03" },
 	{{ "DPOJ8P\x00\x00" }, false, 0xB3, 0x5AB5, 0x53A6F59C, 0xE9929B0A79056A82,  900478976,  +559499264, {  106240124,  +559501268, 6496, 0xED80 }, "Phantasy Star Online Episode I & II: Trial Edition" },
-	{{ "DPSJ8P\x00\x00" }, false, 0x28, 0xB3B1, 0x230570E1, 0xD6B9904CBD23766F, 1143683072,  +316295168, {  287886316,  +316295196, 6496, 0xD936 }, "Phantasy Star Online Episode III: C.A.R.D. Revolution: Trial Edition" },
+	{{ "DPSJ8P\x00\x00" }, false, 0x28, 0xB3B1, 0x230570E1, 0xD6B9904CBD23766F, 1143683072,  +316295168, {  287886316,  +316295196, 6496, 0xD936 }, "Phantasy Star Online Episode III: C.A.R.D. Revolution" },
 	{{ "DR2JCQ\x00\x00" }, false, 0xE4, 0xFE97, 0xE3295A1A, 0x5AADCAB50FE80160,  394209280, +1065768960, {  231032552,       +6424, 6496, 0x3C3C }, "Rune II: Koruten no Kagi no Himitsu" },
 	{{ "DRSEAF\x00\x00" }, false, 0x57, 0xF2AF, 0x989E11D9, 0xA60F5B909DC1B199,  126695424, +1333282816, {   39425384, +1333283128, 6496, 0x8804 }, "Soulcalibur II" },
 	{{ "DSTJ13\x00\x00" }, false, 0xBB, 0x45BC, 0x190F43D4, 0x682095BA117EDC39, 1066573824,  +393404416, { 1066566848,     +102184, 6496, 0x7461 }, "SSX Tricky" },
@@ -2387,6 +2387,7 @@ static const struct {
 	{{ "GD5JB2\x00\x00" }, true,  0x49, 0x6440, 0x382C043E, 0x10D31372560E0AAA, 1023129600,  +436848640, { 1023122892,          +0, 6496, 0x1CF2 }, "Dragon Drive: D-Masters Shot" },
 	{{ "GD5JB2\x00\x00" }, true,  0x6A, 0x6440, 0xD0EB8A56, 0x10D31372560E0AAA, 1023129600,          +0, { 1023122892,          +0, 6496, 0x1CF2 }, "Dragon Drive: D-Masters Shot" },
 	{{ "GDEE71\x00\x00" }, false, 0x65, 0xC228, 0xC2C80167, 0x616D2EAD3B11D74F, 1358307328,  +101670912, {  914092380,       +7536, 6496, 0x2D5A }, "Baldur's Gate: Dark Alliance" },
+	{{ "GDPEAF\x00\x00" }, false, 0x74, 0x1069, 0x75C63FBA, 0xF24E56AE954EEDA4,  895551488,  +564426752, {  524379884,  +564425460, 6496, 0x7780 }, "Mr. Driller: Drill Land" },
 	{{ "GDPJAF\x00\x00" }, false, 0x85, 0x5BBF, 0xEEAD97CB, 0xF5236848D65E4FF3,  913614848,  +546363392, {  542371948,  +546337144, 6496, 0x7780 }, "Mr. Driller: Drill Land" },
 	{{ "GEAE8P\x00\x00" }, false, 0x16, 0x4329, 0x22E6FE4B, 0x776C0A056378855A, 1421514752,   +38463488, { 1206244016,   +36660560, 6496, 0x51AD }, "Skies of Arcadia: Legends Maeson" },
 	{{ "GEAE8P\x00\x00" }, false, 0x66, 0xE528, 0xEE8698CB, 0xEE3D9D60D95DC4D8, 1441400832,   +18577408, { 1206239432,   +16754488, 6496, 0xCB3E }, "Skies of Arcadia: Legends" },
@@ -2534,7 +2535,7 @@ static const struct {
 	{{ "SG4JDA\x00\x00" }, true,  0x52, 0xF019, 0x4BB4830A, 0x3645CAE26589C220, 1272594432,  +187383808, { 1272587604,  +187384140, 6496, 0x015D }, "Naruto: Clash of Ninja 4" },
 	{{ "SG4JDA\x00\x00" }, true,  0x9D, 0xB3B3, 0x424A4760, 0x38394EDF8E58393A, 1261602816,  +198375424, { 1261594344,  +198377400, 6496, 0x015D }, "Naruto: Clash of Ninja 4" },
 	{{ "TESTNA\x00\x00" }, false, 0xD2, 0x0C28, 0x6254FB97, 0xAA2E5EDD0EF81992,   26834944,       -1658, {         ~0,          +0,    0, 0xFFFF }, "Dodger Demo" },
-#define VALID_GCM_COUNT (REDUMP_COUNT + 243)
+#define VALID_GCM_COUNT (REDUMP_COUNT + 244)
 	{{ "000801\x00\x00" }, true,  0x72, 0xB329, 0x0E0756FC, 0x2541648547EA120F, 1354366976,  +105611264, {         ~0,          +0,    0, 0xFFFF }, "Diag 2001/03/29" },
 	{{ "101E01\x00\x05" }, true,  0x88, 0xB6FD, 0x4BB518CD, 0x27CFAD706924A030, 1435949056,   +24029184, {         ~0,          +0,    0, 0xFFFF }, "Hontai Kensa Disc DOL-USA" },
 	{{ "101E01\x00\x05" }, true,  0xC6, 0xB6FD, 0x4BB518CD, 0x27CFAD706924A030, 1435949056,   +24029184, {         ~0,          +0,    0, 0xFFFF }, "Hontai Kensa Disc DOL-USA" },
