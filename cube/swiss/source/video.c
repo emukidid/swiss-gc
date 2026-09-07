@@ -157,6 +157,12 @@ GXRModeObj *getVideoModeFromSwissSetting(int uiVMode) {
 				default:             return &TVNtsc480Int;
 			}
 		case 3:
+			switch(swissSettings.sramVideo) {
+				case SYS_VIDEO_PAL:  return &TVEurgb60Hz240DsVf;
+				case SYS_VIDEO_MPAL: return getDTVStatus() ? &TVNtsc240DsVf : &TVMpal240DsVf;
+				default:             return &TVNtsc240DsVf;
+			}
+		case 4:
 			if(getDTVStatus()) {
 				return swissSettings.sramVideo == SYS_VIDEO_PAL ? &TVEurgb60Hz480Prog : &TVNtsc480Prog;
 			} else {
@@ -166,11 +172,13 @@ GXRModeObj *getVideoModeFromSwissSetting(int uiVMode) {
 					default:             return &TVNtsc480IntDf;
 				}
 			}
-		case 4:
-			return &TVPal576IntDfScale;
 		case 5:
-			return &TVPal576IntScale;
+			return &TVPal576IntDfScale;
 		case 6:
+			return &TVPal576IntScale;
+		case 7:
+			return &TVPal288DsVfScale;
+		case 8:
 			return getDTVStatus() ? &TVPal576ProgScale : &TVPal576IntDfScale;
 	}
 	return getVideoMode();
@@ -249,12 +257,12 @@ void setVideoMode(GXRModeObj *m) {
 	// init viewport
 	GX_SetViewport (0.0f, 0.0f, m->fbWidth, m->efbHeight, 0.0f, 1.0f);
 	// Set the correct y scaling for efb->xfb copy operation
-	GX_SetDispCopySrc (0, 0, m->fbWidth, m->efbHeight);
 	GX_SetDispCopyFrame2Field (m->copy_interlaced);
+	GX_SetDispCopySrc (0, 0, m->fbWidth, m->efbHeight);
 	GX_SetDispCopyYScale (GX_GetYScaleFactor (m->efbHeight, m->xfbHeight));
 	GX_SetDispCopyDst (m->fbWidth, m->xfbHeight);
 	GX_SetCopyFilter (m->aa, m->sample_pattern, GX_TRUE, m->vfilter);
-	GX_SetFieldMode (m->field_rendering, ((m->viHeight == 2 * m->efbHeight) ? GX_ENABLE : GX_DISABLE));
+	GX_SetFieldMode (m->field_rendering, ((m->viHeight / m->efbHeight == 2) ? GX_ENABLE : GX_DISABLE));
 	if (m->aa)
 		GX_SetPixelFmt(GX_PF_RGB565_Z16, GX_ZC_LINEAR);
 	else

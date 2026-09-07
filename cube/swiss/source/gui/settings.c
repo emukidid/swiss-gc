@@ -30,7 +30,7 @@ ConfigEntry tempConfig;
 SwissSettings tempSettings;
 char *enableUSBGeckoStr[] = {"No", "Slot A", "Slot B", "Serial Port 2"};
 char *simulatedMemSizeStr[] = {"None", "16 MiB", "24 MiB", "32 MiB", "48 MiB", "64 MiB"};
-char *uiVModeStr[] = {"Auto", "480i", "480sf", "480p", "576i", "576sf", "576p"};
+char *uiVModeStr[] = {"Auto", "480i", "480sf", "240p", "480p", "576i", "576sf", "288p", "576p"};
 char *gameVModeStr[] = {"Auto", "480i", "480sf", "240p", "960i", "480p", "1080i60", "540p60", "576i", "576sf", "288p", "1152i", "576p", "1080i50", "540p50"};
 char *forceHScaleStr[] = {"Auto", "1:1", "11:10", "9:8", "640px", "656px", "672px", "704px", "720px"};
 char *forceVFilterStr[] = {"Auto", "0", "1", "2"};
@@ -520,7 +520,7 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 						curDevicePos = allDevices[curDevicePos+1] == NULL ? 0 : curDevicePos+1;
 					}
 					else {
-						curDevicePos = curDevicePos > 0 ? curDevicePos-1 : 0;
+						curDevicePos = curDevicePos > 0 ? curDevicePos-1 : MAX_DEVICES-1;
 					}
 					// Go to next writable device
 					while((allDevices[curDevicePos] == NULL) || !(allDevices[curDevicePos]->features & FEAT_CONFIG_DEVICE)) {
@@ -535,7 +535,7 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 			break;
 			case SET_SWISS_VIDEOMODE:
 				swissSettings.uiVMode += direction;
-				swissSettings.uiVMode = (swissSettings.uiVMode + 7) % 7;
+				swissSettings.uiVMode = (swissSettings.uiVMode + 9) % 9;
 			break;
 			case SET_INIT_DRIVE:
 				if(deviceHandler_getDeviceAvailable(&__device_dvd))

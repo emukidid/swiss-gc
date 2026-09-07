@@ -103,17 +103,33 @@ void ogc_video__reset()
 					break;
 			}
 			break;
-		case 1 ... 3:
+		case 1:
 			sprintf(txtbuffer, "Video Mode: %s %s", "NTSC", gameVModeStr[swissSettings.gameVMode]);
 			newmode = &TVNtsc480IntDf;
+			break;
+		case 2:
+			sprintf(txtbuffer, "Video Mode: %s %s", "NTSC", gameVModeStr[swissSettings.gameVMode]);
+			newmode = &TVNtsc480Int;
+			break;
+		case 3:
+			sprintf(txtbuffer, "Video Mode: %s %s", "NTSC", gameVModeStr[swissSettings.gameVMode]);
+			newmode = &TVNtsc240DsVf;
 			break;
 		case 4 ... 7:
 			sprintf(txtbuffer, "Video Mode: %s %s", "NTSC", gameVModeStr[swissSettings.gameVMode]);
 			newmode = &TVNtsc480Prog;
 			break;
-		case 8 ... 10:
+		case 8:
 			sprintf(txtbuffer, "Video Mode: %s %s\n%s Mode selected.", "PAL", gameVModeStr[swissSettings.gameVMode], swissSettings.sram60Hz ? "60Hz":"50Hz");
 			newmode = &TVPal576IntDfScale;
+			break;
+		case 9:
+			sprintf(txtbuffer, "Video Mode: %s %s\n%s Mode selected.", "PAL", gameVModeStr[swissSettings.gameVMode], swissSettings.sram60Hz ? "60Hz":"50Hz");
+			newmode = &TVPal576IntScale;
+			break;
+		case 10:
+			sprintf(txtbuffer, "Video Mode: %s %s\n%s Mode selected.", "PAL", gameVModeStr[swissSettings.gameVMode], swissSettings.sram60Hz ? "60Hz":"50Hz");
+			newmode = &TVPal288DsVfScale;
 			break;
 		case 11 ... 14:
 			sprintf(txtbuffer, "Video Mode: %s %s\n%s Mode selected.", "PAL", gameVModeStr[swissSettings.gameVMode], swissSettings.sram60Hz ? "60Hz":"50Hz");
