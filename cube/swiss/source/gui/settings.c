@@ -134,6 +134,11 @@ char* getConfigDeviceName(SwissSettings *settings) {
 	return configDevice != NULL ? (char*)(configDevice->deviceName) : "None";
 }
 
+char* getAutoLoadDeviceName(SwissSettings *settings) {
+	DEVICEHANDLER_INTERFACE *entryDevice = getDeviceFromPath(settings->autoload);
+	return entryDevice != NULL ? (char*)(entryDevice->deviceName) : "None";
+}
+
 char* getGameVideoModeString(int gameVMode) {
 	return gameVMode <= 0 ? getScanMode() == VI_PROGRESSIVE ? "Auto (Progressive)" : "Auto (Interlaced)" : gameVModeStr[gameVMode];
 }
@@ -291,6 +296,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 		drawSettingEntryBoolean(page, &page_y_ofs, "Show hidden files:", swissSettings.showHiddenFiles, option == SET_SHOW_HIDDEN, true);
 		drawSettingEntryBoolean(page, &page_y_ofs, "Hide unknown file types:", swissSettings.hideUnknownFileTypes, option == SET_HIDE_UNK, true);
 		drawSettingEntryBoolean(page, &page_y_ofs, "Boot without prompts:", swissSettings.autoBoot, option == SET_AUTOBOOT, true);
+		drawSettingEntryString(page, &page_y_ofs, "Load at startup:", getAutoLoadDeviceName(&swissSettings), option == SET_AUTOLOAD, true);
 		drawSettingEntryString(page, &page_y_ofs, "Flatten directory:", swissSettings.flattenDir, option == SET_FLATTEN_DIR, true);
 	}
 	else if(page_num == PAGE_NETWORK) {
@@ -651,6 +657,26 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 			break;
 			case SET_AUTOBOOT:
 				swissSettings.autoBoot ^= 1;
+			break;
+			case SET_AUTOLOAD:
+				select_device(DEVICE_DEST);
+				if(devices[DEVICE_DEST] != NULL) {
+					if(devices[DEVICE_DEST] != devices[DEVICE_CUR]) {
+						deviceHandler_setStatEnabled(0);
+						if(devices[DEVICE_DEST]->init(devices[DEVICE_DEST]->initial)) {
+							deviceHandler_setStatEnabled(1);
+							strlcpy(swissSettings.autoload, devices[DEVICE_DEST]->initial->name, sizeof(swissSettings.autoload));
+							return;
+						}
+						deviceHandler_setStatEnabled(1);
+					}
+					select_dest_dir(devices[DEVICE_DEST]->initial, swissSettings.autoload);
+					
+					if(devices[DEVICE_DEST] != devices[DEVICE_CUR]) {
+						devices[DEVICE_DEST]->deinit(devices[DEVICE_DEST]->initial);
+					}
+					devices[DEVICE_DEST] = NULL;
+				}
 			break;
 			case SET_FLATTEN_DIR:
 				DrawGetTextEntry(ENTRYMODE_NUMERIC|ENTRYMODE_ALPHA, "Flatten directory", &swissSettings.flattenDir, sizeof(swissSettings.flattenDir) - 1);
@@ -1183,7 +1209,7 @@ int show_settings(int page, int option, ConfigEntry *config) {
 				page--; option = 0;
 			}
 			// These use text input, allow them to be accessed with the A button
-			if(page == PAGE_INTERFACE && option == SET_FLATTEN_DIR) {
+			if(page == PAGE_INTERFACE && in_range(option, SET_AUTOLOAD, SET_FLATTEN_DIR)) {
 				settings_toggle(page, option, 0, config);
 			}
 			if(page == PAGE_NETWORK && (in_range(option, SET_BBA_LOCALIP, SET_BBA_GATEWAY) ||

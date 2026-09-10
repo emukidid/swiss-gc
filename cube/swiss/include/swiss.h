@@ -91,7 +91,7 @@ extern void drawFiles(file_handle** directory, int num_files, uiDrawObj_t *conta
 extern void select_speed();
 extern int select_slot();
 extern void select_device(int type);
-extern bool select_dest_dir(file_handle* initial, file_handle* selection);
+extern bool select_dest_dir(file_handle* initial, char* selection);
 
 typedef struct {
 	int cubebootInvoked;

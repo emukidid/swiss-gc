@@ -119,10 +119,10 @@ DEVICEHANDLER_INTERFACE* getDeviceFromPath(char *path) {
 		return NULL;	// garbage
 	}
 	for(int i = 0; i < MAX_DEVICES; i++) {
-		if(allDevices[i] != NULL && !strncmp(&allDevices[i]->initial->name[0], path, devpos-path) && deviceHandler_getDeviceAvailable(allDevices[i])) {
+		if(allDevices[i] != NULL && allDevices[i]->initial != NULL && !strncmp(allDevices[i]->initial->name, path, devpos-path)) {
 			return allDevices[i];
 		}
-	}	
+	}
 	return NULL;
 }
 

@@ -1680,8 +1680,8 @@ void DrawArgsSelector(const char *fileName) {
 	int param_selection = 0;
 	int params_per_page = 6;
 	
-	while ((padsButtonsHeld() & BUTTON_A)){ VIDEO_WaitVSync (); }
 	uiDrawObj_t *container = NULL;
+	while (padsButtonsHeld() & BUTTON_A){ VIDEO_WaitVSync (); }
 	while(1) {
 		uiDrawObj_t *newPanel = DrawEmptyBox(20,60, getVideoMode()->fbWidth-20, 460);
 		sprintf(txtbuffer, "%s Parameters:", fileName);
@@ -1756,8 +1756,8 @@ void DrawCheatsSelector(const char *fileName) {
 	int cheat_selection = 0;
 	int cheats_per_page = 6;
 
-	while ((padsButtonsHeld() & BUTTON_A)){ VIDEO_WaitVSync (); }
-	uiDrawObj_t *container = NULL;		
+	uiDrawObj_t *container = NULL;
+	while (padsButtonsHeld() & BUTTON_A){ VIDEO_WaitVSync (); }
 	while(1) {
 		uiDrawObj_t *newPanel = DrawEmptyBox(20,60, getVideoMode()->fbWidth-20, 460);
 		sprintf(txtbuffer, "%s Cheats:", fileName);

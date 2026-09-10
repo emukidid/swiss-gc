@@ -854,7 +854,7 @@ uiDrawObj_t* renderFileFullwidth(file_handle** directory, int num_files, uiDrawO
 	return filePanel;
 }
 
-bool select_dest_dir(file_handle* initial, file_handle* selection)
+bool select_dest_dir(file_handle* initial, char* selection)
 {
 	file_handle **directory = NULL;
 	file_handle *curDirEntries = NULL;
@@ -876,7 +876,7 @@ bool select_dest_dir(file_handle* initial, file_handle* selection)
 			num_files = devices[DEVICE_DEST]->readDir(&curDir, &curDirEntries, IS_DIR);
 			num_files = sortFiles(curDirEntries, num_files, &directory);
 			if(num_files <= 1 && destDirBox == NULL) {
-				memcpy(selection, &curDir, sizeof(file_handle));
+				strcpy(selection, curDir.name);
 				break;
 			}
 			refresh = idx = 0;
@@ -912,7 +912,7 @@ bool select_dest_dir(file_handle* initial, file_handle* selection)
 			usleep(50000 - abs(padsStickY()*256));
 		}
 		if(padsButtonsHeld() & BUTTON_X)	{
-			memcpy(selection, &curDir, sizeof(file_handle));
+			strcpy(selection, curDir.name);
 			break;
 		}
 		if(padsButtonsHeld() & BUTTON_B)	{
@@ -1606,16 +1606,16 @@ bool manage_file() {
 		if(devices[DEVICE_DEST] == NULL) return false;
 
 		// If the devices are not the same, init the destination, fail on non-existing device/etc
-		if(devices[DEVICE_CUR] != devices[DEVICE_DEST]) {
+		if(devices[DEVICE_DEST] != devices[DEVICE_CUR]) {
 			devices[DEVICE_DEST]->deinit( devices[DEVICE_DEST]->initial );	
 			deviceHandler_setStatEnabled(0);
 			if(devices[DEVICE_DEST]->init( devices[DEVICE_DEST]->initial )) {
+				deviceHandler_setStatEnabled(1);
 				sprintf(txtbuffer, "Failed to init destination device! (%u)\nPress A to continue.",ret);
 				uiDrawObj_t *msgBox = DrawMessageBox(D_FAIL,txtbuffer);
 				DrawPublish(msgBox);
 				wait_press_A();
 				DrawDispose(msgBox);
-				deviceHandler_setStatEnabled(1);
 				return false;
 			}
 			deviceHandler_setStatEnabled(1);
@@ -1624,11 +1624,12 @@ bool manage_file() {
 		file_handle *destFile = calloc(1, sizeof(file_handle));
 		
 		// Show a directory only browser and get the destination file location
-		ret = select_dest_dir(devices[DEVICE_DEST]->initial, destFile);
+		ret = select_dest_dir(devices[DEVICE_DEST]->initial, destFile->name);
 		if(ret) {
 			if(devices[DEVICE_DEST] != devices[DEVICE_CUR]) {
 				devices[DEVICE_DEST]->deinit( devices[DEVICE_DEST]->initial );
 			}
+			devices[DEVICE_DEST] = NULL;
 			return false;
 		}
 		
@@ -1636,13 +1637,6 @@ bool manage_file() {
 		u32 isSrcCard = devices[DEVICE_CUR] == &__device_card_a || devices[DEVICE_CUR] == &__device_card_b;
 		
 		concat_path(destFile->name, destFile->name, stripInvalidChars(getRelativeName(curFile.name)));
-		destFile->status = 0;
-		destFile->fp = 0;
-		destFile->ffsFp = 0;
-		destFile->fileBase = 0;
-		destFile->offset = 0;
-		destFile->size = 0;
-		destFile->fileType = IS_FILE;
 		// Create a GCI if something is coming out from CARD to another device
 		if(isSrcCard && !isDestCard) {
 			strlcat(destFile->name, ".gci", PATHNAME_MAX);
@@ -2684,6 +2678,7 @@ void select_device(int type)
 	}
 
 	uiDrawObj_t *deviceSelectBox = NULL;
+	while (padsButtonsHeld() & BUTTON_A){ VIDEO_WaitVSync (); }
 	while(1) {
 		// Device selector
 		deviceSelectBox = DrawEmptyBox(20,190, getVideoMode()->fbWidth-20, 410);
@@ -2803,7 +2798,7 @@ void select_device(int type)
 			{ VIDEO_WaitVSync (); }
 		DrawDispose(deviceSelectBox);
 	}
-	while ((padsButtonsHeld() & BUTTON_A)){ VIDEO_WaitVSync (); }
+	while (padsButtonsHeld() & BUTTON_A){ VIDEO_WaitVSync (); }
 	// Deinit any existing device
 	if(devices[type] != NULL) {
 		// Don't deinit our current device when selecting a destination device

@@ -375,6 +375,6 @@ void show_info() {
 			|| (padsButtonsHeld() & BUTTON_L))
 			{ VIDEO_WaitVSync (); }
 	}
-	DrawDispose(pagePanel);
 	while (padsButtonsHeld() & BUTTON_A){ VIDEO_WaitVSync (); }
+	DrawDispose(pagePanel);
 }
