@@ -35,19 +35,19 @@ int whichfb = 0;				//Frame buffer toggle
 
 char *getVideoModeString(GXRModeObj *m) {
 	switch(m->viTVMode) {
-		case VI_TVMODE_NTSC_INT:       return m->xfbMode == VI_XFBMODE_DF ? NtscIntDfStr : NtscIntStr;
+		case VI_TVMODE_NTSC_INT:       return m->xfbMode == VI_XFBMODE_PSF ? NtscIntStr : NtscIntDfStr;
 		case VI_TVMODE_NTSC_DS:        return NtscDsStr;
 		case VI_TVMODE_NTSC_PROG:      return NtscProgStr;
-		case VI_TVMODE_PAL_INT:        return m->xfbMode == VI_XFBMODE_DF ? PalIntDfStr : PalIntStr;
+		case VI_TVMODE_PAL_INT:        return m->xfbMode == VI_XFBMODE_PSF ? PalIntStr : PalIntDfStr;
 		case VI_TVMODE_PAL_DS:         return PalDsStr;
 		case VI_TVMODE_PAL_PROG:       return PalProgStr;
-		case VI_TVMODE_MPAL_INT:       return m->xfbMode == VI_XFBMODE_DF ? MpalIntDfStr : MpalIntStr;
+		case VI_TVMODE_MPAL_INT:       return m->xfbMode == VI_XFBMODE_PSF ? MpalIntStr : MpalIntDfStr;
 		case VI_TVMODE_MPAL_DS:        return MpalDsStr;
 		case VI_TVMODE_MPAL_PROG:      return MpalProgStr;
-		case VI_TVMODE_DEBUG_PAL_INT:  return m->xfbMode == VI_XFBMODE_DF ? DebugPalIntDfStr : DebugPalIntStr;
+		case VI_TVMODE_DEBUG_PAL_INT:  return m->xfbMode == VI_XFBMODE_PSF ? DebugPalIntStr : DebugPalIntDfStr;
 		case VI_TVMODE_DEBUG_PAL_DS:   return DebugPalDsStr;
 		case VI_TVMODE_DEBUG_PAL_PROG: return DebugPalProgStr;
-		case VI_TVMODE_EURGB60_INT:    return m->xfbMode == VI_XFBMODE_DF ? Eurgb60IntDfStr : Eurgb60IntStr;
+		case VI_TVMODE_EURGB60_INT:    return m->xfbMode == VI_XFBMODE_PSF ? Eurgb60IntStr : Eurgb60IntDfStr;
 		case VI_TVMODE_EURGB60_DS:     return Eurgb60DsStr;
 		case VI_TVMODE_EURGB60_PROG:   return Eurgb60ProgStr;
 		default:                       return UnknownVideo;
@@ -190,22 +190,31 @@ static void ProperScanPADS(u32 retrace) {
 
 GXRModeObj *getVideoMode() {
 	if(vmode == NULL) {
-		if(getScanMode() == VI_PROGRESSIVE) {
-			switch(getTVFormat()) {
-				case VI_PAL:
-				case VI_DEBUG_PAL: return &TVPal576ProgScale;
-				case VI_EURGB60:   return &TVEurgb60Hz480Prog;
-				case VI_MPAL:      return &TVMpal480Prog;
-				default:           return &TVNtsc480Prog;
-			}
-		} else {
-			switch(getTVFormat()) {
-				case VI_PAL:
-				case VI_DEBUG_PAL: return &TVPal576IntDfScale;
-				case VI_EURGB60:   return &TVEurgb60Hz480IntDf;
-				case VI_MPAL:      return &TVMpal480IntDf;
-				default:           return &TVNtsc480IntDf;
-			}
+		switch(getScanMode()) {
+			case VI_INTERLACE:
+				switch(getTVFormat()) {
+					case VI_PAL:
+					case VI_DEBUG_PAL: return &TVPal576IntDfScale;
+					case VI_EURGB60:   return &TVEurgb60Hz480IntDf;
+					case VI_MPAL:      return &TVMpal480IntDf;
+					default:           return &TVNtsc480IntDf;
+				}
+			case VI_NON_INTERLACE:
+				switch(getTVFormat()) {
+					case VI_PAL:
+					case VI_DEBUG_PAL: return &TVPal288DsVfScale;
+					case VI_EURGB60:   return &TVEurgb60Hz240DsVf;
+					case VI_MPAL:      return &TVMpal240DsVf;
+					default:           return &TVNtsc240DsVf;
+				}
+			case VI_PROGRESSIVE:
+				switch(getTVFormat()) {
+					case VI_PAL:
+					case VI_DEBUG_PAL: return &TVPal576ProgScale;
+					case VI_EURGB60:   return &TVEurgb60Hz480Prog;
+					case VI_MPAL:      return &TVMpal480Prog;
+					default:           return &TVNtsc480Prog;
+				}
 		}
 	}
 	return vmode;
@@ -256,6 +265,7 @@ void setVideoMode(GXRModeObj *m) {
 	GX_SetCopyClear ((GXColor) {0, 0, 0, 0xFF}, GX_MAX_Z24);
 	// init viewport
 	GX_SetViewport (0.0f, 0.0f, m->fbWidth, m->efbHeight, 0.0f, 1.0f);
+	GX_SetScissor (0, 0, m->fbWidth, m->efbHeight);
 	// Set the correct y scaling for efb->xfb copy operation
 	GX_SetDispCopyFrame2Field (m->copy_interlaced);
 	GX_SetDispCopySrc (0, 0, m->fbWidth, m->efbHeight);

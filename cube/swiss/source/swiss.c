@@ -80,59 +80,46 @@ void ogc_video__reset()
 	/* set TV mode for current game */
 	switch(swissSettings.gameVMode) {
 		case -2:
-			sprintf(txtbuffer, "Video Mode: %s", "PAL 576p");
 			newmode = &TVPal576ProgScale;
 			break;
 		case -1:
-			sprintf(txtbuffer, "Video Mode: %s", "NTSC 480p");
 			newmode = &TVNtsc480Prog;
 			break;
 		case 0:
 			switch(swissSettings.sramVideo) {
 				case SYS_VIDEO_PAL:
-					sprintf(txtbuffer, "Video Mode: %s", "PAL 576i");
 					newmode = &TVPal576IntDfScale;
 					break;
 				case SYS_VIDEO_MPAL:
-					sprintf(txtbuffer, "Video Mode: %s", "PAL-M 480i");
 					newmode = &TVMpal480IntDf;
 					break;
 				default:
-					sprintf(txtbuffer, "Video Mode: %s", "NTSC 480i");
 					newmode = &TVNtsc480IntDf;
 					break;
 			}
 			break;
 		case 1:
-			sprintf(txtbuffer, "Video Mode: %s %s", "NTSC", gameVModeStr[swissSettings.gameVMode]);
 			newmode = &TVNtsc480IntDf;
 			break;
 		case 2:
-			sprintf(txtbuffer, "Video Mode: %s %s", "NTSC", gameVModeStr[swissSettings.gameVMode]);
 			newmode = &TVNtsc480Int;
 			break;
 		case 3:
-			sprintf(txtbuffer, "Video Mode: %s %s", "NTSC", gameVModeStr[swissSettings.gameVMode]);
 			newmode = &TVNtsc240DsVf;
 			break;
 		case 4 ... 7:
-			sprintf(txtbuffer, "Video Mode: %s %s", "NTSC", gameVModeStr[swissSettings.gameVMode]);
 			newmode = &TVNtsc480Prog;
 			break;
 		case 8:
-			sprintf(txtbuffer, "Video Mode: %s %s\n%s Mode selected.", "PAL", gameVModeStr[swissSettings.gameVMode], swissSettings.sram60Hz ? "60Hz":"50Hz");
 			newmode = &TVPal576IntDfScale;
 			break;
 		case 9:
-			sprintf(txtbuffer, "Video Mode: %s %s\n%s Mode selected.", "PAL", gameVModeStr[swissSettings.gameVMode], swissSettings.sram60Hz ? "60Hz":"50Hz");
 			newmode = &TVPal576IntScale;
 			break;
 		case 10:
-			sprintf(txtbuffer, "Video Mode: %s %s\n%s Mode selected.", "PAL", gameVModeStr[swissSettings.gameVMode], swissSettings.sram60Hz ? "60Hz":"50Hz");
 			newmode = &TVPal288DsVfScale;
 			break;
 		case 11 ... 14:
-			sprintf(txtbuffer, "Video Mode: %s %s\n%s Mode selected.", "PAL", gameVModeStr[swissSettings.gameVMode], swissSettings.sram60Hz ? "60Hz":"50Hz");
 			newmode = &TVPal576ProgScale;
 			break;
 		default:
@@ -140,6 +127,11 @@ void ogc_video__reset()
 			break;
 	}
 	if((newmode != NULL) && (newmode != getVideoMode())) {
+		if((newmode->viTVMode >> 2) == VI_PAL) {
+			sprintf(txtbuffer, "Video Mode: %s\n%s Mode selected.", getVideoModeString(newmode), swissSettings.sram60Hz ? "60Hz":"50Hz");
+		} else {
+			sprintf(txtbuffer, "Video Mode: %s", getVideoModeString(newmode));
+		}
 		DrawVideoMode(newmode);
 		uiDrawObj_t *msgBox = DrawMessageBox(D_INFO, txtbuffer);
 		DrawPublish(msgBox);
