@@ -315,7 +315,7 @@ int parse_gcm(file_handle *file, file_handle *file2, ExecutableFile *filesToPatc
 			memcpy(&file_offset,&FST[offset+4],4);
 			memcpy(&size,&FST[offset+8],4);
 			if(endsWith(filename,".dol")) {
-				if(strcasecmp(filename,"ffe.dol")) {
+				if(strcasecmp(filename,"ffe.dol") && strcasecmp(filename,"game_mainmenu.dol")) {
 					// Some games contain a single "default.dol", these do not need 
 					// pre-patching because they are what is actually pointed to by the apploader (and loaded by us)
 					if(dolOffset == file_offset || dolSize == size || !valid_dol_file(file, file_offset, size)) {
