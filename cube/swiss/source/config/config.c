@@ -324,6 +324,7 @@ int config_update_game(ConfigEntry *entry, ConfigEntry *defaults, bool checkConf
 }
 
 static char fixPixelCenterEntries[][5] = {"00\0E\1", "DNDD\1", "G2BE\1", "G2BP\1", "GD7E\1", "GD7P\1", "GEME\1", "GEMJ\1", "GEMP\1", "GNBE\1", "GNBJ\1", "GNBP\1", "GZBJ\1"};
+static char forceAnisotropyEntries[][5] = {"GADE\0", "GAEE\0", "GAEJ\0", "GAFE\0", "GAFJ\0", "GAFP\0", "GAFU\0", "GM8E\0", "GM8J\0", "GM8P\0", "PGSE\0", "PKBJ\0", "PZLE\0", "PZLJ\0", "PZLP\0"};
 static char triggerLevelEntries[][5] = {"GKGE\0", "GKGJ\0", "GKGP\0", "GY2E\0", "GY2J\0", "GY2P\0", "GY3E\0", "GY3J\0", "GYBE\0", "GYBJ\0", "GYBP\0"};
 static char emulateAudioStreamEntries[][5] = {"UFZE\0", "UFZJ\0", "UFZP\0"};
 static char emulateReadSpeedEntries[][5] = {"DRSE\1", "GADE\0", "GQSD\1", "GQSE\1", "GQSF\1", "GQSI\1", "GQSP\1", "GQSS\1", "GRSE\1", "GRSJ\1", "GRSP\1", "GTOJ\1"};
@@ -357,6 +358,12 @@ void config_defaults(ConfigEntry *entry) {
 	for(int i = 0; i < countof(fixPixelCenterEntries); i++) {
 		if(!strncmp(entry->game_id, fixPixelCenterEntries[i], 4)) {
 			entry->fixPixelCenter = fixPixelCenterEntries[i][4];
+			break;
+		}
+	}
+	for(int i = 0; i < countof(forceAnisotropyEntries); i++) {
+		if(!strncmp(entry->game_id, forceAnisotropyEntries[i], 4)) {
+			entry->forceAnisotropy = forceAnisotropyEntries[i][4];
 			break;
 		}
 	}
