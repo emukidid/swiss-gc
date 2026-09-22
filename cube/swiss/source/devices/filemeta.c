@@ -4,6 +4,7 @@
  */
 
 #include <fnmatch.h>
+#include <iconv.h>
 #include <stdcountof.h>
 #include <stdio.h>
 #include <ogcsys.h>
@@ -14,6 +15,7 @@
 #include <sys/time.h>
 #include <time.h>
 #include <malloc.h>
+#include <uchardet/uchardet.h>
 #include <gcm.h>
 #include <main.h>
 #include "dvd.h"
@@ -96,7 +98,35 @@ void meta_create_direct_texture_ci(file_meta* meta) {
 	GX_InitTexObjUserData(&meta->bannerTexObj, &meta->bannerTlutObj);
 }
 
-void fixBannerDesc(char *str, int len) {
+void meta_iconv(iconv_t cd, char *inbuf, size_t inbytesleft, char *outbuf, size_t outbytesleft) {
+	iconv(cd, &inbuf, &inbytesleft, &outbuf, &outbytesleft);
+	iconv(cd, NULL, NULL, &outbuf, &outbytesleft);
+}
+
+void iconvBannerDesc(BNRDesc *to, BNRDesc *from, u16 fontEncode) {
+	uchardet_t ud = uchardet_new();
+	uchardet_handle_data(ud, from->gameName, BNR_SHORT_TEXT_LEN);
+	uchardet_handle_data(ud, from->company, BNR_SHORT_TEXT_LEN);
+	uchardet_handle_data(ud, from->fullGameName, BNR_FULL_TEXT_LEN);
+	uchardet_handle_data(ud, from->fullCompany, BNR_FULL_TEXT_LEN);
+	uchardet_handle_data(ud, from->description, BNR_DESC_LEN);
+	uchardet_data_end(ud);
+	const char *charset = uchardet_get_charset(ud);
+	if (strcmp(charset, "ASCII") && strcmp(charset, "SHIFT_JIS") && strcmp(charset, "UTF-8") && strcmp(charset, "UTF-16") && strcmp(charset, "UTF-32") && strcmp(charset, "WINDOWS-1252"))
+		charset = fontEncode == SYS_FONTENC_SJIS ? "SHIFT_JIS" : "WINDOWS-1252";
+	iconv_t cd = iconv_open("WINDOWS-1252/IGNORE", charset);
+	if (cd != (iconv_t)-1) {
+		meta_iconv(cd, from->gameName, BNR_SHORT_TEXT_LEN, to->gameName, BNR_SHORT_TEXT_LEN);
+		meta_iconv(cd, from->company, BNR_SHORT_TEXT_LEN, to->company, BNR_SHORT_TEXT_LEN);
+		meta_iconv(cd, from->fullGameName, BNR_FULL_TEXT_LEN, to->fullGameName, BNR_FULL_TEXT_LEN);
+		meta_iconv(cd, from->fullCompany, BNR_FULL_TEXT_LEN, to->fullCompany, BNR_FULL_TEXT_LEN);
+		meta_iconv(cd, from->description, BNR_DESC_LEN, to->description, BNR_DESC_LEN);
+		iconv_close(cd);
+	}
+	uchardet_delete(ud);
+}
+
+void fixBannerDesc(char *str, size_t len) {
 	const char *end = str + len;
 	for (char *s1 = str; s1 < end && *s1; s1++) {
 		if (*s1 == ' ') {
@@ -157,7 +187,7 @@ void populate_save_meta(file_handle *f, u8 bannerFormat, u32 bannerOffset, u32 c
 	}
 }
 
-void populate_game_meta(file_handle *f, u32 bannerOffset, u32 bannerSize) {
+void populate_game_meta(file_handle *f, u32 bannerOffset, u32 bannerSize, u16 fontEncode) {
 	f->meta->bannerSum = 0xFFFF;
 	f->meta->bannerSize = BNR_PIXELDATA_LEN;
 	f->meta->banner = memalign(32,BNR_PIXELDATA_LEN);
@@ -174,15 +204,15 @@ void populate_game_meta(file_handle *f, u32 bannerOffset, u32 bannerSize) {
 			if(!memcmp(banner->magic, "BNR1", 4)) {
 				f->meta->bannerSum = fletcher16(banner, bannerSize);
 				memcpy(f->meta->banner, banner->pixelData, f->meta->bannerSize);
-				memcpy(&f->meta->bannerDesc, &banner->desc[SYS_LANG_ENGLISH], sizeof(f->meta->bannerDesc));
+				iconvBannerDesc(&f->meta->bannerDesc, &banner->desc[SYS_LANG_ENGLISH], fontEncode);
 			}
 			else if(!memcmp(banner->magic, "BNR2", 4)) {
 				f->meta->bannerSum = fletcher16(banner, bannerSize);
 				memcpy(f->meta->banner, banner->pixelData, f->meta->bannerSize);
 				if(in_range(swissSettings.sramLanguage, SYS_LANG_ENGLISH, SYS_LANG_DUTCH))
-					memcpy(&f->meta->bannerDesc, &banner->desc[swissSettings.sramLanguage], sizeof(f->meta->bannerDesc));
+					iconvBannerDesc(&f->meta->bannerDesc, &banner->desc[swissSettings.sramLanguage], fontEncode);
 				else
-					memcpy(&f->meta->bannerDesc, &banner->desc[SYS_LANG_ENGLISH], sizeof(f->meta->bannerDesc));
+					iconvBannerDesc(&f->meta->bannerDesc, &banner->desc[SYS_LANG_ENGLISH], fontEncode);
 			}
 			fixBannerDesc(f->meta->bannerDesc.gameName, BNR_SHORT_TEXT_LEN);
 			if(strnlen(f->meta->bannerDesc.gameName, BNR_SHORT_TEXT_LEN))
@@ -319,7 +349,7 @@ void populate_meta(file_handle *f) {
 					u32 bannerOffset = 0, bannerSize = f->size;
 					if(!get_gcm_banner_fast(diskHeader, &bannerOffset, &bannerSize))
 						get_gcm_banner(f, diskHeader, &bannerOffset, &bannerSize);
-					populate_game_meta(f, bannerOffset, bannerSize);
+					populate_game_meta(f, bannerOffset, bannerSize, diskHeader->RegionCode ? SYS_FONTENC_ANSI : SYS_FONTENC_SJIS);
 					get_gcm_title(diskHeader, f->meta);
 					// Assign GCM region texture
 					char region = wodeRegionToChar(diskHeader->RegionCode);
@@ -338,7 +368,7 @@ void populate_meta(file_handle *f) {
 				TGCHeader tgcHeader;
 				f->device->seekFile(f, 0, DEVICE_HANDLER_SEEK_SET);
 				if(f->device->readFile(f, &tgcHeader, sizeof(TGCHeader)) == sizeof(TGCHeader) && tgcHeader.magic == TGC_MAGIC) {
-					populate_game_meta(f, tgcHeader.bannerStart, tgcHeader.bannerLength);
+					populate_game_meta(f, tgcHeader.bannerStart, tgcHeader.bannerLength, SYS_FONTENC_ANSI);
 					f->meta->fileTypeTexObj = &tgcimgTexObj;
 				}
 			}
@@ -350,7 +380,7 @@ void populate_meta(file_handle *f) {
 				bannerFile->device = f->device;
 				
 				if (f->device->readFile(bannerFile, NULL, 0) == 0 && bannerFile->size)
-					populate_game_meta(bannerFile, 0, bannerFile->size);
+					populate_game_meta(bannerFile, 0, bannerFile->size, SYS_FONTENC_ANSI);
 				
 				f->device->closeFile(bannerFile);
 				free(bannerFile);
@@ -368,7 +398,7 @@ void populate_meta(file_handle *f) {
 			bannerFile->device = f->device;
 			
 			if (f->device->readFile(bannerFile, NULL, 0) == 0 && bannerFile->size) {
-				populate_game_meta(bannerFile, 0, bannerFile->size);
+				populate_game_meta(bannerFile, 0, bannerFile->size, SYS_FONTENC_ANSI);
 				
 				file_handle *bootFile = calloc(1, sizeof(file_handle));
 				concat_path(bootFile->name, f->name, "default.dol");

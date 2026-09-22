@@ -60,7 +60,7 @@ compile-patches:
 	@cd $(PATCHES) && $(MAKE)
 
 compile: # compile
-	@$(PACMAN) -Q devkitppc-licenses gamecube-tools-git libogc2-git libogc2-libdvm-git ppc-libdeflate ppc-libmad ppc-libpsoarchive ppc-libxxhash ppc-zlib-ng-compat
+	@$(PACMAN) -Q devkitppc-licenses gamecube-tools-git libogc2-git libogc2-libdvm-git ppc-libdeflate ppc-libiconv ppc-libmad ppc-libpsoarchive ppc-libuchardet ppc-libxxhash ppc-zlib-ng-compat
 	@cd $(SOURCES)/swiss && $(MAKE)
 
 compile-packer:
@@ -95,8 +95,10 @@ build:
 	@cp $(DEVKITPRO)/licenses/devkitPPC/COPYING.LIBGLOSS $(DIST)/Licenses/libgloss.txt
 	@cp $(DEVKITPRO)/licenses/devkitPPC/COPYING.NEWLIB $(DIST)/Licenses/newlib.txt
 	@cp $(DEVKITPRO)/portlibs/ppc/licenses/ppc-libdeflate/COPYING $(DIST)/Licenses/libdeflate.txt
+	@cp $(DEVKITPRO)/portlibs/ppc/licenses/ppc-libiconv/COPYING.LIB $(DIST)/Licenses/libiconv.txt
 	@cp $(DEVKITPRO)/portlibs/ppc/licenses/ppc-libmad/COPYING $(DIST)/Licenses/libmad.txt
 	@cp $(DEVKITPRO)/portlibs/ppc/licenses/ppc-libpsoarchive/COPYING.LGPL21 $(DIST)/Licenses/libpsoarchive.txt
+	@cp $(DEVKITPRO)/portlibs/ppc/licenses/ppc-libuchardet/COPYING $(DIST)/Licenses/uchardet.txt
 	@cp $(DEVKITPRO)/portlibs/ppc/licenses/ppc-libxxhash/LICENSE $(DIST)/Licenses/xxhash.txt
 	@cp $(DEVKITPRO)/portlibs/ppc/licenses/ppc-zlib-ng-compat/LICENSE.md $(DIST)/Licenses/zlib-ng.txt
 	# make ISOs and WKF firmware
