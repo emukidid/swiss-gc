@@ -114,7 +114,7 @@ void iconvBannerDesc(BNRDesc *to, BNRDesc *from, u16 fontEncode) {
 	const char *charset = uchardet_get_charset(ud);
 	if (strcmp(charset, "ASCII") && strcmp(charset, "SHIFT_JIS") && strcmp(charset, "UTF-8") && strcmp(charset, "UTF-16") && strcmp(charset, "UTF-32") && strcmp(charset, "WINDOWS-1252"))
 		charset = fontEncode == SYS_FONTENC_SJIS ? "SHIFT_JIS" : "WINDOWS-1252";
-	iconv_t cd = iconv_open("WINDOWS-1252/IGNORE", charset);
+	iconv_t cd = iconv_open("WINDOWS-1252/TRANSLIT/IGNORE", charset);
 	if (cd != (iconv_t)-1) {
 		meta_iconv(cd, from->gameName, BNR_SHORT_TEXT_LEN, to->gameName, BNR_SHORT_TEXT_LEN);
 		meta_iconv(cd, from->company, BNR_SHORT_TEXT_LEN, to->company, BNR_SHORT_TEXT_LEN);
