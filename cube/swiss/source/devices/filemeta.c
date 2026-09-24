@@ -15,7 +15,7 @@
 #include <sys/time.h>
 #include <time.h>
 #include <malloc.h>
-#include <uchardet/uchardet.h>
+#include <uchardet.h>
 #include <gcm.h>
 #include <main.h>
 #include "dvd.h"
