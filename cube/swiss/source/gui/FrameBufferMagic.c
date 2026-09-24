@@ -1828,7 +1828,7 @@ void DrawGetTextEntry(int mode, const char *label, void *src, int size) {
 																	mode & ENTRYMODE_IP ? "Y":"N", mode & ENTRYMODE_MASKED ? "Y":"N", mode & ENTRYMODE_FILE ? "Y":"N");
 	char *text = calloc(1, size + 1);
 	if(mode & (ENTRYMODE_ALPHA|ENTRYMODE_IP)) {
-		strncpy(text, src, size);
+		strlcpy(text, src, size + 1);
 	}
 	else {
 		u16 *src_int = (u16*)src;
@@ -2082,7 +2082,7 @@ void DrawGetTextEntry(int mode, const char *label, void *src, int size) {
 		}
 		if(btns & BUTTON_START) {
 			if(mode & (ENTRYMODE_ALPHA|ENTRYMODE_IP)) {
-				strcpy(src, text);
+				strlcpy(src, text, size + 1);
 			}
 			else {
 				// TODO fix this stuff at some point, we're checking based on text size rather than max val of the data type.

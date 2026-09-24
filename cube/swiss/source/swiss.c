@@ -408,7 +408,7 @@ uiDrawObj_t* renderFileBrowser(file_handle** directory, int num_files, uiDrawObj
 					memset(&swissSettings.autoload[0], 0, PATHNAME_MAX);
 				}
 				else {
-					strcpy(&swissSettings.autoload[0], &curDir.name[0]);
+					strlcpy(&swissSettings.autoload[0], &curDir.name[0], sizeof(swissSettings.autoload));
 				}
 				// Save config
 				uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Saving autoload\205"));
@@ -645,7 +645,7 @@ uiDrawObj_t* renderFileCarousel(file_handle** directory, int num_files, uiDrawOb
 					memset(&swissSettings.autoload[0], 0, PATHNAME_MAX);
 				}
 				else {
-					strcpy(&swissSettings.autoload[0], &curDir.name[0]);
+					strlcpy(&swissSettings.autoload[0], &curDir.name[0], sizeof(swissSettings.autoload));
 				}
 				// Save config
 				uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Saving autoload\205"));
@@ -821,7 +821,7 @@ uiDrawObj_t* renderFileFullwidth(file_handle** directory, int num_files, uiDrawO
 					memset(&swissSettings.autoload[0], 0, PATHNAME_MAX);
 				}
 				else {
-					strcpy(&swissSettings.autoload[0], &curDir.name[0]);
+					strlcpy(&swissSettings.autoload[0], &curDir.name[0], sizeof(swissSettings.autoload));
 				}
 				// Save config
 				uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Saving autoload\205"));
@@ -1569,7 +1569,7 @@ bool manage_file() {
 		char *nameBuffer = calloc(1, sizeof(curFile.name));
 		char *parentPath = calloc(1, sizeof(curFile.name));
 		getParentPath(&curFile.name[0], parentPath);
-		strcpy(nameBuffer, getRelativeName(&curFile.name[0]));
+		strlcpy(nameBuffer, getRelativeName(&curFile.name[0]), sizeof(curFile.name));
 		DrawGetTextEntry(ENTRYMODE_NUMERIC|ENTRYMODE_ALPHA|ENTRYMODE_FILE, "Rename", nameBuffer, sizeof(curFile.name)-(strlen(parentPath)+1));
 		concat_path(txtbuffer, parentPath, nameBuffer);
 		bool modified = (strcmp(&curFile.name[0], txtbuffer) != 0) && strlen(nameBuffer) > 0;
@@ -2627,7 +2627,7 @@ int info_game(ConfigEntry *config)
 				strcpy(&swissSettings.autoload[0], "dvd:/*.gcm");
 			}
 			else {
-				strcpy(&swissSettings.autoload[0], &curFile.name[0]);
+				strlcpy(&swissSettings.autoload[0], &curFile.name[0], sizeof(swissSettings.autoload));
 			}
 			// Save config
 			uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Saving autoload\205"));
