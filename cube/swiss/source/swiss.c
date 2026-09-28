@@ -1010,7 +1010,7 @@ void load_app(ExecutableFile *fileToPatch)
 	uiDrawObj_t* progBox = NULL;
 	const char* message = NULL;
 	char* gameID = VAR_AREA;
-	void* buffer;
+	void* buffer = NULL;
 	u32 sizeToRead;
 	int type;
 	char* argz = NULL;
