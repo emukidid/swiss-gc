@@ -13,7 +13,6 @@ VIConfigure960i:
 2:	lis			%r4, VAR_AREA
 	stw			%r5, VAR_TVMODE (%r4)
 	insrwi		%r0, %r5, 14, 0
-	li			%r8, 1
 	li			%r7, 0
 	lhz			%r6, 8 (%r3)
 	slwi		%r6, %r6, 1
@@ -52,7 +51,6 @@ VIConfigure960i:
 	sth			%r5, 12 (%r3)
 	sth			%r6, 16 (%r3)
 	stb			%r7, 22 (%r3)
-	stb			%r8, 24 (%r3)
 	stw			%r0, 0 (%r3)
 
 .globl VIConfigure960i_size

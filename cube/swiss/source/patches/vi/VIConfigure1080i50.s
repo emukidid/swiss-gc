@@ -13,7 +13,6 @@ VIConfigure1080i50:
 	bne			2f
 1:	li			%r5, 574
 2:	insrwi		%r0, %r6, 14, 0
-	li			%r8, 1
 	li			%r7, 0
 	lhz			%r6, 8 (%r3)
 	slwi		%r6, %r6, 1
@@ -26,7 +25,6 @@ VIConfigure1080i50:
 	sth			%r5, 12 (%r3)
 	sth			%r6, 16 (%r3)
 	stb			%r7, 22 (%r3)
-	stb			%r8, 24 (%r3)
 	stw			%r0, 0 (%r3)
 
 .globl VIConfigure1080i50_size

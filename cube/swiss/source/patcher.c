@@ -8168,6 +8168,15 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 		{  36,  2,  2, 0, 0,  6, GXSetBlendModePatch3, GXSetBlendModePatch3Length, "GXSetBlendMode" },	// SN Systems ProDG
 		{  38,  2,  2, 0, 0,  8, GXSetBlendModePatch3, GXSetBlendModePatch3Length, "GXSetBlendMode" }	// SN Systems ProDG
 	};
+	FuncPattern GXSetFieldModeSigs[7] = {
+		{ 63, 28, 5, 4, 2, 4, NULL, 0, "GXSetFieldModeD" },
+		{ 61, 28, 5, 4, 2, 3, NULL, 0, "GXSetFieldModeD" },
+		{ 32,  8, 8, 2, 0, 4, NULL, 0, "GXSetFieldMode" },
+		{ 31,  8, 8, 2, 0, 4, NULL, 0, "GXSetFieldMode" },
+		{ 27,  5, 7, 2, 0, 4, NULL, 0, "GXSetFieldMode" },	// SN Systems ProDG
+		{ 30,  8, 8, 2, 0, 3, NULL, 0, "GXSetFieldMode" },
+		{ 28, 10, 6, 2, 0, 3, NULL, 0, "GXSetFieldMode" }	// SN Systems ProDG
+	};
 	FuncPattern __GXSetViewportSigs[2] = {
 		{ 163, 75, 15, 2, 12, 14, NULL, 0, "__GXSetViewportD" },
 		{  36, 15,  7, 0,  0,  0, NULL, 0, "__GXSetViewport" }
@@ -9058,6 +9067,7 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 							find_pattern_after(data, dataType, length, &GXSetDispCopyGammaSigs[0], &GXCopyDispSigs[0]);
 						
 						findx_pattern(data, dataType, i + 1033, length, &GXSetBlendModeSigs[0]);
+						findx_pattern(data, dataType, i + 1064, length, &GXSetFieldModeSigs[0]);
 						findx_pattern(data, dataType, i +  727, length, &GXSetViewportSigs[0]);
 						break;
 					case 1:
@@ -9071,6 +9081,7 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 							find_pattern_after(data, dataType, length, &GXSetDispCopyGammaSigs[0], &GXCopyDispSigs[0]);
 						
 						findx_pattern(data, dataType, i + 444, length, &GXSetBlendModeSigs[0]);
+						findx_pattern(data, dataType, i + 475, length, &GXSetFieldModeSigs[0]);
 						findx_pattern(data, dataType, i + 202, length, &GXSetViewportSigs[0]);
 						break;
 					case 2:
@@ -9085,6 +9096,7 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 							find_pattern_after(data, dataType, length, &__GXVerifCopySig, &GXCopyDispSigs[1]);
 						
 						findx_pattern(data, dataType, i + 481, length, &GXSetBlendModeSigs[1]);
+						findx_pattern(data, dataType, i + 512, length, &GXSetFieldModeSigs[1]);
 						findx_pattern(data, dataType, i + 210, length, &GXSetViewportSigs[1]);
 						break;
 					case 3:
@@ -9098,6 +9110,7 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 							find_pattern_after(data, dataType, length, &GXSetDispCopyGammaSigs[2], &GXCopyDispSigs[2]);
 						
 						findx_pattern(data, dataType, i + 881, length, &GXSetBlendModeSigs[2]);
+						findx_pattern(data, dataType, i + 912, length, &GXSetFieldModeSigs[2]);
 						findx_pattern(data, dataType, i + 553, length, &GXSetViewportSigs[2]);
 						break;
 					case 4:
@@ -9111,6 +9124,7 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 							find_pattern_after(data, dataType, length, &GXSetDispCopyGammaSigs[2], &GXCopyDispSigs[2]);
 						
 						findx_pattern(data, dataType, i + 431, length, &GXSetBlendModeSigs[2]);
+						findx_pattern(data, dataType, i + 462, length, &GXSetFieldModeSigs[2]);
 						findx_pattern(data, dataType, i + 186, length, &GXSetViewportSigs[2]);
 						break;
 					case 5:
@@ -9128,6 +9142,7 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 							find_pattern_after(data, dataType, length, &GXSetDispCopyGammaSigs[2], &GXCopyDispSigs[2]);
 						
 						findx_pattern(data, dataType, i + 446, length, &GXSetBlendModeSigs[2]);
+						findx_pattern(data, dataType, i + 477, length, &GXSetFieldModeSigs[2]);
 						findx_pattern(data, dataType, i + 202, length, &GXSetViewportSigs[2]);
 						break;
 					case 6:
@@ -9141,6 +9156,7 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 							find_pattern_after(data, dataType, length, &GXSetDispCopyGammaSigs[2], &GXCopyDispSigs[3]);
 						
 						findx_pattern(data, dataType, i + 461, length, &GXSetBlendModeSigs[3]);
+						findx_pattern(data, dataType, i + 492, length, &GXSetFieldModeSigs[3]);
 						findx_pattern(data, dataType, i + 215, length, &GXSetViewportSigs[3]);
 						break;
 					case 7:
@@ -9154,6 +9170,7 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 							find_pattern_after(data, dataType, length, &GXSetDispCopyGammaSigs[3], &GXCopyDispSigs[4]);
 						
 						findx_pattern(data, dataType, i + 433, length, &GXSetBlendModeSigs[5]);
+						findx_pattern(data, dataType, i + 468, length, &GXSetFieldModeSigs[4]);
 						findx_pattern(data, dataType, i + 202, length, &GXSetViewportSigs[4]);
 						break;
 					case 8:
@@ -9167,6 +9184,7 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 							find_pattern_after(data, dataType, length, &GXSetDispCopyGammaSigs[3], &GXCopyDispSigs[4]);
 						
 						findx_pattern(data, dataType, i + 435, length, &GXSetBlendModeSigs[6]);
+						findx_pattern(data, dataType, i + 470, length, &GXSetFieldModeSigs[4]);
 						findx_pattern(data, dataType, i + 204, length, &GXSetViewportSigs[4]);
 						break;
 					case 9:
@@ -9180,6 +9198,7 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 							find_pattern_after(data, dataType, length, &GXSetDispCopyGammaSigs[4], &GXCopyDispSigs[5]);
 						
 						findx_pattern(data, dataType, i + 490, length, &GXSetBlendModeSigs[3]);
+						findx_pattern(data, dataType, i + 521, length, &GXSetFieldModeSigs[5]);
 						
 						if (findx_pattern(data, dataType, i + 215, length, &GXSetViewportSigs[5]))
 							find_pattern_before(data, dataType, length, &GXSetViewportSigs[5], &GXSetViewportJitterSigs[5]);
@@ -9195,6 +9214,7 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 							find_pattern_after(data, dataType, length, &GXSetDispCopyGammaSigs[4], &GXCopyDispSigs[6]);
 						
 						findx_pattern(data, dataType, i + 478, length, &GXSetBlendModeSigs[4]);
+						findx_pattern(data, dataType, i + 507, length, &GXSetFieldModeSigs[6]);
 						
 						if (findx_pattern(data, dataType, i + 209, length, &GXSetViewportSigs[6]))
 							find_pattern_before(data, dataType, length, &GXSetViewportSigs[6], &GXSetViewportJitterSigs[6]);
@@ -10748,30 +10768,6 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 		}
 	}
 	
-	for (j = 0; j < countof(__GXInitGXSigs); j++)
-	if ((i = __GXInitGXSigs[j].offsetFoundAt)) {
-		u32 *__GXInitGX = Calc_ProperAddress(data, dataType, i * sizeof(u32));
-		
-		if (__GXInitGX) {
-			if (swissSettings.forceVJitter == 1) {
-				switch (j) {
-					case  0: data[i + 1055] = 0x38600001; break;
-					case  1: data[i +  466] = 0x38600001; break;
-					case  2: data[i +  503] = 0x38600001; break;
-					case  3: data[i +  911] = 0x38600001; break;
-					case  4: data[i +  461] = 0x38600001; break;
-					case  5: data[i +  476] = 0x38600001; break;
-					case  6: data[i +  491] = 0x38600001; break;
-					case  7: data[i +  461] = 0x38600001; break;
-					case  8: data[i +  463] = 0x38600001; break;
-					case  9: data[i +  520] = 0x38600001; break;
-					case 10: data[i +  503] = 0x38600001; break;
-				}
-			}
-			print_debug("Found:[%s$%i] @ %08X\n", __GXInitGXSigs[j].Name, j, __GXInitGX);
-		}
-	}
-	
 	for (j = 0; j < countof(GXAdjustForOverscanSigs); j++)
 	if ((i = GXAdjustForOverscanSigs[j].offsetFoundAt)) {
 		u32 *GXAdjustForOverscan = Calc_ProperAddress(data, dataType, i * sizeof(u32));
@@ -10876,6 +10872,26 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 				}
 				print_debug("Found:[%s$%i] @ %08X\n", GXSetBlendModeSigs[j].Name, j, GXSetBlendMode);
 			}
+		}
+	}
+	
+	for (j = 0; j < countof(GXSetFieldModeSigs); j++)
+	if ((i = GXSetFieldModeSigs[j].offsetFoundAt)) {
+		u32 *GXSetFieldMode = Calc_ProperAddress(data, dataType, i * sizeof(u32));
+		
+		if (GXSetFieldMode) {
+			if (swissSettings.forceVJitter == 1) {
+				switch (j) {
+					case 0: data[i + 46] = 0x38000001; break;	// li		r0, 1
+					case 1: data[i + 44] = 0x38000001; break;	// li		r0, 1
+					case 2:
+					case 3: data[i +  9] = 0x3BA00001; break;	// li		r29, 1
+					case 4: data[i +  6] = 0x3B800001; break;	// li		r28, 1
+					case 5: data[i +  9] = 0x3BA00001; break;	// li		r29, 1
+					case 6: data[i +  8] = 0x3BE00001; break;	// li		r31, 1
+				}
+			}
+			print_debug("Found:[%s$%i] @ %08X\n", GXSetFieldModeSigs[j].Name, j, GXSetFieldMode);
 		}
 	}
 	
