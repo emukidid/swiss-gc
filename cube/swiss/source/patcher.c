@@ -10029,6 +10029,8 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 			
 			if (swissSettings.forceVJitter == 1 || (swissSettings.forceVJitter != 2 && swissSettings.fixPixelCenter))
 				VIConfigureHook1 = getPatchAddr(VI_CONFIGUREFIELDMODE);
+			if (swissSettings.forceVJitter == 1)
+				VIConfigureHook1[0] = 0x38000001;	// li		r0, 1
 			
 			switch (swissSettings.gameVMode) {
 				case -2:
@@ -10889,6 +10891,16 @@ void Patch_Video(u32 *data, u32 length, int dataType)
 					case 4: data[i +  6] = 0x3B800001; break;	// li		r28, 1
 					case 5: data[i +  9] = 0x3BA00001; break;	// li		r29, 1
 					case 6: data[i +  8] = 0x3BE00001; break;	// li		r31, 1
+				}
+			} else if (swissSettings.forceVJitter > 1) {
+				switch (j) {
+					case 0: data[i + 46] = 0x38000000; break;	// li		r0, 0
+					case 1: data[i + 44] = 0x38000000; break;	// li		r0, 0
+					case 2:
+					case 3: data[i +  9] = 0x3BA00000; break;	// li		r29, 0
+					case 4: data[i +  6] = 0x3B800000; break;	// li		r28, 0
+					case 5: data[i +  9] = 0x3BA00000; break;	// li		r29, 0
+					case 6: data[i +  8] = 0x3BE00000; break;	// li		r31, 0
 				}
 			}
 			print_debug("Found:[%s$%i] @ %08X\n", GXSetFieldModeSigs[j].Name, j, GXSetFieldMode);
