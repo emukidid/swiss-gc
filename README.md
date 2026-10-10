@@ -47,6 +47,7 @@ Note: Emulation is only available for the Dolphin SDK. Homebrew requires native 
 - Game ID for BlueRetro, FlipperMCE, MemCard PRO GC and PixelFX RetroGEM GC
 - Profile selection for RetroTINK-4K using [ser2net](https://github.com/cminyard/ser2net)
 - Return to loader and environment setup for [libogc2](https://github.com/extremscorner/libogc2) applications
+- Return to loader for libogc v3.2.0+ applications
 - Return to loader for older applications using a legacy mechanism
 - [wiiload](https://wiibrew.org/wiki/Wiiload) v0.5 over TCP/IP or USB Gecko
 
