@@ -305,7 +305,7 @@ s32 deviceHandler_Flippy_renameFile(file_handle* file, char* name) {
 	deviceHandler_Flippy_closeFile(file);
 	int ret = flippy_rename(getDevicePath(file->name), getDevicePath(name));
 	if(ret == FLIPPY_RESULT_OK || ret == FLIPPY_RESULT_NO_FILE || ret == FLIPPY_RESULT_NO_PATH)
-		strcpy(file->name, name);
+		strlcpy(file->name, name, sizeof(file->name));
 	return ret;
 }
 
