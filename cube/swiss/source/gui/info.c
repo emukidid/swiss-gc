@@ -160,6 +160,9 @@ uiDrawObj_t * info_draw_page(int page_num) {
 					strcpy(topStr, "Nintendo GameCube DOT-001");
 				}
 			}
+			else if(*DVDDeviceCode == 0x8000 && DVDDriveInfo->rel_date == 0x20010619) {
+				strcpy(topStr, "Nintendo Gateway GameCube MSA-500");
+			}
 			else if(*DVDDeviceCode == 0x8000 && DVDDriveInfo->pad[1] == 'M') {
 				strcpy(topStr, "Panasonic Q SL-GC10-S");
 			}
