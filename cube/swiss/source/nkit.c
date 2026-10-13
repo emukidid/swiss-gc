@@ -151,6 +151,7 @@ static const struct {
 	{ "apploader.img", /* 2002/03/28       */  113536, 0x5D2040FE89C64FBC },
 	{ "apploader.img", /* 2002/04/10       */  113536, 0xBBF3FF7C1A14AA59 },
 	{ "apploader.img", /* 2002/04/10       */  113536, 0xDC2A278D4F92A68C },
+	{ "apploader.img", /* 2002/09/05       */  116512, 0x3712B0FF29B57C84 },
 	{ "apploader.img", /* 2002/09/05       */  116512, 0x42C07D59E1227D14 },
 	{ "apploader.img", /* 2002/09/05       */  116512, 0x4E907A28728D421A },
 	{ "apploader.img", /* 2002/09/05       */  116512, 0x6587E6A4F9663BB7 },
@@ -188,7 +189,7 @@ static const struct {
 	{ "apploader.img", /* 2024/09/17       */  113536, 0x623687789597750B },
 	{ "apploader.img", /* 2025/07/10       */  113536, 0xED22F838A52EABC5 },
 	{ "apploader.img", /* 2026/05/11       */  116512, 0xCBDE805EC9BF9E55 },
-#define NKIT_FIRM_COUNT (FIRM_COUNT + 130)
+#define NKIT_FIRM_COUNT (FIRM_COUNT + 131)
 	{ "240p Test Suite (World) (v1.04) (Unl).dol",                  2301384, 0x71BCDBA149B3AAAF },
 	{ "240p Test Suite (World) (v1.06) (Unl).dol",                   930560, 0x7EB7DDDAF5105457 },
 	{ "240p Test Suite (World) (v1.07) (Unl).dol",                   932032, 0x4DAB8540272CCBD5 },
@@ -2490,6 +2491,7 @@ static const struct {
 	{{ "GW7E69\x00\x00" }, false, 0x66, 0xDB76, 0x4BC8D2F2, 0x2C85D98760F49F3C, 1342423040,  +117555200, {  663027520,  +117250240, 6496, 0x347B }, "007: Agent Under Fire: Reloaded" },
 	{{ "GW7E69\x00\x00" }, false, 0xE4, 0xBA0B, 0x9D4C631E, 0x2C85D98760F49F3C, 1303988224,  +155990016, {  665209012,  +155709260, 6496, 0x347B }, "007: Agent Under Fire: Reloaded" },
 	{{ "GWPP78\x00\x00" }, false, 0x1C, 0x8CFA, 0x4E7543EC, 0xD1D444106E2AB800, 1221117952,  +238860288, {  383449524,  +238861052, 6496, 0x2E8C }, "WWE Day of Reckoning 2" },
+	{{ "GWWE01\x00\x00" }, false, 0x86, 0x62C5, 0x68B519A9, 0x66534F09956CF631,  269649920, +1190328320, {  269642340, +1190329404, 6496, 0xBEB2 }, "Wario World" },
 	{{ "GXEE8P\x00\x00" }, false, 0xAC, 0x1743, 0x5F4EB455, 0x8E9452DC6F72AB90, 1401688064,   +58290176, {    1356504,      +19784, 6496, 0xCAD2 }, "Sonic Riders" },
 	{{ "GXPE78\x00\x00" }, false, 0x29, 0x3EAD, 0xF1EEF03F, 0xFF6D003B8A5037E6, 1444642816,   +15335424, {         ~0,          +0,    0, 0xFFFF }, "Pirates of the Caribbean" },
 	{{ "GXQP41\x00\x00" }, false, 0x8B, 0x904A, 0xD0B0EDE0, 0x260C8DE80E2C787E,  478402560,  +981575680, {  478393544,     +743596, 8096, 0xA071 }, "Taxi 3: The Game" },
@@ -2512,6 +2514,7 @@ static const struct {
 	{{ "GY3E01\x00\x00" }, false, 0xA4, 0x112A, 0xEBDE4B7E, 0xF8786AEC09D59DAE,  264794112, +1195184128, {    3756480, +1195184724, 6496, 0x12FC }, "Donkey Konga 3: Tabehoudai! Haru Mogitate 50-kyoku" },
 	{{ "GYFEA4\x00\x00" }, false, 0x99, 0xFD98, 0xF7DE993B, 0xF9A63BE22E0BCEE5,  584765440,  +875212800, {  344220044,  +875213940, 6496, 0x23CA }, "Yu-Gi-Oh! The Falsebound Kingdom" },
 	{{ "GZBEB2\x00\x00" }, false, 0x3E, 0x6A71, 0x21866440, 0x506BD6CC75ADDC0B,  553748480,  +906229760, {  114322196,       +1548, 6496, 0xB677 }, "Zatch Bell! Go! Go! Mamodo Fight!!" },
+	{{ "GZLE01\x00\x00" }, false, 0x03, 0x0503, 0xAF019DB9, 0x36D193DF45BFDAA4, 1086173184,  +373805056, { 1084514500,  +373806324, 6496, 0x825E }, "The Legend of Zelda: The Wind Waker" },
 	{{ "GZLE01\x00\x00" }, false, 0x09, 0x863D, 0x5D06C4D8, 0x36D193DF45BFDAA4,  720627712,   +40671232, {  225455448,    +9556648, 6496, 0xDF7E }, "The Legend of Zelda: The Wind Waker Rewritten" },
 	{{ "GZPE70\x00\x00" }, false, 0x63, 0x887C, 0xBC256FCD, 0xE7D53A48267CDB88, 1416488960,   +43489280, {    2317240,      +17384, 6496, 0x195D }, "Zapper" },
 	{{ "GZVJDA\x00\x00" }, true,  0x68, 0x2B52, 0x95B17023, 0x1DAB61B3A2307C7F,  852459520,  +607518720, {  274948656,  +194059728, 6496, 0xE4B0 }, "Zoids Vs. III" },
@@ -2522,6 +2525,7 @@ static const struct {
 	{{ "PZHP69\x00\x00" }, false, 0x40, 0xBAC4, 0x3873B78F, 0x6644F65D96920450, 1110884352,  +349093888, {  583244796,      +30880, 8096, 0x1D7C }, "Need for Speed: Underground" },
 	{{ "RELSAB\x00\x00" }, false, 0x01, 0x58E1, 0x911795AE, 0xFEF0EF64907D1C20,    3733504, +1456244736, {         ~0,          +0,    0, 0xFFFF }, "KPAD Demo" },
 	{{ "RELSAB\x00\x00" }, false, 0x01, 0xD64E, 0x87A41CC0, 0x6973B52BB5B82A39, 1374566400,   +85411840, { 1374558044,       +4580, 6496, 0x9CA2 }, "Gladius" },
+	{{ "RELSAB\x00\x00" }, false, 0x20, 0x5D4D, 0xF9E0CEDA, 0x3869AEF190DB9003,   37224448, +1422753792, {         ~0,          +0,    0, 0xFFFF }, "Gateway Utility" },
 	{{ "RELSAB\x00\x00" }, false, 0x68, 0xF505, 0xEE5FC0C9, 0x85E3A0F139E4F00D,     438272, +1459539968, {     382556,      +10660, 6496, 0x1071 }, "Wireless Receiver Test" },
 	{{ "RELSAB\x00\x00" }, false, 0x9E, 0xBA9E, 0x1D74AD4A, 0x1A5F0EA47A582D7E, 1455841280,    +4136960, {         ~0,          +0,    0, 0xFFFF }, "Memory Card Utility Program" },
 	{{ "RELSAB\x00\x00" }, false, 0xAD, 0x35B7, 0x524B2418, 0x589D3DE183C7219D,  750051328,  +709926912, {         ~0,          +0,    0, 0xFFFF }, "Disney/Pixar Ratatouille" },
@@ -2539,7 +2543,7 @@ static const struct {
 	{{ "SG4JDA\x00\x00" }, true,  0x52, 0xF019, 0x4BB4830A, 0x3645CAE26589C220, 1272594432,  +187383808, { 1272587604,  +187384140, 6496, 0x015D }, "Naruto: Clash of Ninja 4" },
 	{{ "SG4JDA\x00\x00" }, true,  0x9D, 0xB3B3, 0x424A4760, 0x38394EDF8E58393A, 1261602816,  +198375424, { 1261594344,  +198377400, 6496, 0x015D }, "Naruto: Clash of Ninja 4" },
 	{{ "TESTNA\x00\x00" }, false, 0xD2, 0x0C28, 0x6254FB97, 0xAA2E5EDD0EF81992,   26834944,       -1658, {         ~0,          +0,    0, 0xFFFF }, "Dodger Demo" },
-#define VALID_GCM_COUNT (REDUMP_COUNT + 248)
+#define VALID_GCM_COUNT (REDUMP_COUNT + 251)
 	{{ "000801\x00\x00" }, true,  0x72, 0xB329, 0x0E0756FC, 0x2541648547EA120F, 1354366976,  +105611264, {         ~0,          +0,    0, 0xFFFF }, "Diag 2001/03/29" },
 	{{ "101E01\x00\x05" }, true,  0x88, 0xB6FD, 0x4BB518CD, 0x27CFAD706924A030, 1435949056,   +24029184, {         ~0,          +0,    0, 0xFFFF }, "Hontai Kensa Disc DOL-USA" },
 	{{ "101E01\x00\x05" }, true,  0xC6, 0xB6FD, 0x4BB518CD, 0x27CFAD706924A030, 1435949056,   +24029184, {         ~0,          +0,    0, 0xFFFF }, "Hontai Kensa Disc DOL-USA" },
