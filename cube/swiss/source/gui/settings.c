@@ -65,66 +65,225 @@ const int simulatedMemSizeInt[] = {
 };
 
 static char *tooltips_global[PAGE_GLOBAL_MAX+1] = {
-	[SET_SYS_BOOTMODE] = "System Boot Mode:\n\nSets development or production mode on development hardware.\nOn retail hardware with GC Loader or PicoLoader, the default\nskips the GameCube logo screen.",
-	[SET_SYS_SOUND] = "System Sound:\n\nSets the default audio output type used by most games",
-	[SET_SYS_VIDEO] = "System Video:\n\nIntended to select between NTSC and PAL-M on DOL-002(BRA)",
-	[SET_SCREEN_POS] = "Screen Position:\n\nAdjusts the horizontal screen position in games",
-	[SET_SYS_LANG] = "System Language:\n\nSystem language used in games, primarily multi-5 PAL games",
-	[SET_CONFIG_DEV] = "Configuration Device:\n\nThe device that Swiss will use to load and save settings from.\nThis setting is stored in SRAM and will remain on reboot.",
-	[SET_APPS_VIDEOMODE] = "Apps Video Mode:\n\nApplicable to libogc2 applications and very loosely so to libogc.",
-	[SET_INIT_DRIVE] = "Init DVD Drive at startup:\n\nDisabled - Leave it as-is (default)\nEnabled - Deassert reset signal when Swiss starts\n\nThis is necessary for the eject button to function on the\nPanasonic Q when Swiss is used as IPL replacement.",
-	[SET_STOP_MOTOR] = "Stop DVD Drive motor:\n\nDisabled - Leave it as-is (default)\nEnabled - Stop the disc from spinning when Swiss starts\n\nThis option is mostly for users booting from game save exploits\nwhere the disc will already be spinning.",
-	[SET_AUDIO_BUFFER] = "Configure Audio Buffer:\n\nOff - Disable audio streaming\nAuto - Enable audio streaming if the disc is known to use it\nOn - Enable audio streaming if the disc asks for it (default)\n\nThe audio buffer consumes a large portion of the GameCube\ndisc drive's read-ahead cache, lengthening load times.",
-	[SET_EXI_SPEED] = "SD/IDE-EXI Speed:\n\nThe clock speed to try using on the EXI bus for SD cards and\nIDE-EXI devices. 27 MHz may not work with some SD cards or\nSD card adapters.",
-	[SET_AVE_COMPAT] = "AVE Compatibility:\n\nSets the compatibility mode for the used audio/video encoder.\n\nAVE N-DOL - Output PAL as NTSC 50\nAVE P-DOL - Disable progressive scan mode\nCMPV-DOL - Enable 1080i & 540p\nGCDigital - Apply input filtering in OSD\nGCVideo - Apply general workarounds for GCVideo (default)\nAVE-RVL - Support 960i & 1152i without WiiVideo",
-	[SET_FORCE_DTVSTATUS] = "Force DTV Status:\n\nDisabled - Use detect signal from the Digital AV Out (default)\nEnabled - Force detection in the case of a hardware fault\nRegion Switch - Ease transition between SD/ED TV setups",
-	[SET_RT4K_OPTIM] = "RetroTINK-4K HDMI Input:\n\nFor GCDigital compatibility mode:\n Requires FX-Framework firmware version 3.9.46.178 or later\n and RetroTINK-4K firmware version 1.9.4 or later, and using\n DV1-Direct mode.\n\nFor GCVideo compatibility mode:\n Requires GCVideo-DVI firmware version 3.0 or later.",
-	[SET_DISABLE_RECALIB] = "Disable Controller Recalibration:\n\nAvoids problems with non-compliant GameCube Controller\nimplementations.",
-	[SET_ENABLE_USBGECKO] = "Enable USB Gecko:\n\nIf a USB Gecko is present, messages output to the debug UART\nwill be redirected. When the USB host isn't actively reading from\nthe USB Gecko, it may cause the system to hang.\n\nwiiload is also made available for iterative development.",
-	[SET_WAIT_USBGECKO] = "Wait for USB Gecko:\n\nWait for the transmit buffer to be read by the USB host when full.",
-	[SET_SIMMEMSIZE] = "Simulated MRAM Size:\n\nLimits the amount of memory available on development hardware.",
-	[SET_TAU_CALIB] = "CPU Temperature Calibration:\n\nOn a cold boot, adjust this value so that the CPU temperature\nreading in the title bar is around room temperature.\n\nThere is no factory calibration."
+	[SET_SYS_BOOTMODE] = "System Boot Mode:\n\n"
+		"Sets development or production mode on development hardware.\n"
+		"On retail hardware with GC Loader or PicoLoader, the default\n"
+		"skips the GameCube logo screen.",
+	[SET_SYS_SOUND] = "System Sound:\n\n"
+		"Sets the default audio output type used by most games",
+	[SET_SYS_VIDEO] = "System Video:\n\n"
+		"Intended to select between NTSC and PAL-M on DOL-002(BRA)",
+	[SET_SCREEN_POS] = "Screen Position:\n\n"
+		"Adjusts the horizontal screen position in games",
+	[SET_SYS_LANG] = "System Language:\n\n"
+		"System language used in games, primarily multi-5 PAL games",
+	[SET_CONFIG_DEV] = "Configuration Device:\n\n"
+		"The device that Swiss will use to load and save settings from.\n"
+		"This setting is stored in SRAM and will remain on reboot.",
+	[SET_APPS_VIDEOMODE] = "Apps Video Mode:\n\n"
+		"Applicable to libogc2 applications and very loosely so to libogc.",
+	[SET_INIT_DRIVE] = "Init DVD Drive at startup:\n\n"
+		"Disabled - Leave it as-is (default)\n"
+		"Enabled - Deassert reset signal when Swiss starts\n\n"
+		"This is necessary for the eject button to function on the\n"
+		"Panasonic Q when Swiss is used as IPL replacement.",
+	[SET_STOP_MOTOR] = "Stop DVD Drive motor:\n\n"
+		"Disabled - Leave it as-is (default)\n"
+		"Enabled - Stop the disc from spinning when Swiss starts\n\n"
+		"This option is mostly for users booting from game save exploits\n"
+		"where the disc will already be spinning.",
+	[SET_AUDIO_BUFFER] = "Configure Audio Buffer:\n\n"
+		"Off - Disable audio streaming\n"
+		"Auto - Enable audio streaming if the disc is known to use it\n"
+		"On - Enable audio streaming if the disc asks for it (default)\n\n"
+		"The audio buffer consumes a large portion of the GameCube\n"
+		"disc drive's read-ahead cache, lengthening load times.",
+	[SET_EXI_SPEED] = "SD/IDE-EXI Speed:\n\n"
+		"The clock speed to try using on the EXI bus for SD cards and\n"
+		"IDE-EXI devices. 27 MHz may not work with some SD cards or\n"
+		"SD card adapters.",
+	[SET_AVE_COMPAT] = "AVE Compatibility:\n\n"
+		"Sets the compatibility mode for the used audio/video encoder.\n\n"
+		"AVE N-DOL - Output PAL as NTSC 50\n"
+		"AVE P-DOL - Disable progressive scan mode\n"
+		"CMPV-DOL - Enable 1080i & 540p\n"
+		"GCDigital - Apply input filtering in OSD\n"
+		"GCVideo - Apply general workarounds for GCVideo (default)\n"
+		"AVE-RVL - Support 960i & 1152i without WiiVideo",
+	[SET_FORCE_DTVSTATUS] = "Force DTV Status:\n\n"
+		"Disabled - Use detect signal from the Digital AV Out (default)\n"
+		"Enabled - Force detection in the case of a hardware fault\n"
+		"Region Switch - Ease transition between SD/ED TV setups",
+	[SET_RT4K_OPTIM] = "RetroTINK-4K HDMI Input:\n\n"
+		"For GCDigital compatibility mode:\n"
+		" Requires FX-Framework firmware version 3.9.46.178 or later\n"
+		" and RetroTINK-4K firmware version 1.9.4 or later, and using\n"
+		" DV1-Direct mode.\n\n"
+		"For GCVideo compatibility mode:\n"
+		" Requires GCVideo-DVI firmware version 3.0 or later.",
+	[SET_DISABLE_RECALIB] = "Disable Controller Recalibration:\n\n"
+		"Avoids problems with non-compliant GameCube Controller\n"
+		"implementations.",
+	[SET_ENABLE_USBGECKO] = "Enable USB Gecko:\n\n"
+		"If a USB Gecko is present, messages output to the debug UART\n"
+		"will be redirected. When the USB host isn't actively reading from\n"
+		"the USB Gecko, it may cause the system to hang.\n\n"
+		"wiiload is also made available for iterative development.",
+	[SET_WAIT_USBGECKO] = "Wait for USB Gecko:\n\n"
+		"Wait for the transmit buffer to be read by the USB host when full.",
+	[SET_SIMMEMSIZE] = "Simulated MRAM Size:\n\n"
+		"Limits the amount of memory available on development hardware.",
+	[SET_TAU_CALIB] = "CPU Temperature Calibration:\n\n"
+		"On a cold boot, adjust this value so that the CPU temperature\n"
+		"reading in the title bar is around room temperature.\n\n"
+		"There is no factory calibration."
 };
 
 static char *tooltips_interface[PAGE_INTERFACE_MAX+1] = {
-	[SET_FILEBROWSER_TYPE] = "File Browser Type:\n\nStandard - Displays files with minimal detail. (default)\n\nFullwidth - Displays files across the entire screen while hiding\nside information panels.\n\nCarousel - Suited towards Game/DOL only use, consider combining\nthis option with the \223File Management\224 setting turned off and\n\223Hide unknown file types\224 turned on for a better experience.",
-	[SET_APPSBROWSER_TYPE] = "File Browser Type for apps:\n\nApplicable to the /apps directory.",
-	[SET_GAMEBROWSER_TYPE] = "File Browser Type for games:\n\nApplicable to the /games directory.",
-	[SET_FILE_MGMT] = "File Management:\n\nWhen enabled, pressing Z on an entry in the file browser will\nallow it to be managed.",
-	[SET_RECENT_LIST] = "Recent List:\n\n(On) - Press Start while browsing to show a recent list.\n(Lazy) - Same as On but list updates only for new entries.\n(Off) - Recent list is completely disabled.\n\nThe lazy/off options exist to minimise SD card writes.",
-	[SET_HIDE_UNK] = "Hide unknown file types:\n\nDisabled - Show all files (default)\nEnabled - Hide unknown file types from being displayed\n\nKnown file types are:\n GameCube Executables (.bin/.dol/.elf)\n Disc images (.gcm/.iso/.nkit.iso/.tgc)\n MP3 Music (.mp3)\n WASP/WKF Flash files (.fzn)\n GameCube Memory Card files (.gci/.gcs/.sav)\n GameCube Executables with parameters appended (.dol+cli)",
-	[SET_FLATTEN_DIR] = "Flatten directory:\n\nFlattens a directory structure matching a glob pattern."
+	[SET_FILEBROWSER_TYPE] = "File Browser Type:\n\n"
+		"Standard - Displays files with minimal detail. (default)\n\n"
+		"Fullwidth - Displays files across the entire screen while hiding\n"
+		"side information panels.\n\n"
+		"Carousel - Suited towards Game/DOL only use, consider combining\n"
+		"this option with the \223File Management\224 setting turned off and\n"
+		"\223Hide unknown file types\224 turned on for a better experience.",
+	[SET_APPSBROWSER_TYPE] = "File Browser Type for apps:\n\n"
+		"Applicable to the /apps directory.",
+	[SET_GAMEBROWSER_TYPE] = "File Browser Type for games:\n\n"
+		"Applicable to the /games directory.",
+	[SET_FILE_MGMT] = "File Management:\n\n"
+		"When enabled, pressing Z on an entry in the file browser will\n"
+		"allow it to be managed.",
+	[SET_RECENT_LIST] = "Recent List:\n\n"
+		"(On) - Press Start while browsing to show a recent list.\n"
+		"(Lazy) - Same as On but list updates only for new entries.\n"
+		"(Off) - Recent list is completely disabled.\n\n"
+		"The lazy/off options exist to minimise SD card writes.",
+	[SET_HIDE_UNK] = "Hide unknown file types:\n\n"
+		"Disabled - Show all files (default)\n"
+		"Enabled - Hide unknown file types from being displayed\n\n"
+		"Known file types are:\n"
+		" GameCube Executables (.bin/.dol/.elf)\n"
+		" Disc images (.gcm/.iso/.nkit.iso/.tgc)\n"
+		" MP3 Music (.mp3)\n"
+		" WASP/WKF Flash files (.fzn)\n"
+		" GameCube Memory Card files (.gci/.gcs/.sav)\n"
+		" GameCube Executables with parameters appended (.dol+cli)",
+	[SET_FLATTEN_DIR] = "Flatten directory:\n\n"
+		"Flattens a directory structure matching a glob pattern."
 };
 
 static char *tooltips_network[PAGE_NETWORK_MAX+1] = {
-	[SET_INIT_NET] = "Init network at startup:\n\nDisabled - Do not initialise the BBA even if present (default)\nEnabled - If a BBA is present, it will be initialised at startup\n\nIf initialised, navigate to the IP in a web browser to backup\nvarious data. wiiload is available for iterative development.",
-	[SET_FSP_PMTU] = "FSP Path MTU:\n\nThe valid range is between 576 and 2030 bytes (default: 1500).\nIncreasing this value may provide a performance enhancement.\n\nThe maximum packet size on the server should be set to at least\nthis value, minus 40 bytes. The Layer 2 MTU on all involved\nnetwork interfaces must be set to at least this value.\n\nMisconfiguration will result in read errors. Users of USB Dolphin\nneed to observe limitations specific to their USB Ethernet adapter."
+	[SET_INIT_NET] = "Init network at startup:\n\n"
+		"Disabled - Do not initialise the BBA even if present (default)\n"
+		"Enabled - If a BBA is present, it will be initialised at startup\n\n"
+		"If initialised, navigate to the IP in a web browser to backup\n"
+		"various data. wiiload is available for iterative development.",
+	[SET_FSP_PMTU] = "FSP Path MTU:\n\n"
+		"The valid range is between 576 and 2030 bytes (default: 1500).\n"
+		"Increasing this value may provide a performance enhancement.\n\n"
+		"The maximum packet size on the server should be set to at least\n"
+		"this value, minus 40 bytes. The Layer 2 MTU on all involved\n"
+		"network interfaces must be set to at least this value.\n\n"
+		"Misconfiguration will result in read errors. Users of USB Dolphin\n"
+		"need to observe limitations specific to their USB Ethernet adapter."
 };
 
 static char *tooltips_game_global[PAGE_GAME_GLOBAL_MAX+1] = {
-	[SET_IGR] = "In-Game Reset: (A + Z + Start)\n\nReboot - Perform hot reset with a compatible device\nApploader - Requires /swiss/patches/apploader.img",
-	[SET_BS2BOOT] = "Load GameCube Main Menu:\n\nWhen enabled, games will be booted with the GameCube logo\nscreen and Main Menu accessible with patches applied.\n\nRequires /swiss/patches/ipl.bin on Wii.",
-	[SET_FORCE_VIDACTIVE] = "Force Video Active:\n\nA workaround for GCVideo-DVI firmware version series 3.0,\nrendered obsolete by 3.1 and later.",
-	[SET_PAUSE_AVOUTPUT] = "Pause for resolution change:\n\nWhen enabled, a change in active video resolution will pause the\ngame for 2 seconds.",
-	[SET_ALL_CHEATS] = "Auto-load cheats:\n\nIf enabled, and a cheats file for a particular game is found\ne.g. /swiss/cheats/GPOP8D.txt (on a compatible device)\nthen all previously enabled cheats will be re-enabled",
-	[SET_WIIRDDBG] = "WiiRD debugging:\n\nDisabled - Boot as normal (default)\nEnabled - This will start a game with the WiiRD debugger enabled & paused\n\nThe WiiRD debugger takes up more memory and can cause issues."
+	[SET_IGR] = "In-Game Reset: (A + Z + Start)\n\n"
+		"Reboot - Perform hot reset with a compatible device\n"
+		"Apploader - Requires /swiss/patches/apploader.img",
+	[SET_BS2BOOT] = "Load GameCube Main Menu:\n\n"
+		"When enabled, games will be booted with the GameCube logo\n"
+		"screen and Main Menu accessible with patches applied.\n\n"
+		"Requires /swiss/patches/ipl.bin on Wii.",
+	[SET_FORCE_VIDACTIVE] = "Force Video Active:\n\n"
+		"A workaround for GCVideo-DVI firmware version series 3.0,\n"
+		"rendered obsolete by 3.1 and later.",
+	[SET_PAUSE_AVOUTPUT] = "Pause for resolution change:\n\n"
+		"When enabled, a change in active video resolution will pause the\n"
+		"game for 2 seconds.",
+	[SET_ALL_CHEATS] = "Auto-load cheats:\n\n"
+		"If enabled, and a cheats file for a particular game is found\n"
+		"e.g. /swiss/cheats/GPOP8D.txt (on a compatible device)\n"
+		"then all previously enabled cheats will be re-enabled",
+	[SET_WIIRDDBG] = "WiiRD debugging:\n\n"
+		"Disabled - Boot as normal (default)\n"
+		"Enabled - This will start a game with the WiiRD debugger enabled & paused\n\n"
+		"The WiiRD debugger takes up more memory and can cause issues."
 };
 
 static char *tooltips_game[PAGE_GAME_DEFAULTS_MAX+1] = {
-	[SET_VERT_FILTER] = "Force Vertical Filter:\n\nFor 480i & 576i:\n Auto - Do nothing (default)\n\nFor 240p & 288p:\n Auto - Equivalent to 0 (default)\n 0 - 50%/50% blend with lower lines\n 1 - 50%/50% blend with upper lines\n 2 - Discard even lines\n\nFor other video modes:\n Auto - Equivalent to 0 (default)\n 0 - 3\327MSAA resolve only\n 1 - 18.75%/62.5%/18.75% blend\n 2 - 25%/50%/25% blend (deflicker)",
-	[SET_PIXEL_CENTER] = "Fix Pixel Center:\n\nNot to be confused with the \223480p Pixel Fix\224 on Wii.",
-	[SET_ANISO_FILTER] = "Force Anisotropic Filter:\n\nThe GameCube's texture sampling hardware is optimised for the\ntrilinear filtering of 16 bpp textures and the bilinear filtering of\n32 bpp textures.\n\nIt is not unusual for the performance to randomly plummet once\nanisotropic filtering is enabled, so do so sparingly.",
-	[SET_POLL_RATE] = "Force Polling Rate:\n\nVSync - Highest compatibility\n1000Hz - Lowest input latency",
-	[SET_INVERT_CAMERA] = "Invert Camera Stick:\n\nNo - Leave C Stick as-is (default)\nX - Invert X-axis of the C Stick\nY - Invert Y-axis of the C Stick\nX&Y - Invert both axes of the C Stick",
-	[SET_SWAP_CAMERA] = "Swap Camera Stick:\n\nNo - Leave C Stick as-is (default)\nX - Swap X-axis of the C Stick with the Control Stick\nY - Swap Y-axis of the C Stick with the Control Stick\nX&Y - Swap both axes of the C Stick with the Control Stick",
-	[SET_TRIGGER_LEVEL] = "Digital Trigger Level:\n\nSets the threshold where the L/R Button is fully pressed.",
-	[SET_AUDIO_STREAM] = "Emulate Audio Streaming:\n\nAudio streaming is a hardware feature that allows a compressed\naudio track to be played in the background by the disc drive.\n\nEmulation is necessary for devices not attached to the\nDVD Interface, or for those not implementing it regardless.",
-	[SET_READ_SPEED] = "Emulate Read Speed:\n\nNo - Start transfer immediately (default)\nYes - Delay transfer to simulate the GameCube disc drive\nWii - Delay transfer to simulate the Wii disc drive\n\nThis is necessary to avoid programming mistakes obfuscated by\nthe original medium, or for speedrunning.",
-	[SET_EMULATE_ETHERNET] = "Emulate Broadband Adapter:\n\nOnly available with the File Service Protocol or an initialised\nETH2GC/GCNET module, where memory constraints permit.\n\nPackets not destined for the hypervisor are forwarded to the\nvirtual MAC. The virtual MAC address is the same as the\nphysical MAC. The physical MAC/PHY retain their configuration\nfrom Swiss, including link speed.",
-	[SET_DISABLE_MEMCARD] = "Disable Memory Card:\n\nSome games misbehave when unexpected devices are present in\nthe memory card slots. When selected, the device will be hidden\nfrom the game if present at boot time.",
-	[SET_DISABLE_HYPERVISOR] = "Disable Hypervisor:\n\nDisables all features and bugfixes relying upon the hypervisor,\nalong with prepatching and patch persistence.\n\nOnly available to devices attached to the DVD Interface.",
-	[SET_CLEAN_BOOT] = "Prefer Clean Boot:\n\nWhen enabled, the GameCube will be reset and the game booted\nthrough normal processes with no changes applied.\nRegion restrictions may be applicable.\n\nOnly available to devices attached to the DVD Interface.",
-	[SET_RT4K_PROFILE] = "RetroTINK-4K Profile:\n\nPresses a profile button through a configured ser2net TCP\nconnection to the RetroTINK-4K's serial port."
+	[SET_VERT_FILTER] = "Force Vertical Filter:\n\n"
+		"For 480i & 576i:\n"
+		" Auto - Do nothing (default)\n\n"
+		"For 240p & 288p:\n"
+		" Auto - Equivalent to 0 (default)\n"
+		" 0 - 50%/50% blend with lower lines\n"
+		" 1 - 50%/50% blend with upper lines\n"
+		" 2 - Discard even lines\n\n"
+		"For other video modes:\n"
+		" Auto - Equivalent to 0 (default)\n"
+		" 0 - 3\327MSAA resolve only\n"
+		" 1 - 18.75%/62.5%/18.75% blend\n"
+		" 2 - 25%/50%/25% blend (deflicker)",
+	[SET_PIXEL_CENTER] = "Fix Pixel Center:\n\n"
+		"Not to be confused with the \223480p Pixel Fix\224 on Wii.",
+	[SET_ANISO_FILTER] = "Force Anisotropic Filter:\n\n"
+		"The GameCube's texture sampling hardware is optimised for the\n"
+		"trilinear filtering of 16 bpp textures and the bilinear filtering of\n"
+		"32 bpp textures.\n\n"
+		"It is not unusual for the performance to randomly plummet once\n"
+		"anisotropic filtering is enabled, so do so sparingly.",
+	[SET_POLL_RATE] = "Force Polling Rate:\n\n"
+		"VSync - Highest compatibility\n"
+		"1000Hz - Lowest input latency",
+	[SET_INVERT_CAMERA] = "Invert Camera Stick:\n\n"
+		"No - Leave C Stick as-is (default)\n"
+		"X - Invert X-axis of the C Stick\n"
+		"Y - Invert Y-axis of the C Stick\n"
+		"X&Y - Invert both axes of the C Stick",
+	[SET_SWAP_CAMERA] = "Swap Camera Stick:\n\n"
+		"No - Leave C Stick as-is (default)\n"
+		"X - Swap X-axis of the C Stick with the Control Stick\n"
+		"Y - Swap Y-axis of the C Stick with the Control Stick\n"
+		"X&Y - Swap both axes of the C Stick with the Control Stick",
+	[SET_TRIGGER_LEVEL] = "Digital Trigger Level:\n\n"
+		"Sets the threshold where the L/R Button is fully pressed.",
+	[SET_AUDIO_STREAM] = "Emulate Audio Streaming:\n\n"
+		"Audio streaming is a hardware feature that allows a compressed\n"
+		"audio track to be played in the background by the disc drive.\n\n"
+		"Emulation is necessary for devices not attached to the\n"
+		"DVD Interface, or for those not implementing it regardless.",
+	[SET_READ_SPEED] = "Emulate Read Speed:\n\n"
+		"No - Start transfer immediately (default)\n"
+		"Yes - Delay transfer to simulate the GameCube disc drive\n"
+		"Wii - Delay transfer to simulate the Wii disc drive\n\n"
+		"This is necessary to avoid programming mistakes obfuscated by\n"
+		"the original medium, or for speedrunning.",
+	[SET_EMULATE_ETHERNET] = "Emulate Broadband Adapter:\n\n"
+		"Only available with the File Service Protocol or an initialised\n"
+		"ETH2GC/GCNET module, where memory constraints permit.\n\n"
+		"Packets not destined for the hypervisor are forwarded to the\n"
+		"virtual MAC. The virtual MAC address is the same as the\n"
+		"physical MAC. The physical MAC/PHY retain their configuration\n"
+		"from Swiss, including link speed.",
+	[SET_DISABLE_MEMCARD] = "Disable Memory Card:\n\n"
+		"Some games misbehave when unexpected devices are present in\n"
+		"the memory card slots. When selected, the device will be hidden\n"
+		"from the game if present at boot time.",
+	[SET_DISABLE_HYPERVISOR] = "Disable Hypervisor:\n\n"
+		"Disables all features and bugfixes relying upon the hypervisor,\n"
+		"along with prepatching and patch persistence.\n\n"
+		"Only available to devices attached to the DVD Interface.",
+	[SET_CLEAN_BOOT] = "Prefer Clean Boot:\n\n"
+		"When enabled, the GameCube will be reset and the game booted\n"
+		"through normal processes with no changes applied.\n"
+		"Region restrictions may be applicable.\n\n"
+		"Only available to devices attached to the DVD Interface.",
+	[SET_RT4K_PROFILE] = "RetroTINK-4K Profile:\n\n"
+		"Presses a profile button through a configured ser2net TCP\n"
+		"connection to the RetroTINK-4K's serial port."
 };
 
 // Number of settings (including Back, Next, Save, Exit buttons) per page
