@@ -71,6 +71,7 @@ static char *tooltips_global[PAGE_GLOBAL_MAX+1] = {
 	[SET_SCREEN_POS] = "Screen Position:\n\nAdjusts the horizontal screen position in games",
 	[SET_SYS_LANG] = "System Language:\n\nSystem language used in games, primarily multi-5 PAL games",
 	[SET_CONFIG_DEV] = "Configuration Device:\n\nThe device that Swiss will use to load and save settings from.\nThis setting is stored in SRAM and will remain on reboot.",
+	[SET_APPS_VIDEOMODE] = "Apps Video Mode:\n\nApplicable to libogc2 applications and very loosely so to libogc.",
 	[SET_INIT_DRIVE] = "Init DVD Drive at startup:\n\nDisabled - Leave it as-is (default)\nEnabled - Deassert reset signal when Swiss starts\n\nThis is necessary for the eject button to function on the\nPanasonic Q when Swiss is used as IPL replacement.",
 	[SET_STOP_MOTOR] = "Stop DVD Drive motor:\n\nDisabled - Leave it as-is (default)\nEnabled - Stop the disc from spinning when Swiss starts\n\nThis option is mostly for users booting from game save exploits\nwhere the disc will already be spinning.",
 	[SET_AUDIO_BUFFER] = "Configure Audio Buffer:\n\nOff - Disable audio streaming\nAuto - Enable audio streaming if the disc is known to use it\nOn - Enable audio streaming if the disc asks for it (default)\n\nThe audio buffer consumes a large portion of the GameCube\ndisc drive's read-ahead cache, lengthening load times.",
@@ -194,6 +195,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 	uiDrawObj_t* page = DrawEmptyBox(20,60, getVideoMode()->fbWidth-20, 460);
 	char sramHOffsetStr[8];
 	char uiVModeStr[21];
+	char appsVModeStr[21];
 	char sramTemperatureStr[8];
 	char bbaNetmaskStr[8];
 	char forceVOffsetStr[8];
@@ -259,7 +261,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 		bool dtvEnable = !in_range(swissSettings.aveCompat, AVE_N_DOL_COMPAT, AVE_P_DOL_COMPAT);
 		bool rt4kEnable = in_range(swissSettings.aveCompat, GCDIGITAL_COMPAT, GCVIDEO_COMPAT);
 		// TODO settings to a new typedef that ties type etc all together, then draw a "page" of these rather than this at some point.
-		if(option < SET_AVE_COMPAT) {
+		if(option < SET_EXI_SPEED) {
 			drawSettingEntryString(page, &page_y_ofs, "System Boot Mode:", swissSettings.sramBoot ? "Production" : "Default", option == SET_SYS_BOOTMODE, true);
 			drawSettingEntryString(page, &page_y_ofs, "System Sound:", swissSettings.sramStereo ? "Stereo" : "Mono", option == SET_SYS_SOUND, true);
 			drawSettingEntryString(page, &page_y_ofs, "System Video:", sramVideoStr[swissSettings.sramVideo], option == SET_SYS_VIDEO, tvEnable);
@@ -269,11 +271,13 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 			drawSettingEntryString(page, &page_y_ofs, "Configuration Device:", getConfigDeviceName(&swissSettings), option == SET_CONFIG_DEV, true);
 			sprintf(uiVModeStr, "%s%s", getVideoModeString(getVideoModeFromSwissSetting(swissSettings.uiVMode)), swissSettings.uiVMode == 0 ? " (Auto) " : "");
 			drawSettingEntryString(page, &page_y_ofs, "Swiss Video Mode:", uiVModeStr, option == SET_SWISS_VIDEOMODE, true);
+			sprintf(appsVModeStr, "%s%s", getVideoModeString(getVideoModeFromSwissSetting(swissSettings.appsVMode ? : swissSettings.uiVMode)), swissSettings.appsVMode == 0 ? " (Auto) " : "");
+			drawSettingEntryString(page, &page_y_ofs, "Apps Video Mode:", appsVModeStr, option == SET_APPS_VIDEOMODE, true);
 			drawSettingEntryBoolean(page, &page_y_ofs, "Init DVD Drive at startup:", swissSettings.initDVDDriveAtStart, option == SET_INIT_DRIVE, dvdEnable);
 			drawSettingEntryBoolean(page, &page_y_ofs, "Stop DVD Drive motor:", swissSettings.stopMotor, option == SET_STOP_MOTOR, dvdEnable);
 			drawSettingEntryString(page, &page_y_ofs, "Configure Audio Buffer:", configAudioBufferStr[swissSettings.configAudioBuffer], option == SET_AUDIO_BUFFER, dvdEnable);
-			drawSettingEntryString(page, &page_y_ofs, "SD/IDE-EXI Speed:", swissSettings.exiSpeed ? "27 MHz" : "13.5 MHz", option == SET_EXI_SPEED, true);
 		} else {
+			drawSettingEntryString(page, &page_y_ofs, "SD/IDE-EXI Speed:", swissSettings.exiSpeed ? "27 MHz" : "13.5 MHz", option == SET_EXI_SPEED, true);
 			drawSettingEntryString(page, &page_y_ofs, "AVE Compatibility:", aveCompatStr[swissSettings.aveCompat], option == SET_AVE_COMPAT, true);
 			drawSettingEntryString(page, &page_y_ofs, "Force DTV Status:", forceDTVStatusStr[swissSettings.forceDTVStatus], option == SET_FORCE_DTVSTATUS, dtvEnable);
 			drawSettingEntryBoolean(page, &page_y_ofs, "RetroTINK-4K HDMI Input:", swissSettings.rt4kOptim, option == SET_RT4K_OPTIM, rt4kEnable);
@@ -542,6 +546,10 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 			case SET_SWISS_VIDEOMODE:
 				swissSettings.uiVMode += direction;
 				swissSettings.uiVMode = (swissSettings.uiVMode + 9) % 9;
+			break;
+			case SET_APPS_VIDEOMODE:
+				swissSettings.appsVMode += direction;
+				swissSettings.appsVMode = (swissSettings.appsVMode + 9) % 9;
 			break;
 			case SET_INIT_DRIVE:
 				if(deviceHandler_getDeviceAvailable(&__device_dvd))

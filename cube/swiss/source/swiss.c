@@ -1451,6 +1451,12 @@ void boot_dol(file_handle* file, int argc, char *argv[])
 	if(swissSettings.hasFlippyDrive && needs_flippy_bypass(file, hash)) {
 		flippy_bypass(true);
 	}
+	if(swissSettings.appsVMode > 0) {
+		GXRModeObj *forcedMode = getVideoModeFromSwissSetting(swissSettings.appsVMode);
+		DrawVideoMode(forcedMode);
+		swissSettings.sram60Hz = getTVFormat() == VI_EURGB60;
+		swissSettings.sramProgressive = getScanMode() == VI_PROGRESSIVE;
+	}
 
 	if(!memcmp(buffer, ELFMAG, SELFMAG)) {
 		ELFtoARAM(buffer, argz, argz_len);

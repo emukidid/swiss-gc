@@ -104,6 +104,7 @@ typedef struct {
 	int hasFlippyDrive;
 	int exiSpeed;
 	int uiVMode;	// What mode to force Swiss into
+	int appsVMode;
 	int gameVMode;	// What mode to force a Game into
 	int gameVModeNtsc;
 	int gameVModePal;
