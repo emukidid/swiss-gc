@@ -16,7 +16,7 @@ Swiss aims to be an all-in-one homebrew utility for the Nintendo GameCube.
 
 ### Main Features
 **Can browse the following devices**
-- SDSC/SDHC/SDXC Cards via [SD Gecko](https://www.gc-forever.com/wiki/index.php?title=SDGecko) or [SD2SP2](https://github.com/Extrems/SD2SP2)
+- SDSC/SDHC/SDXC Cards via [SD Gecko](https://www.gc-forever.com/wiki/index.php?title=SDGecko), [SD2SP1](https://github.com/silverstee1/SD2SP1) or [SD2SP2](https://github.com/Extrems/SD2SP2)
 - DVD±R or original Game Discs via Optical Disc Drive
 - [Qoob Pro](https://www.gc-forever.com/wiki/index.php?title=Qoob) flash memory
 - [USB Gecko](https://www.gc-forever.com/wiki/index.php?title=USBGecko) remote file storage
@@ -37,7 +37,7 @@ Note: Most devices and the exFAT filesystem are not supported by libogc and only
 - DVD Interface
 	- Optical Disc Drive
 - External Expansion Interface
-	- Broadband Adapter via [ENC28J60](https://www.microchip.com/en-us/product/enc28j60), [W5500](https://wiznet.io/products/ethernet-chips/w5500), [W6100](https://wiznet.io/products/ethernet-chips/w6100) or [W6300](https://wiznet.io/products/ethernet-chips/w6300)
+	- Broadband Adapter via [ENC28J60](https://www.microchip.com/en-us/product/enc28j60) (ETH2GC, GCNET and SP1ETH), [W5500](https://wiznet.io/products/ethernet-chips/w5500) (ETH2SP1), [W6100](https://wiznet.io/products/ethernet-chips/w6100) or [W6300](https://wiznet.io/products/ethernet-chips/w6300)
 	- Memory Cards via SD Cards
 - Audio Streaming Interface
 
