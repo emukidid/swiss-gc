@@ -1133,37 +1133,46 @@ static void _DrawFileBrowserButton(uiDrawObj_t *evt) {
 			int bnr_height = 32;
 			file_handle *file = data->file;
 			// Draw banner if there is one
-			if(file->meta && (file->meta->banner || file->meta->fileTypeTexObj)) {
-				GXTexObj *texObj = (file->meta->banner ? &file->meta->bannerTexObj : file->meta->fileTypeTexObj);
-				bnr_width *= (file->meta->banner ? 2 : 1);
-				bnr_height *= (file->meta->banner ? 2 : 1);
-				if(file->meta->banner) {
-					GX_SetNumTevStages(1);
-					GX_SetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_INVSRCALPHA, GX_LO_CLEAR);
+			if(file->meta) {
+				if(file->meta->banner || file->meta->fileTypeTexObj) {
+					GXTexObj *texObj = (file->meta->banner ? &file->meta->bannerTexObj : file->meta->fileTypeTexObj);
+					bnr_width *= (file->meta->banner ? 2 : 1);
+					bnr_height *= (file->meta->banner ? 2 : 1);
+					if(file->meta->banner) {
+						GX_SetNumTevStages(1);
+						GX_SetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_INVSRCALPHA, GX_LO_CLEAR);
+					}
+					GX_InvalidateTexAll();
+					GXTlutObj *tlutObj = GX_GetTexObjUserData(texObj);
+					if(tlutObj) GX_LoadTlut(tlutObj, GX_GetTexObjTlut(texObj));
+					GX_LoadTexObj(texObj, GX_TEXMAP0);
+					int bnr_x = x_mid - (bnr_width/2);
+					GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
+						GX_Position3f32((float) bnr_x,(float) data->y1+borderSize+40, 0.0f );
+						GX_Color4u8(255, 255, 255, data->alpha);
+						GX_TexCoord2f32(0.0f,0.0f);
+						GX_Position3f32((float) (bnr_x+bnr_width),(float) data->y1+borderSize+40,0.0f );
+						GX_Color4u8(255, 255, 255, data->alpha);
+						GX_TexCoord2f32(1.0f,0.0f);
+						GX_Position3f32((float) (bnr_x+bnr_width),(float) (data->y1+borderSize+40+bnr_height),0.0f );
+						GX_Color4u8(255, 255, 255, data->alpha);
+						GX_TexCoord2f32(1.0f,1.0f);
+						GX_Position3f32((float) bnr_x,(float) (data->y1+borderSize+40+bnr_height),0.0f );
+						GX_Color4u8(255, 255, 255, data->alpha);
+						GX_TexCoord2f32(0.0f,1.0f);
+					GX_End();
+					
+					if(data->isAutoLoadEntry) {
+						drawInit();
+						_DrawImageNow(TEX_STAR, bnr_x+bnr_width-16, data->y1+borderSize+40, 16, 16, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
+					}
 				}
-				GX_InvalidateTexAll();
-				GXTlutObj *tlutObj = GX_GetTexObjUserData(texObj);
-				if(tlutObj) GX_LoadTlut(tlutObj, GX_GetTexObjTlut(texObj));
-				GX_LoadTexObj(texObj, GX_TEXMAP0);
-				int bnr_x = x_mid - (bnr_width/2);
-				GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
-					GX_Position3f32((float) bnr_x,(float) data->y1+borderSize+40, 0.0f );
-					GX_Color4u8(255, 255, 255, data->alpha);
-					GX_TexCoord2f32(0.0f,0.0f);
-					GX_Position3f32((float) (bnr_x+bnr_width),(float) data->y1+borderSize+40,0.0f );
-					GX_Color4u8(255, 255, 255, data->alpha);
-					GX_TexCoord2f32(1.0f,0.0f);
-					GX_Position3f32((float) (bnr_x+bnr_width),(float) (data->y1+borderSize+40+bnr_height),0.0f );
-					GX_Color4u8(255, 255, 255, data->alpha);
-					GX_TexCoord2f32(1.0f,1.0f);
-					GX_Position3f32((float) bnr_x,(float) (data->y1+borderSize+40+bnr_height),0.0f );
-					GX_Color4u8(255, 255, 255, data->alpha);
-					GX_TexCoord2f32(0.0f,1.0f);
-				GX_End();
 				
-				if(data->isAutoLoadEntry) {
+				// Region
+				if(file->meta->regionTexObj) {
 					drawInit();
-					_DrawImageNow(TEX_STAR, bnr_x+bnr_width-16, data->y1+borderSize+40, 16, 16, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
+					_DrawTexObjNow(file->meta->regionTexObj, data->x2 - 44, data->y2-(borderSize+50), 32, 20, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
+					drawString(data->x2 - 44, data->y2-(borderSize+41), "Region: ", 0.45f, ALIGN_RIGHT, defaultColor);
 				}
 				
 				// Company
@@ -1181,12 +1190,6 @@ static void _DrawFileBrowserButton(uiDrawObj_t *evt) {
 					drawString(x_mid, data->y1+(borderSize*2)+40+bnr_height+60+(line*scale*24), tok, scale, ALIGN_CENTER, defaultColor);
 					line++;
 				}
-			}
-			// Region
-			if(file->meta && file->meta->regionTexObj) {
-				drawString(data->x2 - 44, data->y2-(borderSize+41), "Region: ", 0.45f, ALIGN_RIGHT, defaultColor);
-				drawInit();
-				_DrawTexObjNow(file->meta->regionTexObj, data->x2 - 44, data->y2-(borderSize+50), 32, 20, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
 			}
 			
 			// fullGameName displays some titles with incorrect encoding, use displayName instead
@@ -1217,8 +1220,8 @@ static void _DrawFileBrowserButton(uiDrawObj_t *evt) {
 			int bnr_width = 72;
 			int bnr_height = 24;
 			int x_start = (data->x2-((data->x2-data->x1)/2)) - (bnr_height/2);
-			// Draw banner if there is one
 			file_handle *file = data->file;
+			// Draw banner if there is one
 			if(file->meta && (file->meta->banner || file->meta->fileTypeTexObj)) {
 				GXTexObj *texObj = (file->meta->banner ? &file->meta->bannerTexObj : file->meta->fileTypeTexObj);
 				if(file->meta->banner) {
@@ -1266,44 +1269,48 @@ static void _DrawFileBrowserButton(uiDrawObj_t *evt) {
 		_DrawSimpleBox(data->x1, data->y1, data->x2-data->x1, data->y2-data->y1, 
 					0, data->mode == B_SELECTED ? selectColor : noColor, borderColor);
 		
-		// Draw banner if there is one
 		file_handle *file = data->file;
-		if(file->meta && (file->meta->banner || file->meta->fileTypeTexObj)) {
-			GXTexObj *texObj = (file->meta->banner ? &file->meta->bannerTexObj : file->meta->fileTypeTexObj);
-			if(file->meta->banner) {
-				GX_SetTevOrder(GX_TEVSTAGE1, GX_TEXCOORD0, GX_TEXMAP1, GX_COLOR0A0);
-				GX_SetTevColorIn(GX_TEVSTAGE1, GX_CC_ZERO, GX_CC_ZERO, GX_CC_ZERO, GX_CC_CPREV);
-				GX_SetTevAlphaIn(GX_TEVSTAGE1, GX_CA_ZERO, GX_CA_APREV, GX_CA_TEXA, GX_CA_ZERO);
-				GX_SetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_INVSRCALPHA, GX_LO_CLEAR);
+		// Draw banner if there is one
+		if(file->meta) {
+			if(file->meta->banner || file->meta->fileTypeTexObj) {
+				GXTexObj *texObj = (file->meta->banner ? &file->meta->bannerTexObj : file->meta->fileTypeTexObj);
+				if(file->meta->banner) {
+					GX_SetTevOrder(GX_TEVSTAGE1, GX_TEXCOORD0, GX_TEXMAP1, GX_COLOR0A0);
+					GX_SetTevColorIn(GX_TEVSTAGE1, GX_CC_ZERO, GX_CC_ZERO, GX_CC_ZERO, GX_CC_CPREV);
+					GX_SetTevAlphaIn(GX_TEVSTAGE1, GX_CA_ZERO, GX_CA_APREV, GX_CA_TEXA, GX_CA_ZERO);
+					GX_SetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_INVSRCALPHA, GX_LO_CLEAR);
+				}
+				GX_InvalidateTexAll();
+				GXTlutObj *tlutObj = GX_GetTexObjUserData(texObj);
+				if(tlutObj) GX_LoadTlut(tlutObj, GX_GetTexObjTlut(texObj));
+				GX_LoadTexObj(texObj, GX_TEXMAP0);
+				GX_LoadTexObj(&bannerMaskTexObj, GX_TEXMAP1);
+				GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
+					GX_Position3f32((float) data->x1+7,(float) data->y1+4, 0.0f );
+					GX_Color4u8(255, 255, 255, data->alpha);
+					GX_TexCoord2f32(0.0f,0.0f);
+					GX_Position3f32((float) (data->x1+7+96),(float) data->y1+4,0.0f );
+					GX_Color4u8(255, 255, 255, data->alpha);
+					GX_TexCoord2f32(1.0f,0.0f);
+					GX_Position3f32((float) (data->x1+7+96),(float) (data->y1+4+32),0.0f );
+					GX_Color4u8(255, 255, 255, data->alpha);
+					GX_TexCoord2f32(1.0f,1.0f);
+					GX_Position3f32((float) data->x1+7,(float) (data->y1+4+32),0.0f );
+					GX_Color4u8(255, 255, 255, data->alpha);
+					GX_TexCoord2f32(0.0f,1.0f);
+				GX_End();
+				
+				if(data->isAutoLoadEntry) {
+					drawInit();
+					_DrawImageNow(TEX_STAR, data->x1+7+96-16, data->y1+4, 16, 16, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
+				}
 			}
-			GX_InvalidateTexAll();
-			GXTlutObj *tlutObj = GX_GetTexObjUserData(texObj);
-			if(tlutObj) GX_LoadTlut(tlutObj, GX_GetTexObjTlut(texObj));
-			GX_LoadTexObj(texObj, GX_TEXMAP0);
-			GX_LoadTexObj(&bannerMaskTexObj, GX_TEXMAP1);
-			GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
-				GX_Position3f32((float) data->x1+7,(float) data->y1+4, 0.0f );
-				GX_Color4u8(255, 255, 255, data->alpha);
-				GX_TexCoord2f32(0.0f,0.0f);
-				GX_Position3f32((float) (data->x1+7+96),(float) data->y1+4,0.0f );
-				GX_Color4u8(255, 255, 255, data->alpha);
-				GX_TexCoord2f32(1.0f,0.0f);
-				GX_Position3f32((float) (data->x1+7+96),(float) (data->y1+4+32),0.0f );
-				GX_Color4u8(255, 255, 255, data->alpha);
-				GX_TexCoord2f32(1.0f,1.0f);
-				GX_Position3f32((float) data->x1+7,(float) (data->y1+4+32),0.0f );
-				GX_Color4u8(255, 255, 255, data->alpha);
-				GX_TexCoord2f32(0.0f,1.0f);
-			GX_End();
-			
-			if(data->isAutoLoadEntry) {
+			if(file->meta->regionTexObj) {
 				drawInit();
-				_DrawImageNow(TEX_STAR, data->x1+7+96-16, data->y1+4, 16, 16, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
+				_DrawTexObjNow(file->meta->regionTexObj, data->x2 - 39, data->y1+borderSize+1, 32, 20, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
+			} else {
+				drawString(data->x2-(borderSize+3), data->y1+borderSize+10, file->meta->osType, 0.6f, ALIGN_RIGHT, defaultColor);
 			}
-		}
-		if(file->meta && file->meta->regionTexObj) {
-			drawInit();
-			_DrawTexObjNow(file->meta->regionTexObj, data->x2 - 39, data->y1+borderSize+1, 32, 20, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
 		}
 
 		// fullGameName displays some titles with incorrect encoding, use displayName instead

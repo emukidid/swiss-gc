@@ -48,6 +48,7 @@ typedef struct {
 	GXTexObj bannerTexObj;
 	GXTlutObj bannerTlutObj;
 	BNRDesc bannerDesc;
+	char osType[BNR_SHORT_TEXT_LEN];
 } file_meta;
 
 typedef struct DEVICEHANDLER_STRUCT DEVICEHANDLER_INTERFACE;

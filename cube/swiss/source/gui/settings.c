@@ -81,7 +81,7 @@ static char *tooltips_global[PAGE_GLOBAL_MAX+1] = {
 		"The device that Swiss will use to load and save settings from.\n"
 		"This setting is stored in SRAM and will remain on reboot.",
 	[SET_APPS_VIDEOMODE] = "Apps Video Mode:\n\n"
-		"Applicable to libogc2 applications and very loosely so to libogc.",
+		"Applicable to libogc2 applications and very loosely so to libOGC.",
 	[SET_INIT_DRIVE] = "Init DVD Drive at startup:\n\n"
 		"Disabled - Leave it as-is (default)\n"
 		"Enabled - Deassert reset signal when Swiss starts\n\n"

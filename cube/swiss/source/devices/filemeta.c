@@ -249,7 +249,11 @@ void populate_dol_meta(file_handle *f) {
 			f->device->seekFile(f, dolhdr.dataOffset[0], DEVICE_HANDLER_SEEK_SET);
 			if(f->device->readFile(f, description, BNR_DESC_LEN) == BNR_DESC_LEN) {
 				if(strnlen(description, BNR_DESC_LEN) < BNR_DESC_LEN && !strncasecmp(description, "libogc", 6)) {
-					strncpy(f->meta->bannerDesc.description, description, BNR_DESC_LEN);
+					if(!strnlen(f->meta->bannerDesc.description, BNR_DESC_LEN))
+						strncpy(f->meta->bannerDesc.description, description, BNR_DESC_LEN);
+					char *versionInfo = description;
+					char *library = strsep(&versionInfo, " \r\n");
+					strlcpy(f->meta->osType, library, BNR_SHORT_TEXT_LEN);
 				}
 			}
 		}
@@ -406,6 +410,7 @@ void populate_meta(file_handle *f) {
 				bootFile->device = f->device;
 				
 				if (f->device->readFile(bootFile, NULL, 0) == 0 && bootFile->size) {
+					populate_dol_meta(bootFile);
 					f->device->closeFile(bootFile);
 					
 					f = memcpy(f, bootFile, offsetof(file_handle, uiObj));
