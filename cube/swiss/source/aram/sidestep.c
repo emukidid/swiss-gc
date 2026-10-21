@@ -138,7 +138,7 @@ static void ARAMStub(void)
 }
 
 void __InitFPRS(void);
-void __SYS_SetBootTime(void);
+void __SYS_InitTime(void);
 
 void ARAMRunStub(void)
 {
@@ -183,7 +183,7 @@ void ARAMRun(u32 entrypoint, u32 dst, u32 src, u32 len)
 	/*** Shutdown libOGC ***/
 	DrawShutdown();
 	SYS_ResetSystem(SYS_SHUTDOWN, 0, FALSE);
-	__SYS_SetBootTime();
+	__SYS_InitTime();
 
 	/*** Shutdown all threads and exit to this method ***/
 	__lwp_thread_stopmultitasking(ARAMRunStub);
