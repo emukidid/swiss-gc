@@ -15,7 +15,7 @@
 #include <sys/stat.h>
 #include <network.h>
 #include <ogcsys.h>
-#include <ogc/lwp_watchdog.h>
+#include <ogc/timesupp.h>
 #include <ogc/mutex.h>
 #include <network.h>
 
@@ -252,14 +252,14 @@ static bool SocketSend(SOCKET theSocket, const char* buf, size_t count)
 	s32 ret;
 	u64 t1,t2;
 
-	t1=ticks_to_millisecs(gettime());
+	t1=SYS_GetSystemTime();
 	while(count>0)
 	{
 		ret=net_send(theSocket,buf,(count>NET_WRITE_BUFFERSIZE)?NET_WRITE_BUFFERSIZE:count,0);
 		if(ret==-EAGAIN)
 		{
-			t2=ticks_to_millisecs(gettime());
-			if( (t2 - t1) > NET_TIMEOUT)
+			t2=SYS_GetSystemTime();
+			if(diff_msec(t1, t2) > NET_TIMEOUT)
 			{
 				return false;	/* timeout */
 			}
@@ -278,7 +278,7 @@ static bool SocketSend(SOCKET theSocket, const char* buf, size_t count)
 			{
 				return true;
 			}
-			t1=ticks_to_millisecs(gettime());
+			t1=SYS_GetSystemTime();
 		}
 	}
 
@@ -294,14 +294,14 @@ static int SocketRecv(SOCKET theSocket, char* buf, size_t count, bool exitonempt
 	u64 t1,t2;
 	u32 received = 0;
 
-	t1=ticks_to_millisecs(gettime());
+	t1=SYS_GetSystemTime();
 	while(count>0)
 	{
 		ret=net_recv(theSocket,buf,(count>NET_READ_BUFFERSIZE)?NET_READ_BUFFERSIZE:count,0);
 		if(ret==-EAGAIN)
 		{
-			t2=ticks_to_millisecs(gettime());
-			if( (t2 - t1) > NET_TIMEOUT)
+			t2=SYS_GetSystemTime();
+			if(diff_msec(t1, t2) > NET_TIMEOUT)
 			{
 				return -1;	/* timeout */
 			}
@@ -321,7 +321,7 @@ static int SocketRecv(SOCKET theSocket, char* buf, size_t count, bool exitonempt
 			{
 				return received;
 			}
-			t1=ticks_to_millisecs(gettime());
+			t1=SYS_GetSystemTime();
 			usleep(4000);
 		}
 	}
@@ -746,7 +746,7 @@ static int ftp_execute_open_actv(ftp_env* env, char *cmd, char *type, off_t offs
 
 		ftp_close_data(env);
 
-		t1=ticks_to_millisecs(gettime());
+		t1 = SYS_GetSystemTime();
 
 execute_open_actv_retry:
 
@@ -787,9 +787,9 @@ execute_open_actv_retry:
 
 			if(res == -EAGAIN)
 			{
-				t2 = ticks_to_millisecs(gettime());
+				t2 = SYS_GetSystemTime();
 
-				if ( t2 - t1 > NET_TIMEOUT)
+				if (diff_msec(t1, t2) > NET_TIMEOUT)
 				{
 					return -1;
 				}
@@ -811,9 +811,9 @@ execute_open_actv_retry:
 
 			if(res == -EAGAIN)
 			{
-				t2 = ticks_to_millisecs(gettime());
+				t2 = SYS_GetSystemTime();
 
-				if ( t2 - t1 > NET_TIMEOUT)
+				if (diff_msec(t1, t2) > NET_TIMEOUT)
 				{
 					return -1;
 				}
@@ -836,9 +836,9 @@ execute_open_actv_retry:
 
 				if(res == -EAGAIN)
 				{
-					t2 = ticks_to_millisecs(gettime());
+					t2 = SYS_GetSystemTime();
 
-					if ( t2 - t1 > NET_TIMEOUT)
+					if (diff_msec(t1, t2) > NET_TIMEOUT)
 					{
 						return -1;
 					}
@@ -858,9 +858,9 @@ execute_open_actv_retry:
 
 			if(res == -EAGAIN)
 			{
-				t2 = ticks_to_millisecs(gettime());
+				t2 = SYS_GetSystemTime();
 
-				if ( t2 - t1 > NET_TIMEOUT)
+				if (diff_msec(t1, t2) > NET_TIMEOUT)
 				{
 					return -1;
 				}
@@ -881,9 +881,9 @@ execute_open_actv_retry:
 
 			if(res == -EAGAIN)
 			{
-				t2 = ticks_to_millisecs(gettime());
+				t2 = SYS_GetSystemTime();
 
-				if ( t2 - t1 > NET_TIMEOUT)
+				if (diff_msec(t1, t2) > NET_TIMEOUT)
 				{
 					return -1;
 				}
@@ -948,18 +948,19 @@ static int ftp_execute_open_pasv(ftp_env* env, char *cmd, char *type, off_t offs
 	if( (env->data_socket == INVALID_SOCKET) || (offset != last_off) || (strcmp(last_cmd, cmd)) )
 	{
 		ftp_close_data(env);
-		t1=ticks_to_millisecs(gettime());
+
+		t1 = SYS_GetSystemTime();
 
 execute_open_retry:
 
-		if( (res = ftp_execute(env, "PASV", 0, 1)) < 0)
+		if((res = ftp_execute(env, "PASV", 0, 1)) < 0)
 		{
 			//PASV command failed!
 			if(res == -EAGAIN)
 			{
-				t2 = ticks_to_millisecs(gettime());
+				t2 = SYS_GetSystemTime();
 
-				if ( t2 - t1 > NET_TIMEOUT)
+				if (diff_msec(t1, t2) > NET_TIMEOUT)
 				{
 					return -1;
 				}
@@ -975,9 +976,9 @@ execute_open_retry:
 		if((res = ftp_readline(env->ctrl_socket, buf, FTP_MAX_LINE)) < 0)
 		{
 			//No response!
-			t2 = ticks_to_millisecs(gettime());
+			t2 = SYS_GetSystemTime();
 
-			if ( t2 - t1 > NET_TIMEOUT)
+			if (diff_msec(t1, t2) > NET_TIMEOUT)
 			{
 				return -1;
 			}
@@ -1014,9 +1015,9 @@ execute_open_retry:
 
 			if(res == -EAGAIN)
 			{
-				t2 = ticks_to_millisecs(gettime());
+				t2 = SYS_GetSystemTime();
 
-				if ( t2 - t1 > NET_TIMEOUT)
+				if (diff_msec(t1, t2) > NET_TIMEOUT)
 				{
 					return -1;
 				}
@@ -1038,9 +1039,9 @@ execute_open_retry:
 				//Could not set transmission offset!
 				if(res == -EAGAIN)
 				{
-					t2 = ticks_to_millisecs(gettime());
+					t2 = SYS_GetSystemTime();
 
-					if ( t2 - t1 > NET_TIMEOUT)
+					if (diff_msec(t1, t2) > NET_TIMEOUT)
 					{
 						return -1;
 					}
@@ -1059,9 +1060,9 @@ execute_open_retry:
 			//Could not execute cmd!
 			if(res == -EAGAIN)
 			{
-				t2 = ticks_to_millisecs(gettime());
+				t2 = SYS_GetSystemTime();
 
-				if ( t2 - t1 > NET_TIMEOUT)
+				if (diff_msec(t1, t2) > NET_TIMEOUT)
 				{
 					return -1;
 				}
@@ -1422,7 +1423,7 @@ static bool FTP_FindFirst(const char *path_abs, FTPDIRSTATESTRUCT* state, ftp_en
 
 	sprintf(buf, "CWD %s%s", env->share, path_abs);
 
-	t1=ticks_to_millisecs(gettime());
+	t1 = SYS_GetSystemTime();
 
 loaddir_retry:
 
@@ -1432,8 +1433,9 @@ loaddir_retry:
 		//if app is trying to list not absent directory (\subtitles), we have long timeout here
 		if(res == -EAGAIN)
 		{
-			t2=ticks_to_millisecs(gettime());
-			if (t2 - t1 > NET_TIMEOUT)
+			t2 = SYS_GetSystemTime();
+
+			if (diff_msec(t1, t2) > NET_TIMEOUT)
 			{
 				return false;
 			}
@@ -1978,7 +1980,7 @@ static bool ReadFTPFromCache(void *buf, off_t len, FTPFILESTRUCT *file)
 			{
 				//we hit the page
 				//copy as much as we can
-				FTPReadAheadCache[i].last_used = gettime();
+				FTPReadAheadCache[i].last_used = SYS_GetSystemTime();
 
 				off_t buffer_used = (FTPReadAheadCache[i].offset + FTP_READ_BUFFERSIZE) - new_offset;
 				if (buffer_used > rest) buffer_used = rest;
@@ -2054,7 +2056,7 @@ static bool ReadFTPFromCache(void *buf, off_t len, FTPFILESTRUCT *file)
 		return false;
 	}
 
-	FTPReadAheadCache[leastUsed].last_used = gettime();
+	FTPReadAheadCache[leastUsed].last_used = SYS_GetSystemTime();
 
 	FTPReadAheadCache[leastUsed].offset = cache_offset;
 	FTPReadAheadCache[leastUsed].file = file;

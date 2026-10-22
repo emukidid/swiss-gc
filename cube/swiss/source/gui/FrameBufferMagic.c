@@ -16,7 +16,7 @@
 #include <math.h>
 #include <ogc/exi.h>
 #include <gctypes.h>
-#include <ogc/lwp_watchdog.h>
+#include <ogc/timesupp.h>
 #include "deviceHandler.h"
 #include "FrameBufferMagic.h"
 #include "IPLFontWrite.h"
