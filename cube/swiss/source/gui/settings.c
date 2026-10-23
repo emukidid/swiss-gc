@@ -491,6 +491,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 			drawSettingEntryString(page, &page_y_ofs, "SMB Share:", swissSettings.smbShare, option == SET_SMB_SHARE, netEnable);
 			drawSettingEntryString(page, &page_y_ofs, "SMB Username:", swissSettings.smbUser, option == SET_SMB_USER, netEnable);
 			drawSettingEntryString(page, &page_y_ofs, "SMB Password:", "*****", option == SET_SMB_PASS, netEnable);
+			drawSettingEntryString(page, &page_y_ofs, "SNTP Host IP:", swissSettings.sntpHostIp, option == SET_SNTP_HOSTIP, netEnable);
 			drawSettingEntryString(page, &page_y_ofs, "RetroTINK-4K Host IP:", swissSettings.rt4kHostIp, option == SET_RT4K_HOSTIP, netEnable);
 			drawSettingEntryNumeric(page, &page_y_ofs, "RetroTINK-4K Port:", swissSettings.rt4kPort, option == SET_RT4K_PORT, netEnable);
 		}
@@ -906,6 +907,9 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 			break;
 			case SET_SMB_PASS:
 				DrawGetTextEntry(ENTRYMODE_NUMERIC|ENTRYMODE_ALPHA|ENTRYMODE_MASKED, "SMB Password", &swissSettings.smbPassword, sizeof(swissSettings.smbPassword) - 1);
+			break;
+			case SET_SNTP_HOSTIP:
+				DrawGetTextEntry(ENTRYMODE_IP, "SNTP Host IP", &swissSettings.sntpHostIp, sizeof(swissSettings.sntpHostIp) - 1);
 			break;
 			case SET_RT4K_HOSTIP:
 				DrawGetTextEntry(ENTRYMODE_IP, "RetroTINK-4K Host IP", &swissSettings.rt4kHostIp, sizeof(swissSettings.rt4kHostIp) - 1);

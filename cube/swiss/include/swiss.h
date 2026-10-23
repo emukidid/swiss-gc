@@ -72,6 +72,7 @@ extern u32 __SYS_UnlockSramEx(u32 write);
 extern u32 __SYS_SyncSram(void);
 extern u32 __SYS_CheckSram(void);
 extern void __SYS_ReadROM(void *buf,u32 len,u32 offset);
+extern u32 __SYS_SetRTC(u32 gctime);
 extern u8 __SYS_SetTAUCalibration(s8 calib);
 
 extern uiDrawObj_t* renderFileBrowser(file_handle** directory, int num_files, uiDrawObj_t* filePanel);
@@ -150,6 +151,7 @@ typedef struct {
 	s8 sramTemperature;
 	u8 sramLanguage;
 	u8 sramVideo;
+	char sntpHostIp[16];
 	char rt4kHostIp[16];
 	u16 rt4kPort;
 	bool rt4kOptim;

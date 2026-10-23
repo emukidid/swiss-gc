@@ -181,6 +181,7 @@ int config_update_global(bool checkConfigDevice) {
 	fprintf(fp, "AppsBrowserType=%s\r\n", fileBrowserTypeStr[swissSettings.appsBrowserType]);
 	fprintf(fp, "GameBrowserType=%s\r\n", fileBrowserTypeStr[swissSettings.gameBrowserType]);
 	fprintf(fp, "BS2Boot=%s\r\n", bs2BootStr[swissSettings.bs2Boot]);
+	fprintf(fp, "SNTPHostIP=%s\r\n", swissSettings.sntpHostIp);
 	fprintf(fp, "RT4KHostIP=%s\r\n", swissSettings.rt4kHostIp);
 	fprintf(fp, "RT4KPort=%hu\r\n", swissSettings.rt4kPort);
 	fprintf(fp, "RT4KOptim=%s\r\n", swissSettings.rt4kOptim ? "Yes":"No");
@@ -1002,6 +1003,9 @@ void config_parse_global(char *configData) {
 							break;
 						}
 					}
+				}
+				else if(!strcmp("SNTPHostIP", name)) {
+					strlcpy(swissSettings.sntpHostIp, value, sizeof(swissSettings.sntpHostIp));
 				}
 				else if(!strcmp("RT4KHostIP", name)) {
 					strlcpy(swissSettings.rt4kHostIp, value, sizeof(swissSettings.rt4kHostIp));
