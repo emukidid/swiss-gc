@@ -19,13 +19,19 @@
 
 #include <ogc/system.h>
 #include <stdbool.h>
+#include <stdlib.h>
+#include <time.h>
 #include "deviceHandler.h"
 #include "sram.h"
 #include "swiss.h"
 
 static s32 onreset(s32 final)
 {
-	if (!final) updateSRAM(&swissSettings, false);
+	if (!final) {
+		updateSRAM(&swissSettings, false);
+		unsetenv("TZ");
+	}
+
 	return TRUE;
 }
 
@@ -76,6 +82,17 @@ void refreshSRAM(SwissSettings *settings)
 
 void updateSRAM(SwissSettings *settings, bool syncSram)
 {
+	time_t now;
+	struct tm tm;
+
+	if (getenv("TZ")) {
+		time(&now);
+		gmtime_r(&now, &tm);
+		tm.tm_isdst = -1;
+
+		SYS_SetCounterBias(now - mktime(&tm));
+	}
+
 	SYS_SetDisplayOffsetH(settings->sramHOffset);
 	SYS_SetBootMode(settings->sramBoot);
 	SYS_SetEuRGB60(settings->sram60Hz);

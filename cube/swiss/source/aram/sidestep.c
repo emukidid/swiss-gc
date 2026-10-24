@@ -357,15 +357,10 @@ int DOLtoARAM(unsigned char *dol, char *argz, size_t argz_len)
         {
           argz = NULL;
           argz_len = 0;
-          unsetenv("TZ");
         }
         else if (entrypoint[9] == ENVP_MAGIC)
         {
           argz_create(environ, &envz, &envz_len);
-        }
-        else
-        {
-          unsetenv("TZ");
         }
       }
 
@@ -479,15 +474,10 @@ int ELFtoARAM(unsigned char *elf, char *argz, size_t argz_len)
         {
           argz = NULL;
           argz_len = 0;
-          unsetenv("TZ");
         }
         else if (entrypoint[9] == ENVP_MAGIC)
         {
           argz_create(environ, &envz, &envz_len);
-        }
-        else
-        {
-          unsetenv("TZ");
         }
       }
 
