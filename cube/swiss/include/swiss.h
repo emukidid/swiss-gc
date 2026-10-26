@@ -73,6 +73,7 @@ extern u32 __SYS_SyncSram(void);
 extern u32 __SYS_CheckSram(void);
 extern void __SYS_ReadROM(void *buf,u32 len,u32 offset);
 extern u32 __SYS_SetRTC(u32 gctime);
+extern void __SYS_InitTime(void);
 extern u8 __SYS_SetTAUCalibration(s8 calib);
 
 extern uiDrawObj_t* renderFileBrowser(file_handle** directory, int num_files, uiDrawObj_t* filePanel);
@@ -93,6 +94,7 @@ extern void select_speed();
 extern int select_slot();
 extern void select_device(int type);
 extern bool select_dest_dir(file_handle* initial, char* selection);
+extern void select_timezone(char* selection);
 
 typedef struct {
 	int cubebootInvoked;
@@ -151,6 +153,7 @@ typedef struct {
 	s8 sramTemperature;
 	u8 sramLanguage;
 	u8 sramVideo;
+	char timeZone[32];
 	char sntpHostIp[16];
 	char rt4kHostIp[16];
 	u16 rt4kPort;

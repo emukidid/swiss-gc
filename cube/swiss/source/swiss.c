@@ -45,6 +45,7 @@
 #include "mp3.h"
 #include "nkit.h"
 #include "rt4k.h"
+#include "tzdata.h"
 #include "wkf.h"
 #include "cheats.h"
 #include "settings.h"
@@ -928,6 +929,55 @@ bool select_dest_dir(file_handle* initial, char* selection)
 	free(curDirEntries);
 	free(directory);
 	return cancelled;
+}
+
+void select_timezone(char* selection)
+{
+	char timezone[32];
+	struct TZData *tzdata = &TZData;
+	strcpy(timezone, tzdata->name);
+	int i = 0, j = 0, max = 0, num_files = tzdata->count, idx = 0;
+	
+	int fileListBase = 90;
+	int scrollBarHeight = (FILES_PER_PAGE*40);
+	int scrollBarTabHeight = (int)((float)scrollBarHeight/(float)num_files);
+	uiDrawObj_t *container = NULL;
+	while (padsButtonsHeld() & BUTTON_A){ VIDEO_WaitVSync (); }
+	while(1){
+		uiDrawObj_t* newPanel = DrawEmptyBox(20,40, getVideoMode()->fbWidth-20, 450);
+		DrawAddChild(newPanel, DrawLabel(50, 67, "Select time zone"));
+		i = MIN(MAX(0,idx-FILES_PER_PAGE/2),MAX(0,num_files-FILES_PER_PAGE));
+		max = MIN(num_files, MAX(idx+FILES_PER_PAGE/2,FILES_PER_PAGE));
+		if(num_files > FILES_PER_PAGE)
+			DrawAddChild(newPanel, DrawVertScrollBar(getVideoMode()->fbWidth-30, fileListBase, 16, scrollBarHeight, (float)((float)idx/(float)(num_files-1)),scrollBarTabHeight));
+		for(j = 0; i<max; ++i,++j) {
+			DrawAddChild(newPanel, DrawSelectableButton(50,fileListBase+(j*40), getVideoMode()->fbWidth-35, fileListBase+(j*40)+40, tzdata->timezones[i].name, (i == idx) ? B_SELECTED:B_NOSELECT));
+		}
+		container = DrawRepublish(container, newPanel);
+		while ((padsStickY() > -16 && padsStickY() < 16) && !(padsButtonsHeld() & BUTTON_B) && !(padsButtonsHeld() & BUTTON_A) && !(padsButtonsHeld() & BUTTON_UP) && !(padsButtonsHeld() & BUTTON_DOWN))
+			{ VIDEO_WaitVSync (); }
+		if((padsButtonsHeld() & BUTTON_UP) || padsStickY() > 16){	idx = (--idx < 0) ? num_files-1 : idx;}
+		if((padsButtonsHeld() & BUTTON_DOWN) || padsStickY() < -16) {idx = (idx + 1) % num_files;	}
+		if((padsButtonsHeld() & BUTTON_A))	{
+			tzdata = &tzdata->timezones[idx];
+			strcat(timezone, tzdata->name);
+			if(tzdata->count > 0) {
+				num_files = tzdata->count;
+				idx = 0;
+			}
+			else {
+				strcpy(selection, timezone);
+				break;
+			}
+		}
+		if((padsButtonsHeld() & BUTTON_B))	break;
+		if(padsStickY() < -16 || padsStickY() > 16) {
+			usleep(50000 - abs(padsStickY()*256));
+		}
+		while (!(!(padsButtonsHeld() & BUTTON_B) && !(padsButtonsHeld() & BUTTON_A) && !(padsButtonsHeld() & BUTTON_UP) && !(padsButtonsHeld() & BUTTON_DOWN)))
+			{ VIDEO_WaitVSync (); }
+	}
+	DrawDispose(container);
 }
 
 // Alt DOL sorting/selecting code

@@ -259,6 +259,7 @@ int main(int argc, char *argv[])
 	swissSettings.lastDTVStatus = getRawDTVStatus();
 	swissSettings.configAudioBuffer = ENABLE_BYDISK;
 	swissSettings.emulateAudioStream = 1;
+	strcpy(swissSettings.timeZone, "Etc/Unknown");
 	strcpy(swissSettings.sntpHostIp, "162.159.200.1");
 	swissSettings.ftpPort = 21;
 	swissSettings.fspPort = 21;

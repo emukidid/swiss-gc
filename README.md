@@ -49,6 +49,7 @@ Note: Emulation is only available for the Dolphin SDK. Homebrew requires native 
 - Return to loader and environment setup for [libogc2](https://github.com/extremscorner/libogc2) applications
 - Return to loader for libogc v3.2.0+ applications
 - Return to loader for older applications using a legacy mechanism
+- Timekeeping using SNTP and daylight saving time data
 - [wiiload](https://wiibrew.org/wiki/Wiiload) v0.5 over TCP/IP or USB Gecko
 
 ### Requirements

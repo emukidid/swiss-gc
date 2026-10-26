@@ -77,6 +77,11 @@ static char *tooltips_global[PAGE_GLOBAL_MAX+1] = {
 		"Adjusts the horizontal screen position in games",
 	[SET_SYS_LANG] = "System Language:\n\n"
 		"System language used in games, primarily multi-5 PAL games",
+	[SET_SYS_TIMEZONE] = "System Time Zone:\n\n"
+		"Daylight Saving Time adjustments are observed by libogc2\n"
+		"applications while they're running. Others see a static offset.\n\n"
+		"The \223Etc/Unknown\224 time zone allow for date/time adjustments\n"
+		"outside of Swiss.",
 	[SET_CONFIG_DEV] = "Configuration Device:\n\n"
 		"The device that Swiss will use to load and save settings from.\n"
 		"This setting is stored in SRAM and will remain on reboot.",
@@ -420,13 +425,14 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 		bool dtvEnable = !in_range(swissSettings.aveCompat, AVE_N_DOL_COMPAT, AVE_P_DOL_COMPAT);
 		bool rt4kEnable = in_range(swissSettings.aveCompat, GCDIGITAL_COMPAT, GCVIDEO_COMPAT);
 		// TODO settings to a new typedef that ties type etc all together, then draw a "page" of these rather than this at some point.
-		if(option < SET_EXI_SPEED) {
+		if(option < SET_AUDIO_BUFFER) {
 			drawSettingEntryString(page, &page_y_ofs, "System Boot Mode:", swissSettings.sramBoot ? "Production" : "Default", option == SET_SYS_BOOTMODE, true);
 			drawSettingEntryString(page, &page_y_ofs, "System Sound:", swissSettings.sramStereo ? "Stereo" : "Mono", option == SET_SYS_SOUND, true);
 			drawSettingEntryString(page, &page_y_ofs, "System Video:", sramVideoStr[swissSettings.sramVideo], option == SET_SYS_VIDEO, tvEnable);
 			sprintf(sramHOffsetStr, "%+hi", swissSettings.sramHOffset);
 			drawSettingEntryString(page, &page_y_ofs, "Screen Position:", sramHOffsetStr, option == SET_SCREEN_POS, true);
 			drawSettingEntryString(page, &page_y_ofs, "System Language:", sramLanguageStr[swissSettings.sramLanguage], option == SET_SYS_LANG, true);
+			drawSettingEntryString(page, &page_y_ofs, "System Time Zone:", swissSettings.timeZone, option == SET_SYS_TIMEZONE, true);
 			drawSettingEntryString(page, &page_y_ofs, "Configuration Device:", getConfigDeviceName(&swissSettings), option == SET_CONFIG_DEV, true);
 			sprintf(uiVModeStr, "%s%s", getVideoModeString(getVideoModeFromSwissSetting(swissSettings.uiVMode)), swissSettings.uiVMode == 0 ? " (Auto) " : "");
 			drawSettingEntryString(page, &page_y_ofs, "Swiss Video Mode:", uiVModeStr, option == SET_SWISS_VIDEOMODE, true);
@@ -434,8 +440,8 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 			drawSettingEntryString(page, &page_y_ofs, "Apps Video Mode:", appsVModeStr, option == SET_APPS_VIDEOMODE, true);
 			drawSettingEntryBoolean(page, &page_y_ofs, "Init DVD Drive at startup:", swissSettings.initDVDDriveAtStart, option == SET_INIT_DRIVE, dvdEnable);
 			drawSettingEntryBoolean(page, &page_y_ofs, "Stop DVD Drive motor:", swissSettings.stopMotor, option == SET_STOP_MOTOR, dvdEnable);
-			drawSettingEntryString(page, &page_y_ofs, "Configure Audio Buffer:", configAudioBufferStr[swissSettings.configAudioBuffer], option == SET_AUDIO_BUFFER, dvdEnable);
 		} else {
+			drawSettingEntryString(page, &page_y_ofs, "Configure Audio Buffer:", configAudioBufferStr[swissSettings.configAudioBuffer], option == SET_AUDIO_BUFFER, dvdEnable);
 			drawSettingEntryString(page, &page_y_ofs, "SD/IDE-EXI Speed:", swissSettings.exiSpeed ? "27 MHz" : "13.5 MHz", option == SET_EXI_SPEED, true);
 			drawSettingEntryString(page, &page_y_ofs, "AVE Compatibility:", aveCompatStr[swissSettings.aveCompat], option == SET_AVE_COMPAT, true);
 			drawSettingEntryString(page, &page_y_ofs, "Force DTV Status:", forceDTVStatusStr[swissSettings.forceDTVStatus], option == SET_FORCE_DTVSTATUS, dtvEnable);
@@ -662,6 +668,9 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 			case SET_SYS_LANG:
 				swissSettings.sramLanguage += direction;
 				swissSettings.sramLanguage = ((s8)swissSettings.sramLanguage + SRAM_LANGUAGE_MAX) % SRAM_LANGUAGE_MAX;
+			break;
+			case SET_SYS_TIMEZONE:
+				select_timezone(swissSettings.timeZone);
 			break;
 			case SET_CONFIG_DEV:
 			{
@@ -1380,6 +1389,9 @@ int show_settings(int page, int option, ConfigEntry *config) {
 				page--; option = 0;
 			}
 			// These use text input, allow them to be accessed with the A button
+			if(page == PAGE_GLOBAL && option == SET_SYS_TIMEZONE) {
+				settings_toggle(page, option, 0, config);
+			}
 			if(page == PAGE_INTERFACE && in_range(option, SET_AUTOLOAD, SET_FLATTEN_DIR)) {
 				settings_toggle(page, option, 0, config);
 			}
