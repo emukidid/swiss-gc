@@ -368,7 +368,7 @@ void show_info() {
 			page++;
 		if(((btns & BUTTON_LEFT) || (btns & BUTTON_L)) && page > 0)
 			page--;
-		if((btns & BUTTON_A) || (btns & PAD_BUTTON_B))
+		if((btns & BUTTON_A) || (btns & BUTTON_B))
 			break;
 		while ((padsButtonsHeld() & BUTTON_RIGHT)
 			|| (padsButtonsHeld() & BUTTON_LEFT)

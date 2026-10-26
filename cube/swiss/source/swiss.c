@@ -896,7 +896,7 @@ bool select_dest_dir(file_handle* initial, char* selection)
 			{ VIDEO_WaitVSync (); }
 		if((padsButtonsHeld() & BUTTON_UP) || padsStickY() > 16){	idx = (--idx < 0) ? num_files-1 : idx;}
 		if((padsButtonsHeld() & BUTTON_DOWN) || padsStickY() < -16) {idx = (idx + 1) % num_files;	}
-		if((padsButtonsHeld() & PAD_BUTTON_A))	{
+		if((padsButtonsHeld() & BUTTON_A))	{
 			//go into a folder or select a file
 			if(directory[idx]->fileType==IS_DIR) {
 				memcpy(&curDir, directory[idx], sizeof(file_handle));
