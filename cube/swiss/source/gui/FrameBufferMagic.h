@@ -115,6 +115,7 @@ uiDrawObj_t* DrawEmptyColouredBox(int x1, int y1, int x2, int y2, GXColor colour
 uiDrawObj_t* DrawTransparentBox(int x1, int y1, int x2, int y2);
 uiDrawObj_t* DrawStyledLabel(int x, int y, const char *string, float size, int align, GXColor color);
 uiDrawObj_t* DrawStyledLabelWithCaret(int x, int y, const char *string, float size, int align, GXColor color, int caretPosition);
+uiDrawObj_t* DrawStyledLabelEllipsis(int x, int y, const char *string, float size, int align, GXColor color, int maxSize);
 uiDrawObj_t* DrawLabel(int x, int y, const char *string);
 uiDrawObj_t* DrawFadingLabel(int x, int y, const char *string, float size);
 uiDrawObj_t* DrawDynamicLabel(int x, int y, const char *(*getString)(void), float size, int align, GXColor color);

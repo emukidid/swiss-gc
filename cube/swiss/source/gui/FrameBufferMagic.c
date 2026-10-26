@@ -164,6 +164,8 @@ typedef struct drawStyledLabelEvent {
 	bool showCaret;
 	int caretPosition;
 	GXColor caretColor;
+	bool showEllipsis;
+	int maxSize;
 } drawStyledLabelEvent_t;
 
 typedef struct drawSelectableButtonEvent {
@@ -1001,7 +1003,7 @@ static void _DrawStyledLabel(uiDrawObj_t *evt) {
 			data->caretColor.a += (data->fadingDirection * 20);
 			if(data->caretColor.a >= 255) { data->fadingDirection = -1; data->caretColor.a = 255; }
 			else if(data->caretColor.a <= 15) { data->fadingDirection = 1; data->caretColor.a = 0; }
-		}		
+		}
 		drawStringWithCaret(data->x, data->y, string, data->size, data->align, data->color, data->caretPosition, data->caretColor);
 	}
 	else {
@@ -1010,7 +1012,12 @@ static void _DrawStyledLabel(uiDrawObj_t *evt) {
 			if(data->color.a >= 255) data->fadingDirection = -1;
 			else if(data->color.a <= 15) data->fadingDirection = 1;
 		}
-		drawString(data->x, data->y, string, data->size, data->align, data->color);
+		if(data->showEllipsis) {
+			drawStringEllipsis(data->x, data->y, string, data->size, data->align, data->color, false, data->maxSize);
+		}
+		else {
+			drawString(data->x, data->y, string, data->size, data->align, data->color);
+		}
 	}
 }
 
@@ -1040,10 +1047,20 @@ uiDrawObj_t* DrawStyledLabelWithCaret(int x, int y, const char *string, float si
 {	
 	uiDrawObj_t *event = DrawStyledLabel(x, y, string, size, align, color);
 	drawStyledLabelEvent_t *eventData = (drawStyledLabelEvent_t*)event->data;
-	eventData->caretPosition = caretPosition;
-	eventData->showCaret = true;
 	eventData->fadingDirection = 1;
+	eventData->showCaret = true;
+	eventData->caretPosition = caretPosition;
 	eventData->caretColor = eventData->color;
+	return event;
+}
+
+// External
+uiDrawObj_t* DrawStyledLabelEllipsis(int x, int y, const char *string, float size, int align, GXColor color, int maxSize)
+{	
+	uiDrawObj_t *event = DrawStyledLabel(x, y, string, size, align, color);
+	drawStyledLabelEvent_t *eventData = (drawStyledLabelEvent_t*)event->data;
+	eventData->showEllipsis = true;
+	eventData->maxSize = maxSize;
 	return event;
 }
 

@@ -20,7 +20,7 @@
 #include "rt4k.h"
 
 #define page_x_ofs_key (30)
-#define page_x_ofs_val (410)
+#define page_x_ofs_val (390)
 #define page_y_line (25)
 #define page_nav_y (390)
 #define page_saveexit_y (425)
@@ -341,9 +341,9 @@ void drawSettingEntryString(uiDrawObj_t* page, int *y, char *label, char *key, b
 	if(selected) {
 		DrawAddChild(page, DrawStyledLabel(20, *y, "\225", label_size, ALIGN_LEFT, enabled ? defaultColor:deSelectedColor));
 	}
-	DrawAddChild(page, DrawStyledLabel(page_x_ofs_key, *y, label, label_size, ALIGN_LEFT, enabled ? defaultColor:deSelectedColor));
-	DrawAddChild(page, DrawStyledLabel(page_x_ofs_val, *y, key, label_size, ALIGN_LEFT, enabled && selected ? defaultColor:deSelectedColor));
-	*y += page_y_line; 
+	DrawAddChild(page, DrawStyledLabelEllipsis(page_x_ofs_key, *y, label, label_size, ALIGN_LEFT, enabled ? defaultColor:deSelectedColor, page_x_ofs_val-page_x_ofs_key));
+	DrawAddChild(page, DrawStyledLabelEllipsis(page_x_ofs_val, *y, key, label_size, ALIGN_LEFT, enabled && selected ? defaultColor:deSelectedColor, (getVideoMode()->fbWidth-45)-page_x_ofs_val));
+	*y += page_y_line;
 }
 
 void drawSettingEntryBoolean(uiDrawObj_t* page, int *y, char *label, bool boolval, bool selected, bool enabled) {
