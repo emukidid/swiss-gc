@@ -90,6 +90,7 @@ build:
 	@cp LICENSE $(DIST)/LICENSE.txt
 	@cp $(SOURCES)/swiss/source/littlefs/LICENSE.md $(DIST)/Licenses/littlefs.txt
 	@cp $(DEVKITPRO)/libogc2/gamecube/share/licenses/libdvm/COPYING $(DIST)/Licenses/libdvm.txt
+	@cp $(DEVKITPRO)/libogc2/gamecube/share/licenses/lwip/COPYING $(DIST)/Licenses/lwip.txt
 	@cp $(DEVKITPRO)/libogc2/libogc2_license.txt $(DIST)/Licenses/libogc2.txt
 	@cp $(DEVKITPRO)/libogc2/rtems_license.txt $(DIST)/Licenses/rtems.txt
 	@cp $(DEVKITPRO)/licenses/devkitPPC/COPYING.LIBGLOSS $(DIST)/Licenses/libgloss.txt
