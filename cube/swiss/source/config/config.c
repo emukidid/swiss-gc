@@ -1422,13 +1422,11 @@ void config_update_environ() {
 	putenv(txtbuffer);
 	
 	const char *tzenv = get_timezone(swissSettings.timeZone);
-	if(tzenv == NULL) {
-		s32 bias = SYS_GetCounterBias();
-		sprintf(txtbuffer, "TZ=localtime%i:%i:%i", -(bias / TB_SECSPERHR), abs(bias % TB_SECSPERHR) / TB_SECSPERMIN, abs(bias % TB_SECSPERMIN));
-		putenv(txtbuffer);
+	if(tzenv != NULL) {
+		setenv("TZ", tzenv, 1);
 		tzset();
 	} else {
-		setenv("TZ", tzenv, 1);
+		unsetenv("TZ");
 		tzset();
 	}
 	
