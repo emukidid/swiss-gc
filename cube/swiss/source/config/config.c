@@ -1422,10 +1422,15 @@ void config_update_environ() {
 	putenv(txtbuffer);
 	
 	const char *tzenv = get_timezone(swissSettings.timeZone);
-	if(tzenv != NULL)
+	if(tzenv == NULL) {
+		s32 bias = SYS_GetCounterBias();
+		sprintf(txtbuffer, "TZ=localtime%i:%i:%i", -(bias / TB_SECSPERHR), abs(bias % TB_SECSPERHR) / TB_SECSPERMIN, abs(bias % TB_SECSPERMIN));
+		putenv(txtbuffer);
+		tzset();
+	} else {
 		setenv("TZ", tzenv, 1);
-	else
-		unsetenv("TZ");
+		tzset();
+	}
 	
 	if(swissSettings.enableUSBGecko) {
 		sprintf(txtbuffer, "USBGECKO_CHANNEL=%i", swissSettings.enableUSBGecko - USBGECKO_MEMCARD_SLOT_A);
