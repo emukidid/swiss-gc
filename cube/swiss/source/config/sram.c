@@ -18,7 +18,9 @@
  */
 
 #include <ogc/system.h>
+#include <ogc/timesupp.h>
 #include <stdbool.h>
+#include <stdckdint.h>
 #include <stdlib.h>
 #include <time.h>
 #include "deviceHandler.h"
@@ -54,6 +56,26 @@ static void initSRAM(void)
 
 	__SYS_UnlockSram(writeSram);
 	while (!__SYS_SyncSram());
+
+	u32 epoch, rtc;
+	s32 bias = SYS_GetCounterBias();
+
+	if (!ckd_sub(&epoch, GIT_TIMESTAMP, DIFF_SEC_1970_2000) && __SYS_GetRTC(&rtc)) {
+		if (rtc < epoch) {
+			__SYS_SetRTC(epoch);
+			__SYS_SetTime(secs_to_ticks(epoch));
+			SYS_SetCounterBias(0);
+		} else if (ckd_add(&rtc, rtc, bias)) {
+			if (ckd_sub(&bias, rtc, epoch)) {
+				__SYS_SetRTC(epoch);
+				__SYS_SetTime(secs_to_ticks(epoch));
+				SYS_SetCounterBias(0);
+			} else {
+				__SYS_SetRTC(epoch);
+				SYS_SetCounterBias(bias);
+			}
+		}
+	}
 
 	SYS_RegisterResetFunc(&resetinfo);
 }

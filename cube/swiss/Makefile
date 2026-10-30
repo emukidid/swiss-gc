@@ -57,7 +57,7 @@ INCLUDES	:=	include $(SOURCES) ..
 # options for code generation
 #---------------------------------------------------------------------------------
 
-CFLAGS		= -g -O2 -Wall -Wno-format-truncation -Wno-scalar-storage-order -fno-strict-aliasing -D_GNU_SOURCE $(MACHDEP) $(INCLUDE) $(shell $(PREFIX)pkg-config --cflags libdeflate iconv mad uchardet libxxhash zlib) -D'GIT_COMMIT="$(shell git rev-parse --short HEAD)"' -D'GIT_REVISION="$(shell git rev-list HEAD | wc -l)"' -DLFS_MULTIVERSION
+CFLAGS		= -g -O2 -Wall -Wno-format-truncation -Wno-scalar-storage-order -fno-strict-aliasing -D_GNU_SOURCE $(MACHDEP) $(INCLUDE) $(shell $(PREFIX)pkg-config --cflags libdeflate iconv mad uchardet libxxhash zlib) -D'GIT_COMMIT="$(shell git rev-parse --short HEAD)"' -D'GIT_REVISION="$(shell git rev-list HEAD | wc -l)"' -D'GIT_TIMESTAMP=$(shell git log -1 --format=%ct)' -DLFS_MULTIVERSION
 CXXFLAGS	= $(CFLAGS)
 
 ASFLAGS		= $(MACHDEP) -mregnames -D_LANGUAGE_ASSEMBLY $(INCLUDE)
