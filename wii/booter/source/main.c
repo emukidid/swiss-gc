@@ -18,6 +18,7 @@
  */
 
 #include <argz.h>
+#include <envlock.h>
 #include <gctypes.h>
 #include <ogc/cache.h>
 #include <ogc/conf.h>
@@ -176,7 +177,9 @@ int main(int argc, char **argv)
 	initSram();
 
 	argz_create(argv, &argz, &argzlen);
+	__env_lock(NULL);
 	argz_create(environ, &envz, &envzlen);
+	__env_unlock(NULL);
 
 	envz = memcpy(SYS_AllocArenaMem1Hi(envzlen, 1), envz, envzlen);
 	argz = memcpy(SYS_AllocArenaMem1Hi(argzlen, 1), argz, argzlen);

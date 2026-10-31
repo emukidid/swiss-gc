@@ -7,6 +7,7 @@
 * softdev March 2007
 ***************************************************************************/
 #include <argz.h>
+#include <envlock.h>
 #include <gccore.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -360,7 +361,9 @@ int DOLtoARAM(unsigned char *dol, char *argz, size_t argz_len)
         }
         else if (entrypoint[9] == ENVP_MAGIC)
         {
+          __env_lock(NULL);
           argz_create(environ, &envz, &envz_len);
+          __env_unlock(NULL);
         }
       }
 
@@ -477,7 +480,9 @@ int ELFtoARAM(unsigned char *elf, char *argz, size_t argz_len)
         }
         else if (entrypoint[9] == ENVP_MAGIC)
         {
+          __env_lock(NULL);
           argz_create(environ, &envz, &envz_len);
+          __env_unlock(NULL);
         }
       }
 
