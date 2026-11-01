@@ -1419,6 +1419,7 @@ void config_init_environ() {
 
 void config_update_environ() {
 	__env_lock(NULL);
+	
 	setenv("AVE", aveCompatStr[swissSettings.aveCompat], 1);
 	sprintf(txtbuffer, "LANG=%s.%s", sramLanguageEnvStr[swissSettings.sramLanguage], nl_langinfo(CODESET));
 	putenv(txtbuffer);
@@ -1452,6 +1453,7 @@ void config_update_environ() {
 	__PADDisableRecalibration(swissSettings.disableRecalibration);
 	__PADDisableRumble(swissSettings.disableRumble);
 	__SYS_InitTime();
+	
 	__env_unlock(NULL);
 }
 

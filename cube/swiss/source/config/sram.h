@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2024, Extrems <extrems@extremscorner.org>
+ * Copyright (c) 2024-2026, Extrems <extrems@extremscorner.org>
  * 
  * This file is part of Swiss.
  * 
@@ -21,9 +21,11 @@
 #define __SRAM_H__
 
 #include <stdbool.h>
+#include <sys/types.h>
 #include "swiss.h"
 
 void refreshSRAM(SwissSettings *settings);
 void updateSRAM(SwissSettings *settings, bool syncSram);
+void updateRTC(time_t now);
 
 #endif /* __SRAM_H__ */

@@ -29,11 +29,7 @@
 
 static s32 onreset(s32 final)
 {
-	if (!final) {
-		updateSRAM(&swissSettings, false);
-		unsetenv("TZ");
-	}
-
+	if (!final) updateSRAM(&swissSettings, false);
 	return TRUE;
 }
 
@@ -134,4 +130,14 @@ void updateSRAM(SwissSettings *settings, bool syncSram)
 
 	__SYS_UnlockSramEx(writeSram);
 	while (syncSram && !__SYS_SyncSram());
+}
+
+void updateRTC(time_t now)
+{
+	u32 rtc = now - DIFF_SEC_1970_2000;
+
+	now = (time_t)(getenv("TZ") ? rtc : rtc + SYS_GetCounterBias()) + DIFF_SEC_1970_2000;
+
+	__SYS_SetRTC(rtc);
+	__SYS_SetPosixTime(secs_to_ticks(now));
 }

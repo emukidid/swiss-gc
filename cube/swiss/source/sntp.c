@@ -37,6 +37,7 @@
 #include <ogc/timesupp.h>
 #include <string.h>
 #include <unistd.h>
+#include "sram.h"
 #include "swiss.h"
 
 /** This is an example of a "SNTP" client (with socket API).
@@ -68,7 +69,7 @@
 
 /** SNTP macro to change system time and/or the update the RTC clock */
 #ifndef SNTP_SYSTEM_TIME
-#define SNTP_SYSTEM_TIME(t)         __SYS_SetRTC((t) - DIFF_SEC_1970_2000)
+#define SNTP_SYSTEM_TIME(t)         updateRTC(t)
 #endif
 
 /* SNTP protocol defines */
