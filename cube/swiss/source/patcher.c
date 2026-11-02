@@ -178,6 +178,8 @@ int install_code(int final)
 			*(u32 *)0x800000CC = VIDEO_GetCurrentTvMode();
 			*(u32 *)0x800000F0 = size;
 		} else {
+			*(s64 *)VAR_POSIX_TIMEBASE = *(s64 *)0x800030D8 + *(s64 *)0x800030F8;
+			
 			for (u32 i = 0x100; i <= 0x900; i += 0x100) {
 				if (i == 0x300) {
 					((u32 *)&VAR_AREA[i])[0] = 0x48000002 | ((u32)DSI_EXCEPTION_VECTOR & 0x03FFFFFC);
@@ -11309,9 +11311,9 @@ void Patch_Widescreen(u32 *data, u32 length, int dataType)
 			if (MTXPerspective) {
 				print_debug("Found:[%s] @ %08X\n", MTXPerspectiveSig.Name, MTXPerspective);
 				MTXPerspectiveHook = installPatch(MTX_PERSPECTIVEHOOK);
-				MTXPerspectiveHook[5] = branch(MTXPerspective + 21, MTXPerspectiveHook + 5);
+				MTXPerspectiveHook[6] = branch(MTXPerspective + 21, MTXPerspectiveHook + 6);
 				data[i + 20] = branch(MTXPerspectiveHook, MTXPerspective + 20);
-				*(u32*)VAR_FLOAT9_16 = 0x3F100000;
+				*(u32*)VAR_FLOAT3_4 = 0x3F400000;
 				break;
 			}
 		}
@@ -11325,9 +11327,9 @@ void Patch_Widescreen(u32 *data, u32 length, int dataType)
 			if (MTXLightPerspective) {
 				print_debug("Found:[%s] @ %08X\n", MTXLightPerspectiveSig.Name, MTXLightPerspective);
 				MTXLightPerspectiveHook = installPatch(MTX_LIGHTPERSPECTIVEHOOK);
-				MTXLightPerspectiveHook[5] = branch(MTXLightPerspective + 25, MTXLightPerspectiveHook + 5);
+				MTXLightPerspectiveHook[6] = branch(MTXLightPerspective + 25, MTXLightPerspectiveHook + 6);
 				data[i + 24] = branch(MTXLightPerspectiveHook, MTXLightPerspective + 24);
-				*(u32*)VAR_FLOAT9_16 = 0x3F100000;
+				*(u32*)VAR_FLOAT3_4 = 0x3F400000;
 				break;
 			}
 		}

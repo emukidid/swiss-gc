@@ -3,7 +3,8 @@
 .globl MTXPerspectiveHook
 MTXPerspectiveHook:
 	lis			%r12, VAR_AREA
-	lfs			%f12, VAR_FLOAT9_16 (%r12)
+	lfs			%f12, VAR_FLOAT3_4 (%r12)
+	fmuls		%f12, %f12, %f12
 	fneg		%f13, %f12
 	fsel		%f29, %f29, %f12, %f13
 	fmuls		%f1, %f4, %f29

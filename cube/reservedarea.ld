@@ -27,9 +27,9 @@ VAR_SERVER_PMTU		= VAR_AREA + 0x09DA;	/* server MTU */
 VAR_EXI2_REGS		= VAR_AREA + 0x09DC;	/* pointer to EXI2 registers */
 
 VAR_FLOAT1_6		= VAR_AREA + 0x09E0;	/* constant 1/6 */
-VAR_FLOAT9_16		= VAR_AREA + 0x09E4;	/* constant 9/16 */
-VAR_FLOAT3_4		= VAR_AREA + 0x09E8;	/* constant 3/4 */
-VAR_FLOATM_1		= VAR_AREA + 0x09EC;	/* constant -1 */
+VAR_FLOAT3_4		= VAR_AREA + 0x09E4;	/* constant 3/4 */
+VAR_FLOATM_1		= VAR_AREA + 0x09E8;	/* constant -1 */
+VAR_RMODE			= VAR_AREA + 0x09EC;	/* render mode */
 VAR_VFILTER_ON		= VAR_AREA + 0x09F0;	/* vertical filter on */
 VAR_VFILTER			= VAR_AREA + 0x09F1;	/* vertical filter */
 VAR_SAR_WIDTH		= VAR_AREA + 0x09F8;	/* sample aspect ratio width */
@@ -45,6 +45,7 @@ VAR_SECTOR_BUF		= VAR_AREA + 0x0A00;	/* 0x200 of read data */
 
 VAR_PATCHES_BASE	= VAR_AREA + 0x3000;	/* Patches get copied to below this area. */
 
+VAR_SYSTEM_TIMEBASE	= VAR_AREA + 0x30D8;	/* system time base */
 VAR_PAD_BUTTON		= VAR_AREA + 0x30E4;	/* PAD buttons */
 VAR_TGC_OFFSET		= VAR_AREA + 0x30F4;	/* TGC disc offset */
-VAR_RMODE			= VAR_AREA + 0x30F8;	/* render mode */
+VAR_POSIX_TIMEBASE	= VAR_AREA + 0x30F8;	/* POSIX time base */

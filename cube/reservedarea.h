@@ -40,9 +40,9 @@
 .set VAR_EXI2_REGS,			0x09DC	# pointer to EXI2 registers
 
 .set VAR_FLOAT1_6,			0x09E0	# constant 1/6
-.set VAR_FLOAT9_16,			0x09E4	# constant 9/16
-.set VAR_FLOAT3_4,			0x09E8	# constant 3/4
-.set VAR_FLOATM_1,			0x09EC	# constant -1
+.set VAR_FLOAT3_4,			0x09E4	# constant 3/4
+.set VAR_FLOATM_1,			0x09E8	# constant -1
+.set VAR_RMODE,				0x09EC	# render mode
 .set VAR_VFILTER_ON,		0x09F0	# vertical filter on
 .set VAR_VFILTER,			0x09F1	# vertical filter
 .set VAR_SAR_WIDTH,			0x09F8	# sample aspect ratio width
@@ -58,9 +58,10 @@
 
 .set VAR_PATCHES_BASE,		0x3000	# Patches get copied to below this area.
 
+.set VAR_SYSTEM_TIMEBASE,	0x30D8	# system time base
 .set VAR_PAD_BUTTON,		0x30E4	# PAD buttons
 .set VAR_TGC_OFFSET,		0x30F4	# TGC disc offset
-.set VAR_RMODE,				0x30F8	# render mode
+.set VAR_POSIX_TIMEBASE,	0x30F8	# POSIX time base
 
 # Cheat Engine + Cheats buffer	(0x817FE000)
 .set	WIIRD_ENGINE_SPACE,	(0x2000)
@@ -105,9 +106,9 @@ extern char VAR_SERVER_PMTU[2];		// server MTU
 extern char VAR_EXI2_REGS[4];		// pointer to EXI2 registers
 
 extern char VAR_FLOAT1_6[4];		// constant 1/6
-extern char VAR_FLOAT9_16[4];		// constant 9/16
 extern char VAR_FLOAT3_4[4];		// constant 3/4
 extern char VAR_FLOATM_1[4];		// constant -1
+extern char VAR_RMODE[4];			// render mode
 extern char VAR_VFILTER_ON[1];		// vertical filter on
 extern char VAR_VFILTER[7];			// vertical filter
 extern char VAR_SAR_WIDTH[2];		// sample aspect ratio width
@@ -123,9 +124,10 @@ extern char VAR_SECTOR_BUF[0x200];	// 0x200 of read data
 
 extern char VAR_PATCHES_BASE[];		// Patches get copied to below this area.
 
+extern char VAR_SYSTEM_TIMEBASE[8];	// system time base
 extern char VAR_PAD_BUTTON[2];		// PAD buttons
 extern char VAR_TGC_OFFSET[4];		// TGC disc offset
-extern char VAR_RMODE[4];			// render mode
+extern char VAR_POSIX_TIMEBASE[8];	// POSIX time base
 
 // Cheat Engine + Cheats buffer (0x817FE000)
 #define WIIRD_ENGINE_SPACE	(0x2000)
