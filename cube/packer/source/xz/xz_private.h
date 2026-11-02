@@ -71,10 +71,12 @@
  * of the supported modes are enabled, these macros will evaluate to true or
  * false at compile time and thus allow the compiler to omit unneeded code.
  */
-#ifdef XZ_DEC_SINGLE
+#if !defined(XZ_DEC_SINGLE)
+#	define DEC_IS_SINGLE(mode) (false)
+#elif defined(XZ_DEC_PREALLOC) || defined(XZ_DEC_DYNALLOC)
 #	define DEC_IS_SINGLE(mode) ((mode) == XZ_SINGLE)
 #else
-#	define DEC_IS_SINGLE(mode) (false)
+#	define DEC_IS_SINGLE(mode) (true)
 #endif
 
 #ifdef XZ_DEC_PREALLOC
@@ -163,7 +165,7 @@ XZ_EXTERN void xz_dec_lzma2_end(struct xz_dec_lzma2 *s);
  * Allocate memory for BCJ decoders. xz_dec_bcj_reset() must be used before
  * calling xz_dec_bcj_run().
  */
-XZ_EXTERN struct xz_dec_bcj *xz_dec_bcj_create(bool single_call);
+XZ_EXTERN struct xz_dec_bcj *xz_dec_bcj_create(enum xz_mode mode);
 
 /*
  * Decode the Filter ID of a BCJ filter. This implementation doesn't

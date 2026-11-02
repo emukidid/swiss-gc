@@ -35,8 +35,8 @@ struct xz_dec_bcj {
 	 */
 	enum xz_ret ret;
 
-	/* True if we are operating in single-call mode. */
-	bool single_call;
+	/* Operation mode */
+	enum xz_mode mode;
 
 	/*
 	 * Absolute position relative to the beginning of the uncompressed
@@ -611,7 +611,7 @@ XZ_EXTERN enum xz_ret xz_dec_bcj_run(struct xz_dec_bcj *s,
 
 		s->ret = xz_dec_lzma2_run(lzma2, b);
 		if (s->ret != XZ_STREAM_END
-				&& (s->ret != XZ_OK || s->single_call))
+				&& (s->ret != XZ_OK || DEC_IS_SINGLE(s->mode)))
 			return s->ret;
 
 		bcj_apply(s, b->out, &out_start, b->out_pos);
@@ -682,11 +682,11 @@ XZ_EXTERN enum xz_ret xz_dec_bcj_run(struct xz_dec_bcj *s,
 	return s->ret;
 }
 
-XZ_EXTERN struct xz_dec_bcj *xz_dec_bcj_create(bool single_call)
+XZ_EXTERN struct xz_dec_bcj *xz_dec_bcj_create(enum xz_mode mode)
 {
 	struct xz_dec_bcj *s = kmalloc(sizeof(*s), GFP_KERNEL);
 	if (s != NULL)
-		s->single_call = single_call;
+		s->mode = mode;
 
 	return s;
 }
