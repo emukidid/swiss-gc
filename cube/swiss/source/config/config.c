@@ -1403,6 +1403,22 @@ void config_init_environ() {
 	if(value != NULL) {
 		swissSettings.hasFlippyDrive = !!atoi(value);
 	}
+	value = getenv("SMB_PASSWORD");
+	if(value != NULL) {
+		strlcpy(swissSettings.smbPassword, value, sizeof(swissSettings.smbPassword));
+	}
+	value = getenv("SMB_SERVER");
+	if(value != NULL) {
+		strlcpy(swissSettings.smbServerIp, value, sizeof(swissSettings.smbServerIp));
+	}
+	value = getenv("SMB_SHARE");
+	if(value != NULL) {
+		strlcpy(swissSettings.smbShare, value, sizeof(swissSettings.smbShare));
+	}
+	value = getenv("SMB_USER");
+	if(value != NULL) {
+		strlcpy(swissSettings.smbUser, value, sizeof(swissSettings.smbUser));
+	}
 	value = getenv("USBGECKO_CHANNEL");
 	if(value != NULL) {
 		swissSettings.enableUSBGecko = USBGECKO_MEMCARD_SLOT_A + atoi(value);
@@ -1423,6 +1439,26 @@ void config_update_environ() {
 	setenv("AVE", aveCompatStr[swissSettings.aveCompat], 1);
 	sprintf(txtbuffer, "LANG=%s.%s", sramLanguageEnvStr[swissSettings.sramLanguage], nl_langinfo(CODESET));
 	putenv(txtbuffer);
+	
+	if(strlen(swissSettings.smbPassword))
+		setenv("SMB_PASSWORD", swissSettings.smbPassword, 1);
+	else
+		unsetenv("SMB_PASSWORD");
+	
+	if(strlen(swissSettings.smbServerIp))
+		setenv("SMB_SERVER", swissSettings.smbServerIp, 1);
+	else
+		unsetenv("SMB_SERVER");
+	
+	if(strlen(swissSettings.smbShare))
+		setenv("SMB_SHARE", swissSettings.smbShare, 1);
+	else
+		unsetenv("SMB_SHARE");
+	
+	if(strlen(swissSettings.smbUser))
+		setenv("SMB_USER", swissSettings.smbUser, 1);
+	else
+		unsetenv("SMB_USER");
 	
 	const char *tzenv = get_timezone(swissSettings.timeZone);
 	if(tzenv != NULL) {
