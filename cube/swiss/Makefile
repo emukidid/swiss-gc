@@ -57,7 +57,7 @@ INCLUDES	:=	include $(SOURCES) ..
 # options for code generation
 #---------------------------------------------------------------------------------
 
-CFLAGS		= -g -O2 -Wall -Wno-format-truncation -Wno-scalar-storage-order -fno-strict-aliasing -D_GNU_SOURCE $(MACHDEP) $(INCLUDE) $(shell $(PREFIX)pkg-config --cflags libdeflate iconv mad uchardet libxxhash zlib) -D'GIT_COMMIT="$(shell git rev-parse --short HEAD)"' -D'GIT_REVISION="$(shell git rev-list HEAD | wc -l)"' -D'GIT_TIMESTAMP=$(shell git log -1 --format=%ct)' -DLFS_MULTIVERSION
+CFLAGS		= -g -O2 -Wall -Wno-format-truncation -Wno-scalar-storage-order -fno-strict-aliasing -D_GNU_SOURCE $(MACHDEP) $(INCLUDE) $(shell $(PREFIX)pkg-config --cflags libdeflate iconv mad libsmb2 uchardet libxxhash zlib) -D'GIT_COMMIT="$(shell git rev-parse --short HEAD)"' -D'GIT_REVISION="$(shell git rev-list HEAD | wc -l)"' -D'GIT_TIMESTAMP=$(shell git log -1 --format=%ct)' -DLFS_MULTIVERSION
 CXXFLAGS	= $(CFLAGS)
 
 ASFLAGS		= $(MACHDEP) -mregnames -D_LANGUAGE_ASSEMBLY $(INCLUDE)
@@ -66,7 +66,7 @@ LDFLAGS		= $(CFLAGS) -Wl,-Map,$(notdir $@).map -T ../../linker-script/ogc.ld -T 
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project
 #---------------------------------------------------------------------------------
-LIBS	:=	-ldvm -ltinysmb -lbba -laesnd -ldb -logc -lm -lpsoarchive $(shell $(PREFIX)pkg-config --libs libdeflate iconv mad uchardet libxxhash zlib)
+LIBS	:=	-ldvm -lbba -laesnd -ldb -logc -lm -lpsoarchive $(shell $(PREFIX)pkg-config --libs libdeflate iconv mad libsmb2 uchardet libxxhash zlib)
 
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing

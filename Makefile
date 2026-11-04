@@ -60,7 +60,7 @@ compile-patches:
 	@cd $(PATCHES) && $(MAKE)
 
 compile: # compile
-	@$(PACMAN) -Q devkitppc-licenses gamecube-tools-git libogc2-git libogc2-libdvm-git libogc2-pkg-config ppc-libdeflate ppc-libiconv-lite ppc-libmad ppc-libpsoarchive ppc-libuchardet ppc-libxxhash ppc-zlib-ng-compat
+	@$(PACMAN) -Q devkitppc-licenses gamecube-tools-git libogc2-git libogc2-libdvm-git libogc2-libsmb2 libogc2-pkg-config ppc-libdeflate ppc-libiconv-lite ppc-libmad ppc-libpsoarchive ppc-libuchardet ppc-libxxhash ppc-zlib-ng-compat
 	@cd $(SOURCES)/swiss && $(MAKE)
 
 compile-packer:
@@ -90,6 +90,7 @@ build:
 	@cp LICENSE $(DIST)/LICENSE.txt
 	@cp $(SOURCES)/swiss/source/littlefs/LICENSE.md $(DIST)/Licenses/littlefs.txt
 	@cp $(DEVKITPRO)/libogc2/gamecube/share/licenses/libdvm/COPYING $(DIST)/Licenses/libdvm.txt
+	@cp $(DEVKITPRO)/libogc2/gamecube/share/licenses/libsmb2/LICENCE-LGPL-2.1.txt $(DIST)/Licenses/libsmb2.txt
 	@cp $(DEVKITPRO)/libogc2/gamecube/share/licenses/lwip/COPYING $(DIST)/Licenses/lwip.txt
 	@cp $(DEVKITPRO)/libogc2/libogc2_license.txt $(DIST)/Licenses/libogc2.txt
 	@cp $(DEVKITPRO)/libogc2/rtems_license.txt $(DIST)/Licenses/rtems.txt

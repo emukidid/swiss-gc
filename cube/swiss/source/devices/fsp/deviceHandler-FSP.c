@@ -76,11 +76,11 @@ s32 deviceHandler_FSP_readDir(file_handle* ffile, file_handle** dir, u32 type) {
 }
 
 s32 deviceHandler_FSP_statFile(file_handle* file) {
-	struct stat fstat;
-	int ret = fsp_stat(fsp_session, getDevicePath(file->name), &fstat);
+	struct stat st;
+	int ret = fsp_stat(fsp_session, getDevicePath(file->name), &st);
 	if(ret == 0) {
-		file->size     = fstat.st_size;
-		file->fileType = S_ISDIR(fstat.st_mode) ? IS_DIR : IS_FILE;
+		file->size     = st.st_size;
+		file->fileType = S_ISDIR(st.st_mode) ? IS_DIR : IS_FILE;
 	}
 	return ret;
 }

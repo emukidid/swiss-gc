@@ -22,27 +22,22 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <fcntl.h>
 #include <unistd.h>
 #include <malloc.h>
-#include <network.h>
-#include <ogcsys.h>
-#include <smb.h>
-#include <sys/dir.h>
-#include <sys/statvfs.h>
-#include <sys/stat.h>
-#include "swiss.h"
-#include "main.h"
+#include <smb2/smb2.h>
+#include <smb2/libsmb2.h>
+#include "deviceHandler.h"
 #include "gui/FrameBufferMagic.h"
 #include "gui/IPLFontWrite.h"
-#include "deviceHandler.h"
-#include "deviceHandler-FAT.h"
-#include "deviceHandler-SMB.h"
+#include "swiss.h"
+#include "main.h"
 #include "exi.h"
 #include "bba.h"
 
 /* SMB Globals */
 extern int net_initialized;
-int smb_initialized = 0;
+static struct smb2_context *smb2_context;
 
 file_handle initial_SMB = {
 	.name     = "smb:/",
@@ -57,44 +52,21 @@ device_info* deviceHandler_SMB_info(file_handle* file) {
 }
 
 void readDeviceInfoSMB() {
-	struct statvfs buf;
-	memset(&buf, 0, sizeof(statvfs));
 	uiDrawObj_t *msgBox = DrawPublish(DrawProgressBar(true, 0, "Reading filesystem info for smb:/"));
-	int res = statvfs("smb:/", &buf);
-	initial_SMB_info.freeSpace = !res ? (u64)((u64)buf.f_bfree*(u64)buf.f_bsize):0LL;
-	initial_SMB_info.totalSpace = !res ? (u64)((u64)buf.f_blocks*(u64)buf.f_bsize):0LL;
-	initial_SMB_info.metric = true;
+	struct smb2_statvfs buf;
+	if(smb2_statvfs(smb2_context, "", &buf) == 0) {
+		initial_SMB_info.freeSpace = (u64)buf.f_bfree * buf.f_bsize;
+		initial_SMB_info.totalSpace = (u64)buf.f_blocks * buf.f_bsize;
+		initial_SMB_info.metric = true;
+	}
 	DrawDispose(msgBox);
 }
 
-// Connect to the share specified in settings.cfg
-void init_samba() {
-  
-	int res = 0;
+s32 deviceHandler_SMB_readDir(file_handle* ffile, file_handle** dir, u32 type) {
 
-	if(smb_initialized) {
-		return;
-	}
-	res = smbInit(&swissSettings.smbUser[0], &swissSettings.smbPassword[0], &swissSettings.smbShare[0], &swissSettings.smbServerIp[0]);
-	print_debug("smbInit %i\n",res);
-	if(res) {
-		smb_initialized = 1;
-	}
-	else {
-		smb_initialized = 0;
-	}
-}
-
-s32 deviceHandler_SMB_readDir(file_handle* ffile, file_handle** dir, u32 type){	
-   	
-	DIR* dp = opendir( ffile->name );
+	struct smb2dir *dp = smb2_opendir(smb2_context, getRelativePath(ffile->name, initial_SMB.name));
 	if(!dp) return -1;
-	struct dirent *entry;
-	#ifdef _DIRENT_HAVE_D_STAT
-	#define fstat entry->d_stat
-	#else
-	struct stat fstat;
-	#endif
+	struct smb2dirent *entry;
 	
 	// Set everything up to read
 	int num_entries = 1, i = 1;
@@ -104,120 +76,114 @@ s32 deviceHandler_SMB_readDir(file_handle* ffile, file_handle** dir, u32 type){
 	(*dir)[0].device   = ffile->device;
 	
 	// Read each entry of the directory
-	do {
-		errno = 0;
-		entry = readdir(dp);
-		if(!entry || !strcmp(entry->d_name, ".") || !strcmp(entry->d_name, "..")) {
+	while((entry = smb2_readdir(smb2_context, dp))) {
+		if(!strcmp(entry->name, ".") || !strcmp(entry->name, "..")) {
 			continue;
 		}
 		// Do we want this one?
-		if((type == -1 || ((entry->d_type == DT_DIR) ? (type==IS_DIR) : (type==IS_FILE)))) {
+		if((type == -1 || ((entry->st.smb2_type == SMB2_TYPE_DIRECTORY) ? (type==IS_DIR) : (type==IS_FILE)))) {
 			// Make sure we have room for this one
 			if(num_entries == i) {
 				num_entries *= 2;
 				*dir = reallocarray(*dir, num_entries, sizeof(file_handle));
 			}
 			memset(&(*dir)[i], 0, sizeof(file_handle));
-			if(concat_path((*dir)[i].name, ffile->name, entry->d_name) < PATHNAME_MAX
-				#ifndef _DIRENT_HAVE_D_STAT
-				&& !stat((*dir)[i].name, &fstat)
-				#endif
-				&& fstat.st_size <= UINT32_MAX) {
-				(*dir)[i].fileBase = fstat.st_ino;
-				(*dir)[i].size     = fstat.st_size;
-				(*dir)[i].fileType = S_ISDIR(fstat.st_mode) ? IS_DIR : IS_FILE;
+			if(concat_path((*dir)[i].name, ffile->name, entry->name) < PATHNAME_MAX && entry->st.smb2_size <= UINT32_MAX) {
+				(*dir)[i].fileBase = entry->st.smb2_ino;
+				(*dir)[i].size     = entry->st.smb2_size;
+				(*dir)[i].fileType = entry->st.smb2_type == SMB2_TYPE_DIRECTORY ? IS_DIR : IS_FILE;
 				(*dir)[i].device   = ffile->device;
 				++i;
 			}
 		}
-	} while(entry || errno == EOVERFLOW);
+	}
 	if(num_entries != i) {
 		num_entries = i;
 		*dir = reallocarray(*dir, num_entries, sizeof(file_handle));
 	}
 	
-	#undef fstat
-	closedir(dp);
+	smb2_closedir(smb2_context, dp);
 	return num_entries;
 }
 
 s32 deviceHandler_SMB_statFile(file_handle* file) {
-	struct stat fstat;
-	int ret = stat(file->name, &fstat);
+	struct smb2_stat_64 st;
+	int ret = smb2_stat(smb2_context, getRelativePath(file->name, initial_SMB.name), &st);
 	if(ret == 0) {
-		file->fileBase = fstat.st_ino;
-		file->size     = fstat.st_size;
-		file->fileType = S_ISDIR(fstat.st_mode) ? IS_DIR : IS_FILE;
+		file->fileBase = st.smb2_ino;
+		file->size     = st.smb2_size;
+		file->fileType = st.smb2_type == SMB2_TYPE_DIRECTORY ? IS_DIR : IS_FILE;
 	}
 	return ret;
 }
 
-s64 deviceHandler_SMB_seekFile(file_handle* file, s64 where, u32 type){
+s64 deviceHandler_SMB_seekFile(file_handle* file, s64 where, u32 type) {
 	if(type == DEVICE_HANDLER_SEEK_SET) file->offset = where;
 	else if(type == DEVICE_HANDLER_SEEK_CUR) file->offset = file->offset + where;
 	else if(type == DEVICE_HANDLER_SEEK_END) file->offset = file->size + where;
 	return file->offset;
 }
 
-s32 deviceHandler_SMB_readFile(file_handle* file, void* buffer, u32 length){
+s32 deviceHandler_SMB_readFile(file_handle* file, void* buffer, u32 length) {
 	if(!file->fp) {
-		file->fp = fopen(file->name, "rb");
+		file->fp = smb2_open(smb2_context, getRelativePath(file->name, initial_SMB.name), O_RDONLY);
 		if(!file->fp) return -1;
-		setbuf(file->fp, NULL);
-		fseek(file->fp, 0, SEEK_END);
-		file->size = ftell(file->fp);
-		file->fileType = IS_FILE;
+		if(!file->size) {
+			if(deviceHandler_SMB_statFile(file)) {
+				smb2_close(smb2_context, file->fp);
+				file->fp = NULL;
+				return -1;
+			}
+		}
 	}
 	
-	fseek(file->fp, file->offset, SEEK_SET);
-	size_t bytes_read = fread(buffer, 1, length, file->fp);
-	file->offset = ftell(file->fp);
+	s32 bytes_read = smb2_pread(smb2_context, file->fp, buffer, length, file->offset);
+	if(bytes_read > 0) file->offset += bytes_read;
 	return bytes_read;
 }
 
-s32 deviceHandler_SMB_writeFile(file_handle* file, const void* buffer, u32 length){
+s32 deviceHandler_SMB_writeFile(file_handle* file, const void* buffer, u32 length) {
 	if(!file->fp) {
-		file->fp = fopen(file->name, "wb");
+		file->fp = smb2_open(smb2_context, getRelativePath(file->name, initial_SMB.name), O_WRONLY | O_CREAT | O_TRUNC);
 		if(!file->fp) return -1;
-		setbuf(file->fp, NULL);
 		file->size = 0;
 		file->fileType = IS_FILE;
 	}
 	
-	fseek(file->fp, file->offset, SEEK_SET);
-	size_t bytes_written = fwrite(buffer, 1, length, file->fp);
-	file->offset = ftell(file->fp);
+	s32 bytes_written = smb2_pwrite(smb2_context, file->fp, buffer, length, file->offset);
+	if(bytes_written > 0) file->offset += bytes_written;
 	return bytes_written;
 }
 
 s32 deviceHandler_SMB_init(file_handle* file) {
 	// We need at least a share name and ip addr in the settings filled out
-	if(!strlen(&swissSettings.smbShare[0]) || !strlen(&swissSettings.smbServerIp[0])) {
+	if(!strlen(swissSettings.smbShare) || !strlen(swissSettings.smbServerIp)) {
 		file->status = E_CHECKCONFIG;
 		return EFAULT;
 	}
-
-	if(!init_network()) {        //Init if we have to
+	
+	if(!init_network()) {
 		file->status = E_NONET;
 		return EFAULT;
-	} 
-
-	if(!smb_initialized) {       //Connect to the share
-		init_samba();
-		if(!smb_initialized) {
-			file->status = E_CONNECTFAIL;
-			return EIO;
-		}
-		readDeviceInfoSMB();
 	}
 	
+	smb2_context = smb2_init_context();
+	if(strlen(swissSettings.smbPassword)) smb2_set_password(smb2_context, swissSettings.smbPassword);
+	if(smb2_connect_share(smb2_context, swissSettings.smbServerIp, swissSettings.smbShare, swissSettings.smbUser) < 0) {
+		smb2_destroy_context(smb2_context);
+		smb2_context = NULL;
+		file->status = E_CONNECTFAIL;
+		return EIO;
+	}
+	
+	readDeviceInfoSMB();
 	return 0;
 }
 
 s32 deviceHandler_SMB_closeFile(file_handle* file) {
 	int ret = 0;
 	if(file && file->fp) {
-		ret = fclose(file->fp);
+		ret = smb2_close(smb2_context, file->fp);
 		file->fp = NULL;
 	}
 	return ret;
@@ -225,33 +191,30 @@ s32 deviceHandler_SMB_closeFile(file_handle* file) {
 
 s32 deviceHandler_SMB_deinit(file_handle* file) {
 	deviceHandler_SMB_closeFile(file);
-	initial_SMB_info.freeSpace = 0LL;
-	initial_SMB_info.totalSpace = 0LL;
-	if(smb_initialized) {
-		smbClose("smb");
-		smb_initialized = 0;
-	}
+	smb2_disconnect_share(smb2_context);
+	smb2_destroy_context(smb2_context);
+	smb2_context = NULL;
 	return 0;
 }
 
 s32 deviceHandler_SMB_deleteFile(file_handle* file) {
 	deviceHandler_SMB_closeFile(file);
 	if(file->fileType == IS_DIR)
-		return rmdir(file->name);
+		return smb2_rmdir(smb2_context, getRelativePath(file->name, initial_SMB.name));
 	else
-		return unlink(file->name);
+		return smb2_unlink(smb2_context, getRelativePath(file->name, initial_SMB.name));
 }
 
 s32 deviceHandler_SMB_renameFile(file_handle* file, char* name) {
 	deviceHandler_SMB_closeFile(file);
-	int ret = rename(file->name, name);
+	int ret = smb2_rename(smb2_context, getRelativePath(file->name, initial_SMB.name), getRelativePath(name, initial_SMB.name));
 	if(ret == 0)
 		strcpy(file->name, name);
 	return ret;
 }
 
 s32 deviceHandler_SMB_makeDir(file_handle* dir) {
-	return mkdir(dir->name, 0777);
+	return smb2_mkdir(smb2_context, getRelativePath(dir->name, initial_SMB.name));
 }
 
 bool deviceHandler_SMB_test() {
@@ -293,10 +256,10 @@ char* deviceHandler_SMB_status(file_handle* file) {
 DEVICEHANDLER_INTERFACE __device_smb = {
 	.deviceUniqueId = DEVICE_ID_8,
 	.hwName = "Broadband Adapter",
-	.deviceName = "SMB 1.0/CIFS",
+	.deviceName = "Server Message Block",
 	.deviceDescription = "Configurable via the settings screen",
 	.deviceTexture = {TEX_BBA, 140, 64, 140, 64},
-	.features = FEAT_READ|FEAT_WRITE|FEAT_THREAD_SAFE,
+	.features = FEAT_READ|FEAT_WRITE,
 	.initial = &initial_SMB,
 	.test = deviceHandler_SMB_test,
 	.info = deviceHandler_SMB_info,
