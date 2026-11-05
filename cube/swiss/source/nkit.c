@@ -151,6 +151,7 @@ static const struct {
 	{ "apploader.img", /* 2002/03/28       */  113536, 0x5D2040FE89C64FBC },
 	{ "apploader.img", /* 2002/04/10       */  113536, 0xBBF3FF7C1A14AA59 },
 	{ "apploader.img", /* 2002/04/10       */  113536, 0xDC2A278D4F92A68C },
+	{ "apploader.img", /* 2002/04/12       */   78144, 0xD378B8C3792E69E5 },
 	{ "apploader.img", /* 2002/09/05       */  116512, 0x3712B0FF29B57C84 },
 	{ "apploader.img", /* 2002/09/05       */  116512, 0x42C07D59E1227D14 },
 	{ "apploader.img", /* 2002/09/05       */  116512, 0x4E907A28728D421A },
@@ -189,7 +190,7 @@ static const struct {
 	{ "apploader.img", /* 2024/09/17       */  113536, 0x623687789597750B },
 	{ "apploader.img", /* 2025/07/10       */  113536, 0xED22F838A52EABC5 },
 	{ "apploader.img", /* 2026/05/11       */  116512, 0xCBDE805EC9BF9E55 },
-#define NKIT_FIRM_COUNT (FIRM_COUNT + 131)
+#define NKIT_FIRM_COUNT (FIRM_COUNT + 132)
 	{ "240p Test Suite (World) (v1.04) (Unl).dol",                  2301384, 0x71BCDBA149B3AAAF },
 	{ "240p Test Suite (World) (v1.06) (Unl).dol",                   930560, 0x7EB7DDDAF5105457 },
 	{ "240p Test Suite (World) (v1.07) (Unl).dol",                   932032, 0x4DAB8540272CCBD5 },
@@ -2468,6 +2469,7 @@ static const struct {
 	{{ "GMUP5D\x00\x00" }, false, 0x80, 0xEE0B, 0xD442A6BF, 0x436DC9BED493D5DE, 1425692672,   +34285568, {    6644012,    +5580500, 6496, 0x093D }, "Dr. Muto" },
 	{{ "GNHE5d\x00\x00" }, false, 0x94, 0xCCBB, 0xE7F301B7, 0x111E626AC7CDE6B5,     428032, +1459550208, {      94248,       +4056, 6496, 0x5AE1 }, "Action Replay Ultimate Codes for Use with Enter the Matrix" },
 	{{ "GP5P01\x00\x00" }, false, 0x3D, 0xFBF1, 0x9DC1BB2A, 0xC5CD32D7C41AAE3D,  922845184,  +537133056, {   14902032,      +41916, 8096, 0x3D31 }, "Mario Party 5" },
+	{{ "GPIE01\x00\x01" }, false, 0x13, 0x9355, 0xAB7C0C9F, 0x7CC6284609825763,  664678400,  +795299840, {  638193140,  +795300820, 6496, 0x880A }, "Pikmin" },
 	{{ "GPNE08\x00\x00" }, false, 0x44, 0xA6AC, 0xD42D1079, 0x43947E5CABB597D0,  689250304,  +770727936, {  492787200,  +770729280, 6496, 0x5AB7 }, "P.N. 03" },
 	{{ "GPZE01\x00\x00" }, false, 0x3E, 0xF60D, 0x0F13C224, 0x1C69883B549A7E38,  144412672, +1315565568, {   33273940,      +38004, 6496, 0x59D7 }, "Nintendo Puzzle Collection" },
 	{{ "GPZJ01\x00\x00" }, false, 0x49, 0x686E, 0xB6FEB467, 0x3F854F54EDCC3480,  144412672, +1315565568, {   33273940,      +38004, 6496, 0x59D7 }, "Nintendo Puzzle Collection" },
@@ -2543,7 +2545,7 @@ static const struct {
 	{{ "SG4JDA\x00\x00" }, true,  0x52, 0xF019, 0x4BB4830A, 0x3645CAE26589C220, 1272594432,  +187383808, { 1272587604,  +187384140, 6496, 0x015D }, "Naruto: Clash of Ninja 4" },
 	{{ "SG4JDA\x00\x00" }, true,  0x9D, 0xB3B3, 0x424A4760, 0x38394EDF8E58393A, 1261602816,  +198375424, { 1261594344,  +198377400, 6496, 0x015D }, "Naruto: Clash of Ninja 4" },
 	{{ "TESTNA\x00\x00" }, false, 0xD2, 0x0C28, 0x6254FB97, 0xAA2E5EDD0EF81992,   26834944,       -1658, {         ~0,          +0,    0, 0xFFFF }, "Dodger Demo" },
-#define VALID_GCM_COUNT (REDUMP_COUNT + 251)
+#define VALID_GCM_COUNT (REDUMP_COUNT + 252)
 	{{ "000801\x00\x00" }, true,  0x72, 0xB329, 0x0E0756FC, 0x2541648547EA120F, 1354366976,  +105611264, {         ~0,          +0,    0, 0xFFFF }, "Diag 2001/03/29" },
 	{{ "101E01\x00\x05" }, true,  0x88, 0xB6FD, 0x4BB518CD, 0x27CFAD706924A030, 1435949056,   +24029184, {         ~0,          +0,    0, 0xFFFF }, "Hontai Kensa Disc DOL-USA" },
 	{{ "101E01\x00\x05" }, true,  0xC6, 0xB6FD, 0x4BB518CD, 0x27CFAD706924A030, 1435949056,   +24029184, {         ~0,          +0,    0, 0xFFFF }, "Hontai Kensa Disc DOL-USA" },
