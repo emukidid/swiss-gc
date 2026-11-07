@@ -676,9 +676,7 @@ int patch_gcm(ExecutableFile *filesToPatch, int numToPatch) {
 			
 			// Make /swiss/, it'll likely exist already anyway.
 			ensure_path(DEVICE_PATCHES, "swiss", NULL, true);
-			
-			// If the old directory exists, lets move it to the new location (swiss_patches is now just patches under /swiss/)
-			ensure_path(DEVICE_PATCHES, "swiss/patches", "swiss_patches", false);	// TODO kill this off in our next major release.
+			ensure_path(DEVICE_PATCHES, "swiss/patches", NULL, false);
 			ensure_path(DEVICE_PATCHES, "swiss/patches/game", NULL, false);
 			
 			// File handle for a patch we might need to write

@@ -224,11 +224,10 @@ s32 deviceHandler_Flippy_setupFile(file_handle* file, file_handle* file2, Execut
 	}
 	
 	if(swissSettings.emulateMemoryCard) {
-		memset(&patchFile, 0, sizeof(file_handle));
-		concatf_path(patchFile.name, devices[DEVICE_PATCHES]->initial->name, "swiss/patches/MemoryCardA.%s.raw", wodeRegionToString(GCMDisk.RegionCode));
-		concatf_path(txtbuffer, devices[DEVICE_PATCHES]->initial->name, "swiss/saves/MemoryCardA.%s.raw", wodeRegionToString(GCMDisk.RegionCode));
 		ensure_path(DEVICE_PATCHES, "swiss/saves", NULL, false);
-		devices[DEVICE_PATCHES]->renameFile(&patchFile, txtbuffer);	// TODO remove this in our next major release
+		
+		memset(&patchFile, 0, sizeof(file_handle));
+		concatf_path(patchFile.name, devices[DEVICE_PATCHES]->initial->name, "swiss/saves/MemoryCardA.%s.raw", wodeRegionToString(GCMDisk.RegionCode));
 		
 		if(devices[DEVICE_PATCHES]->statFile(&patchFile)) {
 			devices[DEVICE_PATCHES]->seekFile(&patchFile, 16*1024*1024, DEVICE_HANDLER_SEEK_SET);
@@ -240,10 +239,7 @@ s32 deviceHandler_Flippy_setupFile(file_handle* file, file_handle* file2, Execut
 			*(vu8*)VAR_CARD_A_ID = (patchFile.size << 3 >> 20) & 0xFC;
 		
 		memset(&patchFile, 0, sizeof(file_handle));
-		concatf_path(patchFile.name, devices[DEVICE_PATCHES]->initial->name, "swiss/patches/MemoryCardB.%s.raw", wodeRegionToString(GCMDisk.RegionCode));
-		concatf_path(txtbuffer, devices[DEVICE_PATCHES]->initial->name, "swiss/saves/MemoryCardB.%s.raw", wodeRegionToString(GCMDisk.RegionCode));
-		ensure_path(DEVICE_PATCHES, "swiss/saves", NULL, false);
-		devices[DEVICE_PATCHES]->renameFile(&patchFile, txtbuffer);	// TODO remove this in our next major release
+		concatf_path(patchFile.name, devices[DEVICE_PATCHES]->initial->name, "swiss/saves/MemoryCardB.%s.raw", wodeRegionToString(GCMDisk.RegionCode));
 		
 		if(devices[DEVICE_PATCHES]->statFile(&patchFile)) {
 			devices[DEVICE_PATCHES]->seekFile(&patchFile, 16*1024*1024, DEVICE_HANDLER_SEEK_SET);

@@ -7,6 +7,7 @@
    ----------------------------------------------------------- */
 
 #include <fnmatch.h>
+#include <stdatomic.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -1617,7 +1618,7 @@ void DrawUpdateProgressBarDetail(uiDrawObj_t *evt, int percent, int speed, int t
 
 void DrawUpdateProgressLoading(uiDrawObj_t *evt, int increment) {
 	drawProgressEvent_t *data = (drawProgressEvent_t*)evt->data;
-	data->speed += increment;
+	atomic_fetch_add(&data->speed, increment);
 }
 
 void DrawUpdateMenuButtons(int selection) {

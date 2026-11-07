@@ -186,14 +186,9 @@ void __SYS_PreInit(void)
 }
 
 uiDrawObj_t *configProgBar = NULL;
-void config_migration(char* text, int state, int percent) {
+void config_migration(char* text, int state) {
 	if(state) {
-		if(percent < 0) {
-			configProgBar = DrawPublish(DrawProgressBar(percent == -2, 0, text));
-		}
-		else {
-			DrawUpdateProgressBar(configProgBar, percent);
-		}
+		configProgBar = DrawRepublish(configProgBar, DrawProgressBar(true, 0, text));
 	}
 	else {
 		if(configProgBar) {
