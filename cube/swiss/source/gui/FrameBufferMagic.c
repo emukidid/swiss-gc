@@ -1539,9 +1539,9 @@ static void _DrawTitleBar(uiDrawObj_t *evt) {
 	
 	_DrawImageNow(TEX_SWISS, 36, 32, 96, 32, 0, 0.0f, 1.0f, 0.0f, 1.0f, 0);
 	drawString(142, 39, "for GameCube", 0.55f, ALIGN_LEFT, defaultColor);
-	drawString(142, 56, "version 0.6", 0.55f, ALIGN_LEFT, defaultColor);
+	drawString(142, 56, "version " GIT_VERSION, 0.55f, ALIGN_LEFT, defaultColor);
 	
-	sprintf(fbTextBuffer, "commit: %s \267 revision: %s", GIT_COMMIT, GIT_REVISION);
+	sprintf(fbTextBuffer, "commit: %s \267 revision: %i", GIT_COMMIT, GIT_REVISION);
 	drawString(getVideoMode()->fbWidth-36, 56, fbTextBuffer, 0.55f, ALIGN_RIGHT, defaultColor);
 	
 	s8 cputemp = SYS_GetCoreTemperature();

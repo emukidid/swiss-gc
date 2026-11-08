@@ -283,7 +283,7 @@ int main(int argc, char *argv[])
 	print_debug("Arena Size: %iKB\n",SYS_GetArenaSize()/1024);
 	print_debug("DVD Drive Present? %s\n",swissSettings.hasDVDDrive?"Yes":"No");
 	print_debug("GIT Commit: %s\n", GIT_COMMIT);
-	print_debug("GIT Revision: %s\n", GIT_REVISION);
+	print_debug("GIT Revision: %i\n", GIT_REVISION);
 	
 	// Go through all devices with FEAT_BOOT_DEVICE feature and set it as current if one is available
 	for(i = 0; i < MAX_DEVICES; i++) {

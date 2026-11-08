@@ -313,9 +313,9 @@ uiDrawObj_t * info_draw_page(int page_num) {
 	}
 	else if(page_num == 3) {
 		DrawAddChild(container, DrawLabel(30, 67, "Version Info (4/5):"));
-		DrawAddChild(container, DrawStyledLabel(640/2, 115, "Swiss version 0.6", 1.0f, ALIGN_CENTER, defaultColor));
+		DrawAddChild(container, DrawStyledLabel(640/2, 115, "Swiss version " GIT_VERSION, 1.0f, ALIGN_CENTER, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(640/2, 140, "by emu_kidid & Extrems, 2026", 0.75f, ALIGN_CENTER, defaultColor));
-		sprintf(topStr, "Commit %s; Revision %s", GIT_COMMIT, GIT_REVISION);
+		sprintf(topStr, "Commit %s; Revision %i", GIT_COMMIT, GIT_REVISION);
 		DrawAddChild(container, DrawStyledLabel(640/2, 165, topStr, 0.75f, ALIGN_CENTER, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(640/2, 190, "Built with " _V_STRING, 0.64f, ALIGN_CENTER, defaultColor));
 		DrawAddChild(container, DrawStyledLabel(640/2, 240, "Source/Updates/Issues", 0.75f, ALIGN_CENTER, defaultColor));
