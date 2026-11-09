@@ -124,7 +124,7 @@ sntp_request()
       /* prepare local address */
       memset(&local, 0, sizeof(local));
       local.sin_family      = AF_INET;
-      local.sin_port        = htons(INADDR_ANY);
+      local.sin_port        = htons(SNTP_PORT);
       local.sin_addr.s_addr = htonl(INADDR_ANY);
 
       /* bind to local address */
