@@ -14,7 +14,7 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y --no-install-recommends -t bookworm-backports 7zip gcc gcc-mingw-w64-i686 libc6-dev libc6-i386 xorriso
         sudo dkp-pacman -Sy
-        sudo dkp-pacman -S --noconfirm --ask 4 ppc-libiconv-lite
+        sudo dkp-pacman -S --noconfirm --ask 4 ppc-libiconv-lite ppc-libuchardet-lite
 
     - name: Checkout Swiss
       uses: actions/checkout@main
