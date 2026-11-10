@@ -390,7 +390,7 @@ s32 deviceHandler_SYS_init(file_handle* file) {
 
 	rom_sizes[ROM_ARAM]           = AR_GetSize();
 	rom_sizes[ROM_ARAM_INTERNAL]  = AR_GetInternalSize();
-	rom_sizes[ROM_ARAM_EXPANSION] = rom_sizes[ROM_ARAM] - rom_sizes[ROM_ARAM_INTERNAL];
+	rom_sizes[ROM_ARAM_EXPANSION] = AR_GetExpansionSize();
 	rom_sizes[ROM_MRAM]           = SYS_GetPhysicalMemSize();
 	rom_sizes[ROM_MRAM_CACHED]    = SYS_GetSimulatedMemSize();
 	return 0;

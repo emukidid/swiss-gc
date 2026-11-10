@@ -50,7 +50,7 @@ const char* getDeviceInfoString(u32 location) {
 		}
 	}
 	else if(device == &__device_aram) {
-		formatBytes(topStr, __io_aram.numberOfSectors * __io_aram.bytesPerSector, 0, false);
+		formatBytes(topStr, AR_GetExpansionSize(), 0, false);
 		strcat(topStr, " ");
 		strcat(topStr, device->hwName);
 	}
