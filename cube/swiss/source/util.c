@@ -398,11 +398,3 @@ int formatBytes(char *string, off_t count, blksize_t blocksize, bool metric)
 
 	return sprintf(string, "%jd bytes", (intmax_t)count);
 }
-
-/* std::new */
-void *_Znwj(size_t sz)
-{
-	void *p = malloc(sz);
-	if (!p) abort();
-	return p;
-}
