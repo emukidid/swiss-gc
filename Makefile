@@ -152,8 +152,8 @@ package:   # create distribution package
 	@mv $(DIST)/WODE $(SVN_REVISION)
 	@find ./$(SVN_REVISION) -type f -print0 | xargs -0 sha256sum > $(SVN_REVISION).sha256
 	@mv $(SVN_REVISION).sha256 $(SVN_REVISION)
-	@git log -n 4 > $(SVN_REVISION)-changelog.txt
-	@sed -i "s/emukidid <emukidid@gmail.com>/emu_kidid/g" $(SVN_REVISION)-changelog.txt
+	@git log $(shell git describe --tags --abbrev=0 HEAD^)..HEAD > $(SVN_REVISION)-changelog.txt
+	@sed -i 's/ <.*@.*>//g' $(SVN_REVISION)-changelog.txt
 	@mv $(SVN_REVISION)-changelog.txt $(SVN_REVISION)
 	@cp $(BUILDTOOLS)/SWISS_FILE_DESCRIPTIONS.txt $(SVN_REVISION)
 	@mv $(DIST)/LICENSE.txt $(SVN_REVISION)
