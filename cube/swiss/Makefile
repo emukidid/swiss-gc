@@ -57,7 +57,7 @@ INCLUDES	:=	include $(SOURCES) ..
 # options for code generation
 #---------------------------------------------------------------------------------
 
-CFLAGS		= -g -O2 -Wall -Wno-format-truncation -Wno-scalar-storage-order -fno-strict-aliasing -D_GNU_SOURCE $(MACHDEP) $(INCLUDE) $(shell $(PREFIX)pkg-config --cflags libdeflate iconv mad libsmb2 uchardet libxxhash zlib) -D'GIT_COMMIT="$(shell git rev-parse --short HEAD)"' -D'GIT_REVISION=$(shell git rev-list HEAD | wc -l)' -D'GIT_TIMESTAMP=$(shell git log -1 --format=%ct)' -D'GIT_VERSION="$(shell git describe --tags --abbrev=0 | grep -Eo '[[:digit:]]+(\.[[:digit:]]+)+')"' -DLFS_MULTIVERSION
+CFLAGS		= -g -O2 -Wall -Wno-format-truncation -Wno-scalar-storage-order -fno-strict-aliasing -D_GNU_SOURCE $(MACHDEP) $(INCLUDE) $(shell $(PREFIX)pkg-config --cflags libdeflate iconv mad libsmb2 uchardet libxxhash zlib) -DLFS_MULTIVERSION -include defines.h
 CXXFLAGS	= $(CFLAGS) -fno-exceptions -fno-rtti
 
 ASFLAGS		= $(MACHDEP) -mregnames -D_LANGUAGE_ASSEMBLY $(INCLUDE)
@@ -113,7 +113,7 @@ export OFILES_BIN	:=	$(addsuffix .o,$(BINFILES)) $(addsuffix .o,$(TPLFILES))
 export OFILES_SOURCES := $(CPPFILES:.cpp=.o) $(CFILES:.c=.o) $(sFILES:.s=.o) $(SFILES:.S=.o)
 export OFILES := $(OFILES_BIN) $(OFILES_SOURCES)
 
-export HFILES := $(addsuffix .h,$(subst .,_,$(BINFILES))) $(addsuffix .h,$(subst .,_,$(TPLFILES))) tags.h
+export HFILES := $(addsuffix .h,$(subst .,_,$(BINFILES))) $(addsuffix .h,$(subst .,_,$(TPLFILES))) tags.h defines.h
 
 #---------------------------------------------------------------------------------
 # build a list of include paths
@@ -173,6 +173,17 @@ tags.h :
 #---------------------------------------------------------------------------------
 	$(SILENTMSG) $(notdir $@)
 	$(SILENTCMD)git for-each-ref --format='"%(objectname:short)",' refs/tags > $@
+
+#---------------------------------------------------------------------------------
+defines.h :
+#---------------------------------------------------------------------------------
+	$(SILENTMSG) $(notdir $@)
+	@echo '#pragma once' > $@
+	@echo '#define GIT_COMMIT "$(shell git rev-parse --short HEAD)"' >> $@
+	@echo '#define GIT_COPYRIGHT "$(shell git log -1 --committer='^\(emu_\?kidid\|Extrems\) ' --format=%cd --date=format:%Y)"' >> $@
+	@echo '#define GIT_REVISION $(shell git rev-list HEAD | wc -l)' >> $@
+	@echo '#define GIT_TIMESTAMP $(shell git log -1 --format=%ct)' >> $@
+	@echo '#define GIT_VERSION "$(shell git describe --tags --abbrev=0 | grep -oE '[[:digit:]]+(\.[[:digit:]]+)+')"' >> $@
 
 -include $(DEPENDS)
 
