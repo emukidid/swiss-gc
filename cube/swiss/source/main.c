@@ -353,6 +353,7 @@ int main(int argc, char *argv[])
 		swissSettings.sramHOffset &= ~1;
 	}
 	VIDEO_SetAdjustingValues(swissSettings.sramHOffset, 0);
+	updateTZ(swissSettings.timeZone);
 	updateSRAM(&swissSettings, true);
 	
 	if(swissSettings.initNetworkAtStart |= bba_requires_init()) {

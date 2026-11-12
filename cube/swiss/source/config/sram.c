@@ -26,6 +26,7 @@
 #include "deviceHandler.h"
 #include "sram.h"
 #include "swiss.h"
+#include "tzdata.h"
 
 static s32 onreset(s32 final)
 {
@@ -59,11 +60,13 @@ static void initSRAM(void)
 	if (!ckd_sub(&epoch, GIT_TIMESTAMP, DIFF_SEC_1970_2000) && __SYS_GetRTC(&rtc)) {
 		if (rtc < epoch) {
 			__SYS_SetRTC(epoch);
+			__SYS_SetPosixTime(secs_to_ticks(GIT_TIMESTAMP));
 			__SYS_SetTime(secs_to_ticks(epoch));
 			SYS_SetCounterBias(0);
 		} else if (ckd_add(&rtc, rtc, bias)) {
 			if (ckd_sub(&bias, rtc, epoch)) {
 				__SYS_SetRTC(epoch);
+				__SYS_SetPosixTime(secs_to_ticks(GIT_TIMESTAMP));
 				__SYS_SetTime(secs_to_ticks(epoch));
 				SYS_SetCounterBias(0);
 			} else {
@@ -140,4 +143,35 @@ void updateRTC(time_t now)
 
 	__SYS_SetRTC(rtc);
 	__SYS_SetPosixTime(secs_to_ticks(now));
+}
+
+void updateTZ(const char *name)
+{
+	const char *tzenv = get_timezone(name);
+	int adjust = 0;
+
+	if (getenv("TZ")) {
+		if (tzenv) {
+			setenv("TZ", tzenv, 1);
+			tzset();
+		} else {
+			unsetenv("TZ");
+			tzset();
+			adjust = 1;
+		}
+	} else if (tzenv) {
+		setenv("TZ", tzenv, 0);
+		tzset();
+		adjust = -1;
+	}
+
+	if (adjust) {
+		u32 sec0 = ticks_to_secs(gettime());
+		u32 sec1 = sec0 + SYS_GetCounterBias() * adjust;
+
+		s64 tick0 = secs_to_ticks(sec0);
+		s64 tick1 = secs_to_ticks(sec1);
+
+		__SYS_AdjustPosixTime(tick1 - tick0);
+	}
 }

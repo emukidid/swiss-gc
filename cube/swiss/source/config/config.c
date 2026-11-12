@@ -1172,15 +1172,6 @@ void config_update_environ() {
 	else
 		unsetenv("SMB_USER");
 	
-	const char *tzenv = get_timezone(swissSettings.timeZone);
-	if(tzenv != NULL) {
-		setenv("TZ", tzenv, 1);
-		tzset();
-	} else {
-		unsetenv("TZ");
-		tzset();
-	}
-	
 	if(swissSettings.enableUSBGecko) {
 		sprintf(txtbuffer, "USBGECKO_CHANNEL=%i", swissSettings.enableUSBGecko - USBGECKO_MEMCARD_SLOT_A);
 		putenv(txtbuffer);
@@ -1200,7 +1191,6 @@ void config_update_environ() {
 	
 	__PADDisableRecalibration(swissSettings.disableRecalibration);
 	__PADDisableRumble(swissSettings.disableRumble);
-	__SYS_InitTime();
 	
 	__env_unlock(NULL);
 }

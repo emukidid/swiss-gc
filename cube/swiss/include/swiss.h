@@ -95,7 +95,7 @@ extern void select_speed();
 extern int select_slot();
 extern void select_device(int type);
 extern bool select_dest_dir(file_handle* initial, char* selection);
-extern void select_timezone(char* selection);
+extern bool select_timezone(char* selection);
 
 typedef struct {
 	int cubebootInvoked;

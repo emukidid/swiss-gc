@@ -670,7 +670,8 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 				swissSettings.sramLanguage = ((s8)swissSettings.sramLanguage + SRAM_LANGUAGE_MAX) % SRAM_LANGUAGE_MAX;
 			break;
 			case SET_SYS_TIMEZONE:
-				select_timezone(swissSettings.timeZone);
+				if(!select_timezone(swissSettings.timeZone))
+					updateTZ(swissSettings.timeZone);
 			break;
 			case SET_CONFIG_DEV:
 			{
@@ -1347,6 +1348,7 @@ int show_settings(int page, int option, ConfigEntry *config) {
 					swissSettings.sramHOffset &= ~1;
 				}
 				VIDEO_SetAdjustingValues(swissSettings.sramHOffset, 0);
+				updateTZ(swissSettings.timeZone);
 				updateSRAM(&swissSettings, true);
 				// Update environment
 				config_update_environ();
@@ -1378,6 +1380,7 @@ int show_settings(int page, int option, ConfigEntry *config) {
 				memcpy(&swissSettings, &tempSettings, sizeof(SwissSettings));
 				VIDEO_SetAdjustingValues(swissSettings.sramHOffset, 0);
 				__SYS_SetTAUCalibration(swissSettings.sramTemperature);
+				updateTZ(swissSettings.timeZone);
 				DrawDispose(settingsPage);
 				DrawVideoMode(oldmode);
 				return 0;
