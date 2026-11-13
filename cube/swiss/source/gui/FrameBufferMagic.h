@@ -118,7 +118,8 @@ uiDrawObj_t* DrawStyledLabelWithCaret(int x, int y, const char *string, float si
 uiDrawObj_t* DrawStyledLabelEllipsis(int x, int y, const char *string, float size, int align, GXColor color, int maxSize);
 uiDrawObj_t* DrawLabel(int x, int y, const char *string);
 uiDrawObj_t* DrawFadingLabel(int x, int y, const char *string, float size);
-uiDrawObj_t* DrawDynamicLabel(int x, int y, const char *(*getString)(void), float size, int align, GXColor color);
+uiDrawObj_t* DrawDynamicLabel(int x, int y, const char *getString(const char *format), float size, int align, GXColor color);
+uiDrawObj_t* DrawDateTimeLabel(int x, int y, const char *format, float size, int align, GXColor color);
 uiDrawObj_t* DrawMenuButtons(int selection);
 uiDrawObj_t* DrawTooltip(const char *tooltip);
 uiDrawObj_t* DrawTitleBar();

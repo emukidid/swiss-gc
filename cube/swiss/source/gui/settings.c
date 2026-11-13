@@ -294,6 +294,14 @@ static char *tooltips_game[PAGE_GAME_DEFAULTS_MAX+1] = {
 // Number of settings (including Back, Next, Save, Exit buttons) per page
 int settings_count_pp[PAGE_MAX+1] = {PAGE_GLOBAL_MAX, PAGE_INTERFACE_MAX, PAGE_NETWORK_MAX, PAGE_GAME_GLOBAL_MAX, PAGE_GAME_DEFAULTS_MAX, PAGE_GAME_MAX};
 
+char* getDateFormatString(SwissSettings *settings) {
+	switch(settings->sramLanguage) {
+		case SYS_LANG_JAPANESE:   return "%Y.%m.%d";
+		case SYS_LANG_ENGLISH_US: return "%m.%d.%Y";
+		default:                  return "%d.%m.%Y";
+	}
+}
+
 char* getConfigDeviceName(SwissSettings *settings) {
 	DEVICEHANDLER_INTERFACE *configDevice = getDeviceByUniqueId(settings->configDeviceId);
 	return configDevice != NULL ? (char*)(configDevice->deviceName) : "None";
@@ -335,6 +343,15 @@ void add_tooltip_label(uiDrawObj_t* page, int page_num, int option) {
 	if(get_tooltip(page_num, option)) {
 		DrawAddChild(page, DrawFadingLabel(484, 61, "Press (Y) for help", 0.65f));
 	}
+}
+
+void drawSettingEntryDateTime(uiDrawObj_t* page, int *y, char *label, char *key, bool selected, bool enabled) {
+	if(selected) {
+		DrawAddChild(page, DrawStyledLabel(20, *y, "\225", label_size, ALIGN_LEFT, enabled ? defaultColor:deSelectedColor));
+	}
+	DrawAddChild(page, DrawStyledLabel(page_x_ofs_key, *y, label, label_size, ALIGN_LEFT, enabled ? defaultColor:deSelectedColor));
+	DrawAddChild(page, DrawDateTimeLabel(page_x_ofs_val, *y, key, label_size, ALIGN_LEFT, enabled && selected ? defaultColor:deSelectedColor));
+	*y += page_y_line;
 }
 
 void drawSettingEntryString(uiDrawObj_t* page, int *y, char *label, char *key, bool selected, bool enabled) {
@@ -425,22 +442,24 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 		bool dtvEnable = !in_range(swissSettings.aveCompat, AVE_N_DOL_COMPAT, AVE_P_DOL_COMPAT);
 		bool rt4kEnable = in_range(swissSettings.aveCompat, GCDIGITAL_COMPAT, GCVIDEO_COMPAT);
 		// TODO settings to a new typedef that ties type etc all together, then draw a "page" of these rather than this at some point.
-		if(option < SET_AUDIO_BUFFER) {
+		if(option < SET_INIT_DRIVE) {
 			drawSettingEntryString(page, &page_y_ofs, "System Boot Mode:", swissSettings.sramBoot ? "Production" : "Default", option == SET_SYS_BOOTMODE, true);
 			drawSettingEntryString(page, &page_y_ofs, "System Sound:", swissSettings.sramStereo ? "Stereo" : "Mono", option == SET_SYS_SOUND, true);
 			drawSettingEntryString(page, &page_y_ofs, "System Video:", sramVideoStr[swissSettings.sramVideo], option == SET_SYS_VIDEO, tvEnable);
 			sprintf(sramHOffsetStr, "%+hi", swissSettings.sramHOffset);
 			drawSettingEntryString(page, &page_y_ofs, "Screen Position:", sramHOffsetStr, option == SET_SCREEN_POS, true);
 			drawSettingEntryString(page, &page_y_ofs, "System Language:", sramLanguageStr[swissSettings.sramLanguage], option == SET_SYS_LANG, true);
+			drawSettingEntryDateTime(page, &page_y_ofs, "System Date:", getDateFormatString(&swissSettings), option == SET_SYS_DATE, false);
+			drawSettingEntryDateTime(page, &page_y_ofs, "System Time:", "%T", option == SET_SYS_TIME, false);
 			drawSettingEntryString(page, &page_y_ofs, "System Time Zone:", swissSettings.timeZone, option == SET_SYS_TIMEZONE, true);
 			drawSettingEntryString(page, &page_y_ofs, "Configuration Device:", getConfigDeviceName(&swissSettings), option == SET_CONFIG_DEV, true);
 			sprintf(uiVModeStr, "%s%s", getVideoModeString(getVideoModeFromSwissSetting(swissSettings.uiVMode)), swissSettings.uiVMode == 0 ? " (Auto) " : "");
 			drawSettingEntryString(page, &page_y_ofs, "Swiss Video Mode:", uiVModeStr, option == SET_SWISS_VIDEOMODE, true);
 			sprintf(appsVModeStr, "%s%s", getVideoModeString(getVideoModeFromSwissSetting(swissSettings.appsVMode ? : swissSettings.uiVMode)), swissSettings.appsVMode == 0 ? " (Auto) " : "");
 			drawSettingEntryString(page, &page_y_ofs, "Apps Video Mode:", appsVModeStr, option == SET_APPS_VIDEOMODE, true);
+		} else if(option < SET_SIMMEMSIZE) {
 			drawSettingEntryBoolean(page, &page_y_ofs, "Init DVD Drive at startup:", swissSettings.initDVDDriveAtStart, option == SET_INIT_DRIVE, dvdEnable);
 			drawSettingEntryBoolean(page, &page_y_ofs, "Stop DVD Drive motor:", swissSettings.stopMotor, option == SET_STOP_MOTOR, dvdEnable);
-		} else {
 			drawSettingEntryString(page, &page_y_ofs, "Configure Audio Buffer:", configAudioBufferStr[swissSettings.configAudioBuffer], option == SET_AUDIO_BUFFER, dvdEnable);
 			drawSettingEntryString(page, &page_y_ofs, "SD/IDE-EXI Speed:", swissSettings.exiSpeed ? "27 MHz" : "13.5 MHz", option == SET_EXI_SPEED, true);
 			drawSettingEntryString(page, &page_y_ofs, "AVE Compatibility:", aveCompatStr[swissSettings.aveCompat], option == SET_AVE_COMPAT, true);
@@ -450,6 +469,7 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 			drawSettingEntryBoolean(page, &page_y_ofs, "Disable Controller Rumble:", swissSettings.disableRumble, option == SET_DISABLE_RUMBLE, true);
 			drawSettingEntryString(page, &page_y_ofs, "Enable USB Gecko:", enableUSBGeckoStr[swissSettings.enableUSBGecko], option == SET_ENABLE_USBGECKO, true);
 			drawSettingEntryBoolean(page, &page_y_ofs, "Wait for USB Gecko:", swissSettings.waitForUSBGecko, option == SET_WAIT_USBGECKO, true);
+		} else {
 			drawSettingEntryString(page, &page_y_ofs, "Simulated MRAM Size:", simulatedMemSizeStr[swissSettings.simulatedMemSize], option == SET_SIMMEMSIZE, true);
 			sprintf(sramTemperatureStr, "%+hi\260C", swissSettings.sramTemperature);
 			drawSettingEntryString(page, &page_y_ofs, "CPU Temperature Calibration:", sramTemperatureStr, option == SET_TAU_CALIB, is_gamecube());
@@ -1392,7 +1412,7 @@ int show_settings(int page, int option, ConfigEntry *config) {
 				page--; option = 0;
 			}
 			// These use text input, allow them to be accessed with the A button
-			if(page == PAGE_GLOBAL && option == SET_SYS_TIMEZONE) {
+			if(page == PAGE_GLOBAL && in_range(option, SET_SYS_DATE, SET_SYS_TIMEZONE)) {
 				settings_toggle(page, option, 0, config);
 			}
 			if(page == PAGE_INTERFACE && in_range(option, SET_AUTOLOAD, SET_FLATTEN_DIR)) {

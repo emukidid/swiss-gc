@@ -156,7 +156,7 @@ typedef struct drawImageEvent {
 typedef struct drawStyledLabelEvent {
 	int x;
 	int y;
-	const char *(*getString)(void);
+	const char *(*getString)(const char *format);
 	char *string;
 	float size;
 	int align;
@@ -996,7 +996,7 @@ uiDrawObj_t* DrawTooltip(const char *tooltip) {
 // Internal
 static void _DrawStyledLabel(uiDrawObj_t *evt) {
 	drawStyledLabelEvent_t *data = (drawStyledLabelEvent_t*)evt->data;
-	const char *string = data->getString ? data->getString() : data->string;
+	const char *string = data->getString ? data->getString(data->string) : data->string;
 	
 	if(data->showCaret) {
 		// blink the caret
@@ -1109,7 +1109,7 @@ uiDrawObj_t* DrawFadingLabel(int x, int y, const char *string, float size)
 }
 
 // External
-uiDrawObj_t* DrawDynamicLabel(int x, int y, const char *(*getString)(void), float size, int align, GXColor color)
+uiDrawObj_t* DrawDynamicLabel(int x, int y, const char *getString(const char *format), float size, int align, GXColor color)
 {	
 	drawStyledLabelEvent_t *eventData = calloc(1, sizeof(drawStyledLabelEvent_t));
 	eventData->x = x;
@@ -1121,6 +1121,24 @@ uiDrawObj_t* DrawDynamicLabel(int x, int y, const char *(*getString)(void), floa
 	uiDrawObj_t *event = calloc(1, sizeof(uiDrawObj_t));
 	event->type = EV_STYLEDLABEL;
 	event->data = eventData;
+	return event;
+}
+
+static const char* getDateTimeString(const char *format) {
+	time_t curtime;
+	if(time(&curtime) != (time_t)-1) {
+		strftime(fbTextBuffer, sizeof(fbTextBuffer), format, localtime(&curtime));
+		return fbTextBuffer;
+	}
+	return NULL;
+}
+
+// External
+uiDrawObj_t* DrawDateTimeLabel(int x, int y, const char *format, float size, int align, GXColor color)
+{	
+	uiDrawObj_t *event = DrawDynamicLabel(x, y, getDateTimeString, size, align, color);
+	drawStyledLabelEvent_t *eventData = (drawStyledLabelEvent_t*)event->data;
+	eventData->string = strdup(format);
 	return event;
 }
 
