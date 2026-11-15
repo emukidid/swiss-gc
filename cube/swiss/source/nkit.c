@@ -72,6 +72,7 @@ static const struct {
 	{ "apploader.img", /* 2001/09/08       */  106432, 0x1A25A025A07B8230 },
 	{ "apploader.img", /* 2001/09/08       */  106432, 0x1B0D02775A7CF43E },
 	{ "apploader.img", /* 2001/09/08       */  106432, 0x2BB9CDBBDFD93ED8 },
+	{ "apploader.img", /* 2001/09/08       */  106432, 0x2E6E17CA3BCD59B0 },
 	{ "apploader.img", /* 2001/09/08       */  106432, 0x2F3492A6A93665D9 },
 	{ "apploader.img", /* 2001/09/08       */  106432, 0x3586E84FB8FAAE1E },
 	{ "apploader.img", /* 2001/09/08       */  106432, 0x379837963CA97794 },
@@ -190,7 +191,7 @@ static const struct {
 	{ "apploader.img", /* 2024/09/17       */  113536, 0x623687789597750B },
 	{ "apploader.img", /* 2025/07/10       */  113536, 0xED22F838A52EABC5 },
 	{ "apploader.img", /* 2026/05/11       */  116512, 0xCBDE805EC9BF9E55 },
-#define NKIT_FIRM_COUNT (FIRM_COUNT + 132)
+#define NKIT_FIRM_COUNT (FIRM_COUNT + 133)
 	{ "240p Test Suite (World) (v1.04) (Unl).dol",                  2301384, 0x71BCDBA149B3AAAF },
 	{ "240p Test Suite (World) (v1.06) (Unl).dol",                   930560, 0x7EB7DDDAF5105457 },
 	{ "240p Test Suite (World) (v1.07) (Unl).dol",                   932032, 0x4DAB8540272CCBD5 },
@@ -1518,6 +1519,7 @@ static const struct {
 	{{ "GNHE5d\x00\x00" }, false, 0x5A, 0xCCBB, 0x1F756DAD, 0x18600C6BC8C6562B,    1417216, +1458561024, {      94248,       +4056, 6496, 0x6D95 }, "Action Replay Ultimative Cheatcodes für Final Fantasy: Crystal Chronicles" },
 	{{ "GNHE5d\x00\x00" }, false, 0x66, 0xCCBB, 0x55D7EDD1, 0x28A5FFBE9A173388,     989184, +1458989056, {      94248,       +4056, 6496, 0xE787 }, "Ultimate Cheats für Splinter Cell" },
 	{{ "GNHE5d\x00\x00" }, false, 0x68, 0xCCBB, 0xBF7B7C5A, 0x421F5299A43CCD74,    1189888, +1458788352, {      94248,       +4056, 6496, 0xD19A }, "Power Link Game Enhancer Disc" },
+	{{ "GNHE5d\x00\x00" }, false, 0x6B, 0xCCBB, 0x46E36A62, 0x800E9345B896A314,    3393536, +1456584704, {      94248,       +4056, 6496, 0x7AAF }, "Action Replay Max: Evo Edition" },
 	{{ "GNHE5d\x00\x00" }, false, 0x73, 0xCCBB, 0x4B9B91E6, 0xAEC6721D4E3AB041,     866304, +1459111936, {      94248,       +4056, 6496, 0x71CD }, "Cube CD 15 (34)" },
 	{{ "GNHE5d\x00\x00" }, false, 0x7B, 0xCCBB, 0xCC3182C3, 0x009AEBA340070CC2,   11837440, +1448140800, {      94248,       +4056, 6496, 0xCC3B }, "Max Play" },
 	{{ "GNHE5d\x00\x00" }, false, 0x7C, 0xCCBB, 0x26649910, 0x76B7CDED51201288,    2185216, +1457793024, {      94248,       +4056, 6496, 0xCD3A }, "Karat GC-you Pro Action Replay PAR GC-you" },
@@ -2292,7 +2294,7 @@ static const struct {
 	{{ "UGPP01\x00\x01" }, false, 0x2A, 0x6D4F, 0x5ECD9681, 0x4E9244DEFB94F10C,    5079040, +1454899200, {    2317764,       +8764, 8096, 0x8972 }, "Game Boy Player Start-Up Disc" },
 	{{ "UGPP01\x00\x02" }, false, 0x3A, 0xCA50, 0x1E26380C, 0x483B4CE794041533,    5079040, +1454899200, {    2317764,       +8764, 8096, 0x8972 }, "Game Boy Player Start-Up Disc" },
 	{{ "XXXXXX\x00\x01" }, false, 0x83, 0x7056, 0x5995AC59, 0x5CBC3D9F00D75112, 1287913472,  +172064768, {         ~0,          +0,    0, 0xFFFF }, "LEGO Super Soccer Adventure" },
-#define REDUMP_COUNT (2021)
+#define REDUMP_COUNT (2022)
 	{{"00\0E01\x00\x00" }, false, 0x8B, 0x42A2, 0x499CF1AB, 0xC1BAC83BFBED3EDB,   31170560, +1428807680, {    7795364,      +23900, 6496, 0xBBEA }, "Nintendo Developer Demo" },
 	{{"00\0E01\x00\x00" }, false, 0xD9, 0x21CF, 0xBF114CB3, 0xC1BAC83BFBED3EDB,   31170560, +1428807680, {    7795364,      +23900, 6496, 0xBBEA }, "Nintendo Developer Demo" },
 	{{ "060J01\x00\x00" }, true,  0x7E, 0x27AC, 0x94C088DF, 0x55221BF909AB54CC,  171485184, +1288493056, {     238648, +1288483336, 6496, 0xFD76 }, "Diag Ver 3.1.1" },
