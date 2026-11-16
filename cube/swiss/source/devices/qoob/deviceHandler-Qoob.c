@@ -98,7 +98,7 @@ s32 deviceHandler_Qoob_readDir(file_handle* ffile, file_handle** dir, u32 type) 
 	(*dir)[0].device   = ffile->device;
 	
 	u32 usedSpace = 0;
-	
+loop:
 	while(block <0x200000) {
 		char entryName[128];
 		__SYS_ReadROM(iplBlock, sizeof(qoobEntryHeader), block);
@@ -121,7 +121,7 @@ s32 deviceHandler_Qoob_readDir(file_handle* ffile, file_handle** dir, u32 type) 
 				// Make sure we have room for this one
 				if(num_entries == i) {
 					num_entries *= 2;
-					*dir = reallocarray(*dir, num_entries, sizeof(file_handle));
+					if(reallocarr(dir, num_entries, sizeof(file_handle))) break loop;
 				}
 				memset(&(*dir)[i], 0, sizeof(file_handle));
 				memset(entryName, 0, 128);
@@ -173,7 +173,7 @@ s32 deviceHandler_Qoob_readDir(file_handle* ffile, file_handle** dir, u32 type) 
 	}
 	if(num_entries != i) {
 		num_entries = i;
-		*dir = reallocarray(*dir, num_entries, sizeof(file_handle));
+		reallocarr(dir, num_entries, sizeof(file_handle));
 	}
 	
 	initial_Qoob_info.freeSpace = initial_Qoob_info.totalSpace - usedSpace;

@@ -123,7 +123,7 @@ s32 deviceHandler_FAT_readDir(file_handle* ffile, file_handle** dir, u32 type) {
 			// Make sure we have room for this one
 			if(num_entries == i) {
 				num_entries *= 2;
-				*dir = reallocarray(*dir, num_entries, sizeof(file_handle));
+				if(reallocarr(dir, num_entries, sizeof(file_handle))) break;
 			}
 			memset(&(*dir)[i], 0, sizeof(file_handle));
 			if(concat_path((*dir)[i].name, ffile->name, entry.fname) < PATHNAME_MAX && entry.fsize <= UINT32_MAX) {
@@ -139,7 +139,7 @@ s32 deviceHandler_FAT_readDir(file_handle* ffile, file_handle** dir, u32 type) {
 	}
 	if(num_entries != i) {
 		num_entries = i;
-		*dir = reallocarray(*dir, num_entries, sizeof(file_handle));
+		reallocarr(dir, num_entries, sizeof(file_handle));
 	}
 	
 	f_closedir(dp);

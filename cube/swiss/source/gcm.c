@@ -826,7 +826,7 @@ int read_fst(file_handle *file, file_handle** dir, u64 *usedSpace) {
 				//print_debug("Adding: [%03i]%s:%s offset %08X length %08X\n",i,!FST[offset] ? "File" : "Dir",filename,file_offset,size);
 				if(numFiles == idx) {
 					numFiles *= 2;
-					*dir = reallocarray(*dir, numFiles, sizeof(file_handle));
+					if(reallocarr(dir, numFiles, sizeof(file_handle))) break;
 				}
 				memset(&(*dir)[idx], 0, sizeof(file_handle));
 				strcpy((*dir)[idx].name, filename);
@@ -846,7 +846,7 @@ int read_fst(file_handle *file, file_handle** dir, u64 *usedSpace) {
 			//print_debug("Adding: [%03i]%s:%s offset %08X length %08X\n",i,!FST[offset] ? "File" : "Dir",filename,file_offset,size);
 			if(numFiles == idx) {
 				numFiles *= 2;
-				*dir = reallocarray(*dir, numFiles, sizeof(file_handle));
+				if(reallocarr(dir, numFiles, sizeof(file_handle))) break;
 			}
 			memset(&(*dir)[idx], 0, sizeof(file_handle));
 			strcpy((*dir)[idx].name, filename);
@@ -861,7 +861,7 @@ int read_fst(file_handle *file, file_handle** dir, u64 *usedSpace) {
 	}
 	if(numFiles != idx) {
 		numFiles = idx;
-		*dir = reallocarray(*dir, numFiles, sizeof(file_handle));
+		reallocarr(dir, numFiles, sizeof(file_handle));
 	}
 	
 	free(FST);

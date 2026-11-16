@@ -46,7 +46,7 @@ s32 deviceHandler_USBGecko_readDir(file_handle* ffile, file_handle** dir, u32 ty
 		// Make sure we have room for this one
 		if(num_entries == i) {
 			num_entries *= 2;
-			*dir = reallocarray(*dir, num_entries, sizeof(file_handle));
+			if(reallocarr(dir, num_entries, sizeof(file_handle))) break;
 		}
 		memset(&(*dir)[i], 0, sizeof(file_handle));
 		if(strlcpy((*dir)[i].name, entry->name, PATHNAME_MAX) < PATHNAME_MAX) {
@@ -58,7 +58,7 @@ s32 deviceHandler_USBGecko_readDir(file_handle* ffile, file_handle** dir, u32 ty
 	}
 	if(num_entries != i) {
 		num_entries = i;
-		*dir = reallocarray(*dir, num_entries, sizeof(file_handle));
+		reallocarr(dir, num_entries, sizeof(file_handle));
 	}
 	
 	DrawDispose(msgBox);
