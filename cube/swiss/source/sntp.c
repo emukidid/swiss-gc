@@ -155,7 +155,7 @@ sntp_request()
             if (((sntp_response[0] & SNTP_MODE_MASK) == SNTP_MODE_SERVER) || ((sntp_response[0] & SNTP_MODE_MASK) == SNTP_MODE_BROADCAST)) {
               /* extract GMT time from response */
               memcpy( &timestamp, (sntp_response+SNTP_RCV_TIME_OFS), sizeof(timestamp));
-              t = (ntohl(timestamp) - DIFF_SEC_1900_1970);
+              t = (u32)(ntohl(timestamp) - DIFF_SEC_1900_1970);
 
               /* do time processing */
               sntp_process(t);

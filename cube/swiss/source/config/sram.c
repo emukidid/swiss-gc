@@ -139,7 +139,10 @@ void updateSRAM(SwissSettings *settings, bool syncSram)
 
 void updateRTC(time_t now)
 {
-	u32 rtc = now - DIFF_SEC_1970_2000;
+	u32 rtc;
+
+	if (now < GIT_TIMESTAMP || ckd_sub(&rtc, now, DIFF_SEC_1970_2000))
+		return;
 
 	now = (time_t)(getenv("TZ") ? rtc : rtc + SYS_GetCounterBias()) + DIFF_SEC_1970_2000;
 
