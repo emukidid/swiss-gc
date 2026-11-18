@@ -162,21 +162,21 @@ void updateTZ(const char *name)
 		} else {
 			unsetenv("TZ");
 			tzset();
-			adjust = 1;
+			adjust = -1;
 		}
 	} else if (tzenv) {
 		setenv("TZ", tzenv, 0);
 		tzset();
-		adjust = -1;
+		adjust = 1;
 	}
 
 	if (adjust) {
 		u32 sec0 = ticks_to_secs(gettime());
-		u32 sec1 = sec0 + SYS_GetCounterBias() * adjust;
+		u32 sec1 = sec0 - SYS_GetCounterBias();
 
 		s64 tick0 = secs_to_ticks(sec0);
 		s64 tick1 = secs_to_ticks(sec1);
 
-		__SYS_AdjustPosixTime(tick1 - tick0);
+		__SYS_AdjustPosixTime((tick1 - tick0) * adjust);
 	}
 }
