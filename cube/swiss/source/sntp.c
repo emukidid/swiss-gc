@@ -75,6 +75,7 @@
 /* SNTP protocol defines */
 #define SNTP_MAX_DATA_LEN           48
 #define SNTP_RCV_TIME_OFS           32
+#define SNTP_XMT_TIME_OFS           40
 #define SNTP_LI_NO_WARNING          0x00
 #define SNTP_VERSION               (4/* NTP Version 4*/<<3) 
 #define SNTP_MODE_CLIENT            0x03
@@ -154,7 +155,7 @@ sntp_request()
             /* if this is a SNTP response... */
             if (((sntp_response[0] & SNTP_MODE_MASK) == SNTP_MODE_SERVER) || ((sntp_response[0] & SNTP_MODE_MASK) == SNTP_MODE_BROADCAST)) {
               /* extract GMT time from response */
-              memcpy( &timestamp, (sntp_response+SNTP_RCV_TIME_OFS), sizeof(timestamp));
+              memcpy( &timestamp, (sntp_response+SNTP_XMT_TIME_OFS), sizeof(timestamp));
               t = (u32)(ntohl(timestamp) - DIFF_SEC_1900_1970);
 
               /* do time processing */
