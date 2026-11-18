@@ -449,8 +449,8 @@ uiDrawObj_t* settings_draw_page(int page_num, int option, ConfigEntry *gameConfi
 			sprintf(sramHOffsetStr, "%+hi", swissSettings.sramHOffset);
 			drawSettingEntryString(page, &page_y_ofs, "Screen Position:", sramHOffsetStr, option == SET_SCREEN_POS, true);
 			drawSettingEntryString(page, &page_y_ofs, "System Language:", sramLanguageStr[swissSettings.sramLanguage], option == SET_SYS_LANG, true);
-			drawSettingEntryDateTime(page, &page_y_ofs, "System Date:", getDateFormatString(&swissSettings), option == SET_SYS_DATE, false);
-			drawSettingEntryDateTime(page, &page_y_ofs, "System Time:", "%T", option == SET_SYS_TIME, false);
+			drawSettingEntryDateTime(page, &page_y_ofs, "System Date:", getDateFormatString(&swissSettings), option == SET_SYS_DATE, true);
+			drawSettingEntryDateTime(page, &page_y_ofs, "System Time:", "%T", option == SET_SYS_TIME, true);
 			drawSettingEntryString(page, &page_y_ofs, "System Time Zone:", swissSettings.timeZone, option == SET_SYS_TIMEZONE, true);
 			drawSettingEntryString(page, &page_y_ofs, "Configuration Device:", getConfigDeviceName(&swissSettings), option == SET_CONFIG_DEV, true);
 			sprintf(uiVModeStr, "%s%s", getVideoModeString(getVideoModeFromSwissSetting(swissSettings.uiVMode)), swissSettings.uiVMode == 0 ? " (Auto) " : "");
@@ -688,6 +688,12 @@ void settings_toggle(int page, int option, int direction, ConfigEntry *gameConfi
 			case SET_SYS_LANG:
 				swissSettings.sramLanguage += direction;
 				swissSettings.sramLanguage = ((s8)swissSettings.sramLanguage + SRAM_LANGUAGE_MAX) % SRAM_LANGUAGE_MAX;
+			break;
+			case SET_SYS_DATE:
+				DrawGetTextEntry(ENTRYMODE_DATE, "System Date", getDateFormatString(&swissSettings), 10);
+			break;
+			case SET_SYS_TIME:
+				DrawGetTextEntry(ENTRYMODE_TIME, "System Time", "%T", 8);
 			break;
 			case SET_SYS_TIMEZONE:
 				if(!select_timezone(swissSettings.timeZone))

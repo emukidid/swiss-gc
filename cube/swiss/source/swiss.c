@@ -1631,7 +1631,7 @@ bool manage_file() {
 		char *parentPath = calloc(1, sizeof(curFile.name));
 		getParentPath(&curFile.name[0], parentPath);
 		strcpy(nameBuffer, getRelativeName(&curFile.name[0]));
-		DrawGetTextEntry(ENTRYMODE_NUMERIC|ENTRYMODE_ALPHA|ENTRYMODE_FILE, "Rename", nameBuffer, sizeof(curFile.name)-(strlen(parentPath)+1));
+		DrawGetTextEntry(ENTRYMODE_FILE, "Rename", nameBuffer, sizeof(curFile.name)-(strlen(parentPath)+1));
 		concat_path(txtbuffer, parentPath, nameBuffer);
 		bool modified = (strcmp(&curFile.name[0], txtbuffer) != 0) && strlen(nameBuffer) > 0;
 		if(modified) {

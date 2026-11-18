@@ -27,6 +27,7 @@
 void refreshSRAM(SwissSettings *settings);
 void updateSRAM(SwissSettings *settings, bool syncSram);
 void updateRTC(time_t now);
+void updateTime(time_t now);
 void updateTZ(const char *name);
 
 #endif /* __SRAM_H__ */

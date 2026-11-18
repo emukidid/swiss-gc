@@ -150,6 +150,20 @@ void updateRTC(time_t now)
 	__SYS_SetPosixTime(secs_to_ticks(now));
 }
 
+void updateTime(time_t now)
+{
+	u32 sec0, sec1;
+
+	if (getenv("TZ")) {
+		updateRTC(now);
+	} else if (!ckd_sub(&sec1, now, DIFF_SEC_1970_2000) &&
+		__SYS_GetRTC(&sec0)) {
+		__SYS_SetPosixTime(secs_to_ticks(now));
+		__SYS_SetTime(secs_to_ticks(sec1));
+		SYS_SetCounterBias(sec1 - sec0);
+	}
+}
+
 void updateTZ(const char *name)
 {
 	const char *tzenv = get_timezone(name);
