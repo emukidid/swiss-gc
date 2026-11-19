@@ -54,24 +54,30 @@ static void initSRAM(void)
 	__SYS_UnlockSram(writeSram);
 	while (!__SYS_SyncSram());
 
-	u32 epoch, rtc;
-	s32 bias = SYS_GetCounterBias();
+	u32 rtc, epoch;
+	s32 counterBias = SYS_GetCounterBias();
 
 	if (!ckd_sub(&epoch, GIT_TIMESTAMP, DIFF_SEC_1970_2000) && __SYS_GetRTC(&rtc)) {
 		if (rtc < epoch) {
-			__SYS_SetRTC(epoch);
-			__SYS_SetPosixTime(secs_to_ticks(GIT_TIMESTAMP));
-			__SYS_SetTime(secs_to_ticks(epoch));
-			SYS_SetCounterBias(0);
-		} else if (ckd_add(&rtc, rtc, bias)) {
-			if (ckd_sub(&bias, rtc, epoch)) {
+			if (rtc + counterBias + 12 * TB_SECSPERHR < epoch ||
+				ckd_sub(&counterBias, rtc + counterBias, epoch)) {
 				__SYS_SetRTC(epoch);
 				__SYS_SetPosixTime(secs_to_ticks(GIT_TIMESTAMP));
 				__SYS_SetTime(secs_to_ticks(epoch));
 				SYS_SetCounterBias(0);
 			} else {
 				__SYS_SetRTC(epoch);
-				SYS_SetCounterBias(bias);
+				SYS_SetCounterBias(counterBias);
+			}
+		} else if (ckd_add(&rtc, rtc, counterBias)) {
+			if (ckd_sub(&counterBias, rtc, epoch)) {
+				__SYS_SetRTC(epoch);
+				__SYS_SetPosixTime(secs_to_ticks(GIT_TIMESTAMP));
+				__SYS_SetTime(secs_to_ticks(epoch));
+				SYS_SetCounterBias(0);
+			} else {
+				__SYS_SetRTC(epoch);
+				SYS_SetCounterBias(counterBias);
 			}
 		}
 	}
